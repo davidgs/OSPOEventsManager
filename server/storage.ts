@@ -162,16 +162,55 @@ export class MemStorage implements IStorage {
   
   // Event methods
   async getEvents(): Promise<Event[]> {
-    return Array.from(this.events.values());
+    // Transform events array to ensure goals is parsed from JSON string
+    const events = Array.from(this.events.values());
+    
+    // Process each event to handle legacy data or properly format goals
+    return events.map(event => {
+      // If event has the old 'goal' property instead of 'goals'
+      if ('goal' in event && !('goals' in event)) {
+        // @ts-ignore - handle legacy data
+        const goal = event.goal as string;
+        return {
+          ...event,
+          goals: JSON.stringify([goal])
+        };
+      } 
+      // If event has goals
+      return event;
+    });
   }
   
   async getEvent(id: number): Promise<Event | undefined> {
-    return this.events.get(id);
+    const event = this.events.get(id);
+    
+    if (!event) return undefined;
+    
+    // If event has the old 'goal' property instead of 'goals'
+    if ('goal' in event && !('goals' in event)) {
+      // @ts-ignore - handle legacy data
+      const goal = event.goal as string;
+      return {
+        ...event,
+        goals: JSON.stringify([goal])
+      };
+    }
+    
+    return event;
   }
   
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
     const id = this.eventId++;
-    const event: Event = { ...insertEvent, id, status: "planning" };
+    
+    // Ensure goals is stored as a JSON string if it's an array
+    const processedEvent = {
+      ...insertEvent,
+      goals: Array.isArray(insertEvent.goals) 
+        ? JSON.stringify(insertEvent.goals) 
+        : insertEvent.goals
+    };
+    
+    const event: Event = { ...processedEvent, id, status: "planning" };
     this.events.set(id, event);
     return event;
   }
@@ -180,7 +219,16 @@ export class MemStorage implements IStorage {
     const event = this.events.get(id);
     if (!event) return undefined;
     
-    const updatedEvent = { ...event, ...updateEvent };
+    // Process goals array for storage
+    const processedUpdate = { ...updateEvent };
+    
+    if (updateEvent.goals) {
+      processedUpdate.goals = Array.isArray(updateEvent.goals) 
+        ? JSON.stringify(updateEvent.goals) 
+        : updateEvent.goals;
+    }
+    
+    const updatedEvent = { ...event, ...processedUpdate };
     this.events.set(id, updatedEvent);
     return updatedEvent;
   }
@@ -365,7 +413,7 @@ export class MemStorage implements IStorage {
       location: "Amsterdam, Netherlands",
       priority: "high",
       type: "conference",
-      goal: "speaking",
+      goals: ["speaking", "attending"],
       cfpDeadline: new Date("2023-01-15"),
       notes: "Major cloud native conference in Europe",
     });
@@ -378,7 +426,7 @@ export class MemStorage implements IStorage {
       location: "Vancouver, Canada",
       priority: "medium",
       type: "conference",
-      goal: "sponsoring",
+      goals: ["sponsoring", "attending"],
       cfpDeadline: new Date("2023-02-05"),
       notes: "Flagship conference for open source",
     });
@@ -391,7 +439,7 @@ export class MemStorage implements IStorage {
       location: "Seattle, USA",
       priority: "low",
       type: "conference",
-      goal: "attending",
+      goals: ["attending"],
       cfpDeadline: new Date("2023-03-01"),
       notes: "Local DevOps community event",
     });
@@ -404,7 +452,7 @@ export class MemStorage implements IStorage {
       location: "Virtual",
       priority: "medium",
       type: "conference",
-      goal: "speaking",
+      goals: ["speaking", "attending"],
       cfpDeadline: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
       notes: "Annual Docker conference",
     });
@@ -417,7 +465,7 @@ export class MemStorage implements IStorage {
       location: "Berlin, Germany",
       priority: "low",
       type: "conference",
-      goal: "attending",
+      goals: ["attending"],
       notes: "JavaScript focused conference",
     });
 

@@ -30,7 +30,7 @@ const formSchema = z.object({
   location: z.string().min(1, "Location is required"),
   priority: z.enum(eventPriorities),
   type: z.enum(eventTypes),
-  goal: z.enum(eventGoals),
+  goals: z.array(z.enum(eventGoals)).min(1, "Select at least one goal"),
   startDate: z.date({
     required_error: "Start date is required",
   }),
