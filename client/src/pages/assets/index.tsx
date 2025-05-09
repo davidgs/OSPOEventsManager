@@ -142,28 +142,28 @@ export default function AssetsPage() {
     const subType = mimeType.split('/')[1];
     
     if (type === 'image') {
-      return <ImageIcon className="h-8 w-8 text-muted-foreground" />;
+      return <ImageIcon className="h-4 w-4 text-muted-foreground" />;
     } else if (type === 'application') {
       if (subType.includes('pdf')) {
-        return <FileText className="h-8 w-8 text-muted-foreground" />;
+        return <FileText className="h-4 w-4 text-muted-foreground" />;
       } else if (subType.includes('powerpoint') || subType.includes('presentation')) {
-        return <PresentationIcon className="h-8 w-8 text-muted-foreground" />;
+        return <PresentationIcon className="h-4 w-4 text-muted-foreground" />;
       } else if (subType.includes('excel') || subType.includes('spreadsheet')) {
-        return <FileSpreadsheet className="h-8 w-8 text-muted-foreground" />;
+        return <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />;
       } else if (subType.includes('zip') || subType.includes('archive') || subType.includes('compressed')) {
-        return <FileArchive className="h-8 w-8 text-muted-foreground" />;
+        return <FileArchive className="h-4 w-4 text-muted-foreground" />;
       } else if (subType.includes('word') || subType.includes('document')) {
-        return <FileText className="h-8 w-8 text-muted-foreground" />;
+        return <FileText className="h-4 w-4 text-muted-foreground" />;
       }
     } else if (type === 'text') {
-      return <FileText className="h-8 w-8 text-muted-foreground" />;
+      return <FileText className="h-4 w-4 text-muted-foreground" />;
     } else if (type === 'audio') {
-      return <FileAudio className="h-8 w-8 text-muted-foreground" />;
+      return <FileAudio className="h-4 w-4 text-muted-foreground" />;
     } else if (type === 'video') {
-      return <FileVideo className="h-8 w-8 text-muted-foreground" />;
+      return <FileVideo className="h-4 w-4 text-muted-foreground" />;
     }
     
-    return <File className="h-8 w-8 text-muted-foreground" />;
+    return <File className="h-4 w-4 text-muted-foreground" />;
   };
   
   // Helper function to get the asset owner's name
@@ -208,27 +208,30 @@ export default function AssetsPage() {
     }
     
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2">
         {filteredAssets.map((asset) => (
-          <Card key={asset.id} className="overflow-hidden max-w-xs hover:shadow-md transition-shadow">
-            <CardHeader className="pb-1 pt-2 px-3">
+          <Card key={asset.id} className="overflow-hidden max-w-[150px] hover:shadow-md transition-shadow">
+            <CardHeader className="pb-0 pt-1 px-2">
               <div className="flex justify-between items-start">
-                <div className="w-[85%]">
-                  <CardTitle className="text-xs font-medium truncate">{asset.name}</CardTitle>
-                  <CardDescription className="text-xs mt-0.5">
+                <div className="w-[80%]">
+                  <div className="flex flex-col">
+                    <span className="text-[8px] font-bold">Title:</span>
+                    <CardTitle className="text-[10px] font-medium truncate">{asset.name}</CardTitle>
+                  </div>
+                  <CardDescription className="text-[8px] mt-0">
                     {formatBytes(asset.fileSize)} • {asset.mimeType.split('/')[1].toUpperCase()}
                   </CardDescription>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7">
-                      <MoreVertical className="h-3.5 w-3.5" />
+                    <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
+                      <MoreVertical className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => downloadAsset(asset)} className="text-xs">
-                      <Download className="mr-2 h-3.5 w-3.5" />
+                    <DropdownMenuLabel className="text-[9px] py-1">Actions</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => downloadAsset(asset)} className="text-[9px] py-1">
+                      <Download className="mr-1.5 h-2.5 w-2.5" />
                       Download
                     </DropdownMenuItem>
                     <DropdownMenuItem 
@@ -237,9 +240,9 @@ export default function AssetsPage() {
                           deleteAsset.mutate(asset.id);
                         }
                       }}
-                      className="text-destructive text-xs"
+                      className="text-destructive text-[9px] py-1"
                     >
-                      <Trash className="mr-2 h-3.5 w-3.5" />
+                      <Trash className="mr-1.5 h-2.5 w-2.5" />
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -247,33 +250,35 @@ export default function AssetsPage() {
               </div>
             </CardHeader>
             
-            {/* Thumbnail preview area */}
+            {/* Thumbnail preview area - SMALLER SIZE */}
             <div className="px-3 mb-1">
-              {asset.mimeType.startsWith('image/') ? (
-                <AspectRatio ratio={4/3} className="bg-muted rounded-md overflow-hidden">
-                  <img 
-                    src={asset.filePath} 
-                    alt={asset.name}
-                    className="object-contain w-full h-full"
-                  />
-                </AspectRatio>
-              ) : (
-                <AspectRatio ratio={4/3} className="bg-muted/40 rounded-md flex items-center justify-center">
-                  <div className="text-center">
-                    {getFileIcon(asset.mimeType)}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {asset.mimeType.split('/')[1].toUpperCase()}
-                    </p>
-                  </div>
-                </AspectRatio>
-              )}
+              <div className="max-h-[60px] h-[60px]">
+                {asset.mimeType.startsWith('image/') ? (
+                  <AspectRatio ratio={4/3} className="bg-muted rounded-md overflow-hidden h-[60px]">
+                    <img 
+                      src={asset.filePath} 
+                      alt={asset.name}
+                      className="object-contain w-full h-full"
+                    />
+                  </AspectRatio>
+                ) : (
+                  <AspectRatio ratio={4/3} className="bg-muted/40 rounded-md flex items-center justify-center h-[60px]">
+                    <div className="text-center">
+                      {getFileIcon(asset.mimeType)}
+                      <p className="text-[9px] text-muted-foreground mt-0.5">
+                        {asset.mimeType.split('/')[1].toUpperCase()}
+                      </p>
+                    </div>
+                  </AspectRatio>
+                )}
+              </div>
             </div>
             
             <CardContent className="py-1 px-3">
               {asset.description && <p className="text-xs text-muted-foreground line-clamp-2">{asset.description}</p>}
               
               {/* Asset owner info */}
-              <div className="flex items-center mt-2 text-xs">
+              <div className="flex items-center mt-1 text-xs">
                 <User className="h-3 w-3 mr-1 text-muted-foreground" />
                 <span className="text-muted-foreground">Owner: {getAssetOwnerName(asset.uploadedBy)}</span>
               </div>
