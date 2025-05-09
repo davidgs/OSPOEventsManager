@@ -89,8 +89,7 @@ const EventsPage: FC = () => {
     mutationFn: async (newEvent: any) => {
       // For debugging
       console.log('About to add event with data:', newEvent);
-      const res = await apiRequest('POST', '/api/events', newEvent);
-      return res.json();
+      return await apiRequest('POST', '/api/events', newEvent);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
@@ -114,8 +113,7 @@ const EventsPage: FC = () => {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       // For debugging
       console.log('About to update event with data:', data);
-      const res = await apiRequest('PUT', `/api/events/${id}`, data);
-      return res.json();
+      return await apiRequest('PUT', `/api/events/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });

@@ -73,7 +73,6 @@ const SettingsPage: FC = () => {
   // Query to fetch user data
   const { data: userData, isLoading } = useQuery<User>({
     queryKey: [`/api/users/${userId}`],
-    queryFn: () => apiRequest<User>(`/api/users/${userId}`),
   });
   
   // Profile form
@@ -110,7 +109,7 @@ const SettingsPage: FC = () => {
   // Profile update mutation
   const profileMutation = useMutation({
     mutationFn: (data: z.infer<typeof profileFormSchema>) => 
-      apiRequest<User>(`/api/users/${userId}/profile`, 'PUT', data),
+      apiRequest<User>('PUT', `/api/users/${userId}/profile`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}`] });
       toast({
@@ -187,7 +186,7 @@ const SettingsPage: FC = () => {
   // Handle headshot remove
   const handleRemoveHeadshot = async () => {
     try {
-      await apiRequest<User>(`/api/users/${userId}/profile`, 'PUT', { headshot: null });
+      await apiRequest<User>('PUT', `/api/users/${userId}/profile`, { headshot: null });
       
       queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}`] });
       toast({

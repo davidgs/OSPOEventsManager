@@ -8,10 +8,12 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest<T = any>(
+  method: string,
   url: string,
+  body?: any,
   options: RequestInit = {}
 ): Promise<T> {
-  const { method = "GET", body, headers = {}, ...rest } = options;
+  const { headers = {}, ...rest } = options;
   
   // Debug: Log the request method and URL
   console.log(`Making ${method} request to ${url}`);
