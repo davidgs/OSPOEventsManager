@@ -48,7 +48,7 @@ const SidebarContent: FC = () => {
 
   // Query to fetch user data
   const { data: userData } = useQuery<User>({
-    queryKey: ['/api/users', userId],
+    queryKey: [`/api/users/${userId}`],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -98,7 +98,7 @@ const SidebarContent: FC = () => {
               ) : (
                 <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
               )}
-              <AvatarFallback>{getInitials(userData?.name)}</AvatarFallback>
+              <AvatarFallback>{userData?.name ? getInitials(userData.name) : "U"}</AvatarFallback>
             </Avatar>
             <div className="ml-3 text-left">
               <p className="text-sm font-medium text-white">{userData?.name || "User"}</p>
@@ -118,7 +118,7 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
   
   // Query to fetch user data for mobile view
   const { data: userData } = useQuery<User>({
-    queryKey: ['/api/users', userId],
+    queryKey: [`/api/users/${userId}`],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
   
@@ -151,7 +151,7 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
             ) : (
               <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
             )}
-            <AvatarFallback>{getInitials(userData?.name)}</AvatarFallback>
+            <AvatarFallback>{userData?.name ? getInitials(userData.name) : "U"}</AvatarFallback>
           </Avatar>
         </Link>
       </div>
