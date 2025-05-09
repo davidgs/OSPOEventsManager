@@ -527,7 +527,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         assets = await storage.getAssets();
       }
       
-      res.json(assets);
+      // Enhance asset data with user information
+      const enhancedAssets = await Promise.all(assets.map(async (asset) => {
+        const user = await storage.getUser(asset.uploadedBy);
+        return {
+          ...asset,
+          uploadedByName: user ? user.name : 'Unknown User'
+        };
+      }));
+      
+      res.json(enhancedAssets);
     } catch (error) {
       console.error("Error fetching assets:", error);
       res.status(500).json({ message: "Failed to fetch assets" });
@@ -546,7 +555,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Asset not found" });
       }
 
-      res.json(asset);
+      // Add user information
+      const user = await storage.getUser(asset.uploadedBy);
+      const enhancedAsset = {
+        ...asset,
+        uploadedByName: user ? user.name : 'Unknown User'
+      };
+
+      res.json(enhancedAsset);
     } catch (error) {
       console.error("Error fetching asset:", error);
       res.status(500).json({ message: "Failed to fetch asset" });
@@ -597,7 +613,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const asset = await storage.createAsset(assetData);
-      res.status(201).json(asset);
+      
+      // Add user information to the response
+      const user = await storage.getUser(asset.uploadedBy);
+      const enhancedAsset = {
+        ...asset,
+        uploadedByName: user ? user.name : 'Unknown User'
+      };
+      
+      res.status(201).json(enhancedAsset);
     } catch (error) {
       console.error("Error creating asset:", error);
       res.status(500).json({ message: "Failed to create asset" });
@@ -625,7 +649,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Asset not found" });
       }
       
-      res.json(asset);
+      // Add user information to response
+      const user = await storage.getUser(asset.uploadedBy);
+      const enhancedAsset = {
+        ...asset,
+        uploadedByName: user ? user.name : 'Unknown User'
+      };
+      
+      res.json(enhancedAsset);
     } catch (error) {
       console.error("Error updating asset:", error);
       res.status(500).json({ message: "Failed to update asset" });
