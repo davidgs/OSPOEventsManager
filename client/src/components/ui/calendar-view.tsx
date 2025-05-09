@@ -1,20 +1,43 @@
 import { FC, useState } from "react";
 import { 
-  Calendar as CalendarIcon, 
+  Calendar, 
   ChevronLeft, 
-  ChevronRight 
+  ChevronRight, 
+  FileText, 
+  Users, 
+  Edit, 
+  Trash2, 
+  MapPin,
+  Clock,
+  BookOpen,
+  User,
+  Mic
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { addMonths, subMonths, format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, getDay } from "date-fns";
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { addMonths, subMonths, format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, getDay, differenceInDays, isSameDay } from "date-fns";
 import { Event } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface CalendarViewProps {
   events: Event[];
+  cfpCounts?: Record<number, number>;
+  attendeeCounts?: Record<number, number>;
+  tripReportCounts?: Record<number, Record<string, any>[]>;
+  eventSpeakers?: Record<number, Array<{id: number, name: string, submissions: Array<{title: string, status: string}>}>>;
+  eventAttendees?: Record<number, Array<{id: number, name: string}>>;
 }
 
-const CalendarView: FC<CalendarViewProps> = ({ events }) => {
+const CalendarView: FC<CalendarViewProps> = ({ 
+  events,
+  cfpCounts = {},
+  attendeeCounts = {},
+  tripReportCounts = {},
+  eventSpeakers = {},
+  eventAttendees = {}
+}) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   
   const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -60,6 +83,44 @@ const CalendarView: FC<CalendarViewProps> = ({ events }) => {
     });
   };
   
+  // Get CFP deadlines occurring on a specific day
+  const getCfpDeadlinesForDay = (day: Date) => {
+    return events.filter(event => {
+      if (!event.cfpDeadline) return false;
+      const cfpDeadline = new Date(event.cfpDeadline);
+      return isSameDay(day, cfpDeadline);
+    });
+  };
+  
+  // Helper function to get CFP deadline color based on proximity
+  const getCfpDeadlineColor = (deadline: string) => {
+    const deadlineDate = new Date(deadline);
+    const now = new Date();
+    const daysUntil = differenceInDays(deadlineDate, now);
+    
+    if (daysUntil <= 7) {
+      return "bg-red-100 text-red-800"; // Less than a week: red
+    } else if (daysUntil <= 14) {
+      return "bg-yellow-100 text-yellow-800"; // Less than two weeks: yellow
+    } else {
+      return "bg-green-100 text-green-800"; // More than two weeks: green
+    }
+  };
+  
+  // Helper function to get border color based on priority
+  const getBorderColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "border-red-500";
+      case "medium":
+        return "border-yellow-500";
+      case "low":
+        return "border-green-500";
+      default:
+        return "border-gray-300";
+    }
+  };
+  
   // Calendar days
   const calendarDays = getDaysForCalendar();
   
@@ -76,6 +137,92 @@ const CalendarView: FC<CalendarViewProps> = ({ events }) => {
       (eventStart <= monthStart && eventEnd >= monthEnd)
     );
   });
+  
+  // Render mini event card for popover
+  const renderEventCard = (event: Event) => {
+    const cfpCount = cfpCounts[event.id] || 0;
+    const attendeeCount = attendeeCounts[event.id] || 0;
+    const tripReports = tripReportCounts[event.id] || [];
+    const speakers = eventSpeakers[event.id] || [];
+    const attendees = eventAttendees[event.id] || [];
+    
+    return (
+      <div className={`border-l-4 ${getBorderColor(event.priority)} bg-white rounded p-3`}>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-base font-medium text-gray-900">{event.name}</h3>
+        </div>
+        
+        <div className="flex items-center text-xs text-gray-500 mb-2">
+          <MapPin className="h-3 w-3 text-gray-400 mr-1" />
+          <span>{event.location}</span>
+        </div>
+        
+        <div className="flex items-center text-xs text-gray-500 mb-2">
+          <Calendar className="h-3 w-3 text-gray-400 mr-1" />
+          <span>
+            {format(new Date(event.startDate), "MMM d, yyyy")} - {format(new Date(event.endDate), "MMM d, yyyy")}
+          </span>
+        </div>
+        
+        {event.cfpDeadline && (
+          <div className="flex items-center text-xs text-gray-500 mb-2">
+            <Clock className="h-3 w-3 text-gray-400 mr-1" />
+            <span>
+              CFP Deadline: {format(new Date(event.cfpDeadline), "MMM d, yyyy")}
+            </span>
+          </div>
+        )}
+        
+        <div className="flex items-center space-x-4 mt-2 mb-2 text-xs">
+          <div className="flex items-center space-x-1">
+            <FileText className="h-3 w-3 text-gray-400" />
+            <span>{cfpCount} CFPs</span>
+          </div>
+          
+          <div className="flex items-center space-x-1">
+            <Users className="h-3 w-3 text-gray-400" />
+            <span>{attendeeCount} Attendees</span>
+          </div>
+          
+          {tripReports.length > 0 && (
+            <div className="flex items-center space-x-1">
+              <BookOpen className="h-3 w-3 text-gray-400" />
+              <span>{tripReports.length} Reports</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex flex-wrap gap-1 mt-2">
+          {(typeof event.goals === 'string' ? JSON.parse(event.goals) : event.goals).map((goal: string, index: number) => {
+            if (goal === "speaking") {
+              return (
+                <Badge key={index} variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs">
+                  <Mic className="h-2 w-2 mr-1" />
+                  Speaking
+                </Badge>
+              );
+            } else if (goal === "attending") {
+              return (
+                <Badge key={index} variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs">
+                  <User className="h-2 w-2 mr-1" />
+                  Attending
+                </Badge>
+              );
+            } else {
+              return (
+                <Badge key={index} variant="outline" className={
+                  goal === "sponsoring" ? "bg-green-100 text-green-800 hover:bg-green-100 text-xs" : 
+                  "bg-indigo-100 text-indigo-800 hover:bg-indigo-100 text-xs"
+                }>
+                  {goal.charAt(0).toUpperCase() + goal.slice(1)}
+                </Badge>
+              );
+            }
+          })}
+        </div>
+      </div>
+    );
+  };
   
   return (
     <Card className="bg-white shadow rounded-lg">
@@ -125,6 +272,7 @@ const CalendarView: FC<CalendarViewProps> = ({ events }) => {
         <div className="grid grid-cols-7 gap-px">
           {calendarDays.map((day, dayIdx) => {
             const dayEvents = getEventsForDay(day);
+            const cfpDeadlines = getCfpDeadlinesForDay(day);
             const isCurrentMonth = isSameMonth(day, currentMonth);
             const isTodayDate = isToday(day);
             
@@ -145,19 +293,47 @@ const CalendarView: FC<CalendarViewProps> = ({ events }) => {
                   {format(day, 'd')}
                 </span>
                 
-                {dayEvents.length > 0 && (
-                  <div className="mt-1 overflow-y-auto max-h-20">
-                    {dayEvents.map((event) => (
-                      <div 
-                        key={event.id} 
-                        className="bg-blue-100 p-1 rounded text-xs text-blue-800 mb-1 truncate"
-                        title={event.name}
-                      >
-                        {event.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="mt-1 overflow-y-auto max-h-24 space-y-1">
+                  {/* Show CFP deadlines */}
+                  {cfpDeadlines.length > 0 && cfpDeadlines.map((event) => (
+                    <Popover key={`cfp-${event.id}`}>
+                      <PopoverTrigger asChild>
+                        <div 
+                          className={cn(
+                            "p-1 rounded text-xs mb-1 cursor-pointer",
+                            getCfpDeadlineColor(event.cfpDeadline!)
+                          )}
+                          title={`CFP Deadline: ${event.name}`}
+                        >
+                          <div className="flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span className="truncate">CFP: {event.name}</span>
+                          </div>
+                        </div>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="start">
+                        {renderEventCard(event)}
+                      </PopoverContent>
+                    </Popover>
+                  ))}
+                  
+                  {/* Show events */}
+                  {dayEvents.length > 0 && dayEvents.map((event) => (
+                    <Popover key={`event-${event.id}`}>
+                      <PopoverTrigger asChild>
+                        <div 
+                          className="bg-blue-100 p-1 rounded text-xs text-blue-800 mb-1 truncate cursor-pointer"
+                          title={event.name}
+                        >
+                          {event.name}
+                        </div>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="start">
+                        {renderEventCard(event)}
+                      </PopoverContent>
+                    </Popover>
+                  ))}
+                </div>
               </div>
             );
           })}

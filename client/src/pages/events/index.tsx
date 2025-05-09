@@ -430,7 +430,14 @@ const EventsPage: FC = () => {
             )}
             
             {viewMode === ViewMode.Calendar && (
-              <CalendarView events={filteredEvents} />
+              <CalendarView 
+                events={filteredEvents}
+                cfpCounts={cfpCounts}
+                attendeeCounts={attendeeCounts}
+                tripReportCounts={tripReportCounts}
+                eventSpeakers={eventSpeakers}
+                eventAttendees={eventAttendees}
+              />
             )}
             
             {viewMode === ViewMode.Map && (
