@@ -397,6 +397,14 @@ export default function AssetsPage() {
           <AssetUploadForm onComplete={() => setIsUploadDialogOpen(false)} />
         </DialogContent>
       </Dialog>
+
+      {/* Asset Preview Modal */}
+      <AssetPreviewModal
+        asset={previewAsset}
+        isOpen={isPreviewModalOpen}
+        onClose={closeAssetPreview}
+        userName={users?.name || "User"}
+      />
     </div>
   );
 }
