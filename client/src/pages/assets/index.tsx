@@ -36,9 +36,25 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, MoreVertical, File, Download, Trash } from "lucide-react";
+import { 
+  Loader2, 
+  MoreVertical, 
+  File, 
+  Download, 
+  Trash, 
+  Image as ImageIcon, 
+  FileText, 
+  FilePresentation,
+  FileSpreadsheet,
+  FileArchive,
+  FileCode,
+  FileAudio,
+  FileVideo,
+  User
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AssetUploadForm } from "@/components/forms/asset-upload-form";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 // Asset type definition
 export type Asset = {
@@ -64,6 +80,11 @@ export default function AssetsPage() {
   // Fetch all assets
   const { data: assets, isLoading, isError } = useQuery({
     queryKey: ["/api/assets"]
+  });
+  
+  // Fetch users to display asset owner names
+  const { data: users } = useQuery({
+    queryKey: ["/api/users/2"] // For now, we only have one user
   });
 
   // Delete asset mutation
@@ -111,6 +132,44 @@ export default function AssetsPage() {
   // Helper function to download an asset
   const downloadAsset = (asset: Asset) => {
     window.open(`/uploads/${asset.filePath}`, '_blank');
+  };
+  
+  // Helper function to get the appropriate icon for a file based on mime type
+  const getFileIcon = (mimeType: string) => {
+    const type = mimeType.split('/')[0];
+    const subType = mimeType.split('/')[1];
+    
+    if (type === 'image') {
+      return <ImageIcon className="h-12 w-12 text-muted-foreground" />;
+    } else if (type === 'application') {
+      if (subType.includes('pdf')) {
+        return <FileText className="h-12 w-12 text-muted-foreground" />;
+      } else if (subType.includes('powerpoint') || subType.includes('presentation')) {
+        return <FilePresentation className="h-12 w-12 text-muted-foreground" />;
+      } else if (subType.includes('excel') || subType.includes('spreadsheet')) {
+        return <FileSpreadsheet className="h-12 w-12 text-muted-foreground" />;
+      } else if (subType.includes('zip') || subType.includes('archive') || subType.includes('compressed')) {
+        return <FileArchive className="h-12 w-12 text-muted-foreground" />;
+      } else if (subType.includes('word') || subType.includes('document')) {
+        return <FileText className="h-12 w-12 text-muted-foreground" />;
+      }
+    } else if (type === 'text') {
+      return <FileText className="h-12 w-12 text-muted-foreground" />;
+    } else if (type === 'audio') {
+      return <FileAudio className="h-12 w-12 text-muted-foreground" />;
+    } else if (type === 'video') {
+      return <FileVideo className="h-12 w-12 text-muted-foreground" />;
+    }
+    
+    return <File className="h-12 w-12 text-muted-foreground" />;
+  };
+  
+  // Helper function to get the asset owner's name
+  const getAssetOwnerName = (userId: number) => {
+    if (users && users.id === userId) {
+      return users.name;
+    }
+    return "Unknown User";
   };
 
   // Render loading state
@@ -185,9 +244,39 @@ export default function AssetsPage() {
                 </DropdownMenu>
               </div>
             </CardHeader>
+            
+            {/* Thumbnail preview area */}
+            <div className="px-6 mb-2">
+              {asset.mimeType.startsWith('image/') ? (
+                <AspectRatio ratio={16/9} className="bg-muted rounded-md overflow-hidden">
+                  <img 
+                    src={asset.filePath} 
+                    alt={asset.name}
+                    className="object-cover w-full h-full"
+                  />
+                </AspectRatio>
+              ) : (
+                <AspectRatio ratio={16/9} className="bg-muted/40 rounded-md flex items-center justify-center">
+                  <div className="text-center">
+                    {getFileIcon(asset.mimeType)}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {asset.mimeType.split('/')[1].toUpperCase()}
+                    </p>
+                  </div>
+                </AspectRatio>
+              )}
+            </div>
+            
             <CardContent className="pb-2">
               {asset.description && <p className="text-sm text-muted-foreground line-clamp-2">{asset.description}</p>}
+              
+              {/* Asset owner info */}
+              <div className="flex items-center mt-3 text-sm">
+                <User className="h-3 w-3 mr-1 text-muted-foreground" />
+                <span className="text-muted-foreground">Owner: {getAssetOwnerName(asset.uploadedBy)}</span>
+              </div>
             </CardContent>
+            
             <CardFooter className="flex justify-between pt-2 text-xs text-muted-foreground">
               <div>
                 <span className="capitalize">{asset.type.replace('_', ' ')}</span>
