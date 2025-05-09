@@ -72,14 +72,18 @@ const SidebarContent: FC = () => {
         </nav>
       </div>
       <div className="flex items-center p-4 border-t border-gray-700">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
-          <AvatarFallback>AJ</AvatarFallback>
-        </Avatar>
-        <div className="ml-3">
-          <p className="text-sm font-medium text-white">Alex Johnson</p>
-          <p className="text-xs font-medium text-gray-400">Community Architect</p>
-        </div>
+        <Link href="/settings">
+          <Button variant="ghost" className="w-full flex items-center justify-start p-0 hover:bg-transparent">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
+              <AvatarFallback>AJ</AvatarFallback>
+            </Avatar>
+            <div className="ml-3 text-left">
+              <p className="text-sm font-medium text-white">Alex Johnson</p>
+              <p className="text-xs font-medium text-gray-400">Community Architect</p>
+            </div>
+          </Button>
+        </Link>
       </div>
     </div>
   );
@@ -102,10 +106,12 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
           </SheetContent>
         </Sheet>
         <h1 className="text-lg font-semibold">OSPO Events</h1>
-        <Avatar className="h-8 w-8">
-          <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
-          <AvatarFallback>AJ</AvatarFallback>
-        </Avatar>
+        <Link href="/settings">
+          <Avatar className="h-8 w-8 cursor-pointer">
+            <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
+            <AvatarFallback>AJ</AvatarFallback>
+          </Avatar>
+        </Link>
       </div>
     );
   }

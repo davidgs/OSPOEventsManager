@@ -68,7 +68,7 @@ const SettingsPage: FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  const userId = 1; // In a real app, this would come from auth context
+  const userId = 2; // Using demo_user's ID
   
   // Query to fetch user data
   const { data: userData, isLoading } = useQuery<User>({
