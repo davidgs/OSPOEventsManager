@@ -4,8 +4,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useParams, Link, useLocation } from "wouter";
 import { 
   Calendar, ChevronLeft, Edit, ExternalLink, MapPin, Clipboard, 
-  Users, FileText, DollarSign, AlertTriangle, File,
-  FileText as FileTextIcon, PresentationIcon, Download, Eye
+  Users, FileText, DollarSign, AlertTriangle, File, Link as LinkIcon,
+  FileText as FileTextIcon, PresentationIcon, Download, Eye, Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import EditEventModal from "@/components/ui/edit-event-modal";
 import DeleteEventDialog from "@/components/ui/delete-event-dialog";
+import { LinkAssetModal } from "@/components/modals/link-asset-modal";
 import { z } from "zod";
 
 const EventDetailsPage: FC = () => {
@@ -26,6 +27,7 @@ const EventDetailsPage: FC = () => {
   // States for modals
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isLinkAssetModalOpen, setIsLinkAssetModalOpen] = useState(false);
   
   // Fetch event details
   const { 
@@ -654,11 +656,22 @@ const EventDetailsPage: FC = () => {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Event Assets</CardTitle>
-                  <Link href={`/assets?eventId=${event.id}`}>
-                    <Button size="sm">
-                      Manage Assets
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setIsLinkAssetModalOpen(true)}
+                    >
+                      <LinkIcon className="mr-2 h-4 w-4" />
+                      Link Existing
                     </Button>
-                  </Link>
+                    <Link href={`/assets?eventId=${event.id}`}>
+                      <Button size="sm">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Asset
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -758,6 +771,12 @@ const EventDetailsPage: FC = () => {
         onConfirm={handleDeleteEvent}
         event={event}
         isDeleting={isDeletingEvent}
+      />
+      
+      <LinkAssetModal
+        isOpen={isLinkAssetModalOpen}
+        onClose={() => setIsLinkAssetModalOpen(false)}
+        eventId={eventId}
       />
     </div>
   );
