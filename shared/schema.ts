@@ -32,11 +32,32 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  name: text("name"),
+  email: text("email"),
+  bio: text("bio"),
+  role: text("role"),
+  jobTitle: text("job_title"),
+  headshot: text("headshot"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+});
+
+export const updateUserProfileSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }).optional(),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }).optional(),
+  bio: z.string().max(500).optional(),
+  role: z.string().min(1, {
+    message: "Please select a role.",
+  }).optional(),
+  jobTitle: z.string().optional(),
+  headshot: z.string().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
