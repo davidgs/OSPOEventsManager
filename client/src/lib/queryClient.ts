@@ -7,17 +7,17 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest<T = any>(
+export async function apiRequest<TData = any>(
   method: string,
   url: string,
   body?: any,
   options: RequestInit = {}
-): Promise<T> {
+): Promise<TData> {
   const { headers = {}, ...rest } = options;
   
   // Debug: Log the request method and URL
   console.log(`Making ${method} request to ${url}`);
-  console.log('Request body:', body);
+  if (body) console.log('Request body:', body);
   
   try {
     // Only add Content-Type for JSON data, not for FormData
@@ -47,18 +47,21 @@ export async function apiRequest<T = any>(
 
     await throwIfResNotOk(res);
     
-    // Check if response is empty (204 No Content)
-    if (res.status === 204) {
-      return {} as T;
-    }
-    
-    // Check the content type before trying to parse JSON
-    const contentType = res.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return await res.json();
-    } else {
-      console.warn(`Response from ${url} is not JSON`);
-      return {} as T;
+    // Always try to parse as JSON first, fallback if it fails
+    try {
+      // Check the content type before trying to parse JSON
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await res.json() as TData;
+      }
+      
+      // For non-JSON or empty responses, return an empty object
+      console.warn(`Response from ${url} is not JSON or is empty`);
+      return {} as TData;
+    } catch (parseError) {
+      console.warn(`Failed to parse response from ${url}:`, parseError);
+      // Return empty object on parse errors
+      return {} as TData;
     }
   } catch (error) {
     console.error(`Error in apiRequest for ${url}:`, error);
@@ -67,11 +70,10 @@ export async function apiRequest<T = any>(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
+export const getQueryFn = <TData>(options: {
   on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
+}): QueryFunction<TData> => {
+  return async ({ queryKey }) => {
     const url = queryKey[0] as string;
     console.log(`Making GET request to ${url}`);
     
@@ -80,35 +82,37 @@ export const getQueryFn: <T>(options: {
         credentials: "include",
       });
 
-      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-        return null as unknown as T;
+      if (options.on401 === "returnNull" && res.status === 401) {
+        return null as unknown as TData;
       }
 
       await throwIfResNotOk(res);
       
-      // Check if response is empty (204 No Content)
-      if (res.status === 204) {
-        return {} as unknown as T;
-      }
-      
-      // Make sure we can parse the response
-      const contentType = res.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return await res.json() as T;
-      } else {
-        console.warn(`Response from ${url} is not JSON`);
-        return {} as unknown as T;
+      try {
+        // Make sure we can parse the response
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return await res.json() as TData;
+        } else {
+          console.warn(`Response from ${url} is not JSON or is empty`);
+          return {} as TData;
+        }
+      } catch (parseError) {
+        console.warn(`Failed to parse response from ${url}:`, parseError);
+        // Return empty object on parse errors
+        return {} as TData;
       }
     } catch (error) {
       console.error(`Error fetching from ${url}:`, error);
       throw error;
     }
   };
+};
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      queryFn: getQueryFn<unknown>({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
