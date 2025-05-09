@@ -167,6 +167,12 @@ const AttendeesPage: FC = () => {
         const emailB = b.email || "";
         comparison = emailA.localeCompare(emailB);
         break;
+      case "eventId":
+        // First compare by event name
+        const eventNameA = getEventName(a.eventId);
+        const eventNameB = getEventName(b.eventId);
+        comparison = eventNameA.localeCompare(eventNameB);
+        break;
       default:
         comparison = 0;
     }
@@ -335,8 +341,17 @@ const AttendeesPage: FC = () => {
                       </div>
                     </th>
                     {!eventId && (
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Event
+                      <th 
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        onClick={() => handleSort("eventId")}
+                      >
+                        <div className="flex items-center">
+                          Event
+                          {sortField === "eventId" && (
+                            <ArrowUpDown className="ml-1 h-4 w-4" />
+                          )}
+                        </div>
                       </th>
                     )}
                     <th 
