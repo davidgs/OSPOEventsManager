@@ -117,7 +117,10 @@ const EventCard: FC<EventCardProps> = ({
     <Card className={`overflow-hidden shadow rounded-lg border-l-4 ${getBorderColor(event.priority)}`}>
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-2">
-          {getPriorityBadge(event.priority)}
+          <div className="flex items-center space-x-2">
+            {getPriorityBadge(event.priority)}
+            {getTypeBadge(event.type)}
+          </div>
           <div className="flex items-center space-x-2">
             <Button 
               variant="ghost" 
@@ -236,9 +239,10 @@ const EventCard: FC<EventCardProps> = ({
           </div>
           
           <div className="flex flex-col space-y-2">
+            <div className="mb-1">
+              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Conference Goals</h4>
+            </div>
             <div className="flex items-center flex-wrap gap-1">
-              {getTypeBadge(event.type)}
-              
               {event.goal === "speaking" && speakers && speakers.length > 0 ? (
                 <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
                   <Mic className="h-3 w-3 mr-1" />
