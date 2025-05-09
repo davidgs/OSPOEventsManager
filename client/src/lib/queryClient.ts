@@ -19,39 +19,51 @@ export async function apiRequest<T = any>(
   console.log(`Making ${method} request to ${url}`);
   console.log('Request body:', body);
   
-  // Only add Content-Type for JSON data, not for FormData
-  const isFormData = body instanceof FormData;
-  const requestHeaders = isFormData
-    ? { ...headers } // FormData sets its own Content-Type with boundary
-    : { "Content-Type": "application/json", ...headers };
-  
-  const requestBody = body instanceof FormData 
-    ? body 
-    : body 
-      ? JSON.stringify(body) 
-      : undefined;
-  
-  // Debug: Log the stringified request body
-  if (requestBody && !isFormData) {
-    console.log('Stringified request body:', requestBody);
-  }
-  
-  const res = await fetch(url, {
-    method,
-    headers: requestHeaders,
-    body: requestBody,
-    credentials: "include",
-    ...rest,
-  });
+  try {
+    // Only add Content-Type for JSON data, not for FormData
+    const isFormData = body instanceof FormData;
+    const requestHeaders = isFormData
+      ? { ...headers } // FormData sets its own Content-Type with boundary
+      : { "Content-Type": "application/json", ...headers };
+    
+    const requestBody = body instanceof FormData 
+      ? body 
+      : body 
+        ? JSON.stringify(body) 
+        : undefined;
+    
+    // Debug: Log the stringified request body
+    if (requestBody && !isFormData) {
+      console.log('Stringified request body:', requestBody);
+    }
+    
+    const res = await fetch(url, {
+      method,
+      headers: requestHeaders,
+      body: requestBody,
+      credentials: "include",
+      ...rest,
+    });
 
-  await throwIfResNotOk(res);
-  
-  // Check if response is empty (204 No Content)
-  if (res.status === 204) {
-    return {} as T;
+    await throwIfResNotOk(res);
+    
+    // Check if response is empty (204 No Content)
+    if (res.status === 204) {
+      return {} as T;
+    }
+    
+    // Check the content type before trying to parse JSON
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await res.json();
+    } else {
+      console.warn(`Response from ${url} is not JSON`);
+      return {} as T;
+    }
+  } catch (error) {
+    console.error(`Error in apiRequest for ${url}:`, error);
+    throw error;
   }
-  
-  return res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -63,16 +75,34 @@ export const getQueryFn: <T>(options: {
     const url = queryKey[0] as string;
     console.log(`Making GET request to ${url}`);
     
-    const res = await fetch(url, {
-      credentials: "include",
-    });
+    try {
+      const res = await fetch(url, {
+        credentials: "include",
+      });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null as unknown as T;
+      }
+
+      await throwIfResNotOk(res);
+      
+      // Check if response is empty (204 No Content)
+      if (res.status === 204) {
+        return {} as unknown as T;
+      }
+      
+      // Make sure we can parse the response
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await res.json() as T;
+      } else {
+        console.warn(`Response from ${url} is not JSON`);
+        return {} as unknown as T;
+      }
+    } catch (error) {
+      console.error(`Error fetching from ${url}:`, error);
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({
