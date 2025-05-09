@@ -52,11 +52,13 @@ import {
   FileVideo,
   User,
   FileBarChart,
-  PresentationIcon
+  PresentationIcon,
+  Eye
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AssetUploadForm } from "@/components/forms/asset-upload-form";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { AssetPreviewModal } from "@/components/modals/asset-preview-modal";
 
 // Asset type definition
 export type Asset = {
@@ -78,6 +80,8 @@ export default function AssetsPage() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   // Fetch all assets
   const { data: assets, isLoading, isError } = useQuery({
@@ -134,6 +138,18 @@ export default function AssetsPage() {
   // Helper function to download an asset
   const downloadAsset = (asset: Asset) => {
     window.open(asset.filePath, '_blank');
+  };
+  
+  // Open asset preview modal
+  const openAssetPreview = (asset: Asset) => {
+    setPreviewAsset(asset);
+    setIsPreviewModalOpen(true);
+  };
+  
+  // Close asset preview modal
+  const closeAssetPreview = () => {
+    setIsPreviewModalOpen(false);
+    setPreviewAsset(null);
   };
   
   // Helper function to get the appropriate icon for a file based on mime type
@@ -210,7 +226,10 @@ export default function AssetsPage() {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
         {filteredAssets.map((asset) => (
-          <Card key={asset.id} className="overflow-hidden w-full h-full hover:shadow-md transition-shadow">
+          <Card 
+                key={asset.id} 
+                className="overflow-hidden w-full h-full hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => openAssetPreview(asset)}>
             <CardHeader className="pb-0 pt-2 px-4">
               <div className="flex justify-between items-start">
                 <div className="w-[80%]">
@@ -224,18 +243,30 @@ export default function AssetsPage() {
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={(e) => e.stopPropagation()} // Prevent parent Card onClick from triggering
+                    >
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => downloadAsset(asset)} className="text-xs">
+                    <DropdownMenuItem 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadAsset(asset);
+                      }} 
+                      className="text-xs"
+                    >
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (window.confirm("Are you sure you want to delete this asset? This action cannot be undone.")) {
                           deleteAsset.mutate(asset.id);
                         }
