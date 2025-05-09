@@ -45,18 +45,35 @@ export async function apiRequest<TData = any>(
       ...rest,
     });
 
+    console.log(`Response status for ${method} ${url}:`, res.status);
+    // Log content-type header which is most relevant for debugging
+    console.log(`Response content-type for ${method} ${url}:`, res.headers.get('content-type'));
+
     await throwIfResNotOk(res);
     
     // Always try to parse as JSON first, fallback if it fails
     try {
+      // Clone the response for debugging if needed
+      const resClone = res.clone();
+      
       // Check the content type before trying to parse JSON
       const contentType = res.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-        return await res.json() as TData;
+        try {
+          const jsonData = await res.json();
+          console.log(`Success parsing JSON from ${method} ${url}`);
+          return jsonData as TData;
+        } catch (jsonError) {
+          console.error(`JSON parse error for ${method} ${url}:`, jsonError);
+          // Try to get the text to see what we're dealing with
+          const text = await resClone.text();
+          console.log(`Response text from failed JSON parse:`, text);
+          return {} as TData;
+        }
       }
       
       // For non-JSON or empty responses, return an empty object
-      console.warn(`Response from ${url} is not JSON or is empty`);
+      console.warn(`Response from ${url} is not JSON (content-type: ${contentType})`);
       return {} as TData;
     } catch (parseError) {
       console.warn(`Failed to parse response from ${url}:`, parseError);
@@ -82,6 +99,10 @@ export const getQueryFn = <TData>(options: {
         credentials: "include",
       });
 
+      console.log(`Response status for GET ${url}:`, res.status);
+      // Log content-type header which is most relevant for debugging
+      console.log(`Response content-type for GET ${url}:`, res.headers.get('content-type'));
+
       if (options.on401 === "returnNull" && res.status === 401) {
         return null as unknown as TData;
       }
@@ -89,12 +110,25 @@ export const getQueryFn = <TData>(options: {
       await throwIfResNotOk(res);
       
       try {
+        // Clone the response for debugging if needed
+        const resClone = res.clone();
+        
         // Make sure we can parse the response
         const contentType = res.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
-          return await res.json() as TData;
+          try {
+            const jsonData = await res.json();
+            console.log(`Success parsing JSON from GET ${url}`);
+            return jsonData as TData;
+          } catch (jsonError) {
+            console.error(`JSON parse error for GET ${url}:`, jsonError);
+            // Try to get the text to see what we're dealing with
+            const text = await resClone.text();
+            console.log(`Response text from failed JSON parse:`, text);
+            return {} as TData;
+          }
         } else {
-          console.warn(`Response from ${url} is not JSON or is empty`);
+          console.warn(`Response from ${url} is not JSON (content-type: ${contentType})`);
           return {} as TData;
         }
       } catch (parseError) {
