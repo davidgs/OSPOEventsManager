@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -26,8 +26,16 @@ import {
   ShieldCheck, 
   Send, 
   HelpCircle, 
-  Save
+  Save,
+  Upload,
+  X,
+  AlertCircle
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { type User } from "@shared/schema";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -39,6 +47,9 @@ const profileFormSchema = z.object({
   bio: z.string().max(160).optional(),
   role: z.string().min(1, {
     message: "Please select a role.",
+  }),
+  jobTitle: z.string().min(2, {
+    message: "Job title must be at least 2 characters.",
   }),
 });
 
@@ -53,16 +64,35 @@ const notificationFormSchema = z.object({
 const SettingsPage: FC = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("profile");
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+  const userId = 1; // In a real app, this would come from auth context
+  
+  // Query to fetch user data
+  const { data: userData, isLoading } = useQuery<User>({
+    queryKey: ['/api/users', userId],
+    queryFn: () => apiRequest<User>(`/api/users/${userId}`),
+  });
   
   // Profile form
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: "Alex Johnson",
-      email: "alex@example.com",
-      bio: "Community Architect responsible for managing open source events and outreach.",
-      role: "community_architect",
+      name: "",
+      email: "",
+      bio: "",
+      role: "",
+      jobTitle: "",
     },
+    values: userData ? {
+      name: userData.name || "",
+      email: userData.email || "",
+      bio: userData.bio || "",
+      role: userData.role || "",
+      jobTitle: userData.jobTitle || "",
+    } : undefined,
   });
   
   // Notifications form
@@ -77,13 +107,100 @@ const SettingsPage: FC = () => {
     },
   });
   
+  // Profile update mutation
+  const profileMutation = useMutation({
+    mutationFn: (data: z.infer<typeof profileFormSchema>) => 
+      apiRequest(`/api/users/${userId}/profile`, 'PUT', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users', userId] });
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been updated successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+  
   // Handle profile form submission
   const onProfileSubmit = (data: z.infer<typeof profileFormSchema>) => {
-    // This would call an API in a real implementation
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been updated successfully.",
-    });
+    profileMutation.mutate(data);
+  };
+  
+  // Handle headshot upload
+  const handleHeadshotUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("File size exceeds the 10MB limit.");
+      return;
+    }
+    
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError("Only JPG, PNG, and GIF images are allowed.");
+      return;
+    }
+    
+    setUploadError(null);
+    setIsUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('headshot', file);
+      
+      const response = await fetch(`/api/users/${userId}/headshot`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to upload headshot");
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/users', userId] });
+      toast({
+        title: "Headshot Uploaded",
+        description: "Your profile picture has been updated successfully.",
+      });
+    } catch (error: any) {
+      setUploadError(error.message || "Error uploading headshot");
+      toast({
+        title: "Upload Error",
+        description: error.message || "Failed to upload headshot. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  // Handle headshot remove
+  const handleRemoveHeadshot = async () => {
+    try {
+      await apiRequest(`/api/users/${userId}/profile`, 'PUT', { headshot: null });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/users', userId] });
+      toast({
+        title: "Headshot Removed",
+        description: "Your profile picture has been removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove headshot. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Handle notification form submission
@@ -192,6 +309,11 @@ const SettingsPage: FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                    </div>
+                  ) : (
                   <Form {...profileForm}>
                     <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
                       <FormField
@@ -258,6 +380,23 @@ const SettingsPage: FC = () => {
                       
                       <FormField
                         control={profileForm.control}
+                        name="jobTitle"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Job Title</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your job title" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              Your professional title or position.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={profileForm.control}
                         name="bio"
                         render={({ field }) => (
                           <FormItem>
@@ -277,14 +416,93 @@ const SettingsPage: FC = () => {
                         )}
                       />
                       
+                      {/* Profile Photo Upload */}
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="text-base font-medium">Profile Photo</h3>
+                          <p className="text-sm text-gray-500">
+                            Your profile photo will be displayed on your profile and in attendee lists.
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-5">
+                          <Avatar className="h-20 w-20">
+                            {userData?.headshot ? (
+                              <AvatarImage src={userData.headshot} alt={userData.name || "Profile"} />
+                            ) : (
+                              <AvatarFallback className="text-lg">
+                                {userData?.name ? userData.name.charAt(0).toUpperCase() : "U"}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          
+                          <div className="flex flex-col gap-2">
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                              >
+                                <Upload className="mr-2 h-4 w-4" />
+                                {isUploading ? "Uploading..." : "Upload New Photo"}
+                              </Button>
+                              
+                              {userData?.headshot && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleRemoveHeadshot}
+                                  disabled={isUploading}
+                                >
+                                  <X className="mr-2 h-4 w-4" />
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                            
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              onChange={handleHeadshotUpload}
+                              accept="image/jpeg,image/png,image/gif"
+                              className="hidden"
+                            />
+                            
+                            <div className="text-xs text-gray-500">
+                              JPG, PNG or GIF. Max size 10MB.
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {uploadError && (
+                          <Alert variant="destructive" className="mt-2">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{uploadError}</AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                      
                       <div className="flex justify-end">
-                        <Button type="submit">
-                          <Save className="mr-2 h-4 w-4" />
-                          Save Changes
+                        <Button 
+                          type="submit" 
+                          disabled={profileMutation.isPending || isUploading}
+                        >
+                          {profileMutation.isPending ? (
+                            <>Saving Changes...</>
+                          ) : (
+                            <>
+                              <Save className="mr-2 h-4 w-4" />
+                              Save Changes
+                            </>
+                          )}
                         </Button>
                       </div>
                     </form>
                   </Form>
+                  )}
                 </CardContent>
               </Card>
             )}
