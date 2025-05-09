@@ -4,7 +4,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useParams, Link, useLocation } from "wouter";
 import { 
   Calendar, ChevronLeft, Edit, ExternalLink, MapPin, Clipboard, 
-  Users, FileText, DollarSign, AlertTriangle
+  Users, FileText, DollarSign, AlertTriangle, File,
+  FileText as FileTextIcon, PresentationIcon, Download, Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,6 +80,22 @@ const EventDetailsPage: FC = () => {
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to fetch sponsorships');
+      return await res.json();
+    },
+    enabled: !isNaN(eventId),
+  });
+  
+  // Fetch assets related to this event (abstracts, trip reports, presentations)
+  const {
+    data: eventAssets = [],
+    isLoading: isLoadingAssets,
+  } = useQuery({
+    queryKey: ['/api/assets', 'event', eventId],
+    queryFn: async ({ queryKey }) => {
+      const res = await fetch(`/api/assets?eventId=${eventId}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch event assets');
       return await res.json();
     },
     enabled: !isNaN(eventId),
@@ -173,7 +190,7 @@ const EventDetailsPage: FC = () => {
     }
   };
   
-  const isLoading = isLoadingEvent || isLoadingCfp || isLoadingAttendees || isLoadingSponsorships;
+  const isLoading = isLoadingEvent || isLoadingCfp || isLoadingAttendees || isLoadingSponsorships || isLoadingAssets;
   
   if (isNaN(eventId)) {
     return (
@@ -424,7 +441,7 @@ const EventDetailsPage: FC = () => {
         
         {/* Tabs content */}
         <Tabs defaultValue="attendees" className="mb-6">
-          <TabsList className="grid grid-cols-3 mb-6">
+          <TabsList className="grid grid-cols-4 mb-6">
             <TabsTrigger value="attendees" className="text-sm">
               <Users className="mr-2 h-4 w-4" />
               Attendees
@@ -436,6 +453,10 @@ const EventDetailsPage: FC = () => {
             <TabsTrigger value="sponsorships" className="text-sm">
               <DollarSign className="mr-2 h-4 w-4" />
               Sponsorships
+            </TabsTrigger>
+            <TabsTrigger value="assets" className="text-sm">
+              <File className="mr-2 h-4 w-4" />
+              Assets
             </TabsTrigger>
           </TabsList>
           
@@ -622,6 +643,98 @@ const EventDetailsPage: FC = () => {
                         </Link>
                       </div>
                     )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="assets">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Event Assets</CardTitle>
+                  <Link href={`/assets?eventId=${event.id}`}>
+                    <Button size="sm">
+                      Manage Assets
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {eventAssets.length === 0 ? (
+                  <div className="text-center py-8">
+                    <File className="mx-auto h-12 w-12 text-gray-300" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No Assets Yet</h3>
+                    <p className="mt-1 text-sm text-gray-500">Get started by adding assets for this event.</p>
+                    <div className="mt-6">
+                      <Link href={`/assets?eventId=${event.id}`}>
+                        <Button>Add Asset</Button>
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {eventAssets.map((asset) => (
+                      <div key={asset.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                        <div className="h-40 bg-gray-100 relative flex items-center justify-center p-4">
+                          {asset.mimeType.startsWith('image/') ? (
+                            <div className="w-full h-full">
+                              <img
+                                src={asset.filePath.startsWith('/') ? asset.filePath : `/${asset.filePath}`}
+                                alt={asset.name}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center">
+                              {asset.type === 'abstract' ? (
+                                <FileTextIcon className="h-16 w-16 text-blue-500" />
+                              ) : asset.type === 'presentation' ? (
+                                <PresentationIcon className="h-16 w-16 text-purple-500" />
+                              ) : asset.type === 'trip_report' ? (
+                                <FileTextIcon className="h-16 w-16 text-green-500" />
+                              ) : (
+                                <File className="h-16 w-16 text-gray-500" />
+                              )}
+                              <span className="mt-2 text-sm text-gray-500 uppercase">
+                                {asset.mimeType.split('/')[1]}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <div className="mb-1">
+                            <span className="text-xs font-medium bg-gray-100 rounded-full px-2 py-1 capitalize">
+                              {asset.type.replace('_', ' ')}
+                            </span>
+                          </div>
+                          <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-1">{asset.name}</h3>
+                          <p className="text-xs text-gray-500 mb-3">By {asset.uploadedByName || 'Unknown'}</p>
+                          <div className="flex justify-between">
+                            <a 
+                              href={asset.filePath.startsWith('/') ? asset.filePath : `/${asset.filePath}`}
+                              download
+                              className="text-xs flex items-center text-blue-600 hover:underline"
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Download
+                            </a>
+                            <Link href={`/assets/${asset.id}`} className="text-xs flex items-center text-blue-600 hover:underline">
+                              <Eye className="h-3 w-3 mr-1" />
+                              View Details
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {eventAssets.length > 6 && (
+                  <div className="mt-6 text-center">
+                    <Link href={`/assets?eventId=${event.id}`}>
+                      <Button variant="outline">View All Assets</Button>
+                    </Link>
                   </div>
                 )}
               </CardContent>
