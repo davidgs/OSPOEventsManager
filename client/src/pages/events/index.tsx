@@ -84,22 +84,36 @@ const EventsPage: FC = () => {
     return acc;
   }, {});
   
-  // Organize speakers (from CFP submissions) by event
-  const eventSpeakers = cfpSubmissions.reduce((acc: Record<number, Array<{id: number, name: string, status: string}>>, cfp: any) => {
+  // Organize speakers and their submissions by event
+  const eventSpeakers = cfpSubmissions.reduce((acc: Record<number, Array<{
+    id: number, 
+    name: string, 
+    submissions: Array<{title: string, status: string}>
+  }>>, cfp: any) => {
     if (!acc[cfp.eventId]) {
       acc[cfp.eventId] = [];
     }
     
-    // Add the speaker if they don't already exist in the array
+    // Find if this speaker already exists in our array
     const existingIndex = acc[cfp.eventId].findIndex((speaker) => 
       speaker.id === cfp.submitterId && speaker.name === cfp.submitterName
     );
     
-    if (existingIndex === -1) {
+    // If speaker already exists, add this submission to their submissions array
+    if (existingIndex !== -1) {
+      acc[cfp.eventId][existingIndex].submissions.push({
+        title: cfp.title,
+        status: cfp.status
+      });
+    } else {
+      // Add a new speaker with their first submission
       acc[cfp.eventId].push({
         id: cfp.submitterId || 0,
         name: cfp.submitterName,
-        status: cfp.status
+        submissions: [{
+          title: cfp.title,
+          status: cfp.status
+        }]
       });
     }
     

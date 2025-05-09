@@ -8,7 +8,7 @@ interface EventsListProps {
   events: Event[];
   cfpCounts: Record<number, number>;
   attendeeCounts: Record<number, number>;
-  eventSpeakers: Record<number, Array<{id: number, name: string, status: string}>>;
+  eventSpeakers: Record<number, Array<{id: number, name: string, submissions: Array<{title: string, status: string}>}>>;
   eventAttendees: Record<number, Array<{id: number, name: string}>>;
   onAddEvent: () => void;
   onEditEvent: (event: Event) => void;
