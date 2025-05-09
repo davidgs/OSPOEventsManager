@@ -9,17 +9,37 @@ async function throwIfResNotOk(res: Response) {
 
 export async function apiRequest<T = any>(
   url: string,
-  method: string = "GET",
-  data?: unknown
+  options: RequestInit = {}
 ): Promise<T> {
+  const { method = "GET", body, headers = {}, ...rest } = options;
+  
+  // Only add Content-Type for JSON data, not for FormData
+  const isFormData = body instanceof FormData;
+  const requestHeaders = isFormData
+    ? { ...headers } // FormData sets its own Content-Type with boundary
+    : { "Content-Type": "application/json", ...headers };
+  
+  const requestBody = body instanceof FormData 
+    ? body 
+    : body 
+      ? JSON.stringify(body) 
+      : undefined;
+  
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers: requestHeaders,
+    body: requestBody,
     credentials: "include",
+    ...rest,
   });
 
   await throwIfResNotOk(res);
+  
+  // Check if response is empty (204 No Content)
+  if (res.status === 204) {
+    return {} as T;
+  }
+  
   return res.json();
 }
 

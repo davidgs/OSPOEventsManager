@@ -132,21 +132,29 @@ export class MemStorage implements IStorage {
     
     // If name has been changed, update related records
     if (userData.name && userData.name !== user.name) {
+      console.log(`[MemStorage] Updating name from "${user.name}" to "${userData.name}" for user ID ${id}`);
+      
       // Update CFP submissions where this user is the submitter
+      let cfpUpdated = 0;
       for (const submission of this.cfpSubmissions.values()) {
         if (submission.submitterId === id) {
           submission.submitterName = userData.name;
           this.cfpSubmissions.set(submission.id, submission);
+          cfpUpdated++;
         }
       }
+      console.log(`[MemStorage] Updated ${cfpUpdated} CFP submissions`);
       
       // Update attendees where this user has entries
+      let attendeesUpdated = 0;
       for (const attendee of this.attendees.values()) {
         if (attendee.userId === id) {
           attendee.name = userData.name;
           this.attendees.set(attendee.id, attendee);
+          attendeesUpdated++;
         }
       }
+      console.log(`[MemStorage] Updated ${attendeesUpdated} attendee records`);
     }
     
     return updatedUser;
@@ -610,17 +618,26 @@ export class DatabaseStorage implements IStorage {
       
     // If name has been changed, update related records
     if (userData.name && userData.name !== user.name) {
+      console.log(`Updating name from "${user.name}" to "${userData.name}" for user ID ${id}`);
+      
       // Update CFP submissions where this user is the submitter
-      await db
+      const cfpUpdated = await db
         .update(cfpSubmissions)
         .set({ submitterName: userData.name })
-        .where(eq(cfpSubmissions.submitterId, id));
+        .where(eq(cfpSubmissions.submitterId, id))
+        .returning();
+      console.log(`Updated ${cfpUpdated.length} CFP submissions`);
         
       // Update attendees where this user has entries
-      await db
+      const attendeesUpdated = await db
         .update(attendees)
         .set({ name: userData.name })
-        .where(eq(attendees.userId, id));
+        .where(eq(attendees.userId, id))
+        .returning();
+      console.log(`Updated ${attendeesUpdated.length} attendee records`);
+      
+      // Also update any other tables that might reference this user's name
+      // e.g., events.createdByName (if such field exists), etc.
     }
       
     return updatedUser;
