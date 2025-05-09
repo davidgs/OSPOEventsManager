@@ -13,6 +13,10 @@ export async function apiRequest<T = any>(
 ): Promise<T> {
   const { method = "GET", body, headers = {}, ...rest } = options;
   
+  // Debug: Log the request method and URL
+  console.log(`Making ${method} request to ${url}`);
+  console.log('Request body:', body);
+  
   // Only add Content-Type for JSON data, not for FormData
   const isFormData = body instanceof FormData;
   const requestHeaders = isFormData
@@ -24,6 +28,11 @@ export async function apiRequest<T = any>(
     : body 
       ? JSON.stringify(body) 
       : undefined;
+  
+  // Debug: Log the stringified request body
+  if (requestBody && !isFormData) {
+    console.log('Stringified request body:', requestBody);
+  }
   
   const res = await fetch(url, {
     method,

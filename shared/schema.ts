@@ -80,9 +80,25 @@ export const events = pgTable("events", {
   createdById: integer("created_by_id").references(() => users.id),
 });
 
-export const insertEventSchema = createInsertSchema(events).omit({
+// Create the base insert schema from drizzle
+const baseInsertEventSchema = createInsertSchema(events).omit({
   id: true,
   status: true,
+});
+
+// Override the schema to explicitly define how we want date fields handled
+export const insertEventSchema = z.object({
+  name: baseInsertEventSchema.shape.name,
+  link: baseInsertEventSchema.shape.link,
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+  location: baseInsertEventSchema.shape.location,
+  priority: baseInsertEventSchema.shape.priority,
+  type: baseInsertEventSchema.shape.type,
+  goal: baseInsertEventSchema.shape.goal,
+  cfpDeadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format").nullable().optional(),
+  notes: baseInsertEventSchema.shape.notes,
+  createdById: baseInsertEventSchema.shape.createdById,
 });
 
 export type InsertEvent = z.infer<typeof insertEventSchema>;

@@ -80,12 +80,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid event ID" });
       }
 
+      // Log the request body for debugging
+      console.log('PUT /api/events/:id - Request body:', req.body);
+      
       const eventData = insertEventSchema.partial().safeParse(req.body);
       
       if (!eventData.success) {
+        // Log validation errors
+        console.error('Validation error:', eventData.error);
         const validationError = fromZodError(eventData.error);
         return res.status(400).json({ message: validationError.message });
       }
+      
+      // Log the parsed data
+      console.log('Parsed event data:', eventData.data);
       
       const event = await storage.updateEvent(id, eventData.data);
       if (!event) {
@@ -94,6 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(event);
     } catch (error) {
+      console.error('Error updating event:', error);
       res.status(500).json({ message: "Failed to update event" });
     }
   });
