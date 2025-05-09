@@ -52,7 +52,7 @@ import {
   FileVideo,
   User,
   FileBarChart,
-  FileSlides
+  PresentationIcon
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AssetUploadForm } from "@/components/forms/asset-upload-form";
@@ -147,7 +147,7 @@ export default function AssetsPage() {
       if (subType.includes('pdf')) {
         return <FileText className="h-12 w-12 text-muted-foreground" />;
       } else if (subType.includes('powerpoint') || subType.includes('presentation')) {
-        return <FileSlides className="h-12 w-12 text-muted-foreground" />;
+        return <PresentationIcon className="h-12 w-12 text-muted-foreground" />;
       } else if (subType.includes('excel') || subType.includes('spreadsheet')) {
         return <FileSpreadsheet className="h-12 w-12 text-muted-foreground" />;
       } else if (subType.includes('zip') || subType.includes('archive') || subType.includes('compressed')) {
@@ -250,15 +250,15 @@ export default function AssetsPage() {
             {/* Thumbnail preview area */}
             <div className="px-6 mb-2">
               {asset.mimeType.startsWith('image/') ? (
-                <AspectRatio ratio={16/9} className="bg-muted rounded-md overflow-hidden">
+                <AspectRatio ratio={4/3} className="bg-muted rounded-md overflow-hidden">
                   <img 
                     src={`/uploads/${asset.filePath}`} 
                     alt={asset.name}
-                    className="object-cover w-full h-full"
+                    className="object-contain w-full h-full"
                   />
                 </AspectRatio>
               ) : (
-                <AspectRatio ratio={16/9} className="bg-muted/40 rounded-md flex items-center justify-center">
+                <AspectRatio ratio={4/3} className="bg-muted/40 rounded-md flex items-center justify-center">
                   <div className="text-center">
                     {getFileIcon(asset.mimeType)}
                     <p className="text-xs text-muted-foreground mt-2">
