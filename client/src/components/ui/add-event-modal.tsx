@@ -63,7 +63,15 @@ const AddEventModal: FC<AddEventModalProps> = ({
   });
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
-    onSubmit(data);
+    // Convert Date objects to ISO strings for API submission
+    const formattedData = {
+      ...data,
+      startDate: data.startDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      endDate: data.endDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      cfpDeadline: data.cfpDeadline ? data.cfpDeadline.toISOString().split('T')[0] : null, // Format as YYYY-MM-DD if exists
+    };
+    
+    onSubmit(formattedData);
   };
 
   return (
