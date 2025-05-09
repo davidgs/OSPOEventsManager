@@ -12,7 +12,9 @@ import {
   User,
   Check,
   X,
-  Clock
+  Clock,
+  BookOpen,
+  FileText2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -27,6 +29,7 @@ interface EventCardProps {
   attendeeCount: number;
   speakers: Array<{id: number, name: string, submissions: Array<{title: string, status: string}>}>;
   attendees: Array<{id: number, name: string}>;
+  tripReports?: Array<{id: number, name: string, uploadedByName: string}>;
   onEdit: (event: Event) => void;
   onDelete: (event: Event) => void;
 }
