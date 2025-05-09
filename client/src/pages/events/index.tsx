@@ -163,6 +163,8 @@ const EventsPage: FC = () => {
   
   // Handle editing an event
   const handleEditEvent = (id: number, eventData: z.infer<any>) => {
+    // Debug the event data being submitted
+    console.log('Event data to be submitted:', JSON.stringify(eventData, null, 2));
     updateEvent({ id, data: eventData });
   };
   

@@ -100,6 +100,15 @@ const EditEventModal: FC<EditEventModalProps> = ({
         cfpDeadline: data.cfpDeadline ? data.cfpDeadline.toISOString().split('T')[0] : null, // Format as YYYY-MM-DD if exists
       };
       
+      // Debugging logs
+      console.log('Raw form data:', data);
+      console.log('Formatted data for API:', formattedData);
+      console.log('Date format samples:', {
+        rawStartDate: data.startDate,
+        formattedStartDate: formattedData.startDate,
+        dateConstructorTest: new Date(formattedData.startDate).toISOString()
+      });
+      
       onSubmit(event.id, formattedData);
     }
   };
