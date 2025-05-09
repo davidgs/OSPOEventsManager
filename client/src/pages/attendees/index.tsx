@@ -77,8 +77,7 @@ const AttendeesPage: FC = () => {
   // Add attendee mutation
   const { mutate: addAttendee, isPending: isAddingAttendee } = useMutation({
     mutationFn: async (data: z.infer<typeof insertAttendeeSchema>) => {
-      const res = await apiRequest('POST', '/api/attendees', data);
-      return res.json();
+      return await apiRequest('POST', '/api/attendees', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/attendees'] });

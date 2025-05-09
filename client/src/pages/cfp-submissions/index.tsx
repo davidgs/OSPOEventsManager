@@ -83,8 +83,7 @@ const CfpSubmissionsPage: FC = () => {
         ...data,
         submissionDate: data.submissionDate ? format(data.submissionDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
       };
-      const res = await apiRequest('POST', '/api/cfp-submissions', formattedData);
-      return res.json();
+      return await apiRequest('POST', '/api/cfp-submissions', formattedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cfp-submissions'] });
@@ -128,8 +127,7 @@ const CfpSubmissionsPage: FC = () => {
   // Update submission status mutation
   const { mutate: updateSubmissionStatus, isPending: isUpdatingStatus } = useMutation({
     mutationFn: async ({ id, status }: { id: number, status: string }) => {
-      const res = await apiRequest('PUT', `/api/cfp-submissions/${id}`, { status });
-      return res.json();
+      return await apiRequest('PUT', `/api/cfp-submissions/${id}`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cfp-submissions'] });
