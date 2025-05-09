@@ -162,14 +162,77 @@ const EventCard: FC<EventCardProps> = ({
         
         <div className="border-t border-gray-200 pt-3">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-1">
-              <FileText className="h-4 w-4 text-gray-400" />
-              <span className="text-sm font-medium">{cfpCount} {cfpCount === 1 ? "CFP" : "CFPs"}</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Users className="h-4 w-4 text-gray-400" />
-              <span className="text-sm font-medium">{attendeeCount} {attendeeCount === 1 ? "Attendee" : "Attendees"}</span>
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex items-center space-x-1 cursor-pointer hover:text-primary transition-colors">
+                  <FileText className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm font-medium">{cfpCount} {cfpCount === 1 ? "CFP" : "CFPs"}</span>
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Call for Proposals</h4>
+                  {speakers && speakers.length > 0 ? (
+                    <div className="space-y-3">
+                      {speakers.map((speaker, i) => (
+                        <div key={i} className="border-b pb-2 last:border-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium text-sm">{speaker.name}</span>
+                            <span className="text-xs text-gray-500">{speaker.submissions.length} {speaker.submissions.length === 1 ? 'submission' : 'submissions'}</span>
+                          </div>
+                          <ul className="space-y-1.5">
+                            {speaker.submissions.map((submission, j) => (
+                              <li key={j} className="flex items-start gap-2 text-sm">
+                                {submission.status === 'accepted' ? (
+                                  <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                                ) : submission.status === 'rejected' ? (
+                                  <X className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                ) : (
+                                  <Clock className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
+                                )}
+                                <div className="flex-1">
+                                  <p className="text-gray-900 break-words leading-tight">{submission.title}</p>
+                                  <p className="text-xs text-gray-500 capitalize">{submission.status}</p>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No CFP submissions found.</p>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex items-center space-x-1 cursor-pointer hover:text-primary transition-colors">
+                  <Users className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm font-medium">{attendeeCount} {attendeeCount === 1 ? "Attendee" : "Attendees"}</span>
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-64">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Event Attendees</h4>
+                  {attendees && attendees.length > 0 ? (
+                    <div className="space-y-1 max-h-48 overflow-auto">
+                      {attendees.map((attendee, i) => (
+                        <div key={i} className="flex items-center gap-2 p-1 rounded hover:bg-gray-100">
+                          <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 flex-shrink-0">
+                            {attendee.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-sm truncate">{attendee.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No attendees found.</p>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           
           <div className="flex flex-col space-y-2">
