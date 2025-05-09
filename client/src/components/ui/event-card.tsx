@@ -7,17 +7,22 @@ import {
   Users, 
   Edit, 
   Trash2, 
-  MapPin 
+  MapPin,
+  Mic,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Event } from "@shared/schema";
 import { format } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface EventCardProps {
   event: Event;
   cfpCount: number;
   attendeeCount: number;
+  speakers: Array<{id: number, name: string, status: string}>;
+  attendees: Array<{id: number, name: string}>;
   onEdit: (event: Event) => void;
   onDelete: (event: Event) => void;
 }
@@ -26,6 +31,8 @@ const EventCard: FC<EventCardProps> = ({
   event, 
   cfpCount, 
   attendeeCount, 
+  speakers,
+  attendees,
   onEdit, 
   onDelete 
 }) => {
@@ -161,9 +168,75 @@ const EventCard: FC<EventCardProps> = ({
             </div>
           </div>
           
-          <div className="flex items-center space-x-1">
-            {getTypeBadge(event.type)}
-            {getGoalBadge(event.goal)}
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center flex-wrap gap-1">
+              {getTypeBadge(event.type)}
+              
+              {event.goal === "speaking" && speakers && speakers.length > 0 ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="inline-flex items-center">
+                        <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+                          <Mic className="h-3 w-3 mr-1" />
+                          {speakers.filter(s => s.status === "accepted").length > 0 ? "Speaking" : "CFP Submitted"}
+                        </Badge>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-xs font-medium mb-1">
+                        {speakers.filter(s => s.status === "accepted").length > 0 ? 
+                          "Speaking:" : 
+                          "CFP Submissions:"}
+                      </p>
+                      <ul className="text-xs">
+                        {speakers.map((speaker, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            <span className={`w-2 h-2 rounded-full ${speaker.status === 'accepted' ? 'bg-green-500' : speaker.status === 'rejected' ? 'bg-red-500' : 'bg-yellow-500'}`}></span>
+                            {speaker.name} ({speaker.status})
+                          </li>
+                        ))}
+                      </ul>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : event.goal === "speaking" ? (
+                <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+                  <Mic className="h-3 w-3 mr-1" />
+                  Speaking
+                </Badge>
+              ) : null}
+              
+              {event.goal === "attending" && attendees && attendees.length > 0 ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="inline-flex items-center">
+                        <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+                          <User className="h-3 w-3 mr-1" />
+                          Attending ({attendees.length})
+                        </Badge>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-xs font-medium mb-1">Attendees:</p>
+                      <ul className="text-xs">
+                        {attendees.map((attendee, i) => (
+                          <li key={i}>{attendee.name}</li>
+                        ))}
+                      </ul>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : event.goal === "attending" ? (
+                <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+                  <User className="h-3 w-3 mr-1" />
+                  Attending
+                </Badge>
+              ) : null}
+              
+              {event.goal !== "speaking" && event.goal !== "attending" && getGoalBadge(event.goal)}
+            </div>
           </div>
         </div>
       </CardContent>

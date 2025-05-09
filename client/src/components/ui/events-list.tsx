@@ -8,6 +8,8 @@ interface EventsListProps {
   events: Event[];
   cfpCounts: Record<number, number>;
   attendeeCounts: Record<number, number>;
+  eventSpeakers: Record<number, Array<{id: number, name: string, status: string}>>;
+  eventAttendees: Record<number, Array<{id: number, name: string}>>;
   onAddEvent: () => void;
   onEditEvent: (event: Event) => void;
   onDeleteEvent: (event: Event) => void;
@@ -17,6 +19,8 @@ const EventsList: FC<EventsListProps> = ({
   events,
   cfpCounts,
   attendeeCounts,
+  eventSpeakers,
+  eventAttendees,
   onAddEvent,
   onEditEvent,
   onDeleteEvent,
@@ -29,6 +33,8 @@ const EventsList: FC<EventsListProps> = ({
           event={event}
           cfpCount={cfpCounts[event.id] || 0}
           attendeeCount={attendeeCounts[event.id] || 0}
+          speakers={eventSpeakers[event.id] || []}
+          attendees={eventAttendees[event.id] || []}
           onEdit={onEditEvent}
           onDelete={onDeleteEvent}
         />
