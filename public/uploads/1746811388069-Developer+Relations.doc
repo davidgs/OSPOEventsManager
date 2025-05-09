@@ -1,0 +1,1439 @@
+Date: Tue, 18 Jan 2022 17:52:03 +0100 (CET)
+Message-ID: <970742925.26125.1642524723656@vm15.camunda.com>
+Subject: Exported From Confluence
+MIME-Version: 1.0
+Content-Type: multipart/related; 
+	boundary="----=_Part_26124_269485305.1642524723656"
+
+------=_Part_26124_269485305.1642524723656
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///C:/exported.html
+
+<html xmlns:o=3D'urn:schemas-microsoft-com:office:office'
+      xmlns:w=3D'urn:schemas-microsoft-com:office:word'
+      xmlns:v=3D'urn:schemas-microsoft-com:vml'
+      xmlns=3D'urn:w3-org-ns:HTML'>
+<head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8=
+">
+    <title>Developer Relations</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:TargetScreenSize>1024x640</o:TargetScreenSize>
+            <o:PixelsPerInch>72</o:PixelsPerInch>
+            <o:AllowPNG/>
+        </o:OfficeDocumentSettings>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>90</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+                <!--
+        @page Section1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+        }
+
+        table {
+            border: solid 1px;
+            border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: solid 1px;
+            padding: 5px;
+        }
+
+        td {
+            page-break-inside: avoid;
+        }
+
+        tr {
+            page-break-after: avoid;
+        }
+
+        div.Section1 {
+            page: Section1;
+        }
+
+        /* Confluence print stylesheet. Common to all themes for print medi=
+a */
+/* Full of !important until we improve batching for print CSS */
+
+@media print {
+    #main {
+        padding-bottom: 1em !important; /* The default padding of 6em is to=
+o much for printouts */
+    }
+
+    body {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        font-size: 10pt;
+        line-height: 1.2;
+    }
+
+    body, #full-height-container, #main, #page, #content, .has-personal-sid=
+ebar #content {
+        background: #fff !important;
+        color: #000 !important;
+        border: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    a, a:link, a:visited, a:focus, a:hover, a:active {
+        color: #000;
+    }
+
+    #content h1,
+    #content h2,
+    #content h3,
+    #content h4,
+    #content h5,
+    #content h6 {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        page-break-after: avoid;
+    }
+
+    pre {
+        font-family: Monaco, "Courier New", monospace;
+    }
+
+    #header,
+    .aui-header-inner,
+    #navigation,
+    #sidebar,
+    .sidebar,
+    #personal-info-sidebar,
+    .ia-fixed-sidebar,
+    .page-actions,
+    .navmenu,
+    .ajs-menu-bar,
+    .noprint,
+    .inline-control-link,
+    .inline-control-link a,
+    a.show-labels-editor,
+    .global-comment-actions,
+    .comment-actions,
+    .quick-comment-container,
+    #addcomment {
+        display: none !important;
+    }
+
+    /* CONF-28544 cannot print multiple pages in IE */
+    #splitter-content {
+        position: relative !important;
+    }
+
+    .comment .date::before {
+        content: none !important; /* remove middot for print view */
+    }
+
+    h1.pagetitle img {
+        height: auto;
+        width: auto;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    #footer {
+        position: relative !important; /* CONF-17506 Place the footer at en=
+d of the content */
+        margin: 0;
+        padding: 0;
+        background: none;
+        clear: both;
+    }
+
+    #poweredby {
+        border-top: none;
+        background: none;
+    }
+
+    #poweredby li.print-only {
+        display: list-item;
+        font-style: italic;
+    }
+
+    #poweredby li.noprint {
+        display: none;
+    }
+
+    /* no width controls in print */
+    .wiki-content .table-wrap,
+    .wiki-content p,
+    .panel .codeContent,
+    .panel .codeContent pre,
+    .image-wrap {
+        overflow: visible !important;
+    }
+
+    /* TODO - should this work? */
+    #children-section,
+    #comments-section .comment,
+    #comments-section .comment .comment-body,
+    #comments-section .comment .comment-content,
+    #comments-section .comment p {
+        page-break-inside: avoid;
+    }
+
+    #page-children a {
+        text-decoration: none;
+    }
+
+    /**
+     hide twixies
+
+     the specificity here is a hack because print styles
+     are getting loaded before the base styles. */
+    #comments-section.pageSection .section-header,
+    #comments-section.pageSection .section-title,
+    #children-section.pageSection .section-header,
+    #children-section.pageSection .section-title,
+    .children-show-hide {
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .children-show-hide.icon {
+        display: none;
+    }
+
+    /* personal sidebar */
+    .has-personal-sidebar #content {
+        margin-right: 0px;
+    }
+
+    .has-personal-sidebar #content .pageSection {
+        margin-right: 0px;
+    }
+
+    .no-print, .no-print * {
+        display: none !important;
+    }
+}
+-->
+    </style>
+</head>
+<body>
+    <h1>Developer Relations</h1>
+    <div class=3D"Section1">
+        <div class=3D"contentLayout2">=20
+<div class=3D"columnLayout two-right-sidebar" data-layout=3D"two-right-side=
+bar">=20
+<div class=3D"cell normal" data-type=3D"normal">=20
+<div class=3D"innerCell">=20
+<h1 id=3D"DeveloperRelations-MissionStatement">Mission Statement</h1>
+<p><span>The Camunda Developer Relations team&nbsp;</span><span>exists to s=
+erve the Camunda developer community,&nbsp;</span><span>from internal emplo=
+yees to Open Source contributors,&nbsp;</span><span>Enterprise customers, a=
+nd the broader tech community.</span></p>
+<p><span>It is our goal to provide opportunities&nbsp;</span><span>for deve=
+lopers to be more successful&nbsp;</span><span>by making them aware of our =
+solutions,&nbsp;</span><span>enabling them through great experiences,&nbsp;=
+</span><span>and fostering a culture of collaboration.</span></p>
+<h1 id=3D"DeveloperRelations-PrimaryGoal"><span>Primary Goal</span></h1>
+<p><strong>Help developers be more successful through...</strong></p>
+<ul>
+<li><strong>Awareness&nbsp;</strong>of our products &amp; projects.</li>
+<li><strong>Enablement&nbsp;</strong>through content and excellent experien=
+ces.</li>
+<li><span><strong>Engagement</strong>&nbsp;(Collaboration) with other Camun=
+da community members.</span></li>
+</ul>
+<p><br></p>
+</div>=20
+</div>=20
+<div class=3D"cell aside" data-type=3D"aside">=20
+<div class=3D"innerCell">=20
+<p><strong>Page DRI</strong></p>
+<p><strong><a class=3D"confluence-userlink user-mention" data-username=3D"m=
+ary.thengvall" href=3D"/display/~mary.thengvall" data-linked-resource-id=3D=
+"56792488" data-linked-resource-version=3D"2" data-linked-resource-type=3D"=
+userinfo" data-base-url=3D"https://confluence.camunda.com">Mary Thengvall</=
+a> </strong></p>
+<p><strong>On this Page</strong></p>
+<p><style type=3D"text/css">/*<![CDATA[*/
+div.rbtoc1642524722854 {padding: 0px;}
+div.rbtoc1642524722854 ul {list-style: disc;margin-left: 0px;}
+div.rbtoc1642524722854 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style></p>
+<div class=3D"toc-macro rbtoc1642524722854">=20
+<ul class=3D"toc-indentation">=20
+<li><a href=3D"https://confluence.camunda.com/display/HAN/Developer+Relatio=
+ns#DeveloperRelations-MissionStatement">Mission Statement</a></li>=20
+<li><a href=3D"https://confluence.camunda.com/display/HAN/Developer+Relatio=
+ns#DeveloperRelations-PrimaryGoal">Primary Goal</a></li>=20
+<li><a href=3D"https://confluence.camunda.com/display/HAN/Developer+Relatio=
+ns#DeveloperRelations-WhoWeAre">Who We Are</a>=20
+<ul class=3D"toc-indentation">=20
+<li><a href=3D"https://confluence.camunda.com/display/HAN/Developer+Relatio=
+ns#DeveloperRelations-WorkingHours">Working Hours</a></li>=20
+<li><a href=3D"https://confluence.camunda.com/display/HAN/Developer+Relatio=
+ns#DeveloperRelations-FunctionalOrgChart(withpictures!)">Functional Org Cha=
+rt (with pictures!)</a></li>=20
+</ul> </li>=20
+<li><a href=3D"https://confluence.camunda.com/display/HAN/Developer+Relatio=
+ns#DeveloperRelations-HowtoReachUs">How to Reach Us</a></li>=20
+<li><a href=3D"https://confluence.camunda.com/display/HAN/Developer+Relatio=
+ns#DeveloperRelations-MoreInformation">More Information</a></li>=20
+</ul>=20
+</div>
+<p></p>
+</div>=20
+</div>=20
+</div>=20
+<div class=3D"columnLayout two-right-sidebar" data-layout=3D"two-right-side=
+bar">=20
+<div class=3D"cell normal" data-type=3D"normal">=20
+<div class=3D"innerCell">=20
+<h1 id=3D"DeveloperRelations-WhoWeAre">Who We Are</h1>
+<div class=3D"table-wrap">
+<table class=3D"wrapped relative-table confluenceTable" style=3D"width: 94.=
+5824%;">
+<colgroup>
+<col style=3D"width: 19.6154%;">
+<col style=3D"width: 42.7015%;">
+<col style=3D"width: 24.1608%;">
+<col style=3D"width: 13.6401%;">
+</colgroup>
+<tbody>
+<tr>
+<th class=3D"confluenceTh">Name</th>
+<th class=3D"confluenceTh">Title</th>
+<th class=3D"confluenceTh">Location</th>
+<th class=3D"confluenceTh">Timezone</th>
+</tr>
+<tr>
+<td class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"mary.then=
+gvall" href=3D"/display/~mary.thengvall" data-linked-resource-id=3D"5679248=
+8" data-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo=
+" data-base-url=3D"https://confluence.camunda.com">Mary Thengvall</a><br><e=
+m>Pronouns: she/her<br></em><a href=3D"https://confluence.camunda.com/displ=
+ay/~mary.thengvall/A+Guide+to+Working+with+Mary+Thengvall" rel=3D"nofollow"=
+>Working with Mary</a></p>
+</div></td>
+<td class=3D"confluenceTd">Director, Developer Relations</td>
+<td class=3D"confluenceTd">San Francisco, CA, USA</td>
+<td class=3D"confluenceTd"><p>PT / UTC<span style=3D"color: rgb(32,33,36);"=
+>=E2=88=928</span></p></td>
+</tr>
+<tr>
+<td class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"amara.gra=
+ham" href=3D"/display/~amara.graham" data-linked-resource-id=3D"83298857" d=
+ata-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo" da=
+ta-base-url=3D"https://confluence.camunda.com">Amara Graham</a><br><em>Pron=
+ouns: she/her<br></em><a href=3D"https://confluence.camunda.com/display/~am=
+ara.graham/A+Guide+to+Working+with+Amara" rel=3D"nofollow">Working with Ama=
+ra</a></p>
+</div></td>
+<td class=3D"confluenceTd">Head of Developer Experience</td>
+<td class=3D"confluenceTd">Austin, TX, USA</td>
+<td class=3D"confluenceTd">CT / UTC-6</td>
+</tr>
+<tr>
+<td class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"ruecker" =
+href=3D"/display/~ruecker" data-linked-resource-id=3D"720898" data-linked-r=
+esource-version=3D"3" data-linked-resource-type=3D"userinfo" data-base-url=
+=3D"https://confluence.camunda.com">Bernd Ruecker</a><br><em>Pronouns: he/h=
+im<br></em><a href=3D"https://confluence.camunda.com/display/~ruecker/Worki=
+ng+with+Bernd" rel=3D"nofollow">Working with Bernd</a></p>
+</div></td>
+<td class=3D"confluenceTd">Co-founder</td>
+<td class=3D"confluenceTd"><p><span>Bad Mergentheim, Germany</span></p></td=
+>
+<td class=3D"confluenceTd">CET / UTC+1</td>
+</tr>
+<tr>
+<td colspan=3D"1" class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"danielle.=
+andrist" href=3D"/display/~danielle.andrist" data-linked-resource-id=3D"707=
+79174" data-linked-resource-version=3D"1" data-linked-resource-type=3D"user=
+info" data-base-url=3D"https://confluence.camunda.com">Danielle Andrist</a>=
+<br><em>Pronouns: she/her<br></em><a class=3D"external-link" href=3D"https:=
+//docs.google.com/document/d/1WHaS41NQc-XVYSZKZsHGgMdcSUUaxGSicjlvJNn_noE/e=
+dit" rel=3D"nofollow">Working with Danielle</a></p>
+</div></td>
+<td colspan=3D"1" class=3D"confluenceTd">Program Manager</td>
+<td colspan=3D"1" class=3D"confluenceTd">Seattle, WA, USA</td>
+<td colspan=3D"1" class=3D"confluenceTd">PT / UTC-8</td>
+</tr>
+<tr>
+<td class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention current-user-mention" data-=
+username=3D"david.simmons" href=3D"/display/~david.simmons" data-linked-res=
+ource-id=3D"83296260" data-linked-resource-version=3D"2" data-linked-resour=
+ce-type=3D"userinfo" data-base-url=3D"https://confluence.camunda.com">David=
+ Simmons</a><br><em>Pronouns: he/him<br></em><a href=3D"https://confluence.=
+camunda.com/display/~david.simmons/About+me" rel=3D"nofollow">Working with =
+David</a></p>
+</div></td>
+<td class=3D"confluenceTd">Principal Developer Advocate, NA Region, Camunda=
+ Platform</td>
+<td class=3D"confluenceTd"><p><span>Apex, NC, USA</span></p></td>
+<td class=3D"confluenceTd">ET / UTC-5</td>
+</tr>
+<tr>
+<td class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"niall.dee=
+han" href=3D"/display/~niall.deehan" data-linked-resource-id=3D"18776188" d=
+ata-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo" da=
+ta-base-url=3D"https://confluence.camunda.com">Niall Deehan</a><br><em>Pron=
+ouns: he/him<br></em><a href=3D"https://confluence.camunda.com/display/~nia=
+ll.deehan/Offical+Walkthought+for+Working+with+Niall" rel=3D"nofollow">Work=
+ing with Niall</a></p>
+</div></td>
+<td class=3D"confluenceTd">Senior Developer Advocate, Camunda Platform</td>
+<td class=3D"confluenceTd">Berlin, Germany</td>
+<td class=3D"confluenceTd">CET / UTC+1</td>
+</tr>
+<tr>
+<td class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"joshua.wu=
+lf" href=3D"/display/~joshua.wulf" data-linked-resource-id=3D"52986881" dat=
+a-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo" data=
+-base-url=3D"https://confluence.camunda.com">Joshua Wulf</a><br><em>Pronoun=
+s: he/him<br></em><a href=3D"https://confluence.camunda.com/display/~joshua=
+.wulf/A+Guide+to+Working+with+Josh+Wulf" rel=3D"nofollow">Working with Josh=
+</a></p>
+</div></td>
+<td class=3D"confluenceTd">Developer Advocate, Cloud</td>
+<td class=3D"confluenceTd">Auckland, New Zealand</td>
+<td class=3D"confluenceTd">NZT / UTC+13</td>
+</tr>
+<tr>
+<td colspan=3D"1" class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"thomas.he=
+inrichs" href=3D"/display/~thomas.heinrichs" data-linked-resource-id=3D"764=
+86159" data-linked-resource-version=3D"2" data-linked-resource-type=3D"user=
+info" data-base-url=3D"https://confluence.camunda.com">Thomas Heinrichs</a>=
+ <br><em>Pronouns: he/him</em>&nbsp;<em><br></em><a href=3D"https://conflue=
+nce.camunda.com/x/S4R2Bg" rel=3D"nofollow">Working with Thomas</a></p>
+</div></td>
+<td colspan=3D"1" class=3D"confluenceTd">Cloud Developer Advocate</td>
+<td colspan=3D"1" class=3D"confluenceTd">Augsburg, Germany&nbsp;</td>
+<td colspan=3D"1" class=3D"confluenceTd">CET / UTC+1</td>
+</tr>
+<tr>
+<td colspan=3D"1" class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"nele.uhle=
+mann" href=3D"/display/~nele.uhlemann" data-linked-resource-id=3D"20185576"=
+ data-linked-resource-version=3D"4" data-linked-resource-type=3D"userinfo" =
+data-base-url=3D"https://confluence.camunda.com">Nele Uhlemann</a><br><em>P=
+ronouns: she/her<br></em><a href=3D"https://confluence.camunda.com/pages/vi=
+ewpage.action?pageId=3D92468459" rel=3D"nofollow">Working with Nele</a></p>
+</div></td>
+<td colspan=3D"1" class=3D"confluenceTd">Developer Advocate, DACH Region</t=
+d>
+<td colspan=3D"1" class=3D"confluenceTd">Berlin, Germany</td>
+<td colspan=3D"1" class=3D"confluenceTd">CET / UTC+1</td>
+</tr>
+<tr>
+<td colspan=3D"1" class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"luca.buch=
+holz" href=3D"/display/~luca.buchholz" data-linked-resource-id=3D"31885510"=
+ data-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo" =
+data-base-url=3D"https://confluence.camunda.com">Luca Buchholz</a><br><em>P=
+ronouns: she/her<br></em><a href=3D"https://confluence.camunda.com/display/=
+~luca.buchholz/A+Guide+to+Working+with+Luca" rel=3D"nofollow">Working with =
+Luca</a></p>
+</div></td>
+<td colspan=3D"1" class=3D"confluenceTd">Community Manager</td>
+<td colspan=3D"1" class=3D"confluenceTd">Berlin, Germany</td>
+<td colspan=3D"1" class=3D"confluenceTd">CET / UTC+1</td>
+</tr>
+<tr>
+<td colspan=3D"1" class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"kiran.oli=
+ver" href=3D"/display/~kiran.oliver" data-linked-resource-id=3D"85762448" d=
+ata-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo" da=
+ta-base-url=3D"https://confluence.camunda.com">Kiran Oliver</a>&nbsp;(Rin)<=
+br><em>Pronouns: they/them<br></em><a href=3D"https://confluence.camunda.co=
+m/spaces/viewspace.action?key=3D~kiran.oliver" rel=3D"nofollow">Working wit=
+h Rin</a></p>
+</div></td>
+<td colspan=3D"1" class=3D"confluenceTd">Technical Community Builder</td>
+<td colspan=3D"1" class=3D"confluenceTd">Shreveport, LA, USA</td>
+<td colspan=3D"1" class=3D"confluenceTd">CT / UTC-6</td>
+</tr>
+<tr>
+<td colspan=3D"1" class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"christina=
+.ausley" href=3D"/display/~christina.ausley" data-linked-resource-id=3D"967=
+01010" data-linked-resource-version=3D"2" data-linked-resource-type=3D"user=
+info" data-base-url=3D"https://confluence.camunda.com">Christina Ausley</a>=
+&nbsp;<br><em>Pronouns: she/her<br></em><a href=3D"/display/~christina.ausl=
+ey/A+Guide+to+Working+with+Christina">Working with Christina</a></p>
+</div></td>
+<td colspan=3D"1" class=3D"confluenceTd">Technical Writer</td>
+<td colspan=3D"1" class=3D"confluenceTd">Salt Lake City, UT, USA</td>
+<td colspan=3D"1" class=3D"confluenceTd">MT / UTC-7</td>
+</tr>
+<tr>
+<td colspan=3D"1" class=3D"confluenceTd">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"maria.alc=
+antara" href=3D"/display/~maria.alcantara" data-linked-resource-id=3D"98606=
+194" data-linked-resource-version=3D"2" data-linked-resource-type=3D"userin=
+fo" data-base-url=3D"https://confluence.camunda.com">Maria Alcantara</a><br=
+><em>Pronouns: she/her</em>&nbsp;<br><a href=3D"https://confluence.camunda.=
+com/display/~maria.alcantara/A+guide+to+working+with+Maria+Alcantara" rel=
+=3D"nofollow">Working with Maria</a></p>
+</div></td>
+<td colspan=3D"1" class=3D"confluenceTd">Community Manager</td>
+<td colspan=3D"1" class=3D"confluenceTd">Bad Vilbel, Germany</td>
+<td colspan=3D"1" class=3D"confluenceTd">CET / UTC+1</td>
+</tr>
+<tr>
+<td colspan=3D"1" class=3D"confluenceTd">TBH: Full-Stack Engineer</td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 class=3D"auto-cursor-target" id=3D"DeveloperRelations-WorkingHours"><sp=
+an class=3D"inline-comment-marker" data-ref=3D"934016f6-903d-4f74-adc4-ba11=
+084ffc86">Working Hours</span></h2>
+<div class=3D"table-wrap">
+<table class=3D"wrapped confluenceTable">
+<colgroup>
+<col style=3D"width: 171.0px;">
+<col style=3D"width: 47.0px;">
+<col style=3D"width: 38.0px;">
+<col style=3D"width: 39.0px;">
+<col style=3D"width: 40.0px;">
+<col style=3D"width: 39.0px;">
+<col style=3D"width: 40.0px;">
+<col style=3D"width: 40.0px;">
+<col style=3D"width: 38.0px;">
+<col style=3D"width: 40.0px;">
+<col style=3D"width: 40.0px;">
+<col style=3D"width: 38.0px;">
+<col style=3D"width: 39.0px;">
+<col style=3D"width: 38.0px;">
+<col style=3D"width: 39.0px;">
+<col style=3D"width: 38.0px;">
+<col style=3D"width: 39.0px;">
+<col style=3D"width: 38.0px;">
+<col style=3D"width: 39.0px;">
+<col style=3D"width: 37.0px;">
+<col style=3D"width: 39.0px;">
+<col style=3D"width: 39.0px;">
+<col style=3D"width: 38.0px;">
+<col style=3D"width: 38.0px;">
+<col style=3D"width: 39.0px;">
+<col style=3D"width: 29.0px;">
+</colgroup>
+<tbody>
+<tr>
+<th colspan=3D"1" class=3D"confluenceTh">PST (San Francisco)</th>
+<td colspan=3D"1" class=3D"confluenceTd">16</td>
+<td colspan=3D"1" class=3D"confluenceTd">17</td>
+<td colspan=3D"1" class=3D"confluenceTd">18</td>
+<td colspan=3D"1" class=3D"confluenceTd">19</td>
+<td colspan=3D"1" class=3D"confluenceTd">20</td>
+<td colspan=3D"1" class=3D"confluenceTd">21</td>
+<td colspan=3D"1" class=3D"confluenceTd">22</td>
+<td colspan=3D"1" class=3D"confluenceTd">23</td>
+<td colspan=3D"1" class=3D"confluenceTd">00</td>
+<td colspan=3D"1" class=3D"confluenceTd">01</td>
+<td colspan=3D"1" class=3D"confluenceTd">02</td>
+<td colspan=3D"1" class=3D"confluenceTd">03</td>
+<td colspan=3D"1" class=3D"confluenceTd">04</td>
+<td colspan=3D"1" class=3D"confluenceTd">05</td>
+<td colspan=3D"1" class=3D"confluenceTd">06</td>
+<td colspan=3D"1" class=3D"confluenceTd">07</td>
+<td colspan=3D"1" class=3D"confluenceTd">08</td>
+<td colspan=3D"1" class=3D"confluenceTd">09</td>
+<td colspan=3D"1" class=3D"confluenceTd">10</td>
+<td colspan=3D"1" class=3D"confluenceTd">11</td>
+<td colspan=3D"1" class=3D"confluenceTd">12</td>
+<td colspan=3D"1" class=3D"confluenceTd">13</td>
+<td colspan=3D"1" class=3D"confluenceTd">14</td>
+<td colspan=3D"1" class=3D"confluenceTd">15</td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th colspan=3D"1" class=3D"confluenceTh">EST (New York)</th>
+<td colspan=3D"1" class=3D"confluenceTd">19</td>
+<td colspan=3D"1" class=3D"confluenceTd">20</td>
+<td colspan=3D"1" class=3D"confluenceTd">21</td>
+<td colspan=3D"1" class=3D"confluenceTd">22</td>
+<td colspan=3D"1" class=3D"confluenceTd">23</td>
+<td colspan=3D"1" class=3D"confluenceTd">00</td>
+<td colspan=3D"1" class=3D"confluenceTd">01</td>
+<td colspan=3D"1" class=3D"confluenceTd">02</td>
+<td colspan=3D"1" class=3D"confluenceTd">03</td>
+<td colspan=3D"1" class=3D"confluenceTd">04</td>
+<td colspan=3D"1" class=3D"confluenceTd">05</td>
+<td colspan=3D"1" class=3D"confluenceTd">06</td>
+<td colspan=3D"1" class=3D"confluenceTd">07</td>
+<td colspan=3D"1" class=3D"confluenceTd">08</td>
+<td colspan=3D"1" class=3D"confluenceTd">09</td>
+<td colspan=3D"1" class=3D"confluenceTd">10</td>
+<td colspan=3D"1" class=3D"confluenceTd">11</td>
+<td colspan=3D"1" class=3D"confluenceTd">12</td>
+<td colspan=3D"1" class=3D"confluenceTd">13</td>
+<td colspan=3D"1" class=3D"confluenceTd">14</td>
+<td colspan=3D"1" class=3D"confluenceTd">15</td>
+<td colspan=3D"1" class=3D"confluenceTd">16</td>
+<td colspan=3D"1" class=3D"confluenceTd">17</td>
+<td colspan=3D"1" class=3D"confluenceTd">18</td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th class=3D"confluenceTh">UTC (London)</th>
+<th class=3D"confluenceTh">00</th>
+<th class=3D"confluenceTh">01</th>
+<th class=3D"confluenceTh">02</th>
+<th class=3D"confluenceTh">03</th>
+<th class=3D"confluenceTh">04</th>
+<th class=3D"confluenceTh">05</th>
+<th class=3D"confluenceTh">06</th>
+<th class=3D"confluenceTh">07</th>
+<th class=3D"confluenceTh">08</th>
+<th class=3D"confluenceTh">09</th>
+<th class=3D"confluenceTh">10</th>
+<th class=3D"confluenceTh">11</th>
+<th class=3D"confluenceTh">12</th>
+<th class=3D"confluenceTh">13</th>
+<th colspan=3D"1" class=3D"confluenceTh">14</th>
+<th colspan=3D"1" class=3D"confluenceTh">15</th>
+<th colspan=3D"1" class=3D"confluenceTh">16</th>
+<th colspan=3D"1" class=3D"confluenceTh">17</th>
+<th colspan=3D"1" class=3D"confluenceTh">18</th>
+<th colspan=3D"1" class=3D"confluenceTh">19</th>
+<th colspan=3D"1" class=3D"confluenceTh">20</th>
+<th colspan=3D"1" class=3D"confluenceTh">21</th>
+<th colspan=3D"1" class=3D"confluenceTh">22</th>
+<th colspan=3D"1" class=3D"confluenceTh">23</th>
+<th colspan=3D"1" class=3D"confluenceTh"><br></th>
+</tr>
+<tr>
+<th class=3D"confluenceTh">CET (Berlin)</th>
+<td class=3D"confluenceTd">01</td>
+<td class=3D"confluenceTd">02</td>
+<td class=3D"confluenceTd">03</td>
+<td class=3D"confluenceTd">04</td>
+<td class=3D"confluenceTd">05</td>
+<td class=3D"confluenceTd">06</td>
+<td class=3D"confluenceTd">07</td>
+<td class=3D"confluenceTd">08</td>
+<td class=3D"confluenceTd">09</td>
+<td class=3D"confluenceTd">10</td>
+<td class=3D"confluenceTd">11</td>
+<td class=3D"confluenceTd">12</td>
+<td class=3D"confluenceTd">13</td>
+<td class=3D"confluenceTd">14</td>
+<td colspan=3D"1" class=3D"confluenceTd">15</td>
+<td colspan=3D"1" class=3D"confluenceTd">16</td>
+<td colspan=3D"1" class=3D"confluenceTd">17</td>
+<td colspan=3D"1" class=3D"confluenceTd">18</td>
+<td colspan=3D"1" class=3D"confluenceTd">19</td>
+<td colspan=3D"1" class=3D"confluenceTd">20</td>
+<td colspan=3D"1" class=3D"confluenceTd">21</td>
+<td colspan=3D"1" class=3D"confluenceTd">22</td>
+<td colspan=3D"1" class=3D"confluenceTd">23</td>
+<td colspan=3D"1" class=3D"confluenceTd">00</td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th class=3D"confluenceTh">NZT (New Zealand)</th>
+<td class=3D"confluenceTd">13</td>
+<td class=3D"confluenceTd">14</td>
+<td class=3D"confluenceTd">15</td>
+<td class=3D"confluenceTd">16</td>
+<td class=3D"confluenceTd">17</td>
+<td class=3D"confluenceTd">18</td>
+<td class=3D"confluenceTd">19</td>
+<td class=3D"confluenceTd">20</td>
+<td class=3D"confluenceTd">21</td>
+<td class=3D"confluenceTd">22</td>
+<td class=3D"confluenceTd">23</td>
+<td class=3D"confluenceTd">00</td>
+<td class=3D"confluenceTd">01</td>
+<td class=3D"confluenceTd">02</td>
+<td colspan=3D"1" class=3D"confluenceTd">03</td>
+<td colspan=3D"1" class=3D"confluenceTd">04</td>
+<td colspan=3D"1" class=3D"confluenceTd">05</td>
+<td colspan=3D"1" class=3D"confluenceTd">06</td>
+<td colspan=3D"1" class=3D"confluenceTd">07</td>
+<td colspan=3D"1" class=3D"confluenceTd">08</td>
+<td colspan=3D"1" class=3D"confluenceTd">09</td>
+<td colspan=3D"1" class=3D"confluenceTd">10</td>
+<td colspan=3D"1" class=3D"confluenceTd">11</td>
+<td colspan=3D"1" class=3D"confluenceTd">12</td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"mary.then=
+gvall" href=3D"/display/~mary.thengvall" data-linked-resource-id=3D"5679248=
+8" data-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo=
+" data-base-url=3D"https://confluence.camunda.com">Mary Thengvall</a></p>
+</div></th>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+</tr>
+<tr>
+<th class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<a class=3D"confluence-userlink user-mention" data-username=3D"amara.graham=
+" href=3D"/display/~amara.graham" data-linked-resource-id=3D"83298857" data=
+-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo" data-=
+base-url=3D"https://confluence.camunda.com">Amara Graham</a>
+</div></th>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<a class=3D"confluence-userlink user-mention" data-username=3D"ruecker" hre=
+f=3D"/display/~ruecker" data-linked-resource-id=3D"720898" data-linked-reso=
+urce-version=3D"3" data-linked-resource-type=3D"userinfo" data-base-url=3D"=
+https://confluence.camunda.com">Bernd Ruecker</a>
+</div></th>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"danielle.=
+andrist" href=3D"/display/~danielle.andrist" data-linked-resource-id=3D"707=
+79174" data-linked-resource-version=3D"1" data-linked-resource-type=3D"user=
+info" data-base-url=3D"https://confluence.camunda.com">Danielle Andrist</a>=
+</p>
+</div></th>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+</tr>
+<tr>
+<th class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention current-user-mention" data-=
+username=3D"david.simmons" href=3D"/display/~david.simmons" data-linked-res=
+ource-id=3D"83296260" data-linked-resource-version=3D"2" data-linked-resour=
+ce-type=3D"userinfo" data-base-url=3D"https://confluence.camunda.com">David=
+ Simmons</a></p>
+</div></th>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"niall.dee=
+han" href=3D"/display/~niall.deehan" data-linked-resource-id=3D"18776188" d=
+ata-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo" da=
+ta-base-url=3D"https://confluence.camunda.com">Niall Deehan</a></p>
+</div></th>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"joshua.wu=
+lf" href=3D"/display/~joshua.wulf" data-linked-resource-id=3D"52986881" dat=
+a-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo" data=
+-base-url=3D"https://confluence.camunda.com">Joshua Wulf</a></p>
+<p>(one day ahead)</p>
+</div></th>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+</tr>
+<tr>
+<th colspan=3D"1" class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"thomas.he=
+inrichs" href=3D"/display/~thomas.heinrichs" data-linked-resource-id=3D"764=
+86159" data-linked-resource-version=3D"2" data-linked-resource-type=3D"user=
+info" data-base-url=3D"https://confluence.camunda.com">Thomas Heinrichs</a>=
+</p>
+</div></th>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"nele.uhle=
+mann" href=3D"/display/~nele.uhlemann" data-linked-resource-id=3D"20185576"=
+ data-linked-resource-version=3D"4" data-linked-resource-type=3D"userinfo" =
+data-base-url=3D"https://confluence.camunda.com">Nele Uhlemann</a></p>
+</div></th>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"luca.buch=
+holz" href=3D"/display/~luca.buchholz" data-linked-resource-id=3D"31885510"=
+ data-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo" =
+data-base-url=3D"https://confluence.camunda.com">Luca Buchholz</a></p>
+</div></th>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" data-highlight-colour=3D"#b3d4=
+ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th colspan=3D"1" class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"kiran.oli=
+ver" href=3D"/display/~kiran.oliver" data-linked-resource-id=3D"85762448" d=
+ata-linked-resource-version=3D"2" data-linked-resource-type=3D"userinfo" da=
+ta-base-url=3D"https://confluence.camunda.com">Kiran Oliver</a>&nbsp;(Rin)<=
+/p>
+</div></th>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th colspan=3D"1" class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"christina=
+.ausley" href=3D"/display/~christina.ausley" data-linked-resource-id=3D"967=
+01010" data-linked-resource-version=3D"2" data-linked-resource-type=3D"user=
+info" data-base-url=3D"https://confluence.camunda.com">Christina Ausley</a>=
+</p>
+</div></th>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><p><br></p>=
+</td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+<tr>
+<th colspan=3D"1" class=3D"confluenceTh">
+<div class=3D"content-wrapper">
+<p><a class=3D"confluence-userlink user-mention" data-username=3D"maria.alc=
+antara" href=3D"/display/~maria.alcantara" data-linked-resource-id=3D"98606=
+194" data-linked-resource-version=3D"2" data-linked-resource-type=3D"userin=
+fo" data-base-url=3D"https://confluence.camunda.com">Maria Alcantara</a></p=
+>
+</div></th>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td class=3D"highlight-#b3d4ff confluenceTd" colspan=3D"1" data-highlight-c=
+olour=3D"#b3d4ff" title=3D"Background colour : Light blue 100%"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2 class=3D"auto-cursor-target" id=3D"DeveloperRelations-FunctionalOrgChar=
+t(withpictures!)">Functional Org Chart (with pictures!)</h2>
+<p> </p>
+<div class=3D"google-drive" data-url=3D"https://docs.google.com/presentatio=
+n/d/1XQurNJGFM0PY4Tju9uHRRoI3y5lGt8I016fDi6nw7rc/preview" data-height=3D"50=
+0px" data-width=3D"100%" data-filename=3D"DevRel Team" data-edit-url=3D"htt=
+ps://docs.google.com/presentation/d/1XQurNJGFM0PY4Tju9uHRRoI3y5lGt8I016fDi6=
+nw7rc/edit?usp=3Ddrive_web" data-embed-url=3D"https://docs.google.com/prese=
+ntation/d/1XQurNJGFM0PY4Tju9uHRRoI3y5lGt8I016fDi6nw7rc/preview" data-icon-u=
+rl=3D"https://drive-thirdparty.googleusercontent.com/16/type/application/vn=
+d.google-apps.presentation" data-file-id=3D"1XQurNJGFM0PY4Tju9uHRRoI3y5lGt8=
+I016fDi6nw7rc" data-mime-type=3D"application/vnd.google-apps.presentation">=
+=20
+</div>=20
+<p></p>
+<p><span>The Developer Relations team is the most distributed team in the c=
+ompany, with an 21-hour timezone spread between us. Find our approximate lo=
+cations on the <a class=3D"external-link" href=3D"https://www.google.com/ma=
+ps/d/edit?mid=3D1nrAgjwBac94Xqr-SxUmaxn-weflepb6Z&amp;usp=3Dsharing" rel=3D=
+"nofollow">world map</a>.</span></p>
+<p><span>Developer Relations reports into the Products department, living d=
+irectly under Daniel Meyer, CTO. You=E2=80=99ll find Daniel splitting time =
+between Boston and Berlin.&nbsp;</span></p>
+</div>=20
+</div>=20
+<div class=3D"cell aside" data-type=3D"aside">=20
+<div class=3D"innerCell">=20
+<h1 id=3D"DeveloperRelations-HowtoReachUs"><span>How to Reach Us</span></h1=
+>
+<p><span>You can find us on Slack (#ask-devrel) or via email (<a class=3D"c=
+reatelink" href=3D"https://confluence.camunda.com/pages/createpage.action?s=
+paceKey=3DcamBPM&amp;title=3Ddevrel&amp;linkCreation=3Dtrue&amp;fromPageId=
+=3D45745689" rel=3D"nofollow" style=3D"text-decoration: underline;">devrel@=
+camunda.com</a>). If you have projects you'd like us to be involved with, p=
+lease fill out our&nbsp;<a class=3D"external-link" href=3D"https://forms.gl=
+e/SFUSM31SghJ9sSgc9" rel=3D"nofollow" style=3D"text-decoration: none;">Requ=
+est Form</a>.</span></p>
+<h1 id=3D"DeveloperRelations-MoreInformation">More Information</h1>
+<p></p>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/display/HAN/DRIs+in+DevRel">DRIs in DevRel</a></li>
+<li><a href=3D"/display/HAN/DevRel+Functions">DevRel Functions</a>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/display/HAN/Developer+Advocacy">Developer Advocacy</a></li>
+<li><a href=3D"/display/HAN/Developer+Experience">Developer Experience</a>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/display/HAN/Documentation">Documentation</a>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/display/HAN/How+to+make+documentation+suggestions+or+change=
+s">How to make documentation suggestions or changes</a></li>
+<li><a href=3D"/display/HAN/Writing+Center+of+Excellence">Writing Center of=
+ Excellence</a></li>
+</ul></li>
+<li><a href=3D"/display/HAN/Getting+Started+with+the+Camunda+Forums">Gettin=
+g Started with the Camunda Forums</a></li>
+<li><a href=3D"/display/HAN/Where+Developer+Experience+gets+data+from">Wher=
+e Developer Experience gets data from</a></li>
+</ul></li>
+<li><a href=3D"/display/HAN/Community+Management">Community Management</a><=
+/li>
+</ul></li>
+<li><a href=3D"/pages/viewpage.action?pageId=3D85761064">DevRel Goals &amp;=
+ Tactics</a>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/pages/viewpage.action?pageId=3D85761088">DevRel Tactics &am=
+p; Metrics</a>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/display/HAN/Camunda+Educational+License+Program">Camunda Ed=
+ucational License Program</a>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/display/HAN/Expanding+the+Educational+Licence+to+Camunda+Cl=
+oud">Expanding the Educational Licence to Camunda Cloud</a></li>
+<li><a href=3D"/display/HAN/Granting+an+Educational+License">Granting an Ed=
+ucational License</a></li>
+</ul></li>
+<li><a href=3D"/display/HAN/Champion+Program">Champion Program</a>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/pages/viewpage.action?pageId=3D98617265">Champions &amp; Se=
+lection Process</a></li>
+<li><a href=3D"/display/HAN/Success+Metrics">Success Metrics</a></li>
+</ul></li>
+<li><a href=3D"/display/HAN/Community+Feedback">Community Feedback</a></li>
+<li><a href=3D"/display/HAN/Open+Source+Traction+Metrics">Open Source Tract=
+ion Metrics</a></li>
+<li><a href=3D"/display/HAN/Meetup+Organizers+Program">Meetup Organizers Pr=
+ogram</a>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/display/HAN/Meetup+Program+Basic+Information">Meetup Progra=
+m Basic Information</a></li>
+<li><a href=3D"/display/HAN/Glossary+-+Meetup">Glossary - Meetup</a></li>
+<li><a href=3D"/display/HAN/Meetup+Program+-+pitch+and+onboarding+deck">Mee=
+tup Program - pitch and onboarding deck</a></li>
+<li><a href=3D"/display/HAN/Meetup+Program+Success+Metrics">Meetup Program =
+Success Metrics</a></li>
+<li><a href=3D"/display/HAN/Meetup+Process">Meetup Process</a></li>
+</ul></li>
+</ul></li>
+<li><a href=3D"/display/HAN/DevRel-Maintained+Tools">DevRel-Maintained Tool=
+s</a>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/display/HAN/Slack+Archivist">Slack Archivist</a></li>
+<li><a href=3D"/display/HAN/Stats+Collector">Stats Collector</a></li>
+<li><a href=3D"/display/HAN/Probot">Probot</a></li>
+</ul></li>
+<li><a href=3D"/display/HAN/Developer-Facing+Content">Developer-Facing Cont=
+ent</a></li>
+<li><a href=3D"/display/HAN/Community+Extensions">Community Extensions</a><=
+/li>
+<li><a href=3D"/display/HAN/Developer+Journey">Developer Journey</a></li>
+<li><a href=3D"/display/HAN/Community+Code+of+Conduct+-+Procedure">Communit=
+y Code of Conduct - Procedure</a></li>
+</ul></li>
+<li><a href=3D"/display/HAN/DevRel+Team+Resources">DevRel Team Resources</a=
+>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/display/HAN/DevRel+Team+Working+Agreement">DevRel Team Work=
+ing Agreement</a></li>
+<li><a href=3D"/display/HAN/DevRel+Team+Onboarding+Processes">DevRel Team O=
+nboarding Processes</a></li>
+<li><a href=3D"/display/HAN/DevRel+Team+Processes">DevRel Team Processes</a=
+>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/display/HAN/DQL+Handoff+Process">DQL Handoff Process</a></l=
+i>
+<li><a href=3D"/display/HAN/Sending+Swag+Packages+to+Community+Members">Sen=
+ding Swag Packages to Community Members</a></li>
+<li><a href=3D"/display/HAN/Open+CFPs">Open CFPs</a></li>
+<li><a href=3D"/display/HAN/DevRel+and+Camunda+BPM+Product+Communication">D=
+evRel and Camunda BPM Product Communication</a></li>
+<li><a href=3D"/display/HAN/Newly+Created+Content">Newly Created Content</a=
+></li>
+<li><a href=3D"/display/HAN/Acknowledging+Community+Contributions">Acknowle=
+dging Community Contributions</a></li>
+<li><a href=3D"/display/HAN/Process%3A+How+to+add+an+event+to+the+Camunda+C=
+ommunity+Forums">Process: How to add an event to the Camunda Community Foru=
+ms</a></li>
+<li><a href=3D"/display/HAN/DevRel+Events">DevRel Events</a></li>
+<li><a href=3D"/display/HAN/Community+Extension+Process+Updates">Community =
+Extension Process Updates</a></li>
+<li><a href=3D"/display/HAN/Process%3A+How+to+Complete+a+User+Deletion+Requ=
+est">Process: How to Complete a User Deletion Request</a></li>
+</ul></li>
+<li><a href=3D"/display/HAN/DevRel+Tools">DevRel Tools</a>
+<ul class=3D"childpages-macro">
+<li><a href=3D"/display/HAN/DevRel+HubSpot">DevRel HubSpot</a></li>
+<li><a href=3D"/display/HAN/DevRel+Task+Board">DevRel Task Board</a></li>
+<li><a href=3D"/display/HAN/Orbit">Orbit</a></li>
+<li><a href=3D"/display/HAN/Sonatype+and+Maven+Central+Statistics">Sonatype=
+ and Maven Central Statistics</a></li>
+</ul></li>
+<li><a href=3D"/pages/viewpage.action?pageId=3D98604829">New Hire Resources=
+!</a></li>
+<li><a href=3D"/display/HAN/DevRel+Career+Path">DevRel Career Path</a></li>
+</ul></li>
+</ul>
+<p></p>
+</div>=20
+</div>=20
+</div>=20
+</div>
+    </div>
+</body>
+</html>
+------=_Part_26124_269485305.1642524723656--
