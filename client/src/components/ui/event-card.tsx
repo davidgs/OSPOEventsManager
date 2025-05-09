@@ -240,56 +240,13 @@ const EventCard: FC<EventCardProps> = ({
               {getTypeBadge(event.type)}
               
               {event.goal === "speaking" && speakers && speakers.length > 0 ? (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <div className="inline-flex items-center cursor-pointer">
-                      <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
-                        <Mic className="h-3 w-3 mr-1" />
-                        {speakers.some(s => s.submissions.some(sub => sub.status === "accepted")) ? 
-                          "Speaking" : 
-                          "CFP Submitted"
-                        }
-                      </Badge>
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-sm">
-                        {speakers.some(s => s.submissions.some(sub => sub.status === "accepted")) ? 
-                          "Speaking at this event:" : 
-                          "Submitted CFPs for this event:"
-                        }
-                      </h4>
-                      <div className="space-y-3">
-                        {speakers.map((speaker, i) => (
-                          <div key={i} className="border-b pb-2 last:border-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-medium text-sm">{speaker.name}</span>
-                              <span className="text-xs text-gray-500">{speaker.submissions.length} {speaker.submissions.length === 1 ? 'submission' : 'submissions'}</span>
-                            </div>
-                            <ul className="space-y-1.5">
-                              {speaker.submissions.map((submission, j) => (
-                                <li key={j} className="flex items-start gap-2 text-sm">
-                                  {submission.status === 'accepted' ? (
-                                    <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                                  ) : submission.status === 'rejected' ? (
-                                    <X className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-                                  ) : (
-                                    <Clock className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
-                                  )}
-                                  <div className="flex-1">
-                                    <p className="text-gray-900 break-words leading-tight">{submission.title}</p>
-                                    <p className="text-xs text-gray-500 capitalize">{submission.status}</p>
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+                  <Mic className="h-3 w-3 mr-1" />
+                  {speakers.some(s => s.submissions.some(sub => sub.status === "accepted")) ? 
+                    "Speaking" : 
+                    "CFP Submitted"
+                  }
+                </Badge>
               ) : event.goal === "speaking" ? (
                 <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
                   <Mic className="h-3 w-3 mr-1" />
@@ -298,31 +255,10 @@ const EventCard: FC<EventCardProps> = ({
               ) : null}
               
               {event.goal === "attending" && attendees && attendees.length > 0 ? (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <div className="inline-flex items-center cursor-pointer">
-                      <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
-                        <User className="h-3 w-3 mr-1" />
-                        Attending ({attendees.length})
-                      </Badge>
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64">
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-sm">Event Attendees</h4>
-                      <div className="space-y-1 max-h-48 overflow-auto">
-                        {attendees.map((attendee, i) => (
-                          <div key={i} className="flex items-center gap-2 p-1 rounded hover:bg-gray-100">
-                            <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 flex-shrink-0">
-                              {attendee.name.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="text-sm truncate">{attendee.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+                  <User className="h-3 w-3 mr-1" />
+                  Attending
+                </Badge>
               ) : event.goal === "attending" ? (
                 <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
                   <User className="h-3 w-3 mr-1" />
