@@ -6,6 +6,9 @@ import { Calendar, FileText, Users, DollarSign, Settings, Menu } from "lucide-re
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useMobile } from "@/hooks/use-mobile";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { type User } from "@shared/schema";
 
 interface SidebarProps {
   className?: string;
@@ -41,6 +44,22 @@ const navItems = [
 
 const SidebarContent: FC = () => {
   const [location] = useLocation();
+  const userId = 2; // Using demo_user's ID
+
+  // Query to fetch user data
+  const { data: userData } = useQuery({
+    queryKey: ['/api/users', userId],
+    queryFn: () => apiRequest<User>(`/api/users/${userId}`),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Get user initials for the avatar fallback
+  const getInitials = (name?: string) => {
+    if (!name) return "U";
+    const names = name.split(" ");
+    if (names.length === 1) return names[0].charAt(0);
+    return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`;
+  };
 
   return (
     <div className="flex flex-col h-full bg-gray-800">
@@ -75,12 +94,16 @@ const SidebarContent: FC = () => {
         <Link href="/settings">
           <Button variant="ghost" className="w-full flex items-center justify-start p-0 hover:bg-transparent">
             <Avatar className="h-10 w-10">
-              <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
-              <AvatarFallback>AJ</AvatarFallback>
+              {userData?.headshot ? (
+                <AvatarImage src={userData.headshot} alt={userData.name || "User"} />
+              ) : (
+                <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
+              )}
+              <AvatarFallback>{getInitials(userData?.name)}</AvatarFallback>
             </Avatar>
             <div className="ml-3 text-left">
-              <p className="text-sm font-medium text-white">Alex Johnson</p>
-              <p className="text-xs font-medium text-gray-400">Community Architect</p>
+              <p className="text-sm font-medium text-white">{userData?.name || "User"}</p>
+              <p className="text-xs font-medium text-gray-400">{userData?.jobTitle || "Community Member"}</p>
             </div>
           </Button>
         </Link>
@@ -91,6 +114,23 @@ const SidebarContent: FC = () => {
 
 const Sidebar: FC<SidebarProps> = ({ className }) => {
   const isMobile = useMobile();
+
+  const userId = 2; // Using demo_user's ID
+  
+  // Query to fetch user data for mobile view
+  const { data: userData } = useQuery({
+    queryKey: ['/api/users', userId],
+    queryFn: () => apiRequest<User>(`/api/users/${userId}`),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  // Get user initials for the avatar fallback
+  const getInitials = (name?: string) => {
+    if (!name) return "U";
+    const names = name.split(" ");
+    if (names.length === 1) return names[0].charAt(0);
+    return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`;
+  };
 
   if (isMobile) {
     return (
@@ -108,8 +148,12 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
         <h1 className="text-lg font-semibold">OSPO Events</h1>
         <Link href="/settings">
           <Avatar className="h-8 w-8 cursor-pointer">
-            <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
-            <AvatarFallback>AJ</AvatarFallback>
+            {userData?.headshot ? (
+              <AvatarImage src={userData.headshot} alt={userData.name || "User"} />
+            ) : (
+              <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
+            )}
+            <AvatarFallback>{getInitials(userData?.name)}</AvatarFallback>
           </Avatar>
         </Link>
       </div>
