@@ -32,14 +32,7 @@ export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps
 
   // Fetch all unlinked assets (assets that aren't already linked to this event)
   const { data: assets = [], isLoading: isLoadingAssets } = useQuery({
-    queryKey: ['/api/assets/unlinked', eventId],
-    queryFn: async () => {
-      const res = await fetch(`/api/assets?unlinked=${eventId}`, {
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to fetch unlinked assets');
-      return res.json();
-    },
+    queryKey: [`/api/assets?unlinked=${eventId}`],
     enabled: isOpen,
   });
 
