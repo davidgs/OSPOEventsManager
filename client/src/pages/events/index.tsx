@@ -73,7 +73,7 @@ const EventsPage: FC = () => {
     queryKey: ['/api/attendees'],
   });
 
-  // Calculate counts for each event
+  // Calculate counts and organize data for each event
   const cfpCounts = cfpSubmissions.reduce((acc: Record<number, number>, cfp: any) => {
     acc[cfp.eventId] = (acc[cfp.eventId] || 0) + 1;
     return acc;
@@ -83,6 +83,57 @@ const EventsPage: FC = () => {
     acc[attendee.eventId] = (acc[attendee.eventId] || 0) + 1;
     return acc;
   }, {});
+  
+  // Organize speakers (from CFP submissions) by event
+  const eventSpeakers = cfpSubmissions.reduce((acc: Record<number, Array<{id: number, name: string, status: string}>>, cfp: any) => {
+    if (!acc[cfp.eventId]) {
+      acc[cfp.eventId] = [];
+    }
+    
+    // Add the speaker if they don't already exist in the array
+    const existingIndex = acc[cfp.eventId].findIndex((speaker) => 
+      speaker.id === cfp.submitterId && speaker.name === cfp.submitterName
+    );
+    
+    if (existingIndex === -1) {
+      acc[cfp.eventId].push({
+        id: cfp.submitterId || 0,
+        name: cfp.submitterName,
+        status: cfp.status
+      });
+    }
+    
+    return acc;
+  }, {});
+  
+  // Debug our data structures
+  console.log('CFP Submissions:', cfpSubmissions);
+  console.log('Event Speakers:', eventSpeakers);
+  
+  // Organize attendees by event
+  const eventAttendees = attendees.reduce((acc: Record<number, Array<{id: number, name: string}>>, attendee: any) => {
+    if (!acc[attendee.eventId]) {
+      acc[attendee.eventId] = [];
+    }
+    
+    // Add the attendee if they don't already exist in the array
+    const existingIndex = acc[attendee.eventId].findIndex((a) => 
+      a.id === (attendee.userId || attendee.id) && a.name === attendee.name
+    );
+    
+    if (existingIndex === -1) {
+      acc[attendee.eventId].push({
+        id: attendee.userId || attendee.id || 0,
+        name: attendee.name
+      });
+    }
+    
+    return acc;
+  }, {});
+  
+  // Debug attendees data
+  console.log('Attendees:', attendees);
+  console.log('Event Attendees:', eventAttendees);
   
   // Add event mutation
   const { mutate: addEvent, isPending: isAddingEvent } = useMutation({
@@ -327,6 +378,8 @@ const EventsPage: FC = () => {
                 events={filteredEvents}
                 cfpCounts={cfpCounts}
                 attendeeCounts={attendeeCounts}
+                eventSpeakers={eventSpeakers}
+                eventAttendees={eventAttendees}
                 onAddEvent={openAddModal}
                 onEditEvent={openEditModal}
                 onDeleteEvent={openDeleteDialog}
