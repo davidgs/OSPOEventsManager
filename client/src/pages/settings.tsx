@@ -71,8 +71,8 @@ const SettingsPage: FC = () => {
   const userId = 2; // Using demo_user's ID
   
   // Query to fetch user data
-  const { data: userData, isLoading } = useQuery({
-    queryKey: ['/api/users', userId],
+  const { data: userData, isLoading } = useQuery<User>({
+    queryKey: [`/api/users/${userId}`],
     queryFn: () => apiRequest<User>(`/api/users/${userId}`),
   });
   
