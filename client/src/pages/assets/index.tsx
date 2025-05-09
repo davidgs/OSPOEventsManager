@@ -44,13 +44,15 @@ import {
   Trash, 
   Image as ImageIcon, 
   FileText, 
-  FilePresentation,
+  BookOpen,
   FileSpreadsheet,
   FileArchive,
   FileCode,
   FileAudio,
   FileVideo,
-  User
+  User,
+  FileBarChart,
+  FileSlides
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AssetUploadForm } from "@/components/forms/asset-upload-form";
@@ -145,7 +147,7 @@ export default function AssetsPage() {
       if (subType.includes('pdf')) {
         return <FileText className="h-12 w-12 text-muted-foreground" />;
       } else if (subType.includes('powerpoint') || subType.includes('presentation')) {
-        return <FilePresentation className="h-12 w-12 text-muted-foreground" />;
+        return <FileSlides className="h-12 w-12 text-muted-foreground" />;
       } else if (subType.includes('excel') || subType.includes('spreadsheet')) {
         return <FileSpreadsheet className="h-12 w-12 text-muted-foreground" />;
       } else if (subType.includes('zip') || subType.includes('archive') || subType.includes('compressed')) {
@@ -250,7 +252,7 @@ export default function AssetsPage() {
               {asset.mimeType.startsWith('image/') ? (
                 <AspectRatio ratio={16/9} className="bg-muted rounded-md overflow-hidden">
                   <img 
-                    src={asset.filePath} 
+                    src={`/uploads/${asset.filePath}`} 
                     alt={asset.name}
                     className="object-cover w-full h-full"
                   />
@@ -317,6 +319,7 @@ export default function AssetsPage() {
             <TabsTrigger value="abstract">Abstracts</TabsTrigger>
             <TabsTrigger value="bio">Bios</TabsTrigger>
             <TabsTrigger value="headshot">Headshots</TabsTrigger>
+            <TabsTrigger value="trip_report">Trip Reports</TabsTrigger>
             <TabsTrigger value="presentation">Presentations</TabsTrigger>
           </TabsList>
         </Tabs>
