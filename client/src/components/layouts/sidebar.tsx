@@ -1,0 +1,122 @@
+import { FC } from "react";
+import { Link, useLocation } from "wouter";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar, FileText, Users, DollarSign, Settings, Menu } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useMobile } from "@/hooks/use-mobile";
+
+interface SidebarProps {
+  className?: string;
+}
+
+const navItems = [
+  {
+    title: "Events",
+    href: "/events",
+    icon: Calendar,
+  },
+  {
+    title: "CFP Submissions",
+    href: "/cfp-submissions",
+    icon: FileText,
+  },
+  {
+    title: "Attendees",
+    href: "/attendees",
+    icon: Users,
+  },
+  {
+    title: "Sponsorships",
+    href: "/sponsorships",
+    icon: DollarSign,
+  },
+  {
+    title: "Settings",
+    href: "/settings",
+    icon: Settings,
+  },
+];
+
+const SidebarContent: FC = () => {
+  const [location] = useLocation();
+
+  return (
+    <div className="flex flex-col h-full bg-gray-800">
+      <div className="flex items-center justify-center h-16 px-4 bg-gray-900">
+        <h1 className="text-xl font-semibold text-white">OSPO Events</h1>
+      </div>
+      <div className="flex flex-col flex-grow px-4 pt-5 pb-4 overflow-y-auto">
+        <nav className="flex-1 space-y-2">
+          {navItems.map((item) => {
+            const isActive = location === item.href || 
+                            (item.href !== "/" && location.startsWith(item.href));
+            return (
+              <Link key={item.href} href={item.href}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start px-4 py-2 text-sm font-medium rounded-md", 
+                    isActive 
+                      ? "bg-gray-700 text-white" 
+                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                  )}
+                >
+                  <item.icon className="mr-3 h-5 w-5" />
+                  {item.title}
+                </Button>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+      <div className="flex items-center p-4 border-t border-gray-700">
+        <Avatar className="h-10 w-10">
+          <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
+          <AvatarFallback>AJ</AvatarFallback>
+        </Avatar>
+        <div className="ml-3">
+          <p className="text-sm font-medium text-white">Alex Johnson</p>
+          <p className="text-xs font-medium text-gray-400">Community Architect</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Sidebar: FC<SidebarProps> = ({ className }) => {
+  const isMobile = useMobile();
+
+  if (isMobile) {
+    return (
+      <div className="flex items-center justify-between h-16 px-6 bg-white border-b border-gray-200 md:hidden">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-gray-500">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-64">
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+        <h1 className="text-lg font-semibold">OSPO Events</h1>
+        <Avatar className="h-8 w-8">
+          <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar" />
+          <AvatarFallback>AJ</AvatarFallback>
+        </Avatar>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("hidden md:flex md:flex-shrink-0", className)}>
+      <div className="flex flex-col w-64">
+        <SidebarContent />
+      </div>
+    </div>
+  );
+};
+
+export default Sidebar;
