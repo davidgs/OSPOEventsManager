@@ -112,6 +112,26 @@ export class MemStorage implements IStorage {
     
     const updatedUser = { ...user, ...userData };
     this.users.set(id, updatedUser);
+    
+    // If name has been changed, update related records
+    if (userData.name && userData.name !== user.name) {
+      // Update CFP submissions where this user is the submitter
+      for (const submission of this.cfpSubmissions.values()) {
+        if (submission.submitterId === id) {
+          submission.submitterName = userData.name;
+          this.cfpSubmissions.set(submission.id, submission);
+        }
+      }
+      
+      // Update attendees where this user has entries
+      for (const attendee of this.attendees.values()) {
+        if (attendee.userId === id) {
+          attendee.name = userData.name;
+          this.attendees.set(attendee.id, attendee);
+        }
+      }
+    }
+    
     return updatedUser;
   }
   
