@@ -6,6 +6,8 @@ import {
   User, InsertUser,
   events, cfpSubmissions, attendees, sponsorships, users 
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 // Storage interface for the application
 export interface IStorage {
@@ -465,4 +467,200 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database implementation of the storage interface
+export class DatabaseStorage implements IStorage {
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  // Event methods
+  async getEvents(): Promise<Event[]> {
+    return await db.select().from(events);
+  }
+
+  async getEvent(id: number): Promise<Event | undefined> {
+    const [event] = await db.select().from(events).where(eq(events.id, id));
+    return event || undefined;
+  }
+
+  async createEvent(insertEvent: InsertEvent): Promise<Event> {
+    const [event] = await db
+      .insert(events)
+      .values({
+        ...insertEvent,
+        status: "planning"
+      })
+      .returning();
+    return event;
+  }
+
+  async updateEvent(id: number, updateEvent: Partial<InsertEvent>): Promise<Event | undefined> {
+    const [event] = await db
+      .update(events)
+      .set(updateEvent)
+      .where(eq(events.id, id))
+      .returning();
+    return event || undefined;
+  }
+
+  async deleteEvent(id: number): Promise<boolean> {
+    const [deletedEvent] = await db
+      .delete(events)
+      .where(eq(events.id, id))
+      .returning();
+    return !!deletedEvent;
+  }
+
+  // CFP Submission methods
+  async getCfpSubmissions(): Promise<CfpSubmission[]> {
+    return await db.select().from(cfpSubmissions);
+  }
+
+  async getCfpSubmissionsByEvent(eventId: number): Promise<CfpSubmission[]> {
+    return await db
+      .select()
+      .from(cfpSubmissions)
+      .where(eq(cfpSubmissions.eventId, eventId));
+  }
+
+  async getCfpSubmission(id: number): Promise<CfpSubmission | undefined> {
+    const [submission] = await db
+      .select()
+      .from(cfpSubmissions)
+      .where(eq(cfpSubmissions.id, id));
+    return submission || undefined;
+  }
+
+  async createCfpSubmission(insertSubmission: InsertCfpSubmission): Promise<CfpSubmission> {
+    const [submission] = await db
+      .insert(cfpSubmissions)
+      .values(insertSubmission)
+      .returning();
+    return submission;
+  }
+
+  async updateCfpSubmission(id: number, updateSubmission: Partial<InsertCfpSubmission>): Promise<CfpSubmission | undefined> {
+    const [submission] = await db
+      .update(cfpSubmissions)
+      .set(updateSubmission)
+      .where(eq(cfpSubmissions.id, id))
+      .returning();
+    return submission || undefined;
+  }
+
+  async deleteCfpSubmission(id: number): Promise<boolean> {
+    const [deletedSubmission] = await db
+      .delete(cfpSubmissions)
+      .where(eq(cfpSubmissions.id, id))
+      .returning();
+    return !!deletedSubmission;
+  }
+
+  // Attendee methods
+  async getAttendees(): Promise<Attendee[]> {
+    return await db.select().from(attendees);
+  }
+
+  async getAttendeesByEvent(eventId: number): Promise<Attendee[]> {
+    return await db
+      .select()
+      .from(attendees)
+      .where(eq(attendees.eventId, eventId));
+  }
+
+  async getAttendee(id: number): Promise<Attendee | undefined> {
+    const [attendee] = await db
+      .select()
+      .from(attendees)
+      .where(eq(attendees.id, id));
+    return attendee || undefined;
+  }
+
+  async createAttendee(insertAttendee: InsertAttendee): Promise<Attendee> {
+    const [attendee] = await db
+      .insert(attendees)
+      .values(insertAttendee)
+      .returning();
+    return attendee;
+  }
+
+  async updateAttendee(id: number, updateAttendee: Partial<InsertAttendee>): Promise<Attendee | undefined> {
+    const [attendee] = await db
+      .update(attendees)
+      .set(updateAttendee)
+      .where(eq(attendees.id, id))
+      .returning();
+    return attendee || undefined;
+  }
+
+  async deleteAttendee(id: number): Promise<boolean> {
+    const [deletedAttendee] = await db
+      .delete(attendees)
+      .where(eq(attendees.id, id))
+      .returning();
+    return !!deletedAttendee;
+  }
+
+  // Sponsorship methods
+  async getSponsorships(): Promise<Sponsorship[]> {
+    return await db.select().from(sponsorships);
+  }
+
+  async getSponsorshipsByEvent(eventId: number): Promise<Sponsorship[]> {
+    return await db
+      .select()
+      .from(sponsorships)
+      .where(eq(sponsorships.eventId, eventId));
+  }
+
+  async getSponsorship(id: number): Promise<Sponsorship | undefined> {
+    const [sponsorship] = await db
+      .select()
+      .from(sponsorships)
+      .where(eq(sponsorships.id, id));
+    return sponsorship || undefined;
+  }
+
+  async createSponsorship(insertSponsorship: InsertSponsorship): Promise<Sponsorship> {
+    const [sponsorship] = await db
+      .insert(sponsorships)
+      .values(insertSponsorship)
+      .returning();
+    return sponsorship;
+  }
+
+  async updateSponsorship(id: number, updateSponsorship: Partial<InsertSponsorship>): Promise<Sponsorship | undefined> {
+    const [sponsorship] = await db
+      .update(sponsorships)
+      .set(updateSponsorship)
+      .where(eq(sponsorships.id, id))
+      .returning();
+    return sponsorship || undefined;
+  }
+
+  async deleteSponsorship(id: number): Promise<boolean> {
+    const [deletedSponsorship] = await db
+      .delete(sponsorships)
+      .where(eq(sponsorships.id, id))
+      .returning();
+    return !!deletedSponsorship;
+  }
+}
+
+// Use DatabaseStorage instead of MemStorage
+export const storage = new DatabaseStorage();
