@@ -537,6 +537,21 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
       
+    // If name has been changed, update related records
+    if (userData.name && userData.name !== user.name) {
+      // Update CFP submissions where this user is the submitter
+      await db
+        .update(cfpSubmissions)
+        .set({ submitterName: userData.name })
+        .where(eq(cfpSubmissions.submitterId, id));
+        
+      // Update attendees where this user has entries
+      await db
+        .update(attendees)
+        .set({ name: userData.name })
+        .where(eq(attendees.userId, id));
+    }
+      
     return updatedUser;
   }
 
