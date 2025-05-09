@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { assetTypes } from "@shared/schema";
 import { formatBytes } from "@/lib/utils";
@@ -60,6 +60,11 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
+  // Fetch current user
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/2"]
+  });
+  
   const form = useForm<AssetUploadFormValues>({
     resolver: zodResolver(assetUploadSchema),
     defaultValues: {
@@ -91,6 +96,11 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
       
       // Add the file
       formData.append("file", values.file[0]);
+      
+      // Add the current user ID
+      if (currentUser) {
+        formData.append("uploadedBy", currentUser.id.toString());
+      }
       
       return apiRequest("/api/assets", {
         method: "POST",
