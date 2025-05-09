@@ -72,6 +72,14 @@ const EventsPage: FC = () => {
   } = useQuery({
     queryKey: ['/api/attendees'],
   });
+  
+  // Fetch trip reports (assets of type trip_report)
+  const {
+    data: tripReports = [],
+    isLoading: isLoadingTripReports,
+  } = useQuery({
+    queryKey: ['/api/assets'],
+  });
 
   // Calculate counts and organize data for each event
   const cfpCounts = cfpSubmissions.reduce((acc: Record<number, number>, cfp: any) => {
@@ -145,9 +153,29 @@ const EventsPage: FC = () => {
     return acc;
   }, {});
   
-  // Debug attendees data
+  // Organize trip reports by event
+  const eventTripReports = tripReports
+    .filter((asset: any) => asset.type === 'trip_report' && asset.eventId !== null)
+    .reduce((acc: Record<number, Array<{id: number, name: string, uploadedByName: string}>>, asset: any) => {
+      const eventId = asset.eventId!;
+      if (!acc[eventId]) {
+        acc[eventId] = [];
+      }
+      
+      acc[eventId].push({
+        id: asset.id,
+        name: asset.name,
+        uploadedByName: asset.uploadedByName || 'Unknown'
+      });
+      
+      return acc;
+    }, {});
+  
+  // Debug data
   console.log('Attendees:', attendees);
   console.log('Event Attendees:', eventAttendees);
+  console.log('Trip Reports:', tripReports);
+  console.log('Event Trip Reports:', eventTripReports);
   
   // Add event mutation
   const { mutate: addEvent, isPending: isAddingEvent } = useMutation({
@@ -275,7 +303,7 @@ const EventsPage: FC = () => {
   });
   
   // Loading state
-  const isLoading = isLoadingEvents || isLoadingCfp || isLoadingAttendees;
+  const isLoading = isLoadingEvents || isLoadingCfp || isLoadingAttendees || isLoadingTripReports;
   
   return (
     <div className="py-6">
@@ -394,6 +422,7 @@ const EventsPage: FC = () => {
                 attendeeCounts={attendeeCounts}
                 eventSpeakers={eventSpeakers}
                 eventAttendees={eventAttendees}
+                eventTripReports={eventTripReports}
                 onAddEvent={openAddModal}
                 onEditEvent={openEditModal}
                 onDeleteEvent={openDeleteDialog}
