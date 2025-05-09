@@ -243,34 +243,41 @@ const EventCard: FC<EventCardProps> = ({
               <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Conference Goals</h4>
             </div>
             <div className="flex items-center flex-wrap gap-1">
-              {event.goal === "speaking" && speakers && speakers.length > 0 ? (
-                <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
-                  <Mic className="h-3 w-3 mr-1" />
-                  {speakers.some(s => s.submissions.some(sub => sub.status === "accepted")) ? 
-                    "Speaking" : 
-                    "CFP Submitted"
-                  }
-                </Badge>
-              ) : event.goal === "speaking" ? (
-                <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
-                  <Mic className="h-3 w-3 mr-1" />
-                  Speaking
-                </Badge>
-              ) : null}
-              
-              {event.goal === "attending" && attendees && attendees.length > 0 ? (
-                <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
-                  <User className="h-3 w-3 mr-1" />
-                  Attending
-                </Badge>
-              ) : event.goal === "attending" ? (
-                <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
-                  <User className="h-3 w-3 mr-1" />
-                  Attending
-                </Badge>
-              ) : null}
-              
-              {event.goal !== "speaking" && event.goal !== "attending" && getGoalBadge(event.goal)}
+              {/* Parse goals string if it's a JSON string, otherwise treat as an array */}
+              {(typeof event.goals === 'string' ? JSON.parse(event.goals) : event.goals).map((goal: string, index: number) => {
+                if (goal === "speaking") {
+                  return speakers && speakers.length > 0 ? (
+                    <Badge key={index} variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+                      <Mic className="h-3 w-3 mr-1" />
+                      {speakers.some(s => s.submissions.some(sub => sub.status === "accepted")) ? 
+                        "Speaking" : 
+                        "CFP Submitted"
+                      }
+                    </Badge>
+                  ) : (
+                    <Badge key={index} variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+                      <Mic className="h-3 w-3 mr-1" />
+                      Speaking
+                    </Badge>
+                  );
+                } else if (goal === "attending") {
+                  return (
+                    <Badge key={index} variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+                      <User className="h-3 w-3 mr-1" />
+                      Attending
+                    </Badge>
+                  );
+                } else {
+                  return (
+                    <Badge key={index} variant="outline" className={
+                      goal === "sponsoring" ? "bg-green-100 text-green-800 hover:bg-green-100" : 
+                      "bg-indigo-100 text-indigo-800 hover:bg-indigo-100"
+                    }>
+                      {goal.charAt(0).toUpperCase() + goal.slice(1)}
+                    </Badge>
+                  );
+                }
+              })}
             </div>
           </div>
         </div>
