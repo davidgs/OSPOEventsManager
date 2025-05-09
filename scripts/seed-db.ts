@@ -20,6 +20,11 @@ async function seedDatabase() {
       .values({
         username: "demo_user",
         password: "password123",
+        name: "Alex Johnson",
+        email: "alex@example.com",
+        bio: "Senior Developer Advocate with expertise in Kubernetes and cloud-native technologies.",
+        role: "developer_advocate",
+        jobTitle: "Senior Developer Advocate"
       })
       .returning();
     
