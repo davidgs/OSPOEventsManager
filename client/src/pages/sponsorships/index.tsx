@@ -80,8 +80,7 @@ const SponsorshipsPage: FC = () => {
   // Add sponsorship mutation
   const { mutate: addSponsorship, isPending: isAddingSponsorship } = useMutation({
     mutationFn: async (data: z.infer<typeof insertSponsorshipSchema>) => {
-      const res = await apiRequest('POST', '/api/sponsorships', data);
-      return res.json();
+      return await apiRequest('POST', '/api/sponsorships', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sponsorships'] });
