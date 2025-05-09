@@ -144,3 +144,31 @@ export const insertSponsorshipSchema = createInsertSchema(sponsorships).omit({
 
 export type InsertSponsorship = z.infer<typeof insertSponsorshipSchema>;
 export type Sponsorship = typeof sponsorships.$inferSelect;
+
+// Asset types
+export const assetTypes = ["abstract", "bio", "headshot", "trip_report", "presentation", "other"] as const;
+export const assetTypeSchema = z.enum(assetTypes);
+export type AssetType = z.infer<typeof assetTypeSchema>;
+
+// Assets table for managing various file uploads
+export const assets = pgTable("assets", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull().$type<AssetType>(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size").notNull(),
+  mimeType: text("mime_type").notNull(),
+  uploadedBy: integer("uploaded_by").notNull().references(() => users.id),
+  eventId: integer("event_id").references(() => events.id),
+  cfpSubmissionId: integer("cfp_submission_id").references(() => cfpSubmissions.id),
+  description: text("description"),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+});
+
+export const insertAssetSchema = createInsertSchema(assets).omit({
+  id: true,
+  uploadedAt: true,
+});
+
+export type InsertAsset = z.infer<typeof insertAssetSchema>;
+export type Asset = typeof assets.$inferSelect;

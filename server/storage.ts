@@ -47,6 +47,17 @@ export interface IStorage {
   createSponsorship(sponsorship: InsertSponsorship): Promise<Sponsorship>;
   updateSponsorship(id: number, sponsorship: Partial<InsertSponsorship>): Promise<Sponsorship | undefined>;
   deleteSponsorship(id: number): Promise<boolean>;
+  
+  // Asset management methods
+  getAssets(): Promise<Asset[]>;
+  getAssetsByType(type: AssetType): Promise<Asset[]>;
+  getAssetsByEvent(eventId: number): Promise<Asset[]>;
+  getAssetsByCfpSubmission(cfpSubmissionId: number): Promise<Asset[]>;
+  getAssetsByUser(userId: number): Promise<Asset[]>;
+  getAsset(id: number): Promise<Asset | undefined>;
+  createAsset(asset: InsertAsset): Promise<Asset>;
+  updateAsset(id: number, asset: Partial<InsertAsset>): Promise<Asset | undefined>;
+  deleteAsset(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -55,12 +66,14 @@ export class MemStorage implements IStorage {
   private cfpSubmissions: Map<number, CfpSubmission>;
   private attendees: Map<number, Attendee>;
   private sponsorships: Map<number, Sponsorship>;
+  private assets: Map<number, Asset>;
   
   private userId: number;
   private eventId: number;
   private cfpSubmissionId: number;
   private attendeeId: number;
   private sponsorshipId: number;
+  private assetId: number;
   
   constructor() {
     this.users = new Map();
@@ -68,12 +81,14 @@ export class MemStorage implements IStorage {
     this.cfpSubmissions = new Map();
     this.attendees = new Map();
     this.sponsorships = new Map();
+    this.assets = new Map();
     
     this.userId = 1;
     this.eventId = 1;
     this.cfpSubmissionId = 1;
     this.attendeeId = 1;
     this.sponsorshipId = 1;
+    this.assetId = 1;
     
     // Add some sample data
     this.seedData();
@@ -267,6 +282,60 @@ export class MemStorage implements IStorage {
   
   async deleteSponsorship(id: number): Promise<boolean> {
     return this.sponsorships.delete(id);
+  }
+  
+  // Asset management methods
+  async getAssets(): Promise<Asset[]> {
+    return Array.from(this.assets.values());
+  }
+  
+  async getAssetsByType(type: AssetType): Promise<Asset[]> {
+    return Array.from(this.assets.values()).filter(
+      (asset) => asset.type === type
+    );
+  }
+  
+  async getAssetsByEvent(eventId: number): Promise<Asset[]> {
+    return Array.from(this.assets.values()).filter(
+      (asset) => asset.eventId === eventId
+    );
+  }
+  
+  async getAssetsByCfpSubmission(cfpSubmissionId: number): Promise<Asset[]> {
+    return Array.from(this.assets.values()).filter(
+      (asset) => asset.cfpSubmissionId === cfpSubmissionId
+    );
+  }
+  
+  async getAssetsByUser(userId: number): Promise<Asset[]> {
+    return Array.from(this.assets.values()).filter(
+      (asset) => asset.uploadedBy === userId
+    );
+  }
+  
+  async getAsset(id: number): Promise<Asset | undefined> {
+    return this.assets.get(id);
+  }
+  
+  async createAsset(insertAsset: InsertAsset): Promise<Asset> {
+    const id = this.assetId++;
+    const now = new Date().toISOString();
+    const asset: Asset = { ...insertAsset, id, uploadedAt: now };
+    this.assets.set(id, asset);
+    return asset;
+  }
+  
+  async updateAsset(id: number, updateAsset: Partial<InsertAsset>): Promise<Asset | undefined> {
+    const asset = this.assets.get(id);
+    if (!asset) return undefined;
+    
+    const updatedAsset = { ...asset, ...updateAsset };
+    this.assets.set(id, updatedAsset);
+    return updatedAsset;
+  }
+  
+  async deleteAsset(id: number): Promise<boolean> {
+    return this.assets.delete(id);
   }
 
   // Seed method to add initial data
@@ -636,6 +705,72 @@ export class DatabaseStorage implements IStorage {
       .where(eq(cfpSubmissions.id, id))
       .returning();
     return !!deletedSubmission;
+  }
+  
+  // Asset management methods
+  async getAssets(): Promise<Asset[]> {
+    return await db.select().from(assets);
+  }
+  
+  async getAssetsByType(type: AssetType): Promise<Asset[]> {
+    return await db
+      .select()
+      .from(assets)
+      .where(eq(assets.type, type));
+  }
+  
+  async getAssetsByEvent(eventId: number): Promise<Asset[]> {
+    return await db
+      .select()
+      .from(assets)
+      .where(eq(assets.eventId, eventId));
+  }
+  
+  async getAssetsByCfpSubmission(cfpSubmissionId: number): Promise<Asset[]> {
+    return await db
+      .select()
+      .from(assets)
+      .where(eq(assets.cfpSubmissionId, cfpSubmissionId));
+  }
+  
+  async getAssetsByUser(userId: number): Promise<Asset[]> {
+    return await db
+      .select()
+      .from(assets)
+      .where(eq(assets.uploadedBy, userId));
+  }
+  
+  async getAsset(id: number): Promise<Asset | undefined> {
+    const [asset] = await db
+      .select()
+      .from(assets)
+      .where(eq(assets.id, id));
+    return asset || undefined;
+  }
+  
+  async createAsset(insertAsset: InsertAsset): Promise<Asset> {
+    const [asset] = await db
+      .insert(assets)
+      .values(insertAsset)
+      .returning();
+    return asset;
+  }
+  
+  async updateAsset(id: number, updateAsset: Partial<InsertAsset>): Promise<Asset | undefined> {
+    const [asset] = await db
+      .update(assets)
+      .set(updateAsset)
+      .where(eq(assets.id, id))
+      .returning();
+    return asset || undefined;
+  }
+  
+  async deleteAsset(id: number): Promise<boolean> {
+    const [deletedAsset] = await db
+      .delete(assets)
+      .where(eq(assets.id, id))
+      .returning();
+    return !!deletedAsset;
   }
 
   // Attendee methods
