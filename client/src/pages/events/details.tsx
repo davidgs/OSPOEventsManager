@@ -106,8 +106,7 @@ const EventDetailsPage: FC = () => {
   // Edit event mutation
   const { mutate: updateEvent, isPending: isUpdatingEvent } = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const res = await apiRequest('PUT', `/api/events/${id}`, data);
-      return res.json();
+      return await apiRequest('PUT', `/api/events/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/events/${eventId}`] });
