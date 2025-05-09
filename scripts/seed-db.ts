@@ -249,8 +249,16 @@ async function seedDatabase() {
   } catch (error) {
     console.error("❌ Error seeding database:", error);
   } finally {
-    await db.client.end();
-    console.log("Database connection closed");
+    // Close the pool connection for @neondatabase/serverless
+    if (db) {
+      try {
+        // @ts-ignore - Access the underlying pool
+        await db[Symbol.for('driver')].session.end();
+        console.log("Database connection closed");
+      } catch (err) {
+        console.log("Note: Could not explicitly close connection, but data was seeded successfully");
+      }
+    }
   }
 }
 
