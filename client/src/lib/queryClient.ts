@@ -1,9 +1,46 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Safely parse JSON from text, return an empty object if it fails
+function safeParseJSON(text: string) {
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.warn("Failed to parse JSON:", e);
+    return {};
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
+  }
+}
+
+// Safe version of response.json() that handles errors
+async function safeJsonResponse<T>(response: Response): Promise<T> {
+  try {
+    // Try to use the native json() method
+    return await response.json() as T;
+  } catch (e) {
+    console.warn("Native json() method failed, falling back to text() + parse", e);
+    
+    try {
+      // Fallback to getting text and parsing manually
+      const text = await response.text();
+      
+      // If the response is empty, return an empty object
+      if (!text || text.trim() === '') {
+        console.log("Empty response, returning empty object");
+        return {} as T;
+      }
+      
+      // Parse the text as JSON
+      return safeParseJSON(text) as T;
+    } catch (textError) {
+      console.error("Failed to get response text, returning empty object", textError);
+      return {} as T;
+    }
   }
 }
 
@@ -46,40 +83,14 @@ export async function apiRequest<TData = any>(
     });
 
     console.log(`Response status for ${method} ${url}:`, res.status);
-    // Log content-type header which is most relevant for debugging
     console.log(`Response content-type for ${method} ${url}:`, res.headers.get('content-type'));
 
     await throwIfResNotOk(res);
     
-    // Always try to parse as JSON first, fallback if it fails
-    try {
-      // Clone the response for debugging if needed
-      const resClone = res.clone();
-      
-      // Check the content type before trying to parse JSON
-      const contentType = res.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        try {
-          const jsonData = await res.json();
-          console.log(`Success parsing JSON from ${method} ${url}`);
-          return jsonData as TData;
-        } catch (jsonError) {
-          console.error(`JSON parse error for ${method} ${url}:`, jsonError);
-          // Try to get the text to see what we're dealing with
-          const text = await resClone.text();
-          console.log(`Response text from failed JSON parse:`, text);
-          return {} as TData;
-        }
-      }
-      
-      // For non-JSON or empty responses, return an empty object
-      console.warn(`Response from ${url} is not JSON (content-type: ${contentType})`);
-      return {} as TData;
-    } catch (parseError) {
-      console.warn(`Failed to parse response from ${url}:`, parseError);
-      // Return empty object on parse errors
-      return {} as TData;
-    }
+    // Use our safe JSON parsing function that handles errors
+    const data = await safeJsonResponse<TData>(res);
+    console.log(`Successfully processed response from ${method} ${url}`);
+    return data;
   } catch (error) {
     console.error(`Error in apiRequest for ${url}:`, error);
     throw error;
@@ -100,7 +111,6 @@ export const getQueryFn = <TData>(options: {
       });
 
       console.log(`Response status for GET ${url}:`, res.status);
-      // Log content-type header which is most relevant for debugging
       console.log(`Response content-type for GET ${url}:`, res.headers.get('content-type'));
 
       if (options.on401 === "returnNull" && res.status === 401) {
@@ -109,33 +119,10 @@ export const getQueryFn = <TData>(options: {
 
       await throwIfResNotOk(res);
       
-      try {
-        // Clone the response for debugging if needed
-        const resClone = res.clone();
-        
-        // Make sure we can parse the response
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          try {
-            const jsonData = await res.json();
-            console.log(`Success parsing JSON from GET ${url}`);
-            return jsonData as TData;
-          } catch (jsonError) {
-            console.error(`JSON parse error for GET ${url}:`, jsonError);
-            // Try to get the text to see what we're dealing with
-            const text = await resClone.text();
-            console.log(`Response text from failed JSON parse:`, text);
-            return {} as TData;
-          }
-        } else {
-          console.warn(`Response from ${url} is not JSON (content-type: ${contentType})`);
-          return {} as TData;
-        }
-      } catch (parseError) {
-        console.warn(`Failed to parse response from ${url}:`, parseError);
-        // Return empty object on parse errors
-        return {} as TData;
-      }
+      // Use our safe JSON parsing function that handles errors
+      const data = await safeJsonResponse<TData>(res);
+      console.log(`Successfully processed response from GET ${url}`);
+      return data;
     } catch (error) {
       console.error(`Error fetching from ${url}:`, error);
       throw error;
