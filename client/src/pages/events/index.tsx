@@ -434,7 +434,7 @@ const EventsPage: FC = () => {
                 events={filteredEvents}
                 cfpCounts={cfpCounts}
                 attendeeCounts={attendeeCounts}
-                tripReportCounts={tripReportCounts}
+                tripReportCounts={eventTripReports}
                 eventSpeakers={eventSpeakers}
                 eventAttendees={eventAttendees}
               />
