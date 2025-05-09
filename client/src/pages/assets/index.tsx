@@ -133,7 +133,7 @@ export default function AssetsPage() {
 
   // Helper function to download an asset
   const downloadAsset = (asset: Asset) => {
-    window.open(`/uploads/${asset.filePath}`, '_blank');
+    window.open(asset.filePath, '_blank');
   };
   
   // Helper function to get the appropriate icon for a file based on mime type
@@ -252,7 +252,7 @@ export default function AssetsPage() {
               {asset.mimeType.startsWith('image/') ? (
                 <AspectRatio ratio={4/3} className="bg-muted rounded-md overflow-hidden">
                   <img 
-                    src={`/uploads/${asset.filePath}`} 
+                    src={asset.filePath} 
                     alt={asset.name}
                     className="object-contain w-full h-full"
                   />
