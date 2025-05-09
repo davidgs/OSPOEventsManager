@@ -22,15 +22,23 @@ interface AddEventModalProps {
   isSubmitting: boolean;
 }
 
-// Create form schema based on event schema with date validation
-const formSchema = insertEventSchema.extend({
+// Create a client-side form schema with Date objects for better UX
+const formSchema = z.object({
+  name: z.string().min(1, "Event name is required"),
+  link: z.string().url("Must be a valid URL"),
+  location: z.string().min(1, "Location is required"),
+  priority: z.enum(eventPriorities),
+  type: z.enum(eventTypes),
+  goal: z.enum(eventGoals),
   startDate: z.date({
     required_error: "Start date is required",
   }),
   endDate: z.date({
     required_error: "End date is required",
   }),
-  cfpDeadline: z.date().optional(),
+  cfpDeadline: z.date().optional().nullable(),
+  notes: z.string().nullable().optional(),
+  createdById: z.number().nullable().optional(),
 }).refine(data => {
   return !data.endDate || !data.startDate || data.endDate >= data.startDate;
 }, {
