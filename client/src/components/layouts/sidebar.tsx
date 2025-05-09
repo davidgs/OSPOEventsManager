@@ -46,9 +46,10 @@ const SidebarContent: FC = () => {
   const [location] = useLocation();
   const userId = 2; // Using demo_user's ID
 
-  // Query to fetch user data
+  // Query to fetch user data 
   const { data: userData } = useQuery<User>({
     queryKey: [`/api/users/${userId}`],
+    queryFn: () => apiRequest<User>(`/api/users/${userId}`),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -119,6 +120,7 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
   // Query to fetch user data for mobile view
   const { data: userData } = useQuery<User>({
     queryKey: [`/api/users/${userId}`],
+    queryFn: () => apiRequest<User>(`/api/users/${userId}`),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
   

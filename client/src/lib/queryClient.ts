@@ -8,43 +8,14 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest<T = any>(
-  urlOrMethod: string,
-  methodOrData?: string | unknown,
+  url: string,
+  method: string = "GET",
   data?: unknown
 ): Promise<T> {
-  let url: string;
-  let method: string = "GET";
-  let bodyData: unknown | undefined;
-
-  // Handle different calling patterns:
-  // 1. apiRequest<T>(url) - GET request
-  // 2. apiRequest<T>(url, data) - GET request with query params or body
-  // 3. apiRequest<T>(url, method, data) - Specific HTTP method with data
-
-  if (urlOrMethod.startsWith("/")) {
-    // First argument is URL (starts with /)
-    url = urlOrMethod;
-    
-    if (typeof methodOrData === "string" && !methodOrData.startsWith("/")) {
-      // Second argument is HTTP method
-      method = methodOrData;
-      bodyData = data;
-    } else {
-      // Second argument is data
-      method = "GET";
-      bodyData = methodOrData;
-    }
-  } else {
-    // First argument might be method, second is URL
-    method = urlOrMethod;
-    url = methodOrData as string;
-    bodyData = data;
-  }
-
   const res = await fetch(url, {
     method,
-    headers: bodyData ? { "Content-Type": "application/json" } : {},
-    body: bodyData ? JSON.stringify(bodyData) : undefined,
+    headers: data ? { "Content-Type": "application/json" } : {},
+    body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
 

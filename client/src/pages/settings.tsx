@@ -112,7 +112,7 @@ const SettingsPage: FC = () => {
     mutationFn: (data: z.infer<typeof profileFormSchema>) => 
       apiRequest<User>(`/api/users/${userId}/profile`, 'PUT', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users', userId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}`] });
       toast({
         title: "Profile Updated",
         description: "Your profile information has been updated successfully.",
@@ -167,7 +167,7 @@ const SettingsPage: FC = () => {
         throw new Error(errorData.message || "Failed to upload headshot");
       }
       
-      queryClient.invalidateQueries({ queryKey: ['/api/users', userId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}`] });
       toast({
         title: "Headshot Uploaded",
         description: "Your profile picture has been updated successfully.",
@@ -189,7 +189,7 @@ const SettingsPage: FC = () => {
     try {
       await apiRequest<User>(`/api/users/${userId}/profile`, 'PUT', { headshot: null });
       
-      queryClient.invalidateQueries({ queryKey: ['/api/users', userId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}`] });
       toast({
         title: "Headshot Removed",
         description: "Your profile picture has been removed.",
