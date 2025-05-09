@@ -513,9 +513,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cfpSubmissionId = req.query.cfpSubmissionId ? parseInt(req.query.cfpSubmissionId as string) : undefined;
       const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
       const type = req.query.type as string;
+      const unlinkedEventId = req.query.unlinked ? parseInt(req.query.unlinked as string) : undefined;
       
       let assets;
-      if (eventId) {
+      if (unlinkedEventId) {
+        // Get all assets that are not linked to the specified event
+        const allAssets = await storage.getAssets();
+        const linkedAssets = await storage.getAssetsByEvent(unlinkedEventId);
+        const linkedAssetIds = new Set(linkedAssets.map(asset => asset.id));
+        assets = allAssets.filter(asset => !linkedAssetIds.has(asset.id));
+      } else if (eventId) {
         assets = await storage.getAssetsByEvent(eventId);
       } else if (cfpSubmissionId) {
         assets = await storage.getAssetsByCfpSubmission(cfpSubmissionId);
