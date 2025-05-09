@@ -9,6 +9,7 @@ import EventDetailsPage from "@/pages/events/details";
 import CfpSubmissionsPage from "@/pages/cfp-submissions/index";
 import AttendeesPage from "@/pages/attendees/index";
 import SponsorshipsPage from "@/pages/sponsorships/index";
+import AssetsPage from "@/pages/assets/index";
 import SettingsPage from "@/pages/settings";
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
             <Route path="/cfp-submissions" component={CfpSubmissionsPage} />
             <Route path="/attendees" component={AttendeesPage} />
             <Route path="/sponsorships" component={SponsorshipsPage} />
+            <Route path="/assets" component={AssetsPage} />
             <Route path="/settings" component={SettingsPage} />
             <Route component={NotFound} />
           </Switch>

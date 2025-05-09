@@ -2,7 +2,7 @@ import { FC } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Calendar, FileText, Users, DollarSign, Settings, Menu } from "lucide-react";
+import { Calendar, FileText, Users, DollarSign, Settings, Menu, File } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useMobile } from "@/hooks/use-mobile";
@@ -34,6 +34,11 @@ const navItems = [
     title: "Sponsorships",
     href: "/sponsorships",
     icon: DollarSign,
+  },
+  {
+    title: "Assets",
+    href: "/assets",
+    icon: File,
   },
   {
     title: "Settings",

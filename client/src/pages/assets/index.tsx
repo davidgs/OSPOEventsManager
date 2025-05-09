@@ -1,17 +1,31 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link } from "wouter";
-import { PlusIcon, FileIcon, DownloadIcon, TrashIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { assetTypes } from "@shared/schema";
+import { formatBytes, formatDate } from "@/lib/utils";
+
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -19,29 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, MoreVertical, File, Download, Trash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AssetUploadForm } from "@/components/forms/asset-upload-form";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { formatBytes, formatDate } from "@/lib/utils";
 
+// Asset type definition
 export type Asset = {
   id: number;
   name: string;
@@ -57,183 +56,212 @@ export type Asset = {
 };
 
 export default function AssetsPage() {
-  const [filter, setFilter] = useState<string>("");
-  const [openUploadDialog, setOpenUploadDialog] = useState(false);
   const { toast } = useToast();
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<string>("all");
+  const [selectedType, setSelectedType] = useState<string | null>(null);
 
-  const { data: assets, isLoading } = useQuery({
-    queryKey: ["/api/assets", filter],
-    queryFn: async () => {
-      const url = filter 
-        ? `/api/assets?type=${filter}` 
-        : "/api/assets";
-      const response = await fetch(url);
-      const data = await response.json();
-      return data as Asset[];
+  // Fetch all assets
+  const { data: assets, isLoading, isError } = useQuery({
+    queryKey: ["/api/assets"]
+  });
+
+  // Delete asset mutation
+  const deleteAsset = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/assets/${id}`, {
+        method: "DELETE"
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Asset deleted",
+        description: "The asset has been successfully deleted.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete asset: ${error.message}`,
+        variant: "destructive",
+      });
     },
   });
 
-  const handleDelete = async (id: number) => {
-    try {
-      await apiRequest(`/api/assets/${id}`, {
-        method: "DELETE",
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
-      
-      toast({
-        title: "Asset deleted",
-        description: "The asset has been deleted successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete the asset.",
-        variant: "destructive",
-      });
+  // Helper function to filter assets by tab and type
+  const getFilteredAssets = () => {
+    if (!assets) return [];
+    
+    let filtered = [...assets];
+    
+    // First filter by tab
+    if (selectedTab !== "all") {
+      filtered = filtered.filter(asset => asset.type === selectedTab);
     }
+    
+    // Then filter by type if a type is selected
+    if (selectedType) {
+      filtered = filtered.filter(asset => asset.type === selectedType);
+    }
+    
+    return filtered;
   };
 
-  const assetTypeLabels = {
-    abstract: "Abstract",
-    bio: "Biography",
-    headshot: "Headshot",
-    trip_report: "Trip Report",
-    presentation: "Presentation",
-    other: "Other",
+  // Helper function to download an asset
+  const downloadAsset = (asset: Asset) => {
+    window.open(`/uploads/${asset.filePath}`, '_blank');
+  };
+
+  // Render loading state
+  if (isLoading) {
+    return (
+      <div className="container flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Render error state
+  if (isError) {
+    return (
+      <div className="container py-6">
+        <div className="bg-destructive/10 p-4 rounded-lg text-destructive">
+          <p>Failed to load assets. Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render asset cards
+  const renderAssetCards = () => {
+    const filteredAssets = getFilteredAssets();
+    
+    if (filteredAssets.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          <File className="mx-auto h-12 w-12 mb-4 opacity-50" />
+          <p>No assets found. Upload some assets to get started.</p>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredAssets.map((asset) => (
+          <Card key={asset.id} className="overflow-hidden">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-lg truncate">{asset.name}</CardTitle>
+                  <CardDescription>
+                    {formatBytes(asset.fileSize)} • {asset.mimeType.split('/')[1].toUpperCase()}
+                  </CardDescription>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => downloadAsset(asset)}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        if (window.confirm("Are you sure you want to delete this asset? This action cannot be undone.")) {
+                          deleteAsset.mutate(asset.id);
+                        }
+                      }}
+                      className="text-destructive"
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardHeader>
+            <CardContent className="pb-2">
+              {asset.description && <p className="text-sm text-muted-foreground line-clamp-2">{asset.description}</p>}
+            </CardContent>
+            <CardFooter className="flex justify-between pt-2 text-xs text-muted-foreground">
+              <div>
+                <span className="capitalize">{asset.type.replace('_', ' ')}</span>
+              </div>
+              <div>Uploaded {formatDate(asset.uploadedAt)}</div>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    );
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container py-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Assets Library</h1>
-          <p className="text-gray-500">Manage your event-related assets and files</p>
+          <h1 className="text-3xl font-bold tracking-tight">Assets</h1>
+          <p className="text-muted-foreground">
+            Manage your abstracts, bios, headshots, and other event-related assets
+          </p>
         </div>
-        <div className="flex items-center gap-4">
-          <Select
-            value={filter}
-            onValueChange={(value) => setFilter(value)}
-          >
-            <SelectTrigger className="w-[180px]">
+        <Button className="mt-4 md:mt-0" onClick={() => setIsUploadDialogOpen(true)}>
+          Upload New Asset
+        </Button>
+      </div>
+      
+      <Separator className="my-6" />
+      
+      <div className="flex flex-col md:flex-row gap-4 md:items-center justify-between mb-6">
+        <Tabs 
+          defaultValue="all" 
+          value={selectedTab} 
+          onValueChange={setSelectedTab}
+          className="w-full md:w-auto"
+        >
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="abstract">Abstracts</TabsTrigger>
+            <TabsTrigger value="bio">Bios</TabsTrigger>
+            <TabsTrigger value="headshot">Headshots</TabsTrigger>
+            <TabsTrigger value="presentation">Presentations</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        <div className="w-full md:w-[200px]">
+          <Select onValueChange={(value) => setSelectedType(value === "all" ? null : value)}>
+            <SelectTrigger>
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All assets</SelectItem>
-              <SelectItem value="abstract">Abstracts</SelectItem>
-              <SelectItem value="bio">Biographies</SelectItem>
-              <SelectItem value="headshot">Headshots</SelectItem>
-              <SelectItem value="trip_report">Trip Reports</SelectItem>
-              <SelectItem value="presentation">Presentations</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="all">All types</SelectItem>
+              {assetTypes.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          <Dialog open={openUploadDialog} onOpenChange={setOpenUploadDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusIcon className="h-4 w-4 mr-2" /> Upload Asset
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Upload New Asset</DialogTitle>
-              </DialogHeader>
-              <AssetUploadForm onComplete={() => setOpenUploadDialog(false)} />
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Assets Library</CardTitle>
-          <CardDescription>
-            View, download, and manage your organization's assets
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-10">Loading assets...</div>
-          ) : assets && assets.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Size</TableHead>
-                  <TableHead>Uploaded</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {assets.map((asset) => (
-                  <TableRow key={asset.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center">
-                        <FileIcon className="h-5 w-5 mr-2 text-gray-400" />
-                        <span>{asset.name}</span>
-                      </div>
-                      {asset.description && (
-                        <p className="text-xs text-gray-500 mt-1">{asset.description}</p>
-                      )}
-                    </TableCell>
-                    <TableCell>{assetTypeLabels[asset.type]}</TableCell>
-                    <TableCell>{formatBytes(asset.fileSize)}</TableCell>
-                    <TableCell>{formatDate(asset.uploadedAt)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <a
-                          href={asset.filePath}
-                          download
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Button size="sm" variant="ghost">
-                            <DownloadIcon className="h-4 w-4" />
-                          </Button>
-                        </a>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="ghost">
-                              <TrashIcon className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete asset</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete this asset? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-red-500 hover:bg-red-600"
-                                onClick={() => handleDelete(asset.id)}
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-10">
-              <p className="text-gray-500 mb-4">No assets found</p>
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusIcon className="h-4 w-4 mr-2" /> Upload your first asset
-                </Button>
-              </DialogTrigger>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      
+      {renderAssetCards()}
+      
+      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Upload New Asset</DialogTitle>
+            <DialogDescription>
+              Upload files related to events, presentations, and profiles.
+            </DialogDescription>
+          </DialogHeader>
+          <AssetUploadForm onComplete={() => setIsUploadDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
