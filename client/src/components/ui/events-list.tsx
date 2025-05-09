@@ -10,6 +10,7 @@ interface EventsListProps {
   attendeeCounts: Record<number, number>;
   eventSpeakers: Record<number, Array<{id: number, name: string, submissions: Array<{title: string, status: string}>}>>;
   eventAttendees: Record<number, Array<{id: number, name: string}>>;
+  eventTripReports?: Record<number, Array<{id: number, name: string, uploadedByName: string}>>;
   onAddEvent: () => void;
   onEditEvent: (event: Event) => void;
   onDeleteEvent: (event: Event) => void;
@@ -21,6 +22,7 @@ const EventsList: FC<EventsListProps> = ({
   attendeeCounts,
   eventSpeakers,
   eventAttendees,
+  eventTripReports = {},
   onAddEvent,
   onEditEvent,
   onDeleteEvent,
@@ -35,6 +37,7 @@ const EventsList: FC<EventsListProps> = ({
           attendeeCount={attendeeCounts[event.id] || 0}
           speakers={eventSpeakers[event.id] || []}
           attendees={eventAttendees[event.id] || []}
+          tripReports={eventTripReports[event.id] || []}
           onEdit={onEditEvent}
           onDelete={onDeleteEvent}
         />

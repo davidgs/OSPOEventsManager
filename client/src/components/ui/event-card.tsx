@@ -14,7 +14,8 @@ import {
   X,
   Clock,
   BookOpen,
-  FileText2
+  FileArchive,
+  FileText as FileTextIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -40,6 +41,7 @@ const EventCard: FC<EventCardProps> = ({
   attendeeCount, 
   speakers,
   attendees,
+  tripReports = [],
   onEdit, 
   onDelete 
 }) => {
@@ -239,6 +241,34 @@ const EventCard: FC<EventCardProps> = ({
                 </div>
               </PopoverContent>
             </Popover>
+            {tripReports && tripReports.length > 0 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="flex items-center space-x-1 cursor-pointer hover:text-primary transition-colors">
+                    <BookOpen className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm font-medium">{tripReports.length} {tripReports.length === 1 ? "Trip Report" : "Trip Reports"}</span>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-64">
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm">Trip Reports</h4>
+                    <div className="space-y-1 max-h-48 overflow-auto">
+                      {tripReports.map((report, i) => (
+                        <div key={i} className="border-b pb-2 last:border-0">
+                          <div className="flex items-start gap-2 p-1">
+                            <FileArchive className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium break-words leading-tight">{report.name}</p>
+                              <p className="text-xs text-gray-500">by {report.uploadedByName}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
           
           <div className="flex flex-col space-y-2">
