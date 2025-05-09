@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { 
   insertEventSchema, insertCfpSubmissionSchema, 
   insertAttendeeSchema, insertSponsorshipSchema,
-  updateUserProfileSchema
+  updateUserProfileSchema, insertAssetSchema,
+  assetTypes
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -502,6 +503,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading headshot:", error);
       res.status(500).json({ message: "Failed to upload headshot" });
+    }
+  });
+
+  // Assets API routes
+  app.get("/api/assets", async (req: Request, res: Response) => {
+    try {
+      const eventId = req.query.eventId ? parseInt(req.query.eventId as string) : undefined;
+      const cfpSubmissionId = req.query.cfpSubmissionId ? parseInt(req.query.cfpSubmissionId as string) : undefined;
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
+      const type = req.query.type as string;
+      
+      let assets;
+      if (eventId) {
+        assets = await storage.getAssetsByEvent(eventId);
+      } else if (cfpSubmissionId) {
+        assets = await storage.getAssetsByCfpSubmission(cfpSubmissionId);
+      } else if (userId) {
+        assets = await storage.getAssetsByUser(userId);
+      } else if (type && assetTypes.includes(type as any)) {
+        assets = await storage.getAssetsByType(type as any);
+      } else {
+        assets = await storage.getAssets();
+      }
+      
+      res.json(assets);
+    } catch (error) {
+      console.error("Error fetching assets:", error);
+      res.status(500).json({ message: "Failed to fetch assets" });
+    }
+  });
+
+  app.get("/api/assets/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid asset ID" });
+      }
+
+      const asset = await storage.getAsset(id);
+      if (!asset) {
+        return res.status(404).json({ message: "Asset not found" });
+      }
+
+      res.json(asset);
+    } catch (error) {
+      console.error("Error fetching asset:", error);
+      res.status(500).json({ message: "Failed to fetch asset" });
+    }
+  });
+
+  app.post("/api/assets", async (req: Request, res: Response) => {
+    try {
+      // Check if a file was uploaded
+      if (!req.files || !req.files.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const file = req.files.file as fileUpload.UploadedFile;
+      const { name, type, eventId, cfpSubmissionId, uploadedBy, description } = req.body;
+
+      // Validate asset data
+      if (!name || !type || !uploadedBy) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Validate asset type
+      if (!assetTypes.includes(type as any)) {
+        return res.status(400).json({ 
+          message: `Invalid asset type. Must be one of: ${assetTypes.join(', ')}` 
+        });
+      }
+
+      // Generate a unique filename
+      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+      const filePath = path.join('public', 'uploads', fileName);
+      const publicPath = `/uploads/${fileName}`;
+
+      // Move the file to uploads directory
+      await file.mv(path.join(process.cwd(), filePath));
+
+      // Create asset record
+      const assetData = {
+        name,
+        type: type as any,
+        filePath: publicPath,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        uploadedBy: parseInt(uploadedBy as string),
+        eventId: eventId ? parseInt(eventId as string) : null,
+        cfpSubmissionId: cfpSubmissionId ? parseInt(cfpSubmissionId as string) : null,
+        description: description || null
+      };
+
+      const asset = await storage.createAsset(assetData);
+      res.status(201).json(asset);
+    } catch (error) {
+      console.error("Error creating asset:", error);
+      res.status(500).json({ message: "Failed to create asset" });
+    }
+  });
+
+  app.put("/api/assets/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid asset ID" });
+      }
+
+      const { name, description, eventId, cfpSubmissionId } = req.body;
+      
+      // Only allow updating certain fields
+      const updateData: any = {};
+      if (name) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (eventId !== undefined) updateData.eventId = eventId ? parseInt(eventId as string) : null;
+      if (cfpSubmissionId !== undefined) updateData.cfpSubmissionId = cfpSubmissionId ? parseInt(cfpSubmissionId as string) : null;
+      
+      const asset = await storage.updateAsset(id, updateData);
+      if (!asset) {
+        return res.status(404).json({ message: "Asset not found" });
+      }
+      
+      res.json(asset);
+    } catch (error) {
+      console.error("Error updating asset:", error);
+      res.status(500).json({ message: "Failed to update asset" });
+    }
+  });
+
+  app.delete("/api/assets/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid asset ID" });
+      }
+
+      // Get the asset to find the file path
+      const asset = await storage.getAsset(id);
+      if (!asset) {
+        return res.status(404).json({ message: "Asset not found" });
+      }
+
+      // Delete the file from the file system
+      const filePath = path.join(process.cwd(), 'public', asset.filePath);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      // Delete the record from storage
+      const success = await storage.deleteAsset(id);
+      if (!success) {
+        return res.status(404).json({ message: "Failed to delete asset" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      console.error("Error deleting asset:", error);
+      res.status(500).json({ message: "Failed to delete asset" });
     }
   });
 

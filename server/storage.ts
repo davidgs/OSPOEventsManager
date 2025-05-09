@@ -4,7 +4,9 @@ import {
   Attendee, InsertAttendee,
   Sponsorship, InsertSponsorship,
   User, InsertUser,
-  events, cfpSubmissions, attendees, sponsorships, users 
+  Asset, InsertAsset,
+  AssetType,
+  events, cfpSubmissions, attendees, sponsorships, users, assets
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
