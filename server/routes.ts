@@ -32,9 +32,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Events API routes
   app.get("/api/events", async (req: Request, res: Response) => {
     try {
+      console.log('GET /api/events called');
       const events = await storage.getEvents();
+      console.log(`Retrieved ${events.length} events`);
+      
+      if (!events || events.length === 0) {
+        console.log('No events found');
+        return res.json([]);
+      }
+      
       res.json(events);
     } catch (error) {
+      console.error('Error in GET /api/events:', error);
       res.status(500).json({ message: "Failed to fetch events" });
     }
   });

@@ -166,32 +166,58 @@ export class MemStorage implements IStorage {
       console.log('getEvents called');
       // Transform events array to ensure goals is parsed from JSON string
       const events = Array.from(this.events.values());
-      console.log('Raw events:', JSON.stringify(events));
+      
+      if (events.length === 0) {
+        console.log('No events found');
+        return [];
+      }
       
       // Process each event to handle legacy data or properly format goals
       const processedEvents = events.map(event => {
         try {
-          console.log('Processing event:', event.id, event.name);
+          console.log('Processing event:', event.id);
           
-          // If event has the old 'goal' property instead of 'goals'
-          if ('goal' in event && !('goals' in event)) {
-            console.log('Event has legacy goal property:', event.id);
-            // @ts-ignore - handle legacy data
-            const goal = event.goal as string;
-            return {
-              ...event,
-              goals: JSON.stringify([goal])
-            };
+          if (!event) {
+            console.log('Found null event');
+            return null;
           }
           
-          // Return the event as is
-          return event;
+          // Create a safe copy of the event
+          const safeEvent = { ...event };
+          
+          // If event has the old 'goal' property instead of 'goals'
+          if ('goal' in safeEvent && !('goals' in safeEvent)) {
+            console.log('Event has legacy goal property:', safeEvent.id);
+            // @ts-ignore - handle legacy data
+            const goal = safeEvent.goal || 'attending';
+            safeEvent.goals = JSON.stringify([goal]);
+            // Delete old property to avoid confusion
+            // @ts-ignore
+            delete safeEvent.goal;
+          } else if (safeEvent.goals === undefined || safeEvent.goals === null) {
+            // If goals is missing entirely, set a default
+            console.log('Event has no goals property:', safeEvent.id);
+            safeEvent.goals = JSON.stringify(['attending']);
+          } else if (typeof safeEvent.goals === 'string') {
+            // Try to validate if goals is a valid JSON string of array
+            try {
+              JSON.parse(safeEvent.goals);
+              console.log('Event has valid JSON goals:', safeEvent.id);
+            } catch (e) {
+              // If not valid JSON, wrap it as a single-item array
+              console.log('Event has goals string that is not JSON:', safeEvent.id);
+              safeEvent.goals = JSON.stringify([safeEvent.goals]);
+            }
+          }
+          
+          return safeEvent;
         } catch (err) {
-          console.error('Error processing event:', event.id, err);
-          // Return the event unmodified if there's an error
-          return event;
+          console.error('Error processing event:', err);
+          // Skip invalid events
+          return null;
         }
-      });
+      })
+      .filter(event => event !== null) as Event[];
       
       console.log('Processed events count:', processedEvents.length);
       return processedEvents;
@@ -207,17 +233,35 @@ export class MemStorage implements IStorage {
     
     if (!event) return undefined;
     
+    // Create a safe copy of the event
+    const safeEvent = { ...event };
+    
     // If event has the old 'goal' property instead of 'goals'
-    if ('goal' in event && !('goals' in event)) {
+    if ('goal' in safeEvent && !('goals' in safeEvent)) {
+      console.log('Event has legacy goal property:', safeEvent.id);
       // @ts-ignore - handle legacy data
-      const goal = event.goal as string;
-      return {
-        ...event,
-        goals: JSON.stringify([goal])
-      };
+      const goal = safeEvent.goal || 'attending';
+      safeEvent.goals = JSON.stringify([goal]);
+      // Delete old property to avoid confusion
+      // @ts-ignore
+      delete safeEvent.goal;
+    } else if (safeEvent.goals === undefined || safeEvent.goals === null) {
+      // If goals is missing entirely, set a default
+      console.log('Event has no goals property:', safeEvent.id);
+      safeEvent.goals = JSON.stringify(['attending']);
+    } else if (typeof safeEvent.goals === 'string') {
+      // Try to validate if goals is a valid JSON string of array
+      try {
+        JSON.parse(safeEvent.goals);
+        console.log('Event has valid JSON goals:', safeEvent.id);
+      } catch (e) {
+        // If not valid JSON, wrap it as a single-item array
+        console.log('Event has goals string that is not JSON:', safeEvent.id);
+        safeEvent.goals = JSON.stringify([safeEvent.goals]);
+      }
     }
     
-    return event;
+    return safeEvent;
   }
   
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
