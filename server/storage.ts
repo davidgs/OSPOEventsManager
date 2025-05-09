@@ -92,9 +92,27 @@ export class MemStorage implements IStorage {
   
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userId++;
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      ...insertUser, 
+      id,
+      name: null,
+      email: null,
+      bio: null,
+      role: null,
+      jobTitle: null,
+      headshot: null
+    };
     this.users.set(id, user);
     return user;
+  }
+  
+  async updateUserProfile(id: number, userData: { name?: string; email?: string; bio?: string; role?: string; jobTitle?: string; headshot?: string }): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, ...userData };
+    this.users.set(id, updatedUser);
+    return updatedUser;
   }
   
   // Event methods
@@ -487,6 +505,19 @@ export class DatabaseStorage implements IStorage {
       .values(insertUser)
       .returning();
     return user;
+  }
+  
+  async updateUserProfile(id: number, userData: { name?: string; email?: string; bio?: string; role?: string; jobTitle?: string; headshot?: string }): Promise<User | undefined> {
+    const user = await this.getUser(id);
+    if (!user) return undefined;
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+      
+    return updatedUser;
   }
 
   // Event methods

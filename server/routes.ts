@@ -3,10 +3,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
   insertEventSchema, insertCfpSubmissionSchema, 
-  insertAttendeeSchema, insertSponsorshipSchema 
+  insertAttendeeSchema, insertSponsorshipSchema,
+  updateUserProfileSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import fileUpload from "express-fileupload";
+import path from "path";
+import fs from "fs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Events API routes
@@ -378,6 +382,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete sponsorship" });
+    }
+  });
+
+  // Configure file upload middleware
+  app.use(fileUpload({
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    abortOnLimit: true, 
+    createParentPath: true,
+    useTempFiles: true,
+    tempFileDir: '/tmp/'
+  }));
+
+  // Create uploads directory if it doesn't exist
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  // User profile API routes
+  app.get("/api/users/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Don't return the password
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  app.put("/api/users/:id/profile", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const profileData = updateUserProfileSchema.safeParse(req.body);
+      
+      if (!profileData.success) {
+        const validationError = fromZodError(profileData.error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      
+      const user = await storage.updateUserProfile(id, profileData.data);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Don't return the password
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update user profile" });
+    }
+  });
+
+  app.post("/api/users/:id/headshot", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      // Check if user exists
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).json({ message: "No file was uploaded" });
+      }
+
+      // The name of the input field is "headshot"
+      const headshotFile = req.files.headshot as fileUpload.UploadedFile;
+      
+      // Validate file size (already capped by middleware but double-check)
+      if (headshotFile.size > 10 * 1024 * 1024) {
+        return res.status(400).json({ message: "Headshot file size exceeds the 10MB limit" });
+      }
+
+      // Validate file type
+      const fileExt = path.extname(headshotFile.name).toLowerCase();
+      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+      if (!validExtensions.includes(fileExt)) {
+        return res.status(400).json({ message: "Invalid file type. Only JPG, PNG, and GIF are allowed" });
+      }
+
+      // Create a unique filename
+      const fileName = `user_${id}_${Date.now()}${fileExt}`;
+      const uploadPath = path.join(uploadsDir, fileName);
+
+      // Move the file
+      await headshotFile.mv(uploadPath);
+
+      // Update user profile with the headshot path
+      const headshotUrl = `/uploads/${fileName}`;
+      const updatedUser = await storage.updateUserProfile(id, { headshot: headshotUrl });
+
+      // Don't return the password
+      const { password, ...userWithoutPassword } = updatedUser!;
+      res.json({ 
+        message: "Headshot uploaded successfully", 
+        user: userWithoutPassword 
+      });
+    } catch (error) {
+      console.error("Error uploading headshot:", error);
+      res.status(500).json({ message: "Failed to upload headshot" });
     }
   });
 
