@@ -119,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Event not found" });
       }
       
-      res.status(204).end();
+      res.status(200).json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete event" });
     }
@@ -214,7 +214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Submission not found" });
       }
       
-      res.status(204).end();
+      res.status(200).json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete CFP submission" });
     }
@@ -309,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Attendee not found" });
       }
       
-      res.status(204).end();
+      res.status(200).json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete attendee" });
     }
@@ -404,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Sponsorship not found" });
       }
       
-      res.status(204).end();
+      res.status(200).json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete sponsorship" });
     }
@@ -704,7 +704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Failed to delete asset" });
       }
       
-      res.status(204).end();
+      res.status(200).json({ success: true });
     } catch (error) {
       console.error("Error deleting asset:", error);
       res.status(500).json({ message: "Failed to delete asset" });
