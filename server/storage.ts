@@ -695,6 +695,46 @@ export class MemStorage implements IStorage {
       contactEmail: "finance@example.com",
       notes: "Includes booth and speaking slot",
     });
+    
+    // Add trip report assets
+    this.createAsset({
+      name: "KubeCon Trip Report - Key Insights",
+      type: "trip_report",
+      description: "Summary of key sessions and learnings from KubeCon",
+      filePath: "/uploads/trip_reports/kubecon_report.pdf",
+      fileSize: 2048000, // ~2MB
+      mimeType: "application/pdf",
+      uploadedBy: 1,
+      uploadedByName: "Alex Johnson",
+      eventId: 1,
+      cfpSubmissionId: null
+    });
+    
+    this.createAsset({
+      name: "KubeCon Networking Outcomes",
+      type: "trip_report",
+      description: "Notable connections and partnership opportunities from KubeCon",
+      filePath: "/uploads/trip_reports/kubecon_networking.docx",
+      fileSize: 1024000, // ~1MB
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      uploadedBy: 1,
+      uploadedByName: "Alex Johnson",
+      eventId: 1,
+      cfpSubmissionId: null
+    });
+    
+    this.createAsset({
+      name: "Open Source Summit Trip Report",
+      type: "trip_report",
+      description: "Executive summary of Open Source Summit attendance",
+      filePath: "/uploads/trip_reports/oss_report.pdf",
+      fileSize: 3072000, // ~3MB
+      mimeType: "application/pdf",
+      uploadedBy: 1,
+      uploadedByName: "Alex Johnson",
+      eventId: 2,
+      cfpSubmissionId: null
+    });
   }
 }
 
