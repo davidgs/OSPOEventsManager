@@ -208,30 +208,30 @@ export default function AssetsPage() {
     }
     
     return (
-      <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
         {filteredAssets.map((asset) => (
-          <Card key={asset.id} className="overflow-hidden max-w-[150px] hover:shadow-md transition-shadow">
-            <CardHeader className="pb-0 pt-1 px-2">
+          <Card key={asset.id} className="overflow-hidden w-full h-full hover:shadow-md transition-shadow">
+            <CardHeader className="pb-0 pt-2 px-4">
               <div className="flex justify-between items-start">
                 <div className="w-[80%]">
                   <div className="flex flex-col">
-                    <span className="text-[8px] font-bold">Title:</span>
-                    <CardTitle className="text-[10px] font-medium truncate">{asset.name}</CardTitle>
+                    <span className="text-xs font-bold">Title:</span>
+                    <CardTitle className="text-sm font-medium truncate">{asset.name}</CardTitle>
                   </div>
-                  <CardDescription className="text-[8px] mt-0">
+                  <CardDescription className="text-xs mt-1">
                     {formatBytes(asset.fileSize)} • {asset.mimeType.split('/')[1].toUpperCase()}
                   </CardDescription>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-5 w-5 p-0">
-                      <MoreVertical className="h-3 w-3" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuLabel className="text-[9px] py-1">Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => downloadAsset(asset)} className="text-[9px] py-1">
-                      <Download className="mr-1.5 h-2.5 w-2.5" />
+                    <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => downloadAsset(asset)} className="text-xs">
+                      <Download className="mr-2 h-4 w-4" />
                       Download
                     </DropdownMenuItem>
                     <DropdownMenuItem 
@@ -240,9 +240,9 @@ export default function AssetsPage() {
                           deleteAsset.mutate(asset.id);
                         }
                       }}
-                      className="text-destructive text-[9px] py-1"
+                      className="text-destructive text-xs"
                     >
-                      <Trash className="mr-1.5 h-2.5 w-2.5" />
+                      <Trash className="mr-2 h-4 w-4" />
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -251,40 +251,47 @@ export default function AssetsPage() {
             </CardHeader>
             
             {/* Thumbnail preview area - SMALLER SIZE */}
-            <div className="px-3 mb-1">
-              <div className="max-h-[60px] h-[60px]">
-                {asset.mimeType.startsWith('image/') ? (
-                  <AspectRatio ratio={4/3} className="bg-muted rounded-md overflow-hidden h-[60px]">
-                    <img 
-                      src={asset.filePath} 
-                      alt={asset.name}
-                      className="object-contain w-full h-full"
-                    />
-                  </AspectRatio>
-                ) : (
-                  <AspectRatio ratio={4/3} className="bg-muted/40 rounded-md flex items-center justify-center h-[60px]">
-                    <div className="text-center">
-                      {getFileIcon(asset.mimeType)}
-                      <p className="text-[9px] text-muted-foreground mt-0.5">
-                        {asset.mimeType.split('/')[1].toUpperCase()}
-                      </p>
-                    </div>
-                  </AspectRatio>
-                )}
+            <div className="px-4 pb-2">
+              <div className="bg-muted/20 border border-border rounded-md p-1">
+                <div className="max-h-[75px] h-[75px]">
+                  {asset.mimeType.startsWith('image/') ? (
+                    <AspectRatio ratio={4/3} className="bg-muted rounded-md overflow-hidden h-[75px]">
+                      <img 
+                        src={asset.filePath} 
+                        alt={asset.name}
+                        className="object-contain w-full h-full"
+                      />
+                    </AspectRatio>
+                  ) : (
+                    <AspectRatio ratio={4/3} className="bg-muted/30 rounded-md flex items-center justify-center h-[75px]">
+                      <div className="text-center">
+                        {getFileIcon(asset.mimeType)}
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {asset.mimeType.split('/')[1].toUpperCase()}
+                        </p>
+                      </div>
+                    </AspectRatio>
+                  )}
+                </div>
               </div>
             </div>
             
-            <CardContent className="py-1 px-3">
-              {asset.description && <p className="text-xs text-muted-foreground line-clamp-2">{asset.description}</p>}
+            <CardContent className="py-2 px-4">
+              {asset.description && (
+                <div className="mb-2">
+                  <span className="text-xs font-bold block mb-1">Description:</span>
+                  <p className="text-xs text-muted-foreground line-clamp-3">{asset.description}</p>
+                </div>
+              )}
               
               {/* Asset owner info */}
-              <div className="flex items-center mt-1 text-xs">
-                <User className="h-3 w-3 mr-1 text-muted-foreground" />
+              <div className="flex items-center mt-3 text-xs">
+                <User className="h-4 w-4 mr-1.5 text-muted-foreground" />
                 <span className="text-muted-foreground">Owner: {getAssetOwnerName(asset.uploadedBy)}</span>
               </div>
             </CardContent>
             
-            <CardFooter className="flex justify-between pt-1 pb-2 px-3 text-xs text-muted-foreground">
+            <CardFooter className="flex justify-between pt-2 pb-3 px-4 text-xs text-muted-foreground">
               <div>
                 <span className="capitalize">{asset.type.replace('_', ' ')}</span>
               </div>
