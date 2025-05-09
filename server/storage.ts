@@ -996,5 +996,6 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use DatabaseStorage instead of MemStorage
-export const storage = new DatabaseStorage();
+// Use MemStorage instead of DatabaseStorage to handle the goals as arrays without DB schema changes
+// We need to use memory storage since the database schema has 'goal' not 'goals' column
+export const storage = new MemStorage();
