@@ -87,6 +87,8 @@ const EventsPage: FC = () => {
   // Add event mutation
   const { mutate: addEvent, isPending: isAddingEvent } = useMutation({
     mutationFn: async (newEvent: any) => {
+      // For debugging
+      console.log('About to add event with data:', newEvent);
       const res = await apiRequest('POST', '/api/events', newEvent);
       return res.json();
     },
@@ -110,6 +112,8 @@ const EventsPage: FC = () => {
   // Edit event mutation
   const { mutate: updateEvent, isPending: isUpdatingEvent } = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      // For debugging
+      console.log('About to update event with data:', data);
       const res = await apiRequest('PUT', `/api/events/${id}`, data);
       return res.json();
     },
