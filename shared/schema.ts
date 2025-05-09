@@ -15,7 +15,9 @@ export type EventType = z.infer<typeof eventTypeSchema>;
 // Event goals
 export const eventGoals = ["speaking", "sponsoring", "attending", "exhibiting"] as const;
 export const eventGoalSchema = z.enum(eventGoals);
+export const eventGoalsArraySchema = z.array(eventGoalSchema).min(1, "Select at least one goal");
 export type EventGoal = z.infer<typeof eventGoalSchema>;
+export type EventGoals = z.infer<typeof eventGoalsArraySchema>;
 
 // Event statuses
 export const eventStatuses = ["planning", "confirmed", "completed", "cancelled"] as const;
@@ -73,7 +75,7 @@ export const events = pgTable("events", {
   location: text("location").notNull(),
   priority: text("priority").notNull().$type<EventPriority>(),
   type: text("type").notNull().$type<EventType>(),
-  goal: text("goal").notNull().$type<EventGoal>(),
+  goals: text("goals").notNull().$type<string>(), // Storing as JSON string of goals array
   cfpDeadline: date("cfp_deadline"),
   status: text("status").notNull().default("planning").$type<EventStatus>(),
   notes: text("notes"),
@@ -95,7 +97,7 @@ export const insertEventSchema = z.object({
   location: baseInsertEventSchema.shape.location,
   priority: baseInsertEventSchema.shape.priority,
   type: baseInsertEventSchema.shape.type,
-  goal: baseInsertEventSchema.shape.goal,
+  goals: eventGoalsArraySchema, // Updated to use array schema
   cfpDeadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format").nullable().optional(),
   notes: baseInsertEventSchema.shape.notes,
   createdById: baseInsertEventSchema.shape.createdById,

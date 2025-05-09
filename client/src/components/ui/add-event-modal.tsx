@@ -8,12 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertEventSchema, eventPriorities, eventTypes, eventGoals } from "@shared/schema";
+import { insertEventSchema, eventPriorities, eventTypes, eventGoals, eventGoalsArraySchema } from "@shared/schema";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AddEventModalProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ const formSchema = z.object({
   location: z.string().min(1, "Location is required"),
   priority: z.enum(eventPriorities),
   type: z.enum(eventTypes),
-  goal: z.enum(eventGoals),
+  goals: eventGoalsArraySchema, // Changed from goal to goals using array schema
   startDate: z.date({
     required_error: "Start date is required",
   }),
@@ -65,7 +66,7 @@ const AddEventModal: FC<AddEventModalProps> = ({
       location: "",
       priority: "medium",
       type: "conference",
-      goal: "attending",
+      goals: ["attending"], // Default to attending, now as an array
       notes: "",
     },
   });
@@ -272,27 +273,41 @@ const AddEventModal: FC<AddEventModalProps> = ({
                 )}
               />
               
-              {/* Event Goal */}
+              {/* Event Goals - using checkboxes for multiple selection */}
               <FormField
                 control={form.control}
-                name="goal"
+                name="goals"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Event Goal <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select goal" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {eventGoals.map((goal) => (
-                          <SelectItem key={goal} value={goal}>
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Event Goals <span className="text-red-500">*</span></FormLabel>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {eventGoals.map((goal) => (
+                        <FormItem key={goal} className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(goal)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange([...field.value, goal]);
+                                } else {
+                                  field.onChange(
+                                    field.value?.filter(
+                                      (value) => value !== goal
+                                    )
+                                  );
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal">
                             {goal.charAt(0).toUpperCase() + goal.slice(1)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </FormLabel>
+                        </FormItem>
+                      ))}
+                    </div>
+                    <FormDescription>
+                      Select all goals that apply to this event
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
