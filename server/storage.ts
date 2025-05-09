@@ -162,23 +162,44 @@ export class MemStorage implements IStorage {
   
   // Event methods
   async getEvents(): Promise<Event[]> {
-    // Transform events array to ensure goals is parsed from JSON string
-    const events = Array.from(this.events.values());
-    
-    // Process each event to handle legacy data or properly format goals
-    return events.map(event => {
-      // If event has the old 'goal' property instead of 'goals'
-      if ('goal' in event && !('goals' in event)) {
-        // @ts-ignore - handle legacy data
-        const goal = event.goal as string;
-        return {
-          ...event,
-          goals: JSON.stringify([goal])
-        };
-      } 
-      // If event has goals
-      return event;
-    });
+    try {
+      console.log('getEvents called');
+      // Transform events array to ensure goals is parsed from JSON string
+      const events = Array.from(this.events.values());
+      console.log('Raw events:', JSON.stringify(events));
+      
+      // Process each event to handle legacy data or properly format goals
+      const processedEvents = events.map(event => {
+        try {
+          console.log('Processing event:', event.id, event.name);
+          
+          // If event has the old 'goal' property instead of 'goals'
+          if ('goal' in event && !('goals' in event)) {
+            console.log('Event has legacy goal property:', event.id);
+            // @ts-ignore - handle legacy data
+            const goal = event.goal as string;
+            return {
+              ...event,
+              goals: JSON.stringify([goal])
+            };
+          }
+          
+          // Return the event as is
+          return event;
+        } catch (err) {
+          console.error('Error processing event:', event.id, err);
+          // Return the event unmodified if there's an error
+          return event;
+        }
+      });
+      
+      console.log('Processed events count:', processedEvents.length);
+      return processedEvents;
+    } catch (err) {
+      console.error('Error in getEvents method:', err);
+      // Return empty array on error to prevent complete failure
+      return [];
+    }
   }
   
   async getEvent(id: number): Promise<Event | undefined> {

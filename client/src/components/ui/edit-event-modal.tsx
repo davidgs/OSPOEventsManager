@@ -8,12 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertEventSchema, eventPriorities, eventTypes, eventGoals, Event } from "@shared/schema";
+import { insertEventSchema, eventPriorities, eventTypes, eventGoals, EventGoal, Event } from "@shared/schema";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface EditEventModalProps {
   isOpen: boolean;
@@ -67,7 +68,7 @@ const EditEventModal: FC<EditEventModalProps> = ({
       location: "",
       priority: "medium",
       type: "conference",
-      goal: "attending",
+      goals: ["attending"],
       notes: "",
     },
   });
@@ -75,13 +76,32 @@ const EditEventModal: FC<EditEventModalProps> = ({
   // Update form when event changes
   useEffect(() => {
     if (event) {
+      // Parse goals from string to array if needed
+      let eventGoalsArray: EventGoal[] = [];
+      if (typeof event.goals === 'string') {
+        try {
+          // Try to parse the JSON string
+          eventGoalsArray = JSON.parse(event.goals) as EventGoal[];
+        } catch (e) {
+          // If parsing fails, assume it's a single goal and convert to array
+          eventGoalsArray = [event.goals as unknown as EventGoal];
+        }
+      } else if (Array.isArray(event.goals)) {
+        eventGoalsArray = event.goals;
+      } else if (event.goal) {
+        // Fallback to legacy goal field if available
+        eventGoalsArray = [event.goal as EventGoal];
+      }
+      
+      console.log('Event goals parsed:', eventGoalsArray);
+      
       form.reset({
         name: event.name,
         link: event.link,
         location: event.location,
         priority: event.priority,
         type: event.type,
-        goal: event.goal,
+        goals: eventGoalsArray,
         startDate: new Date(event.startDate),
         endDate: new Date(event.endDate),
         cfpDeadline: event.cfpDeadline ? new Date(event.cfpDeadline) : undefined,
@@ -304,27 +324,52 @@ const EditEventModal: FC<EditEventModalProps> = ({
                   )}
                 />
                 
-                {/* Event Goal */}
+                {/* Event Goals - Using Checkboxes */}
                 <FormField
                   control={form.control}
-                  name="goal"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event Goal <span className="text-red-500">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select goal" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {eventGoals.map((goal) => (
-                            <SelectItem key={goal} value={goal}>
-                              {goal.charAt(0).toUpperCase() + goal.slice(1)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  name="goals"
+                  render={() => (
+                    <FormItem className="sm:col-span-2">
+                      <div className="mb-4">
+                        <FormLabel>Event Goals <span className="text-red-500">*</span></FormLabel>
+                        <FormDescription>
+                          Select all goals that apply to this event
+                        </FormDescription>
+                      </div>
+                      <div className="space-y-2">
+                        {eventGoals.map((goal) => (
+                          <FormField
+                            key={goal}
+                            control={form.control}
+                            name="goals"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={goal}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(goal)}
+                                      onCheckedChange={(checked) => {
+                                        const currentValues = Array.isArray(field.value) ? [...field.value] : [];
+                                        return checked
+                                          ? field.onChange([...currentValues, goal])
+                                          : field.onChange(
+                                              currentValues.filter((value) => value !== goal)
+                                            );
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {goal.charAt(0).toUpperCase() + goal.slice(1)}
+                                  </FormLabel>
+                                </FormItem>
+                              );
+                            }}
+                          />
+                        ))}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
