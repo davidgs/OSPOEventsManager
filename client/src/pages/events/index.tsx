@@ -82,18 +82,18 @@ const EventsPage: FC = () => {
   });
 
   // Calculate counts and organize data for each event
-  const cfpCounts = cfpSubmissions.reduce((acc: Record<number, number>, cfp: any) => {
+  const cfpCounts = (cfpSubmissions as any[]).reduce((acc: Record<number, number>, cfp: any) => {
     acc[cfp.eventId] = (acc[cfp.eventId] || 0) + 1;
     return acc;
   }, {});
   
-  const attendeeCounts = attendees.reduce((acc: Record<number, number>, attendee: any) => {
+  const attendeeCounts = (attendees as any[]).reduce((acc: Record<number, number>, attendee: any) => {
     acc[attendee.eventId] = (acc[attendee.eventId] || 0) + 1;
     return acc;
   }, {});
   
   // Organize speakers and their submissions by event
-  const eventSpeakers = cfpSubmissions.reduce((acc: Record<number, Array<{
+  const eventSpeakers = (cfpSubmissions as any[]).reduce((acc: Record<number, Array<{
     id: number, 
     name: string, 
     submissions: Array<{title: string, status: string}>
@@ -133,7 +133,7 @@ const EventsPage: FC = () => {
   console.log('Event Speakers:', eventSpeakers);
   
   // Organize attendees by event
-  const eventAttendees = attendees.reduce((acc: Record<number, Array<{id: number, name: string}>>, attendee: any) => {
+  const eventAttendees = (attendees as any[]).reduce((acc: Record<number, Array<{id: number, name: string}>>, attendee: any) => {
     if (!acc[attendee.eventId]) {
       acc[attendee.eventId] = [];
     }
@@ -154,7 +154,7 @@ const EventsPage: FC = () => {
   }, {});
   
   // Organize trip reports by event
-  const eventTripReports = tripReports
+  const eventTripReports = (tripReports as any[])
     .filter((asset: any) => asset.type === 'trip_report' && asset.eventId !== null)
     .reduce((acc: Record<number, Array<{id: number, name: string, uploadedByName: string}>>, asset: any) => {
       const eventId = asset.eventId!;
@@ -280,7 +280,7 @@ const EventsPage: FC = () => {
   };
   
   // Filter events based on user selections
-  const filteredEvents = events.filter((event: Event) => {
+  const filteredEvents = (events as Event[]).filter((event: Event) => {
     let matches = true;
     
     // Filter by event type
@@ -306,61 +306,62 @@ const EventsPage: FC = () => {
   const isLoading = isLoadingEvents || isLoadingCfp || isLoadingAttendees || isLoadingTripReports;
   
   return (
-    <div className="py-6">
-      <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
+    <div className="py-4 sm:py-6">
+      <div className="px-3 sm:px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
         {/* Dashboard header */}
-        <div className="md:flex md:items-center md:justify-between pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 sm:pb-6 gap-2">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate">Events Dashboard</h2>
+            <h2 className="text-xl sm:text-2xl font-bold leading-7 text-gray-900 sm:truncate">Events Dashboard</h2>
           </div>
-          <div className="flex mt-4 md:mt-0 md:ml-4 space-x-3">
-            <Button variant="outline" className="text-sm">
-              <Upload className="mr-2 h-4 w-4" />
-              Import
+          <div className="flex mt-2 sm:mt-0 sm:ml-4 space-x-2 sm:space-x-3">
+            <Button variant="outline" className="text-xs sm:text-sm px-2 py-1 h-8 sm:h-auto">
+              <Upload className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">Import</span>
             </Button>
-            <Button onClick={openAddModal} className="text-sm">
-              <Plus className="mr-2 h-4 w-4" />
-              New Event
+            <Button onClick={openAddModal} className="text-xs sm:text-sm px-2 py-1 h-8 sm:h-auto">
+              <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden xs:inline">New Event</span>
+              <span className="xs:hidden">Add</span>
             </Button>
           </div>
         </div>
         
         {/* View toggle and filters */}
-        <div className="mb-6 bg-white shadow rounded-lg p-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-            <div className="flex space-x-3">
+        <div className="mb-4 sm:mb-6 bg-white shadow rounded-lg p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+            <div className="flex space-x-1 sm:space-x-3">
               <Button
                 variant={viewMode === ViewMode.List ? "secondary" : "ghost"}
                 onClick={() => setViewMode(ViewMode.List)}
-                className="px-3 py-2 text-sm font-medium"
+                className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium h-8 sm:h-auto"
               >
-                <List className="mr-1 h-4 w-4" /> List
+                <List className="mr-1 h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden xs:inline">List</span>
               </Button>
               <Button
                 variant={viewMode === ViewMode.Calendar ? "secondary" : "ghost"}
                 onClick={() => setViewMode(ViewMode.Calendar)}
-                className="px-3 py-2 text-sm font-medium"
+                className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium h-8 sm:h-auto"
               >
-                <CalendarIcon className="mr-1 h-4 w-4" /> Calendar
+                <CalendarIcon className="mr-1 h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden xs:inline">Calendar</span>
               </Button>
               <Button
                 variant={viewMode === ViewMode.Map ? "secondary" : "ghost"}
                 onClick={() => setViewMode(ViewMode.Map)}
-                className="px-3 py-2 text-sm font-medium"
+                className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium h-8 sm:h-auto"
               >
-                <MapPin className="mr-1 h-4 w-4" /> Map
+                <MapPin className="mr-1 h-3 w-3 sm:h-4 sm:w-4" /> <span className="hidden xs:inline">Map</span>
               </Button>
             </div>
-            <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
               <Select
                 value={eventTypeFilter}
                 onValueChange={setEventTypeFilter}
               >
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="All Event Types" />
+                <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm w-full sm:w-auto min-w-[120px]">
+                  <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Event Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="conference">Conference</SelectItem>
                   <SelectItem value="meetup">Meetup</SelectItem>
                   <SelectItem value="webinar">Webinar</SelectItem>
@@ -372,8 +373,8 @@ const EventsPage: FC = () => {
                 value={priorityFilter}
                 onValueChange={setPriorityFilter}
               >
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="All Priorities" />
+                <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm w-full sm:w-auto min-w-[120px]">
+                  <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Priorities</SelectItem>
@@ -382,14 +383,14 @@ const EventsPage: FC = () => {
                   <SelectItem value="low">Low</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+              <div className="relative col-span-2">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
                 <Input
                   type="text"
                   placeholder="Search events..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
+                  className="pl-8 h-8 sm:h-10 text-xs sm:text-sm"
                 />
               </div>
             </div>
@@ -454,14 +455,14 @@ const EventsPage: FC = () => {
         
         {/* Pagination */}
         {filteredEvents.length > 0 && viewMode === ViewMode.List && (
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex items-center justify-between mt-4 sm:mt-6">
             <div className="flex flex-1 justify-between sm:hidden">
-              <Button variant="outline" size="sm">Previous</Button>
-              <Button variant="outline" size="sm">Next</Button>
+              <Button variant="outline" size="sm" className="text-xs py-1 h-8">Previous</Button>
+              <Button variant="outline" size="sm" className="text-xs py-1 h-8">Next</Button>
             </div>
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-gray-700">
+                <p className="text-xs sm:text-sm text-gray-700">
                   Showing <span className="font-medium">1</span> to <span className="font-medium">{Math.min(filteredEvents.length, 12)}</span> of <span className="font-medium">{filteredEvents.length}</span> events
                 </p>
               </div>
