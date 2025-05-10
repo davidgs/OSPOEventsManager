@@ -485,56 +485,44 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                     <FormLabel>File</FormLabel>
                     <FormControl>
                       <div className="space-y-4">
-                        <input
-                          type="file"
-                          id="file-upload-input"
-                          className="hidden"
-                          ref={inputRef}
-                          onChange={handleChange}
-                          accept={ACCEPTED_FILE_TYPES.join(",")}
-                          {...rest}
-                        />
-                        
-                        {/* Drag and drop area */}
-                        <div
-                          className={`p-6 border-2 border-dashed rounded-lg text-center ${
-                            dragActive ? "border-primary bg-primary/10" : "border-border"
-                          }`}
-                          onDragEnter={handleDrag}
-                          onDragLeave={handleDrag}
-                          onDragOver={handleDrag}
-                          onDrop={handleDrop}
-                        >
-                          <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                          
-                          <div className="text-sm mt-2">
-                            <p className="font-medium">
-                              Drag and drop files here
-                            </p>
-                            <p className="text-muted-foreground">
-                              Files up to {formatBytes(MAX_FILE_SIZE)}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Explicit file select button - separate from drag area */}
-                        <label 
-                          htmlFor="file-upload-input" 
-                          className="block w-full"
-                        >
-                          <div className="flex justify-center">
+                        {/* iOS-compatible file upload approach */}
+                        <div className="space-y-4">
+                          {/* Input element in view - iOS requires the input to be visible */}
+                          <div className="grid grid-cols-1 gap-2">
                             <Button 
                               type="button" 
-                              className="w-full sm:w-auto"
+                              variant="outline"
+                              className="w-full justify-start px-3 py-8 h-auto"
                               onClick={(e) => {
                                 e.preventDefault();
-                                inputRef.current?.click();
+                                if (inputRef.current) {
+                                  inputRef.current.click();
+                                }
                               }}
                             >
-                              <Upload className="mr-2 h-4 w-4" /> Select File
+                              <div className="flex items-center w-full">
+                                <Upload className="h-6 w-6 mr-2 text-muted-foreground" />
+                                <div className="text-left">
+                                  <p className="font-medium">Select a file to upload</p>
+                                  <p className="text-muted-foreground text-sm">
+                                    Files up to {formatBytes(MAX_FILE_SIZE)}
+                                  </p>
+                                </div>
+                              </div>
                             </Button>
+                            
+                            <div className="relative">
+                              <input
+                                type="file"
+                                id="file-upload-input"
+                                className="absolute inset-0 w-0 h-0 opacity-0"
+                                ref={inputRef}
+                                onChange={handleChange}
+                                accept={ACCEPTED_FILE_TYPES.join(",")}
+                              />
+                            </div>
                           </div>
-                        </label>
+                        </div>
                         
                         {/* File preview */}
                         {(() => {
