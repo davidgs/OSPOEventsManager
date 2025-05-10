@@ -318,8 +318,12 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
   };
 
   // Triggers the input when the button is clicked
-  const onButtonClick = () => {
-    inputRef.current?.click();
+  const onButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (inputRef.current) {
+      inputRef.current.click();
+    }
   };
 
   return (
@@ -499,7 +503,7 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                           {...rest}
                         />
                         
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                           <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
                           
                           <div className="text-sm">
@@ -510,6 +514,16 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                               Files up to {formatBytes(MAX_FILE_SIZE)}
                             </p>
                           </div>
+                          
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={onButtonClick}
+                            className="mx-auto mt-2"
+                          >
+                            <Upload className="mr-2 h-4 w-4" /> Select File
+                          </Button>
                           
                           {form.getValues("file") && (
                             <div className="mt-4 p-2 bg-secondary rounded flex items-center justify-center text-sm">
