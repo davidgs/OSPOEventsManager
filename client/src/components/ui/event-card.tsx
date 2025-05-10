@@ -120,61 +120,61 @@ const EventCard: FC<EventCardProps> = ({
 
   return (
     <Card className={`overflow-hidden shadow rounded-lg border-l-4 ${getBorderColor(event.priority)}`}>
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2">
+      <CardContent className="p-3 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {getPriorityBadge(event.priority)}
             {getTypeBadge(event.type)}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             <Button 
               variant="ghost" 
               size="icon"
               onClick={() => onEdit(event)}
-              className="h-8 w-8 text-gray-400 hover:text-gray-500"
+              className="h-7 w-7 sm:h-8 sm:w-8 text-gray-400 hover:text-gray-500"
             >
-              <Edit className="h-4 w-4" />
+              <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
             <Button 
               variant="ghost" 
               size="icon"
               onClick={() => onDelete(event)} 
-              className="h-8 w-8 text-gray-400 hover:text-red-500"
+              className="h-7 w-7 sm:h-8 sm:w-8 text-gray-400 hover:text-red-500"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
           </div>
         </div>
         
-        <h3 className="text-lg leading-6 font-medium text-gray-900 mb-1">{event.name}</h3>
-        <div className="flex items-center text-sm text-gray-500 mb-3">
-          <MapPin className="h-4 w-4 text-gray-400 mr-1" />
-          <span>{event.location}</span>
+        <h3 className="text-base sm:text-lg leading-6 font-medium text-gray-900 mb-1 break-words">{event.name}</h3>
+        <div className="flex items-center text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3">
+          <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 mr-1 flex-shrink-0" />
+          <span className="truncate">{event.location}</span>
         </div>
         
-        <div className="flex items-center text-sm text-gray-500 mb-3">
-          <Calendar className="h-4 w-4 text-gray-400 mr-1" />
-          <span>
+        <div className="flex items-center text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3">
+          <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 mr-1 flex-shrink-0" />
+          <span className="truncate">
             {format(new Date(event.startDate), "MMM d, yyyy")} - {format(new Date(event.endDate), "MMM d, yyyy")}
           </span>
         </div>
         
         {hasCfpDeadlineSoon() && (
-          <div className="bg-yellow-50 p-2 rounded mb-3">
-            <div className="flex text-sm text-yellow-800">
-              <Calendar className="h-4 w-4 text-yellow-600 mr-2" />
-              <span>CFP Deadline: <strong>{format(new Date(event.cfpDeadline!), "MMM d, yyyy")} ({getDaysLeftForCfp()} days left)</strong></span>
+          <div className="bg-yellow-50 p-2 rounded mb-2 sm:mb-3">
+            <div className="flex text-xs sm:text-sm text-yellow-800">
+              <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-600 mr-1 sm:mr-2 flex-shrink-0" />
+              <span className="break-words">CFP Deadline: <strong>{format(new Date(event.cfpDeadline!), "MMM d, yyyy")} ({getDaysLeftForCfp()} days left)</strong></span>
             </div>
           </div>
         )}
         
-        <div className="border-t border-gray-200 pt-3">
-          <div className="flex items-center justify-between mb-2">
+        <div className="border-t border-gray-200 pt-2 sm:pt-3">
+          <div className="flex flex-wrap items-center gap-3 mb-2">
             <Popover>
               <PopoverTrigger asChild>
                 <div className="flex items-center space-x-1 cursor-pointer hover:text-primary transition-colors">
-                  <FileText className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm font-medium">{cfpCount} {cfpCount === 1 ? "CFP" : "CFPs"}</span>
+                  <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
+                  <span className="text-xs sm:text-sm font-medium">{cfpCount} {cfpCount === 1 ? "CFP" : "CFPs"}</span>
                 </div>
               </PopoverTrigger>
               <PopoverContent className="w-80">
@@ -217,8 +217,8 @@ const EventCard: FC<EventCardProps> = ({
             <Popover>
               <PopoverTrigger asChild>
                 <div className="flex items-center space-x-1 cursor-pointer hover:text-primary transition-colors">
-                  <Users className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm font-medium">{attendeeCount} {attendeeCount === 1 ? "Attendee" : "Attendees"}</span>
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
+                  <span className="text-xs sm:text-sm font-medium">{attendeeCount} {attendeeCount === 1 ? "Attendee" : "Attendees"}</span>
                 </div>
               </PopoverTrigger>
               <PopoverContent className="w-64">

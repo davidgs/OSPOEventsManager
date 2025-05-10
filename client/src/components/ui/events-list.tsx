@@ -28,7 +28,7 @@ const EventsList: FC<EventsListProps> = ({
   onDeleteEvent,
 }) => {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 px-2 sm:px-0">
       {events.map((event) => (
         <EventCard
           key={event.id}
@@ -47,10 +47,10 @@ const EventsList: FC<EventsListProps> = ({
       <Button
         onClick={onAddEvent}
         variant="outline"
-        className="h-full min-h-[300px] relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        className="h-full min-h-[250px] sm:min-h-[300px] relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-4 sm:p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
       >
         <div className="flex flex-col items-center justify-center">
-          <PlusCircle className="h-12 w-12 text-gray-400 mb-2" />
+          <PlusCircle className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mb-2" />
           <span className="block text-sm font-medium text-gray-600">Add new event</span>
         </div>
       </Button>
