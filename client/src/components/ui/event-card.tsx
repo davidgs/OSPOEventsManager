@@ -245,8 +245,8 @@ const EventCard: FC<EventCardProps> = ({
               <Popover>
                 <PopoverTrigger asChild>
                   <div className="flex items-center space-x-1 cursor-pointer hover:text-primary transition-colors">
-                    <BookOpen className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm font-medium">{tripReports.length} {tripReports.length === 1 ? "Trip Report" : "Trip Reports"}</span>
+                    <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
+                    <span className="text-xs sm:text-sm font-medium">{tripReports.length} {tripReports.length === 1 ? "Trip Report" : "Trip Reports"}</span>
                   </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-64">
@@ -316,9 +316,9 @@ const EventCard: FC<EventCardProps> = ({
         </div>
       </CardContent>
       
-      <CardFooter className="bg-gray-50 px-5 py-3 flex justify-end">
+      <CardFooter className="bg-gray-50 px-3 sm:px-5 py-2 sm:py-3 flex justify-end">
         <Link href={`/events/${event.id}`}>
-          <Button variant="link" className="font-medium text-primary hover:text-blue-700">
+          <Button variant="link" className="text-sm sm:text-base font-medium text-primary hover:text-blue-700 p-0 h-auto">
             View details →
           </Button>
         </Link>
