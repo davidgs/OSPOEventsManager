@@ -56,7 +56,7 @@ import {
   Eye
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AssetUploadForm } from "@/components/forms/asset-upload-form";
+import { SimpleFileUploadForm } from "@/components/forms/simple-file-upload";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { AssetPreviewModal } from "@/components/modals/asset-preview-modal";
 
