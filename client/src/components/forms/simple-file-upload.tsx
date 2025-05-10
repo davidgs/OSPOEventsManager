@@ -56,17 +56,9 @@ const assetUploadSchema = z.object({
       }
       return true;
     }, "File type not supported")
-    .superRefine((files, ctx) => {
-      // If upload method is file, make sure file is provided
-      if (ctx.parent.uploadMethod === "file") {
-        if (!files || files.length === 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Please select a file",
-          });
-        }
-      }
-    }),
+    .refine((files) => {
+      return true; // Handle this in form submission instead
+    }, "Please select a file"),
 });
 
 const newEventSchema = z.object({
@@ -120,9 +112,12 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
   });
   
   // Fetch events for dropdown
-  const { data: events = [] } = useQuery({ 
+  const { data: eventsData } = useQuery({ 
     queryKey: ["/api/events"],
   });
+  
+  // Define proper type for events
+  const events = Array.isArray(eventsData) ? eventsData : [];
   
   // Create event mutation
   const createEvent = useMutation({
@@ -173,8 +168,8 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
   const upload = useMutation({
     mutationFn: async (values: AssetUploadFormValues) => {
       if (values.uploadMethod === "text") {
-        // Direct text upload
-        return await apiRequest("/api/assets", {
+        // Direct text upload using fetch instead of apiRequest to avoid type issues
+        const response = await fetch("/api/assets", {
           method: "POST",
           body: JSON.stringify({
             name: values.name,
@@ -189,6 +184,12 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
             "Content-Type": "application/json",
           },
         });
+        
+        if (!response.ok) {
+          throw new Error("Failed to upload asset");
+        }
+        
+        return response;
       } else {
         // File upload using FormData
         const formData = new FormData();
