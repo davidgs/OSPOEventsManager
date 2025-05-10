@@ -5,6 +5,7 @@ import { Asset } from "@/pages/assets";
 import { formatBytes, formatDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { PRFViewer } from "@/components/ui/prf-viewer";
+import { PDFViewer } from "@/components/ui/pdf-viewer";
 
 import {
   Dialog,
@@ -35,7 +36,8 @@ import {
   FileSpreadsheet,
   BookOpen,
   User,
-  FileIcon
+  FileIcon,
+  Maximize
 } from "lucide-react";
 
 // Define types for annotations
@@ -191,36 +193,46 @@ export function AssetPreviewModal({ asset, isOpen, onClose, userName }: AssetPre
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] flex flex-col p-4 sm:p-6">
         <DialogHeader>
-          <div className="flex justify-between items-center">
-            <DialogTitle className="mr-8">{asset.name}</DialogTitle>
-            <div className="flex space-x-2">
-              <Button size="sm" variant="outline" onClick={handleZoomOut} disabled={scale <= 0.5}>
-                <ZoomOut className="h-4 w-4 mr-1" /> Zoom Out
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
+            <DialogTitle className="mr-4 text-lg break-words">{asset.name}</DialogTitle>
+            <div className="flex flex-wrap gap-2">
+              {/* Mobile-optimized controls with icons only on small screens */}
+              <Button size="sm" variant="outline" onClick={handleZoomOut} disabled={scale <= 0.5}
+                className="h-8 w-8 sm:h-auto sm:w-auto sm:px-3">
+                <ZoomOut className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Zoom Out</span>
               </Button>
-              <Button size="sm" variant="outline" onClick={handleZoomIn} disabled={scale >= 3}>
-                <ZoomIn className="h-4 w-4 mr-1" /> Zoom In
+              <Button size="sm" variant="outline" onClick={handleZoomIn} disabled={scale >= 3}
+                className="h-8 w-8 sm:h-auto sm:w-auto sm:px-3">
+                <ZoomIn className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Zoom In</span>
               </Button>
-              <Button size="sm" variant="outline" onClick={handleRotate}>
-                <RotateCw className="h-4 w-4 mr-1" /> Rotate
+              <Button size="sm" variant="outline" onClick={handleRotate}
+                className="h-8 w-8 sm:h-auto sm:w-auto sm:px-3">
+                <RotateCw className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Rotate</span>
               </Button>
-              <Button size="sm" variant="outline" onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-1" /> Download
+              <Button size="sm" variant="outline" onClick={handleDownload}
+                className="h-8 w-8 sm:h-auto sm:w-auto sm:px-3">
+                <Download className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Download</span>
               </Button>
               <Button size="sm" variant="outline" onClick={() => setIsAddingAnnotation(!isAddingAnnotation)} 
-                className={isAddingAnnotation ? "bg-primary/20" : ""}>
-                <Plus className="h-4 w-4 mr-1" /> Add Note
+                className={`h-8 w-8 sm:h-auto sm:w-auto sm:px-3 ${isAddingAnnotation ? "bg-primary/20" : ""}`}>
+                <Plus className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Add Note</span>
               </Button>
             </div>
           </div>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             {formatBytes(asset.fileSize)} • {asset.mimeType.split('/')[1].toUpperCase()} • Uploaded {formatDate(asset.uploadedAt)}
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 flex-1 min-h-0">
-          <div className="md:col-span-2 bg-muted/30 rounded-md flex items-center justify-center border border-border min-h-[300px] relative overflow-hidden" 
+        <div className="flex flex-col md:grid md:grid-cols-3 gap-4 mt-4 flex-1 min-h-0">
+          <div className="order-2 md:order-1 md:col-span-2 bg-muted/30 rounded-md flex items-center justify-center border border-border min-h-[300px] relative overflow-hidden" 
             ref={previewRef}
             onClick={handleImageClick}
             style={{
@@ -243,6 +255,14 @@ export function AssetPreviewModal({ asset, isOpen, onClose, userName }: AssetPre
             ) : isPrfFile(asset.mimeType, asset.name) ? (
               <div className="w-full h-full min-h-[400px]">
                 <PRFViewer 
+                  filePath={asset.filePath} 
+                  scale={scale} 
+                  rotation={rotation} 
+                />
+              </div>
+            ) : asset.mimeType === 'application/pdf' || asset.name.toLowerCase().endsWith('.pdf') ? (
+              <div className="w-full h-full min-h-[400px]">
+                <PDFViewer 
                   filePath={asset.filePath} 
                   scale={scale} 
                   rotation={rotation} 
@@ -280,7 +300,7 @@ export function AssetPreviewModal({ asset, isOpen, onClose, userName }: AssetPre
             ))}
           </div>
           
-          <div className="bg-muted/10 rounded-md p-4 border border-border min-h-[300px] flex flex-col">
+          <div className="order-1 md:order-2 bg-muted/10 rounded-md p-4 border border-border min-h-[200px] md:min-h-[300px] flex flex-col">
             <h3 className="text-sm font-semibold mb-2">Asset Information</h3>
             <div className="text-xs mb-4">
               <p className="mb-1"><span className="font-semibold">Type:</span> {asset.type.replace('_', ' ')}</p>
