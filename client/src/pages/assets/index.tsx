@@ -56,7 +56,7 @@ import {
   Eye
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { SimpleFileUploadForm } from "@/components/forms/simple-file-upload";
+import { SimpleFileUploader } from "@/components/forms/simple-file-uploader";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { AssetPreviewModal } from "@/components/modals/asset-preview-modal";
 
@@ -394,7 +394,7 @@ export default function AssetsPage() {
               Upload files related to events, presentations, and profiles.
             </DialogDescription>
           </DialogHeader>
-          <SimpleFileUploadForm onComplete={() => setIsUploadDialogOpen(false)} />
+          <SimpleFileUploader onComplete={() => setIsUploadDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 

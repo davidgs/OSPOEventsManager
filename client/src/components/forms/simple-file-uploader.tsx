@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { assetTypes, eventTypes, eventPriorities } from "@shared/schema";
 import { formatBytes } from "@/lib/utils";
 
@@ -55,10 +55,7 @@ const assetUploadSchema = z.object({
         return ACCEPTED_FILE_TYPES.includes(files[0].type);
       }
       return true;
-    }, "File type not supported")
-    .refine((files) => {
-      return true; // Handle this in form submission instead
-    }, "Please select a file"),
+    }, "File type not supported"),
 });
 
 const newEventSchema = z.object({
@@ -80,7 +77,7 @@ type AssetUploadFormProps = {
 type AssetUploadFormValues = z.infer<typeof assetUploadSchema>;
 type NewEventFormValues = z.infer<typeof newEventSchema>;
 
-export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
+export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
   const { toast } = useToast();
   const [showAddEventDialog, setShowAddEventDialog] = useState(false);
   
@@ -168,7 +165,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
   const upload = useMutation({
     mutationFn: async (values: AssetUploadFormValues) => {
       if (values.uploadMethod === "text") {
-        // Direct text upload using fetch instead of apiRequest to avoid type issues
+        // Direct text upload
         const response = await fetch("/api/assets", {
           method: "POST",
           body: JSON.stringify({
@@ -456,7 +453,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
             </TabsContent>
           </Tabs>
 
-          {/* Fixed position action buttons for better accessibility on mobile/iPad */}
+          {/* Fixed position action buttons for better accessibility on iPad */}
           <div className="sticky bottom-0 left-0 right-0 bg-background pt-4 pb-2 border-t mt-6">
             <div className="flex justify-between sm:justify-end gap-4 px-1">
               <Button 
@@ -488,15 +485,14 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
       
       {/* Add New Event Dialog */}
       <Dialog open={showAddEventDialog} onOpenChange={setShowAddEventDialog}>
-        <DialogContent className="max-w-md pt-8 pb-0 px-4 overflow-hidden">
-          <DialogHeader className="pb-4">
+        <DialogContent className="max-w-md pt-6 px-4 overflow-auto max-h-[90vh]">
+          <DialogHeader className="mb-4">
             <DialogTitle>Add New Event</DialogTitle>
           </DialogHeader>
-          
-          <div className="overflow-y-auto max-h-[60vh] pr-2">
-            <Form {...newEventForm}>
-              <form onSubmit={newEventForm.handleSubmit(onSubmitNewEvent)} className="space-y-4">
-                <FormField
+
+          <Form {...newEventForm}>
+            <form onSubmit={newEventForm.handleSubmit(onSubmitNewEvent)} className="space-y-4">
+              <FormField
                 control={newEventForm.control}
                 name="name"
                 render={({ field }) => (
@@ -706,7 +702,6 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
               </div>
             </form>
           </Form>
-          </div>
         </DialogContent>
       </Dialog>
     </>
