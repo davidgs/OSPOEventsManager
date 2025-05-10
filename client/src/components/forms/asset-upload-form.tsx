@@ -43,7 +43,7 @@ type AssetUploadFormProps = {
 
 const assetUploadSchema = z.object({
   name: z.string().min(1, "Asset name is required"),
-  type: z.enum(assetTypes as [string, ...string[]]),
+  type: z.enum(assetTypes as unknown as [string, ...string[]]),
   description: z.string().optional(),
   eventId: z.string().optional(),
   cfpSubmissionId: z.string().optional(),
@@ -52,7 +52,7 @@ const assetUploadSchema = z.object({
   file: z.instanceof(FileList).optional()
     .superRefine((files, ctx) => {
       // Only validate file if upload method is 'file'
-      if (ctx.path[0] === 'uploadMethod' && ctx.path[0] === 'file') return;
+      if (ctx.data.uploadMethod === 'text') return;
       
       if (files && files.length === 0) {
         ctx.addIssue({
@@ -484,18 +484,10 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                   <FormItem>
                     <FormLabel>File</FormLabel>
                     <FormControl>
-                      <div
-                        className={`p-6 border-2 border-dashed rounded-lg text-center cursor-pointer ${
-                          dragActive ? "border-primary bg-primary/10" : "border-border"
-                        }`}
-                        onDragEnter={handleDrag}
-                        onDragLeave={handleDrag}
-                        onDragOver={handleDrag}
-                        onDrop={handleDrop}
-                        onClick={onButtonClick}
-                      >
+                      <div className="space-y-4">
                         <input
                           type="file"
+                          id="file-upload-input"
                           className="hidden"
                           ref={inputRef}
                           onChange={handleChange}
@@ -503,36 +495,72 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                           {...rest}
                         />
                         
-                        <div className="space-y-4">
+                        {/* Drag and drop area */}
+                        <div
+                          className={`p-6 border-2 border-dashed rounded-lg text-center ${
+                            dragActive ? "border-primary bg-primary/10" : "border-border"
+                          }`}
+                          onDragEnter={handleDrag}
+                          onDragLeave={handleDrag}
+                          onDragOver={handleDrag}
+                          onDrop={handleDrop}
+                        >
                           <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
                           
-                          <div className="text-sm">
+                          <div className="text-sm mt-2">
                             <p className="font-medium">
-                              Click to upload or drag and drop
+                              Drag and drop files here
                             </p>
                             <p className="text-muted-foreground">
                               Files up to {formatBytes(MAX_FILE_SIZE)}
                             </p>
                           </div>
-                          
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={onButtonClick}
-                            className="mx-auto mt-2"
-                          >
-                            <Upload className="mr-2 h-4 w-4" /> Select File
-                          </Button>
-                          
-                          {form.getValues("file") && (
-                            <div className="mt-4 p-2 bg-secondary rounded flex items-center justify-center text-sm">
-                              <span className="truncate max-w-xs">
-                                {form.getValues("file")[0]?.name} ({formatBytes(form.getValues("file")[0]?.size)})
-                              </span>
-                            </div>
-                          )}
                         </div>
+                        
+                        {/* Explicit file select button - separate from drag area */}
+                        <label 
+                          htmlFor="file-upload-input" 
+                          className="block w-full"
+                        >
+                          <div className="flex justify-center">
+                            <Button 
+                              type="button" 
+                              className="w-full sm:w-auto"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                inputRef.current?.click();
+                              }}
+                            >
+                              <Upload className="mr-2 h-4 w-4" /> Select File
+                            </Button>
+                          </div>
+                        </label>
+                        
+                        {/* File preview */}
+                        {(() => {
+                          const files = form.getValues("file");
+                          if (files && files.length > 0 && files[0]) {
+                            return (
+                              <div className="p-3 bg-secondary rounded flex items-center justify-between text-sm">
+                                <span className="truncate max-w-xs">
+                                  {files[0].name} ({formatBytes(files[0].size)})
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    form.setValue("file", undefined);
+                                    form.trigger("file");
+                                  }}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     </FormControl>
                     <FormMessage />
