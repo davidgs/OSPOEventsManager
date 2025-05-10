@@ -394,7 +394,7 @@ export default function AssetsPage() {
               Upload files related to events, presentations, and profiles.
             </DialogDescription>
           </DialogHeader>
-          <AssetUploadForm onComplete={() => setIsUploadDialogOpen(false)} />
+          <SimpleFileUploadForm onComplete={() => setIsUploadDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 
