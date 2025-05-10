@@ -32,7 +32,9 @@ const ACCEPTED_FILE_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/msword",
   "text/plain",
-  "application/zip"
+  "application/zip",
+  "application/prf",
+  "application/x-prf"
 ];
 
 type AssetUploadFormProps = {

@@ -4,6 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Asset } from "@/pages/assets";
 import { formatBytes, formatDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { PRFViewer } from "@/components/ui/prf-viewer";
 
 import {
   Dialog,
@@ -33,7 +34,8 @@ import {
   PresentationIcon,
   FileSpreadsheet,
   BookOpen,
-  User
+  User,
+  FileIcon
 } from "lucide-react";
 
 // Define types for annotations
@@ -163,10 +165,26 @@ export function AssetPreviewModal({ asset, isOpen, onClose, userName }: AssetPre
         return <FileSpreadsheet className="h-12 w-12 text-muted-foreground" />;
       } else if (subType.includes('word') || subType.includes('document')) {
         return <BookOpen className="h-12 w-12 text-muted-foreground" />;
+      } else if (subType.includes('prf')) {
+        return <FileIcon className="h-12 w-12 text-muted-foreground" />;
       }
     }
     
     return <File className="h-12 w-12 text-muted-foreground" />;
+  };
+  
+  // Helper function to check if the file is a PRF
+  const isPrfFile = (mimeType: string, filename: string): boolean => {
+    if (mimeType === 'application/prf' || mimeType === 'application/x-prf') {
+      return true;
+    }
+    
+    // Also check file extension
+    if (filename.toLowerCase().endsWith('.prf')) {
+      return true;
+    }
+    
+    return false;
   };
   
   if (!asset) return null;
@@ -220,6 +238,14 @@ export function AssetPreviewModal({ asset, isOpen, onClose, userName }: AssetPre
                   src={asset.filePath} 
                   alt={asset.name}
                   className="object-contain max-w-full max-h-full"
+                />
+              </div>
+            ) : isPrfFile(asset.mimeType, asset.name) ? (
+              <div className="w-full h-full min-h-[400px]">
+                <PRFViewer 
+                  filePath={asset.filePath} 
+                  scale={scale} 
+                  rotation={rotation} 
                 />
               </div>
             ) : (
