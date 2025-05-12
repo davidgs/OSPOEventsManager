@@ -2,10 +2,17 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
+import { initKeycloak, secureWithKeycloak, keycloakUserMapper } from "./keycloak-config";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Initialize Keycloak
+const keycloak = initKeycloak(app);
+
+// Apply Keycloak user mapping middleware
+app.use(keycloakUserMapper);
 
 // Serve static files from the public directory
 app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
@@ -42,6 +49,9 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  
+  // Apply Keycloak security to routes
+  secureWithKeycloak(app, keycloak);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
