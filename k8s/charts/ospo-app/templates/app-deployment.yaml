@@ -165,16 +165,21 @@ spec:
           resources:
             {{- toYaml .Values.appServer.resources | nindent 12 }}
           volumeMounts:
+            # Mount volumes in consistent order - critical for Kubernetes
             - name: app-code
               mountPath: /app-code
-            - name: app-data
-              mountPath: /app/uploads
             - name: app-shared
               mountPath: /app
               readOnly: false
+            # Use either app-data OR shared-volume for uploads, not both
             {{- if .Values.sharedVolume.enabled }}
+            # Use shared persistent volume for uploads
             - name: shared-volume
-              mountPath: {{ .Values.sharedVolume.mountPath }}
+              mountPath: /app/uploads
+            {{- else }}
+            # Use ephemeral volume for uploads if no shared volume
+            - name: app-data
+              mountPath: /app/uploads
             {{- end }}
           livenessProbe:
             httpGet:

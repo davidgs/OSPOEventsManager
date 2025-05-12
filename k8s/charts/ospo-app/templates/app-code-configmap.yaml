@@ -101,8 +101,9 @@ data:
     const fileUpload = require('express-fileupload');
     const fs = require('fs');
     const path = require('path');
-    const { Pool } = require('@neondatabase/serverless');
+    const { Pool, neonConfig } = require('@neondatabase/serverless');
     const { drizzle } = require('drizzle-orm/neon-serverless');
+    const { eq } = require('drizzle-orm');
     const schema = require('../shared/schema');
     const ws = require('ws');
     
