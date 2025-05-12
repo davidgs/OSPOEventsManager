@@ -872,11 +872,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/approval-workflows/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`Fetching workflow with ID: ${id}`);
       const workflow = await storage.getApprovalWorkflow(id);
       
       if (!workflow) {
+        console.log(`Workflow not found with ID: ${id}`);
         return res.status(404).json({ message: "Approval workflow not found" });
       }
+      
+      console.log(`Found workflow:`, workflow);
       
       // Get related data
       const reviewers = await storage.getWorkflowReviewers(id);
@@ -884,14 +888,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const comments = await storage.getWorkflowComments(id);
       const history = await storage.getWorkflowHistory(id);
       
+      console.log(`Related data: reviewers=${reviewers.length || 0}, stakeholders=${stakeholders.length || 0}, comments=${comments.length || 0}, history=${history.length || 0}`);
+      
       // Return workflow with related data
-      res.json({
+      const fullWorkflow = {
         ...workflow,
-        reviewers,
-        stakeholders,
-        comments,
-        history
-      });
+        reviewers: reviewers || [],
+        stakeholders: stakeholders || [],
+        comments: comments || [],
+        history: history || []
+      };
+      
+      console.log(`Returning full workflow data`);
+      res.json(fullWorkflow);
     } catch (err) {
       console.error(`Error fetching approval workflow ${req.params.id}:`, err);
       res.status(500).json({ message: "Failed to fetch approval workflow" });

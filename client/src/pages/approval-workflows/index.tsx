@@ -35,6 +35,15 @@ export default function ApprovalWorkflowsPage() {
   // Fetch all workflows or filtered by status
   const { data: workflows, isLoading, error } = useQuery({
     queryKey: ['/api/approval-workflows', activeTab !== 'all' ? { status: activeTab } : {}],
+    select: (data) => {
+      // Further filter on client-side if needed
+      if (activeTab === 'all') {
+        return data; // Show all workflows
+      } else {
+        // Double-check filtering to ensure only workflows with matching status are shown
+        return data.filter((workflow: any) => workflow.status === activeTab);
+      }
+    }
   });
 
   // Fetch users for reviewers selection
