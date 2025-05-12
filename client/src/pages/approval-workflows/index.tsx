@@ -54,10 +54,7 @@ export default function ApprovalWorkflowsPage() {
 
   // Create a new workflow
   const createWorkflowMutation = useMutation({
-    mutationFn: (workflow: any) => apiRequest('/api/approval-workflows', {
-      method: 'POST',
-      data: workflow
-    }),
+    mutationFn: (workflow: any) => apiRequest('POST', '/api/approval-workflows', workflow),
     onSuccess: () => {
       toast({
         title: "Workflow created",
