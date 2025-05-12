@@ -1,0 +1,25 @@
+npm error code ENOENT                                                                                                                                                    │
+│ npm error syscall open                                                                                                                                                   │
+│ npm error path /app/package.json                                                                                                                                         │
+│ npm error errno -2                                                                                                                                                       │
+│ npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/app/package.json'                                                         │
+│ npm error enoent This is related to npm not being able to find a file.                                                                                                   │
+│ npm error enoent                                                                                                                                                         │
+│ npm error A complete log of this run can be found in: /root/.npm/_logs/2025-05-12T17_54_54_280Z-debug-0.log                                                              │
+│ Starting application...                                                                                                                                                  │
+│ Running fallback server...                                                                                                                                               │
+│ node:internal/modules/cjs/loader:1215                                                                                                                                    │
+│   throw err;                                                                                                                                                             │
+│   ^                                                                                                                                                                      │
+│                                                                                                                                                                          │
+│ Error: Cannot find module '/app/index.js'                                                                                                                                │
+│     at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)                                                                                                │
+│     at Module._load (node:internal/modules/cjs/loader:1043:27)                                                                                                           │
+│     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)                                                                               │
+│     at node:internal/main/run_main_module:28:49 {                                                                                                                        │
+│   code: 'MODULE_NOT_FOUND',                                                                                                                                              │
+│   requireStack: []                                                                                                                                                       │
+│ }                                                                                                                                                                        │
+│                                                                                                                                                                          │
+│ Node.js v20.19.1                                                                                                                                                         │
+│ Stream closed EOF for default/ospo-app-app-db89f6d98-bxwzn (app-server)

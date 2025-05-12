@@ -31,25 +31,35 @@ spec:
         - name: app-server
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
           imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
-          # Using base Node.js image with volumes mounted code
-          # Start the app directly from the image
+          # Start a simple Express server
           command: ["/bin/sh", "-c"]
           args:
             - |
-              echo "Copying application files to /app..."
+              # Debug what files are in the mount
+              echo "Contents of /app-code:"
+              ls -la /app-code
+              
+              # Create app directory
               mkdir -p /app
-              cp -r /app-code/* /app/ || echo "Warning: No code mounted, using image only"
+              
+              # Copy mounted files
+              cp -v /app-code/package.json /app/ || echo "WARNING: Failed to copy package.json"
+              cp -v /app-code/index.js /app/ || echo "WARNING: Failed to copy index.js"
+              
+              # Move to app directory
               cd /app
+              
+              # Show what we have
+              echo "Contents of /app:"
+              ls -la
+              
+              # Install dependencies
               echo "Installing dependencies..."
-              npm install --no-audit
+              npm install express --no-audit
+              
+              # Run the app
               echo "Starting application..."
-              if [ -f "server/index.js" ]; then
-                echo "Found server/index.js, starting main application..."
-                npm start
-              else
-                echo "Running fallback server..."
-                node index.js
-              fi
+              node index.js
           volumeMounts:
             - name: app-code
               mountPath: /app-code

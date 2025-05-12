@@ -6,19 +6,19 @@ metadata:
     app: {{ .Release.Name }}-app
     {{- include "ospo-app.labels" . | nindent 4 }}
 data:
-  "package.json": |
+  package.json: |
     {
       "name": "ospo-events-app",
       "version": "1.0.0",
-      "main": "server/index.js",
+      "main": "index.js",
       "scripts": {
-        "start": "echo 'Starting application in fallback mode. Running with base image.'"
+        "start": "node index.js"
       },
       "dependencies": {
         "express": "^4.18.2"
       }
     }
-  "index.js": |
+  index.js: |
     const express = require('express');
     const app = express();
     const port = process.env.PORT || 5000;
