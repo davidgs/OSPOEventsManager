@@ -20,17 +20,41 @@ spec:
         # Add timestamp annotation to force update on image rebuild
         rollme: {{ randAlphaNum 5 | quote }}
     spec:
-      # Use a persistent volume claim to store application data
-      # This is simpler than git cloning which requires auth
+      # Create a ConfigMap to store the application code
       volumes:
+        - name: app-code
+          configMap:
+            name: {{ .Release.Name }}-app-code
         - name: app-data
           emptyDir: {}
       containers:
         - name: app-server
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
           imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
-          # Using pre-built docker image with all code included
-          # No custom command needed as the Docker image's CMD will be used
+          # Using base Node.js image with volumes mounted code
+          # Start the app directly from the image
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Copying application files to /app..."
+              mkdir -p /app
+              cp -r /app-code/* /app/ || echo "Warning: No code mounted, using image only"
+              cd /app
+              echo "Installing dependencies..."
+              npm ci
+              echo "Starting application..."
+              if [ -f "server/index.js" ]; then
+                echo "Found server/index.js, starting main application..."
+                npm start
+              else
+                echo "Running fallback server..."
+                node server-status.js
+              fi
+          volumeMounts:
+            - name: app-code
+              mountPath: /app-code
+            - name: app-data
+              mountPath: /app/public/uploads
           ports:
             - name: http
               containerPort: {{ .Values.appServer.service.port }}
