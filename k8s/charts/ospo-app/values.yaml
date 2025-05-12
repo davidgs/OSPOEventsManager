@@ -60,6 +60,8 @@ postgresql:
     size: 10Gi
   auth:
     username: ospo_user
+    # For development testing, using fixed passwords
+    password: "ospo_password123"
     # For production, use secrets to manage these values
     # database and password will be generated and stored in a secret if not provided
     database: ospo_db
