@@ -1,6 +1,8 @@
 #!/bin/bash
-# Script to build and manage Docker images for OSPO Event Manager
-
+# Script to build and tag Docker images for OSPO Event Management App
+# Usage: 
+#   ./docker-build.sh                 # Build and tag as latest
+#   ./docker-build.sh registry.com    # Build, tag, and push to registry
 set -e  # Exit on any error
 
 # Configuration

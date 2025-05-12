@@ -1,8 +1,14 @@
 {
   "realm": "ospo-events",
-  "auth-server-url": "http://localhost:8080/auth",
+  "auth-server-url": "http://localhost:8080/",
   "ssl-required": "external",
   "resource": "ospo-events-app",
   "public-client": true,
-  "confidential-port": 0
+  "confidential-port": 0,
+  "verify-token-audience": false,
+  "credentials": {
+    "secret": "supersecret"
+  },
+  "use-resource-role-mappings": true,
+  "enable-cors": true
 }
