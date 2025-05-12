@@ -76,9 +76,15 @@ keycloak:
     tag: 21.1.2
     pullPolicy: IfNotPresent
   auth:
+    adminUser: admin
     existingSecret: null
+    secretKeys:
+      adminPasswordKey: admin-password
+  extraEnv: []
   service:
     port: 8080
+  persistence:
+    enabled: false
   resources:
     limits:
       cpu: 1000m
@@ -96,8 +102,13 @@ minio:
     rootUser: minio
     rootPassword: minio123
     existingSecret: null
+    secretKeys:
+      rootPasswordKey: root-password
   service:
     port: 9000
+    consolePort: 9001
+  persistence:
+    enabled: false
   resources:
     limits:
       cpu: 500m
