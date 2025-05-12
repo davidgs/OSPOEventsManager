@@ -67,7 +67,7 @@ export const events = pgTable("events", {
   location: text("location").notNull(),
   priority: text("priority").notNull().$type<EventPriority>(),
   type: text("type").notNull().$type<EventType>(),
-  goals: text("goals").notNull().$type<string>(), // Storing as JSON string of goals array
+  goal: text("goal").array(), // Changed from 'goals' to match database schema
   cfpDeadline: date("cfp_deadline"),
   status: text("status").notNull().default("planning").$type<EventStatus>(),
   notes: text("notes"),
@@ -89,7 +89,7 @@ export const insertEventSchema = z.object({
   location: baseInsertEventSchema.shape.location,
   priority: baseInsertEventSchema.shape.priority,
   type: baseInsertEventSchema.shape.type,
-  goals: eventGoalsArraySchema, // Updated to use array schema
+  goal: eventGoalsArraySchema, // Changed from goals to goal to match schema
   cfpDeadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format").nullable().optional(),
   notes: baseInsertEventSchema.shape.notes,
   createdById: baseInsertEventSchema.shape.createdById,
