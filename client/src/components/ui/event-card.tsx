@@ -19,10 +19,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Event } from "@shared/schema";
+import { Event as SchemaEvent } from "@shared/schema";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+// Extend the Event type to handle both goal and goals fields for backward compatibility
+interface Event extends SchemaEvent {
+  goals?: string | string[];
+}
 
 interface EventCardProps {
   event: Event;
@@ -276,8 +281,8 @@ const EventCard: FC<EventCardProps> = ({
               <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Conference Goals</h4>
             </div>
             <div className="flex items-center flex-wrap gap-1">
-              {/* Parse goals string if it's a JSON string, otherwise treat as an array */}
-              {(typeof event.goals === 'string' ? JSON.parse(event.goals) : event.goals).map((goal: string, index: number) => {
+              {/* Access the goal field from the event */}
+              {(event.goal || []).map((goal: string, index: number) => {
                 if (goal === "speaking") {
                   return speakers && speakers.length > 0 ? (
                     <Badge key={index} variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">

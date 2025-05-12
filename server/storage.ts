@@ -1402,7 +1402,8 @@ export class DatabaseStorage implements IStorage {
 
   // Event methods
   async getEvents(): Promise<Event[]> {
-    return await db.select().from(events);
+    const eventsList = await db.select().from(events);
+    return eventsList;
   }
 
   async getEvent(id: number): Promise<Event | undefined> {
@@ -1411,20 +1412,43 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
+    // Handle goal vs goals field
+    const { goals, ...restEvent } = insertEvent as any;
+    
+    // If there's a goals field from the client, use it for the goal column
+    const eventData = {
+      ...restEvent,
+      status: "planning"
+    };
+    
+    // If goals exists in the client data, convert it to goal for db storage
+    if (goals) {
+      eventData.goal = Array.isArray(goals) ? goals : [goals];
+    }
+    
     const [event] = await db
       .insert(events)
-      .values({
-        ...insertEvent,
-        status: "planning"
-      })
+      .values(eventData)
       .returning();
+    
     return event;
   }
 
   async updateEvent(id: number, updateEvent: Partial<InsertEvent>): Promise<Event | undefined> {
+    // Handle goal vs goals field
+    const { goals, ...restUpdate } = updateEvent as any;
+    
+    // Set up the update data
+    const updateData = { ...restUpdate };
+    
+    // If goals exists in the update data, move it to goal for db storage
+    if (goals) {
+      updateData.goal = Array.isArray(goals) ? goals : [goals];
+    }
+    
     const [event] = await db
       .update(events)
-      .set(updateEvent)
+      .set(updateData)
       .where(eq(events.id, id))
       .returning();
     return event || undefined;
