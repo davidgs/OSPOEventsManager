@@ -96,31 +96,16 @@ keycloak:
     secretKeys:
       adminPasswordKey: admin-password
   extraEnv:
-    - name: KC_DB
-      value: "postgres"
-    - name: KC_DB_URL
-      value: "jdbc:postgresql://ospo-app-postgresql:5432/keycloak"
-    - name: KC_DB_USERNAME
-      value: "postgres"
-    - name: KC_DB_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: "ospo-app-postgresql"
-          key: postgres-password
     - name: KC_FEATURES
       value: "preview"
     - name: KC_LOG_LEVEL
       value: "INFO,org.keycloak:DEBUG,org.infinispan:INFO"
-    - name: KC_HEALTH_ENABLED
-      value: "true"
     - name: KC_HTTP_ENABLED
       value: "true"
     - name: KC_METRICS_ENABLED
       value: "true"
     - name: KC_PROXY
       value: "edge"
-    - name: KC_HOSTNAME_STRICT
-      value: "false"
 
 # Object/File Storage (MinIO)
 minio:

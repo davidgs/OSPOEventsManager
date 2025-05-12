@@ -28,7 +28,10 @@ spec:
             - "/opt/keycloak/bin/kc.sh"
             - "start-dev"
             - "--import-realm"
-            - "--hostname-strict=false"
+            - "--db=postgres"
+            - "--db-url=jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/keycloak"
+            - "--db-username={{ .Values.postgresql.auth.username }}"
+            - "--db-password=$(DB_PASSWORD)"
             - "--transaction-xa-enabled=false"
             - "--optimized"
           ports:
@@ -43,19 +46,17 @@ spec:
                 secretKeyRef:
                   name: {{ template "ospo-app.keycloak.secretName" . }}
                   key: {{ .Values.keycloak.auth.secretKeys.adminPasswordKey }}
-            # Database configuration 
-            - name: KC_DB_URL
-              value: "jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/keycloak"
-            - name: KC_DB_USERNAME
-              value: {{ .Values.postgresql.auth.username }}
-            - name: KC_DB_PASSWORD
+            # Database configuration - password is set via an environment variable 
+            # for use in the command line arguments with $(DB_PASSWORD)
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ template "ospo-app.postgresql.secretName" . }}
                   key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
-            # Health probes
             - name: KC_HEALTH_ENABLED
               value: "true"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
             {{- range .Values.keycloak.extraEnv }}
             - name: {{ .name }}
               value: {{ .value | quote }}
