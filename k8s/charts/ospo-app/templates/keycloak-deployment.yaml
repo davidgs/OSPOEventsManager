@@ -32,7 +32,6 @@ spec:
             - "--db-url=jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/keycloak"
             - "--db-username={{ .Values.postgresql.auth.username }}"
             - "--db-password=$(DB_PASSWORD)"
-            - "--optimized"
           ports:
             - name: http
               containerPort: {{ .Values.keycloak.service.port }}
