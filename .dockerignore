@@ -1,0 +1,50 @@
+# Version control
+.git
+.gitignore
+
+# Dependency directories
+node_modules
+
+# Build output
+dist
+build
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.swp
+*.swo
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Test coverage output
+coverage
+
+# Temporary files
+tmp
+temp
+
+# Docker related
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Kubernetes
+k8s
+
+# User uploads (will be mounted as a volume)
+public/uploads/*
+
+# npm cache
+.npm

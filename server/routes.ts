@@ -42,6 +42,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     tempFileDir: '/tmp/'
   }));
 
+  // Health check endpoint for Kubernetes
+  app.get("/api/health", async (_req: Request, res: Response) => {
+    try {
+      // In a production environment, we would add more checks:
+      // 1. Database connectivity
+      // 2. Keycloak connectivity
+      // 3. MinIO connectivity
+      // 4. File system access for uploads
+
+      // For now, a simple check that our storage layer is working
+      await storage.getEvents();
+      
+      res.json({
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        service: "ospo-app",
+        version: process.env.APP_VERSION || "1.0.0"
+      });
+    } catch (error) {
+      console.error("Health check failed:", error);
+      res.status(500).json({
+        status: "unhealthy",
+        timestamp: new Date().toISOString(),
+        error: "Service is not healthy"
+      });
+    }
+  });
+
   // Events API routes
   app.get("/api/events", async (req: Request, res: Response) => {
     try {

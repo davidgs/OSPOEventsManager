@@ -5,7 +5,7 @@ replicaCount: 1
 
 # GitHub repository details
 repository:
-  url: https://github.com/your-org/ospo-app.git
+  url: https://github.com/davidgs/OSPOEventManager.git
   branch: main
   # Optional: Deploy from a specific commit
   # commitHash: 
