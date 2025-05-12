@@ -30,37 +30,28 @@ export const cfpStatuses = ["draft", "submitted", "accepted", "rejected", "withd
 export const cfpStatusSchema = z.enum(cfpStatuses);
 export type CFPStatus = z.infer<typeof cfpStatusSchema>;
 
-// Users table (for reference)
+// Users table (now acts as a reference to Keycloak users)
+// Only storing minimal application-specific data that's not in Keycloak
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  name: text("name"),
-  email: text("email"),
-  bio: text("bio"),
-  role: text("role"),
-  jobTitle: text("job_title"),
-  headshot: text("headshot"),
+  keycloakId: text("keycloak_id").notNull().unique(), // Reference to Keycloak's user ID
+  username: text("username").notNull().unique(),      // Cached from Keycloak for easier queries
+  preferences: text("preferences"),                    // App-specific preferences (JSON)
+  lastLogin: timestamp("last_login"),                  // Track last login time
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Schema for creating a reference to a Keycloak user in our database
 export const insertUserSchema = createInsertSchema(users).pick({
+  keycloakId: true,
   username: true,
-  password: true,
+}).extend({
+  preferences: z.string().optional(),
 });
 
-export const updateUserProfileSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }).optional(),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }).optional(),
-  bio: z.string().max(500).optional(),
-  role: z.string().min(1, {
-    message: "Please select a role.",
-  }).optional(),
-  jobTitle: z.string().optional(),
-  headshot: z.string().optional(),
+// Schema for updating user preferences 
+export const updateUserPreferencesSchema = z.object({
+  preferences: z.string().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
