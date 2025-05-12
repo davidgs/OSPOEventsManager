@@ -18,3 +18,19 @@ data:
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO {{ .Values.postgresql.auth.username }};
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO {{ .Values.postgresql.auth.username }};
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO {{ .Values.postgresql.auth.username }};
+    
+    -- Create a function to concatenate strings (for Keycloak compatibility)
+    CREATE OR REPLACE FUNCTION custom_concat(VARIADIC text[]) 
+    RETURNS text AS $$
+    BEGIN
+      RETURN concat_ws('', VARIADIC $1);
+    END;
+    $$ LANGUAGE plpgsql;
+
+    -- Create an alias for CONCAT
+    CREATE OR REPLACE FUNCTION CONCAT(VARIADIC text[]) 
+    RETURNS text AS $$
+    BEGIN
+      RETURN concat_ws('', VARIADIC $1);
+    END;
+    $$ LANGUAGE plpgsql;

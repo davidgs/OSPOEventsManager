@@ -28,9 +28,10 @@ spec:
             - "/opt/keycloak/bin/kc.sh"
             - "start-dev"
             - "--db=postgres"
-            - "--db-url-host={{ .Release.Name }}-postgresql"
-            - "--db-url-database=keycloak"
             - "--transaction-xa-enabled=false"
+            - "--db-dialect=postgres"
+            - "--optimized"
+            - "--import-realm"
           ports:
             - name: http
               containerPort: {{ .Values.keycloak.service.port }}
@@ -55,6 +56,9 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /opt/keycloak/data
+            - name: import
+              mountPath: /opt/keycloak/data/import
+              readOnly: true
           # Use startup probe to give Keycloak time to initialize
           startupProbe:
             httpGet:
@@ -84,3 +88,6 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        - name: import
+          configMap:
+            name: {{ .Release.Name }}-keycloak-realm
