@@ -208,17 +208,17 @@ export default function WorkflowDetailPage() {
                 <div>
                   <CardTitle className="text-2xl">{workflow.title}</CardTitle>
                   <CardDescription className="mt-1">
-                    {workflow.itemType.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                    {events && (
+                    {workflow.itemType && workflow.itemType.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                    {workflow.itemId && (
                       <span className="ml-1 font-medium">
-                        for {events.find((event: any) => event.id === workflow.itemId)?.name || `Event #${workflow.itemId}`}
+                        for Event #{workflow.itemId}
                       </span>
                     )}
                   </CardDescription>
                 </div>
                 <div className="flex flex-col gap-2 items-end">
-                  {getStatusBadge(workflow.status)}
-                  <Badge variant="outline" className="capitalize">{workflow.priority} Priority</Badge>
+                  {workflow.status && getStatusBadge(workflow.status)}
+                  {workflow.priority && <Badge variant="outline" className="capitalize">{workflow.priority} Priority</Badge>}
                 </div>
               </div>
             </CardHeader>
@@ -233,11 +233,11 @@ export default function WorkflowDetailPage() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">Created:</span>{' '}
-                  {formatDate(workflow.createdAt)}
+                  {workflow.createdAt ? formatDate(workflow.createdAt) : 'Unknown'}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Last Updated:</span>{' '}
-                  {formatDate(workflow.updatedAt)}
+                  {workflow.updatedAt ? formatDate(workflow.updatedAt) : 'Unknown'}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Due Date:</span>{' '}
@@ -245,7 +245,7 @@ export default function WorkflowDetailPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Requester:</span>{' '}
-                  User #{workflow.requesterId}
+                  {workflow.requesterId ? `User #${workflow.requesterId}` : 'Unknown'}
                 </div>
               </div>
             </CardContent>
