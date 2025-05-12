@@ -233,8 +233,8 @@ export const approvalStatuses = ["pending", "approved", "rejected", "changes_req
 export const approvalStatusSchema = z.enum(approvalStatuses);
 export type ApprovalStatus = z.infer<typeof approvalStatusSchema>;
 
-// Approval workflow item types
-export const approvalItemTypes = ["event", "cfp_submission", "sponsorship", "budget_request"] as const;
+// Approval workflow request types
+export const approvalItemTypes = ["event_attendance", "event_cfp_submission", "event_speaking", "event_sponsorship", "event_budget_request"] as const;
 export const approvalItemTypeSchema = z.enum(approvalItemTypes);
 export type ApprovalItemType = z.infer<typeof approvalItemTypeSchema>;
 

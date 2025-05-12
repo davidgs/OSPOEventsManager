@@ -175,11 +175,12 @@ export default function ApprovalWorkflowsPage() {
           </div>
           <div className="flex justify-between items-center">
             <CardDescription className="flex items-center gap-1 capitalize">
-              {workflow.itemType.replace('_', ' ')}: {' '}
-              {workflow.itemType === "event" && events 
-                ? events.find((event: any) => event.id === workflow.itemId)?.name || `#${workflow.itemId}`
-                : `#${workflow.itemId}`
-              }
+              {workflow.itemType.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+              {events && (
+                <span className="ml-1 font-medium">
+                  for {events.find((event: any) => event.id === workflow.itemId)?.name || `Event #${workflow.itemId}`}
+                </span>
+              )}
             </CardDescription>
             <div>{getPriorityBadge(workflow.priority)}</div>
           </div>
@@ -256,13 +257,13 @@ export default function ApprovalWorkflowsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="itemType">Item Type <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="itemType">Request Type <span className="text-red-500">*</span></Label>
                     <Select 
                       onValueChange={(value) => handleSelectChange("itemType", value)} 
                       value={newWorkflow.itemType}
                     >
                       <SelectTrigger id="itemType">
-                        <SelectValue placeholder="Select item type" />
+                        <SelectValue placeholder="Select request type" />
                       </SelectTrigger>
                       <SelectContent>
                         {approvalItemTypes.map(type => (
@@ -274,8 +275,8 @@ export default function ApprovalWorkflowsPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="itemId">Item ID <span className="text-red-500">*</span></Label>
-                    {newWorkflow.itemType === "event" && events ? (
+                    <Label htmlFor="itemId">Event <span className="text-red-500">*</span></Label>
+                    {events ? (
                       <Select 
                         onValueChange={(value) => setNewWorkflow(prev => ({ ...prev, itemId: value }))} 
                         value={newWorkflow.itemId !== "" ? newWorkflow.itemId.toString() : undefined}
@@ -292,14 +293,9 @@ export default function ApprovalWorkflowsPage() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <Input 
-                        id="itemId" 
-                        name="itemId" 
-                        type="number"
-                        placeholder="ID of the related item"
-                        value={newWorkflow.itemId}
-                        onChange={handleInputChange}
-                      />
+                      <div className="text-muted-foreground p-2 border rounded-md">
+                        Loading events...
+                      </div>
                     )}
                   </div>
                 </div>

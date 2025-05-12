@@ -67,10 +67,11 @@ export const approvalStatuses = [
   "changes_requested"
 ];
 
-// Approval workflow item types
+// Approval workflow request types
 export const approvalItemTypes = [
-  "event",
-  "cfp_submission",
-  "sponsorship",
-  "budget_request"
+  "event_attendance",
+  "event_cfp_submission",
+  "event_speaking",
+  "event_sponsorship",
+  "event_budget_request"
 ];
