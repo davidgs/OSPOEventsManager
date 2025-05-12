@@ -21,12 +21,6 @@ spec:
         rollme: {{ randAlphaNum 5 | quote }}
     spec:
       # Create a ConfigMap to store the application code
-      volumes:
-        - name: app-code
-          configMap:
-            name: {{ .Release.Name }}-app-code
-        - name: app-data
-          emptyDir: {}
       containers:
         - name: app-server
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
@@ -34,11 +28,6 @@ spec:
           command: ["sh", "-c"]
           args:
             - mkdir -p /app && cd /app && echo '{"name":"ospo-events-app","version":"1.0.0","main":"index.js","scripts":{"start":"node index.js"},"dependencies":{"express":"^4.18.2"}}' > package.json && echo 'const express = require("express"); const app = express(); const port = process.env.PORT || 5000; app.get("/api/health", (req, res) => { res.json({ status: "healthy", message: "Fallback server is running" }); }); app.get("/", (req, res) => { res.send("OSPO Events App - Emergency Fallback Mode"); }); app.listen(port, "0.0.0.0", () => { console.log(`Emergency fallback server listening on port ${port}`); });' > index.js && npm install express --no-audit && node index.js
-          volumeMounts:
-            - name: app-code
-              mountPath: /app-code
-            - name: app-data
-              mountPath: /app/public/uploads
           ports:
             - name: http
               containerPort: {{ .Values.appServer.service.port }}
@@ -91,6 +80,8 @@ spec:
           resources:
             {{- toYaml .Values.appServer.resources | nindent 12 }}
           volumeMounts:
+            - name: app-code
+              mountPath: /app-code
             - name: app-data
               mountPath: /app/uploads
             {{- if .Values.sharedVolume.enabled }}
@@ -112,6 +103,9 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
       volumes:
+        - name: app-code
+          configMap:
+            name: {{ .Release.Name }}-app-code
         - name: app-data
           emptyDir: {}
         {{- if .Values.sharedVolume.enabled }}
