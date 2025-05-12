@@ -49,7 +49,7 @@ spec:
               
               # Always create the package.json directly to ensure correct formatting
               echo "Creating package.json file..."
-              cat > /app/package.json << 'EOF'
+              cat > /app/package.json << 'EOFPKG'
 {
   "name": "ospo-events-app",
   "version": "1.0.0",
@@ -61,11 +61,11 @@ spec:
     "express": "^4.18.2"
   }
 }
-EOF
+EOFPKG
               
               # Always create index.js directly to ensure proper formatting
               echo "Creating index.js file..."
-              cat > /app/index.js << 'EOF'
+              cat > /app/index.js << 'EOFJS'
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 5000;
@@ -89,7 +89,7 @@ app.get("/api/info", (req, res) => {
 app.listen(port, "0.0.0.0", () => {
   console.log(`Emergency fallback server listening on port ${port}`);
 });
-EOF
+EOFJS
               
               # Show created files
               echo "Contents of working directory:"
