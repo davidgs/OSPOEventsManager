@@ -34,3 +34,11 @@ data:
       RETURN concat_ws('', VARIADIC $1);
     END;
     $$ LANGUAGE plpgsql;
+    
+    -- Create REPLACE function for Keycloak compatibility
+    CREATE OR REPLACE FUNCTION REPLACE(source text, target text, replacement text)
+    RETURNS text AS $$
+    BEGIN
+      RETURN replace(source, target, replacement);
+    END;
+    $$ LANGUAGE plpgsql;
