@@ -16,6 +16,9 @@ spec:
       labels:
         app: {{ .Release.Name }}-minio
         {{- include "ospo-app.selectorLabels" . | nindent 8 }}
+      annotations:
+        # Add timestamp annotation to force update on image rebuild
+        rollme: {{ randAlphaNum 5 | quote }}
     spec:
       containers:
         - name: minio

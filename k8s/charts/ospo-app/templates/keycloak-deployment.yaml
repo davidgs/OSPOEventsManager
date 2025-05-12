@@ -16,6 +16,9 @@ spec:
       labels:
         app: {{ .Release.Name }}-keycloak
         {{- include "ospo-app.selectorLabels" . | nindent 8 }}
+      annotations:
+        # Add timestamp annotation to force update on image rebuild
+        rollme: {{ randAlphaNum 5 | quote }}
     spec:
       containers:
         - name: keycloak
@@ -24,15 +27,26 @@ spec:
           command: 
             - "/opt/keycloak/bin/kc.sh"
             - "start-dev"
-            - "--db=dev-mem"
           ports:
             - name: http
               containerPort: {{ .Values.keycloak.service.port }}
               protocol: TCP
           env:
-            # Use in-memory database for development/testing
+            # Use PostgreSQL database for data persistence
             - name: KC_DB
-              value: "dev-mem"
+              value: "postgres"
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/keycloak"
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgresql
+                  key: postgres-user
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgresql
+                  key: postgres-password
             - name: KEYCLOAK_ADMIN
               value: {{ .Values.keycloak.auth.adminUser }}
             - name: KEYCLOAK_ADMIN_PASSWORD

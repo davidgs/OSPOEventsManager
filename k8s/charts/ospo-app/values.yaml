@@ -97,7 +97,20 @@ keycloak:
       adminPasswordKey: admin-password
   extraEnv:
     - name: KC_DB
-      value: dev-mem
+      value: postgres
+    - name: KC_DB_URL_HOST
+      value: "{{ .Release.Name }}-postgresql"
+    - name: KC_DB_URL_PORT
+      value: "5432"
+    - name: KC_DB_URL_DATABASE
+      value: "keycloak"
+    - name: KC_DB_USERNAME
+      value: "postgres"
+    - name: KC_DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: "{{ .Release.Name }}-postgresql"
+          key: postgres-password
     - name: KC_FEATURES
       value: "preview"
     - name: KC_LOG_LEVEL
