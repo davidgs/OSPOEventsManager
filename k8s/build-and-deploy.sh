@@ -71,20 +71,8 @@ postgresql:
     enabled: false
 
 keycloak:
-  image:
-    repository: quay.io/keycloak/keycloak
-    tag: 21.1.2
-    pullPolicy: IfNotPresent
-  auth:
-    adminUser: admin
-    existingSecret: null
-    secretKeys:
-      adminPasswordKey: admin-password
-  extraEnv: []
   service:
     port: 8080
-  persistence:
-    enabled: false
   resources:
     limits:
       cpu: 1000m
@@ -94,21 +82,8 @@ keycloak:
       memory: 1Gi
 
 minio:
-  image:
-    repository: minio/minio
-    tag: latest
-    pullPolicy: IfNotPresent
-  auth:
-    rootUser: minio
-    rootPassword: minio123
-    existingSecret: null
-    secretKeys:
-      rootPasswordKey: root-password
   service:
     port: 9000
-    consolePort: 9001
-  persistence:
-    enabled: false
   resources:
     limits:
       cpu: 500m
