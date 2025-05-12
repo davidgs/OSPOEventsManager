@@ -13,9 +13,9 @@ repository:
 # App Server configuration
 appServer:
   image:
-    # For local development using the docker-build.sh script
-    repository: ospo-app
-    tag: latest
+    # Using a public Node.js image instead of the custom image
+    repository: node
+    tag: 20-alpine
     # When using a container registry, replace with your registry URL:
     # repository: your-registry.com/ospo-app
     # tag: version

@@ -29,7 +29,10 @@ spec:
         - name: app-server
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
           imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
-          # No need to access /app directory from volume since code is contained in the image
+          # Since we're using a base Node.js image, we need to clone the repo and start the app
+          command: ["/bin/sh", "-c"]
+          args:
+            - "mkdir -p /app && cd /app && git clone {{ .Values.repository.url }} . && npm ci && npm start"
           ports:
             - name: http
               containerPort: {{ .Values.appServer.service.port }}

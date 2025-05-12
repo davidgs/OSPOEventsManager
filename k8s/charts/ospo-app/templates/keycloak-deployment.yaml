@@ -29,7 +29,6 @@ spec:
             - "start-dev"
             - "--import-realm"
             - "--hostname-strict=false"
-            - "--http-relative-path=/"
             - "--transaction-xa-enabled=false"
             - "--optimized"
           ports:
