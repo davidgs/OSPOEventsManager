@@ -19,7 +19,7 @@ appServer:
     # When using a container registry, replace with your registry URL:
     # repository: your-registry.com/ospo-app
     # tag: version
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   resources:
     limits:
       memory: 1Gi
