@@ -17,10 +17,8 @@ spec:
         app: {{ .Release.Name }}-app
         {{- include "ospo-app.selectorLabels" . | nindent 8 }}
       annotations:
-        # Add timestamp annotation to force update on image rebuild
         rollme: {{ randAlphaNum 5 | quote }}
     spec:
-      # Create a ConfigMap to store the application code
       initContainers:
         - name: app-setup
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
@@ -29,12 +27,10 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
-              # Create app directory
               mkdir -p /setup/app/server/dist
               mkdir -p /setup/app/shared
               mkdir -p /setup/app/public/uploads
               
-              # Copy ConfigMap files to appropriate locations
               if [ -f "/app-code/package.json" ]; then
                 echo "Copying package.json from ConfigMap"
                 cp -v /app-code/package.json /setup/app/
@@ -50,10 +46,8 @@ spec:
                 cp -v /app-code/shared_schema.js /setup/app/shared/schema.js
               fi
               
-              # Set permissions for uploads directory
               chmod -R 777 /setup/app/public/uploads
               
-              # Generate a static HTML file for the SPA fallback
               cat > /setup/app/public/index.html << 'EOF'
               <!DOCTYPE html>
               <html lang="en">
@@ -77,7 +71,6 @@ spec:
               </html>
               EOF
               
-              # Install dependencies
               cd /setup/app
               echo "Installing dependencies..."
               npm install --omit=dev || npm install --no-save express @neondatabase/serverless drizzle-orm express-fileupload express-session
@@ -85,7 +78,7 @@ spec:
           volumeMounts:
             - name: app-code
               mountPath: /app-code
-            - name: app-shared
+            - name: app-setup
               mountPath: /setup
       containers:
         - name: app-server
@@ -95,14 +88,8 @@ spec:
             - "/bin/sh" 
             - "-c"
             - |
-              # Ensure app directory exists
-              mkdir -p /app
-              
-              # Use the prepared application from the init container
-              echo "Starting the application from prepared environment..."
               cd /app
               
-              # Start the server
               if [ -f "server/dist/index.js" ]; then
                 echo "Starting from built server code"
                 node server/dist/index.js
@@ -129,7 +116,6 @@ spec:
                 secretKeyRef:
                   name: {{ template "ospo-app.app.secretName" . }}
                   key: session-secret
-            # New Keycloak v21+ doesn't use the /auth path anymore
             - name: KEYCLOAK_URL
               value: "http://{{ .Release.Name }}-keycloak:{{ .Values.keycloak.service.port }}"
             - name: KEYCLOAK_REALM
@@ -151,7 +137,6 @@ spec:
                 secretKeyRef:
                   name: {{ template "ospo-app.minio.secretName" . }}
                   key: secret-key
-            # Add any additional environment variables from values
             {{- if .Values.appServer.env }}
             {{- range $key, $value := .Values.appServer.env }}
             {{- if ne $key "NODE_ENV" }}
@@ -165,21 +150,13 @@ spec:
           resources:
             {{- toYaml .Values.appServer.resources | nindent 12 }}
           volumeMounts:
-            # Mount volumes in consistent order - critical for Kubernetes
             - name: app-code
               mountPath: /app-code
-            - name: app-shared
+            - name: app-setup
               mountPath: /app
-              readOnly: false
-            # Use either app-data OR shared-volume for uploads, not both
             {{- if .Values.sharedVolume.enabled }}
-            # Use shared persistent volume for uploads
             - name: shared-volume
-              mountPath: /app/uploads
-            {{- else }}
-            # Use ephemeral volume for uploads if no shared volume
-            - name: app-data
-              mountPath: /app/uploads
+              mountPath: /app/public/uploads
             {{- end }}
           livenessProbe:
             httpGet:
@@ -199,9 +176,7 @@ spec:
         - name: app-code
           configMap:
             name: {{ .Release.Name }}-app-code
-        - name: app-data
-          emptyDir: {}
-        - name: app-shared
+        - name: app-setup
           emptyDir: {}
         {{- if .Values.sharedVolume.enabled }}
         - name: shared-volume

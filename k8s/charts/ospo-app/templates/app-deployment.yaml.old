@@ -21,46 +21,98 @@ spec:
         rollme: {{ randAlphaNum 5 | quote }}
     spec:
       # Create a ConfigMap to store the application code
+      initContainers:
+        - name: app-setup
+          image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
+          imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              # Create app directory
+              mkdir -p /setup/app/server/dist
+              mkdir -p /setup/app/shared
+              mkdir -p /setup/app/public/uploads
+              
+              # Copy ConfigMap files to appropriate locations
+              if [ -f "/app-code/package.json" ]; then
+                echo "Copying package.json from ConfigMap"
+                cp -v /app-code/package.json /setup/app/
+              fi
+              
+              if [ -f "/app-code/server_dist_index.js" ]; then
+                echo "Copying server implementation from ConfigMap"
+                cp -v /app-code/server_dist_index.js /setup/app/server/dist/index.js
+              fi
+              
+              if [ -f "/app-code/shared_schema.js" ]; then
+                echo "Copying shared schema from ConfigMap"
+                cp -v /app-code/shared_schema.js /setup/app/shared/schema.js
+              fi
+              
+              # Set permissions for uploads directory
+              chmod -R 777 /setup/app/public/uploads
+              
+              # Generate a static HTML file for the SPA fallback
+              cat > /setup/app/public/index.html << 'EOF'
+              <!DOCTYPE html>
+              <html lang="en">
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>OSPO Events App</title>
+                <style>
+                  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
+                  .container { max-width: 1200px; margin: 0 auto; }
+                  h1 { color: #2563eb; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <h1>OSPO Events Management</h1>
+                  <p>Application running in Kubernetes production mode.</p>
+                  <div id="app">Loading application...</div>
+                </div>
+              </body>
+              </html>
+              EOF
+              
+              # Install dependencies
+              cd /setup/app
+              echo "Installing dependencies..."
+              npm install --omit=dev || npm install --no-save express @neondatabase/serverless drizzle-orm express-fileupload express-session
+              echo "Setup complete."
+          volumeMounts:
+            - name: app-code
+              mountPath: /app-code
+            - name: app-shared
+              mountPath: /setup
       containers:
         - name: app-server
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
           imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
-          command: 
-            - "/bin/sh"
-            - "-c" 
+          command:
+            - "/bin/sh" 
+            - "-c"
             - |
+              # Ensure app directory exists
               mkdir -p /app
+              
+              # Use the prepared application from the init container
+              echo "Starting the application from prepared environment..."
               cd /app
-              echo '{
-                "name": "ospo-events-app",
-                "version": "1.0.0",
-                "main": "index.js",
-                "scripts": {
-                  "start": "node index.js"
-                },
-                "dependencies": {
-                  "express": "^4.18.2"
-                }
-              }' > package.json
-              echo '
-              const express = require("express");
-              const app = express();
-              const port = process.env.PORT || 5000;
               
-              app.get("/api/health", (req, res) => {
-                res.json({ status: "healthy", message: "Fallback server is running" });
-              });
-              
-              app.get("/", (req, res) => {
-                res.send("OSPO Events App - Emergency Fallback Mode");
-              });
-              
-              app.listen(port, "0.0.0.0", () => {
-                console.log(`Emergency fallback server listening on port ${port}`);
-              });
-              ' > index.js
-              npm install express --no-audit
-              node index.js
+              # Start the server
+              if [ -f "server/dist/index.js" ]; then
+                echo "Starting from built server code"
+                node server/dist/index.js
+              elif [ -f "server/index.js" ]; then
+                echo "Starting from server source"
+                node server/index.js
+              else
+                echo "ERROR: No server entry point found! Check volume mounts."
+                exit 1
+              fi
           ports:
             - name: http
               containerPort: {{ .Values.appServer.service.port }}
@@ -113,13 +165,21 @@ spec:
           resources:
             {{- toYaml .Values.appServer.resources | nindent 12 }}
           volumeMounts:
+            # Mount volumes in consistent order - critical for Kubernetes
             - name: app-code
               mountPath: /app-code
+            - name: app-shared
+              mountPath: /app
+              readOnly: false
+            # Use either app-data OR shared-volume for uploads, not both
+            {{- if .Values.sharedVolume.enabled }}
+            # Use shared persistent volume for uploads
+            - name: shared-volume
+              mountPath: /app/uploads
+            {{- else }}
+            # Use ephemeral volume for uploads if no shared volume
             - name: app-data
               mountPath: /app/uploads
-            {{- if .Values.sharedVolume.enabled }}
-            - name: shared-volume
-              mountPath: {{ .Values.sharedVolume.mountPath }}
             {{- end }}
           livenessProbe:
             httpGet:
@@ -140,6 +200,8 @@ spec:
           configMap:
             name: {{ .Release.Name }}-app-code
         - name: app-data
+          emptyDir: {}
+        - name: app-shared
           emptyDir: {}
         {{- if .Values.sharedVolume.enabled }}
         - name: shared-volume
