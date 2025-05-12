@@ -14,6 +14,9 @@ import {
   approvalStatuses, approvalItemTypes, type ApprovalStatus, type ApprovalItemType
 } from "@shared/schema";
 
+// Use the updateUserPreferencesSchema as our profile update schema since it contains all the fields we need
+const updateUserProfileSchema = updateUserPreferencesSchema;
+
 // Import our new services
 import { UserService } from "./services/user-service";
 import { WorkflowService } from "./services/workflow-service";

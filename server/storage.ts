@@ -1390,6 +1390,30 @@ export class DatabaseStorage implements IStorage {
     return updatedUser || undefined;
   }
   
+  async updateUserProfile(id: number, userData: { name?: string; email?: string; bio?: string; role?: string; jobTitle?: string; headshot?: string; preferences?: string }): Promise<User | undefined> {
+    const user = await this.getUser(id);
+    if (!user) return undefined;
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    
+    // If name has been updated and there are related records, update them
+    if (userData.name && userData.name !== user.name) {
+      // Update CFP submissions where this user is the submitter
+      await db
+        .update(cfpSubmissions)
+        .set({ submitterName: userData.name })
+        .where(eq(cfpSubmissions.submitterId, id));
+      
+      // Future: Update any other tables that reference the user's name
+    }
+    
+    return updatedUser || undefined;
+  }
+  
   async updateUserLastLogin(id: number): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
