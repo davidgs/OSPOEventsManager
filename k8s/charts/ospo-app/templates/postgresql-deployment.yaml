@@ -66,12 +66,7 @@ spec:
             timeoutSeconds: 5
       volumes:
         - name: data
-          {{- if .Values.postgresql.persistence.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-postgresql-data
-          {{- else }}
-          emptyDir: {}
-          {{- end }}
+          emptyDir: {}  # Always use an empty dir to start fresh
         - name: postgresql-initdb
           configMap:
             name: {{ .Release.Name }}-postgresql-initdb

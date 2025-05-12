@@ -55,7 +55,7 @@ postgresql:
   service:
     port: 5432
   persistence:
-    enabled: true
+    enabled: false  # Temporarily disable persistent storage to start fresh
     storageClass: ""
     size: 10Gi
   auth:
