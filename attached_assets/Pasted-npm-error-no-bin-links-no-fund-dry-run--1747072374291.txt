@@ -1,0 +1,25 @@
+npm error [--no-bin-links] [--no-fund] [--dry-run]                                                                                                                       │
+│ npm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]                                                                                        │
+│ npm error [-ws|--workspaces] [--include-workspace-root] [--install-links]                                                                                                │
+│ npm error                                                                                                                                                                │
+│ npm error aliases: clean-install, ic, install-clean, isntall-clean                                                                                                       │
+│ npm error                                                                                                                                                                │
+│ npm error Run "npm help ci" for more info                                                                                                                                │
+│ npm error A complete log of this run can be found in: /root/.npm/_logs/2025-05-12T17_52_14_766Z-debug-0.log                                                              │
+│ Starting application...                                                                                                                                                  │
+│ Running fallback server...                                                                                                                                               │
+│ node:internal/modules/cjs/loader:1215                                                                                                                                    │
+│   throw err;                                                                                                                                                             │
+│   ^                                                                                                                                                                      │
+│                                                                                                                                                                          │
+│ Error: Cannot find module '/app/server-status.js'                                                                                                                        │
+│     at Module._resolveFilename (node:internal/modules/cjs/loader:1212:15)                                                                                                │
+│     at Module._load (node:internal/modules/cjs/loader:1043:27)                                                                                                           │
+│     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)                                                                               │
+│     at node:internal/main/run_main_module:28:49 {                                                                                                                        │
+│   code: 'MODULE_NOT_FOUND',                                                                                                                                              │
+│   requireStack: []                                                                                                                                                       │
+│ }                                                                                                                                                                        │
+│                                                                                                                                                                          │
+│ Node.js v20.19.1                                                                                                                                                         │
+│ Stream closed EOF for default/ospo-app-app-77f67cb758-f6lhf (app-server)

@@ -41,14 +41,14 @@ spec:
               cp -r /app-code/* /app/ || echo "Warning: No code mounted, using image only"
               cd /app
               echo "Installing dependencies..."
-              npm ci
+              npm install --no-audit
               echo "Starting application..."
               if [ -f "server/index.js" ]; then
                 echo "Found server/index.js, starting main application..."
                 npm start
               else
                 echo "Running fallback server..."
-                node server-status.js
+                node index.js
               fi
           volumeMounts:
             - name: app-code
