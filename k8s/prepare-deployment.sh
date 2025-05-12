@@ -177,17 +177,35 @@ fi
 echo ""
 echo "Updating Helm chart values..."
 
+# Detect platform and set sed command accordingly
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  # macOS uses a different sed syntax
+  SED_CMD="sed -i ''"
+else
+  # Linux and other Unix systems
+  SED_CMD="sed -i"
+fi
+
+# Values file path
+VALUES_FILE="k8s/charts/ospo-app/values.yaml"
+
 # Prompt for domain name
 read -p "Enter your domain name for the application (e.g., ospo-app.example.com): " domain_name
 if [ -n "$domain_name" ]; then
-  sed -i "s/host: ospo-app.example.com/host: $domain_name/" k8s/charts/ospo-app/values.yaml
+  # This is a portable way to update the values file across platforms
+  cp "$VALUES_FILE" "$VALUES_FILE.tmp"
+  cat "$VALUES_FILE.tmp" | sed "s/host: ospo-app.example.com/host: $domain_name/" > "$VALUES_FILE"
+  rm "$VALUES_FILE.tmp"
   echo "Updated domain name to $domain_name"
 fi
 
 # Prompt for GitHub repository URL
 read -p "Enter your GitHub repository URL (e.g., https://github.com/your-org/ospo-app.git): " repo_url
 if [ -n "$repo_url" ]; then
-  sed -i "s|url: https://github.com/your-org/ospo-app.git|url: $repo_url|" k8s/charts/ospo-app/values.yaml
+  # Replace using a safe approach
+  cp "$VALUES_FILE" "$VALUES_FILE.tmp"
+  cat "$VALUES_FILE.tmp" | sed "s|url: https://github.com/your-org/ospo-app.git|url: $repo_url|" > "$VALUES_FILE"
+  rm "$VALUES_FILE.tmp"
   echo "Updated repository URL to $repo_url"
 fi
 
