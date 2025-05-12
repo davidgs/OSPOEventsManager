@@ -26,6 +26,7 @@ export default function ApprovalWorkflowsPage() {
     itemId: "",
     priority: "medium",
     dueDate: "",
+    estimatedCosts: "",
     requesterId: 1, // TODO: Get from current user
     reviewerIds: [] as number[],
     stakeholderIds: [] as number[],
@@ -80,6 +81,7 @@ export default function ApprovalWorkflowsPage() {
         itemId: "",
         priority: "medium",
         dueDate: "",
+        estimatedCosts: "",
         requesterId: 1,
         reviewerIds: [],
         stakeholderIds: [],
@@ -125,6 +127,7 @@ export default function ApprovalWorkflowsPage() {
       itemId: typeof newWorkflow.itemId === 'string' ? parseInt(newWorkflow.itemId) : newWorkflow.itemId,
       priority: String(newWorkflow.priority),
       dueDate: newWorkflow.dueDate || null,
+      estimatedCosts: newWorkflow.estimatedCosts || null,
       requesterId: Number(newWorkflow.requesterId),
       reviewerIds: newWorkflow.reviewerIds.map(id => Number(id)),
       stakeholderIds: (newWorkflow.stakeholderIds || []).map(id => Number(id)),
@@ -348,6 +351,17 @@ export default function ApprovalWorkflowsPage() {
                       onChange={handleInputChange}
                     />
                   </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="estimatedCosts">Estimated Costs</Label>
+                  <Input 
+                    id="estimatedCosts" 
+                    name="estimatedCosts" 
+                    placeholder="e.g. $1,500 for travel and accommodation"
+                    value={newWorkflow.estimatedCosts}
+                    onChange={handleInputChange}
+                  />
                 </div>
 
                 <div className="space-y-2">
