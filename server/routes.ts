@@ -900,10 +900,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/approval-workflows", async (req: Request, res: Response) => {
     try {
+      console.log("Creating workflow:", req.body);
+      
+      // Add validation for the new item types
+      const isValidItemType = approvalItemTypes.includes(req.body.itemType);
+      if (!isValidItemType) {
+        return res.status(400).json({ 
+          message: `Invalid itemType. Allowed values: ${approvalItemTypes.join(', ')}` 
+        });
+      }
+      
       const parseResult = insertApprovalWorkflowSchema.safeParse(req.body);
       
       if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
+        console.error("Validation error:", validationError);
         return res.status(400).json({ message: validationError.message });
       }
       

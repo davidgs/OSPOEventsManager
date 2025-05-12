@@ -54,7 +54,10 @@ export default function ApprovalWorkflowsPage() {
 
   // Create a new workflow
   const createWorkflowMutation = useMutation({
-    mutationFn: (workflow: any) => apiRequest('POST', '/api/approval-workflows', workflow),
+    mutationFn: (workflow: any) => {
+      console.log("Creating workflow with data:", workflow);
+      return apiRequest('POST', '/api/approval-workflows', workflow);
+    },
     onSuccess: () => {
       toast({
         title: "Workflow created",
@@ -76,6 +79,7 @@ export default function ApprovalWorkflowsPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/approval-workflows'] });
     },
     onError: (error) => {
+      console.error("Workflow creation error:", error);
       toast({
         title: "Error",
         description: `Failed to create workflow: ${error.message}`,
