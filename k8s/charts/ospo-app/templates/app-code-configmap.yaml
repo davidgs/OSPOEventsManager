@@ -6,32 +6,134 @@ metadata:
     app: {{ .Release.Name }}-app
     {{- include "ospo-app.labels" . | nindent 4 }}
 data:
-  # Important: ConfigMap keys must use proper formatting with spaces after colons
+  # Application package.json with minimum required dependencies
   package.json: |-
     {
       "name": "ospo-events-app",
       "version": "1.0.0",
-      "main": "index.js",
       "scripts": {
-        "start": "node index.js"
+        "start": "node server/dist/index.js",
+        "build": "echo 'No build required in k8s mode'"
       },
       "dependencies": {
-        "express": "^4.18.2"
+        "express": "^4.18.2",
+        "@neondatabase/serverless": "^0.6.0",
+        "drizzle-orm": "^0.28.1",
+        "express-session": "^1.17.3",
+        "express-fileupload": "^1.4.0",
+        "ws": "^8.13.0"
       }
     }
-  index.js: |-
+  # Server directory for the Node.js backend
+  "server/dist/index.js": |-
     const express = require('express');
+    const fileUpload = require('express-fileupload');
+    const fs = require('fs');
+    const path = require('path');
+    const session = require('express-session');
+    const { Pool } = require('@neondatabase/serverless');
+    const { drizzle } = require('drizzle-orm/neon-serverless');
+    
+    // Create Express application
     const app = express();
     const port = process.env.PORT || 5000;
-
+    
+    // Configure JSON and uploads middleware
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+    app.use(fileUpload({
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+      createParentPath: true,
+      useTempFiles: true,
+      tempFileDir: '/tmp/'
+    }));
+    
+    // Create uploads directory
+    const uploadsDir = path.join(__dirname, '../../public/uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    
+    // Serve static files
+    app.use(express.static(path.join(__dirname, '../../public')));
+    app.use(express.static(path.join(__dirname, '../../dist')));
+    
+    // Session configuration
+    app.use(session({
+      secret: process.env.SESSION_SECRET || 'development-secret',
+      resave: false,
+      saveUninitialized: true,
+      cookie: { secure: process.env.NODE_ENV === 'production' }
+    }));
+    
+    // Database configuration
+    let db;
+    try {
+      if (process.env.DATABASE_URL) {
+        const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+        db = drizzle(pool);
+        console.log('Connected to PostgreSQL database');
+      } else {
+        console.warn('No DATABASE_URL provided, operating in database-less mode');
+      }
+    } catch (error) {
+      console.error('Database connection error:', error);
+    }
+    
+    // API Routes
+    
+    // Health check endpoint
     app.get('/api/health', (req, res) => {
-      res.json({ status: 'healthy', message: 'Application is running in fallback mode' });
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        service: 'ospo-app',
+        version: '1.0.0',
+        database: db ? 'connected' : 'not-connected'
+      });
     });
-
-    app.get('/', (req, res) => {
-      res.send('OSPO Events App - Fallback Mode');
+    
+    // Get all events
+    app.get('/api/events', async (req, res) => {
+      console.log('GET /api/events called');
+      try {
+        if (db) {
+          // We would query the database here
+          const events = await getEventsFromDb();
+          res.json(events);
+        } else {
+          // Return sample data in DB-less mode
+          res.json([
+            { id: 1, name: 'Sample Event 1', location: 'San Francisco', startDate: '2025-06-01' },
+            { id: 2, name: 'Sample Event 2', location: 'New York', startDate: '2025-07-15' }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
     });
-
+    
+    // Catch-all handler for SPA frontend routing
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, '../../dist', 'index.html'));
+    });
+    
+    // Sample function for database access
+    async function getEventsFromDb() {
+      if (!db) return [];
+      try {
+        // This is a placeholder - real implementation would use
+        // schema-specific queries with the actual table name
+        const result = await db.query.select().from({ schema: 'public', name: 'events' });
+        return result.rows;
+      } catch (error) {
+        console.error('Database query error:', error);
+        return [];
+      }
+    }
+    
+    // Start the server
     app.listen(port, '0.0.0.0', () => {
-      console.log(`Fallback server listening on port ${port}`);
+      console.log(`Server running on port ${port}`);
     });
