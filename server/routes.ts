@@ -4,19 +4,19 @@ import { storage } from "./storage";
 import { 
   insertEventSchema, insertCfpSubmissionSchema, 
   insertAttendeeSchema, insertSponsorshipSchema,
-  updateUserProfileSchema, insertAssetSchema,
+  updateUserPreferencesSchema, insertAssetSchema,
   assetTypes, insertStakeholderSchema,
   insertApprovalWorkflowSchema,
   insertWorkflowReviewerSchema,
   insertWorkflowStakeholderSchema,
   insertWorkflowCommentSchema,
   insertWorkflowHistorySchema,
-  approvalStatuses, approvalItemTypes
+  approvalStatuses, approvalItemTypes, type ApprovalStatus, type ApprovalItemType
 } from "@shared/schema";
 
-// Type definitions
-type ApprovalStatus = typeof approvalStatuses[number];
-type ApprovalItemType = typeof approvalItemTypes[number];
+// Import our new services
+import { UserService } from "./services/user-service";
+import { WorkflowService } from "./services/workflow-service";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import fileUpload from "express-fileupload";

@@ -1350,9 +1350,14 @@ export class MemStorage implements IStorage {
 
 // Database implementation of the storage interface
 export class DatabaseStorage implements IStorage {
-  // User methods
+  // User methods with Keycloak integration
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByKeycloakId(keycloakId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.keycloakId, keycloakId));
     return user || undefined;
   }
 
@@ -1369,41 +1374,30 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
   
-  async updateUserProfile(id: number, userData: { name?: string; email?: string; bio?: string; role?: string; jobTitle?: string; headshot?: string }): Promise<User | undefined> {
+  async updateUserPreferences(id: number, preferences: string): Promise<User | undefined> {
     const user = await this.getUser(id);
     if (!user) return undefined;
     
     const [updatedUser] = await db
       .update(users)
-      .set(userData)
+      .set({ 
+        preferences,
+        lastLogin: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+    
+    return updatedUser || undefined;
+  }
+  
+  async updateUserLastLogin(id: number): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ lastLogin: new Date() })
       .where(eq(users.id, id))
       .returning();
       
-    // If name has been changed, update related records
-    if (userData.name && userData.name !== user.name) {
-      console.log(`Updating name from "${user.name}" to "${userData.name}" for user ID ${id}`);
-      
-      // Update CFP submissions where this user is the submitter
-      const cfpUpdated = await db
-        .update(cfpSubmissions)
-        .set({ submitterName: userData.name })
-        .where(eq(cfpSubmissions.submitterId, id))
-        .returning();
-      console.log(`Updated ${cfpUpdated.length} CFP submissions`);
-        
-      // Update attendees where this user has entries
-      const attendeesUpdated = await db
-        .update(attendees)
-        .set({ name: userData.name })
-        .where(eq(attendees.userId, id))
-        .returning();
-      console.log(`Updated ${attendeesUpdated.length} attendee records`);
-      
-      // Also update any other tables that might reference this user's name
-      // e.g., events.createdByName (if such field exists), etc.
-    }
-      
-    return updatedUser;
+    return updatedUser || undefined;
   }
 
   // Event methods
