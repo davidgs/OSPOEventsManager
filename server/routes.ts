@@ -11,8 +11,12 @@ import {
   insertWorkflowStakeholderSchema,
   insertWorkflowCommentSchema,
   insertWorkflowHistorySchema,
-  ApprovalStatus, ApprovalItemType
+  approvalStatuses, approvalItemTypes
 } from "@shared/schema";
+
+// Type definitions
+type ApprovalStatus = typeof approvalStatuses[number];
+type ApprovalItemType = typeof approvalItemTypes[number];
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import fileUpload from "express-fileupload";
@@ -723,6 +727,359 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting asset:", error);
       res.status(500).json({ message: "Failed to delete asset" });
+    }
+  });
+
+  // ===== Stakeholders API =====
+  
+  app.get("/api/stakeholders", async (req: Request, res: Response) => {
+    try {
+      const stakeholders = await storage.getStakeholders();
+      res.json(stakeholders);
+    } catch (err) {
+      console.error("Error fetching stakeholders:", err);
+      res.status(500).json({ message: "Failed to fetch stakeholders" });
+    }
+  });
+  
+  app.get("/api/stakeholders/role/:role", async (req: Request, res: Response) => {
+    try {
+      const role = req.params.role;
+      const stakeholders = await storage.getStakeholdersByRole(role);
+      res.json(stakeholders);
+    } catch (err) {
+      console.error(`Error fetching stakeholders by role ${req.params.role}:`, err);
+      res.status(500).json({ message: "Failed to fetch stakeholders by role" });
+    }
+  });
+  
+  app.get("/api/stakeholders/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const stakeholder = await storage.getStakeholder(id);
+      
+      if (!stakeholder) {
+        return res.status(404).json({ message: "Stakeholder not found" });
+      }
+      
+      res.json(stakeholder);
+    } catch (err) {
+      console.error(`Error fetching stakeholder ${req.params.id}:`, err);
+      res.status(500).json({ message: "Failed to fetch stakeholder" });
+    }
+  });
+  
+  app.post("/api/stakeholders", async (req: Request, res: Response) => {
+    try {
+      const parseResult = insertStakeholderSchema.safeParse(req.body);
+      
+      if (!parseResult.success) {
+        const validationError = fromZodError(parseResult.error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      
+      const stakeholder = await storage.createStakeholder(parseResult.data);
+      res.status(201).json(stakeholder);
+    } catch (err) {
+      console.error("Error creating stakeholder:", err);
+      res.status(500).json({ message: "Failed to create stakeholder" });
+    }
+  });
+  
+  app.put("/api/stakeholders/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const parseResult = insertStakeholderSchema.partial().safeParse(req.body);
+      
+      if (!parseResult.success) {
+        const validationError = fromZodError(parseResult.error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      
+      const stakeholder = await storage.updateStakeholder(id, parseResult.data);
+      
+      if (!stakeholder) {
+        return res.status(404).json({ message: "Stakeholder not found" });
+      }
+      
+      res.json(stakeholder);
+    } catch (err) {
+      console.error(`Error updating stakeholder ${req.params.id}:`, err);
+      res.status(500).json({ message: "Failed to update stakeholder" });
+    }
+  });
+  
+  app.delete("/api/stakeholders/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteStakeholder(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Stakeholder not found" });
+      }
+      
+      res.status(204).end();
+    } catch (err) {
+      console.error(`Error deleting stakeholder ${req.params.id}:`, err);
+      res.status(500).json({ message: "Failed to delete stakeholder" });
+    }
+  });
+  
+  // ===== Approval Workflows API =====
+  
+  app.get("/api/approval-workflows", async (req: Request, res: Response) => {
+    try {
+      const status = req.query.status as ApprovalStatus | undefined;
+      const itemType = req.query.itemType as ApprovalItemType | undefined;
+      const itemId = req.query.itemId ? parseInt(req.query.itemId as string) : undefined;
+      const requesterId = req.query.requesterId ? parseInt(req.query.requesterId as string) : undefined;
+      
+      let workflows;
+      
+      if (status) {
+        workflows = await storage.getApprovalWorkflowsByStatus(status);
+      } else if (itemType && itemId) {
+        workflows = await storage.getApprovalWorkflowsByItem(itemType, itemId);
+      } else if (itemType) {
+        workflows = await storage.getApprovalWorkflowsByItemType(itemType);
+      } else if (requesterId) {
+        workflows = await storage.getApprovalWorkflowsByRequester(requesterId);
+      } else {
+        workflows = await storage.getApprovalWorkflows();
+      }
+      
+      res.json(workflows);
+    } catch (err) {
+      console.error("Error fetching approval workflows:", err);
+      res.status(500).json({ message: "Failed to fetch approval workflows" });
+    }
+  });
+  
+  app.get("/api/approval-workflows/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const workflow = await storage.getApprovalWorkflow(id);
+      
+      if (!workflow) {
+        return res.status(404).json({ message: "Approval workflow not found" });
+      }
+      
+      // Get related data
+      const reviewers = await storage.getWorkflowReviewers(id);
+      const stakeholders = await storage.getWorkflowStakeholders(id);
+      const comments = await storage.getWorkflowComments(id);
+      const history = await storage.getWorkflowHistory(id);
+      
+      // Return workflow with related data
+      res.json({
+        ...workflow,
+        reviewers,
+        stakeholders,
+        comments,
+        history
+      });
+    } catch (err) {
+      console.error(`Error fetching approval workflow ${req.params.id}:`, err);
+      res.status(500).json({ message: "Failed to fetch approval workflow" });
+    }
+  });
+  
+  app.post("/api/approval-workflows", async (req: Request, res: Response) => {
+    try {
+      const parseResult = insertApprovalWorkflowSchema.safeParse(req.body);
+      
+      if (!parseResult.success) {
+        const validationError = fromZodError(parseResult.error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      
+      const workflow = await storage.createApprovalWorkflow(parseResult.data);
+      res.status(201).json(workflow);
+    } catch (err) {
+      console.error("Error creating approval workflow:", err);
+      res.status(500).json({ message: "Failed to create approval workflow" });
+    }
+  });
+  
+  app.put("/api/approval-workflows/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const parseResult = insertApprovalWorkflowSchema.partial().safeParse(req.body);
+      
+      if (!parseResult.success) {
+        const validationError = fromZodError(parseResult.error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      
+      const workflow = await storage.updateApprovalWorkflow(id, parseResult.data);
+      
+      if (!workflow) {
+        return res.status(404).json({ message: "Approval workflow not found" });
+      }
+      
+      res.json(workflow);
+    } catch (err) {
+      console.error(`Error updating approval workflow ${req.params.id}:`, err);
+      res.status(500).json({ message: "Failed to update approval workflow" });
+    }
+  });
+  
+  app.put("/api/approval-workflows/:id/status", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status, userId } = req.body;
+      
+      // Validate inputs
+      if (!status || !userId) {
+        return res.status(400).json({ message: "Status and userId are required" });
+      }
+      
+      if (!Object.values(ApprovalStatus).includes(status as ApprovalStatus)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+      
+      const workflow = await storage.updateApprovalWorkflowStatus(id, status as ApprovalStatus, userId);
+      
+      if (!workflow) {
+        return res.status(404).json({ message: "Approval workflow not found" });
+      }
+      
+      res.json(workflow);
+    } catch (err) {
+      console.error(`Error updating approval workflow status ${req.params.id}:`, err);
+      res.status(500).json({ message: "Failed to update approval workflow status" });
+    }
+  });
+  
+  app.delete("/api/approval-workflows/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteApprovalWorkflow(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Approval workflow not found" });
+      }
+      
+      res.status(204).end();
+    } catch (err) {
+      console.error(`Error deleting approval workflow ${req.params.id}:`, err);
+      res.status(500).json({ message: "Failed to delete approval workflow" });
+    }
+  });
+  
+  // ===== Workflow Reviewers API =====
+  
+  app.get("/api/workflow-reviewers", async (req: Request, res: Response) => {
+    try {
+      const workflowId = req.query.workflowId ? parseInt(req.query.workflowId as string) : undefined;
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
+      
+      let reviewers;
+      
+      if (workflowId) {
+        reviewers = await storage.getWorkflowReviewers(workflowId);
+      } else if (userId) {
+        reviewers = await storage.getWorkflowReviewersByUser(userId);
+      } else {
+        return res.status(400).json({ message: "Either workflowId or userId is required" });
+      }
+      
+      res.json(reviewers);
+    } catch (err) {
+      console.error("Error fetching workflow reviewers:", err);
+      res.status(500).json({ message: "Failed to fetch workflow reviewers" });
+    }
+  });
+  
+  app.post("/api/workflow-reviewers", async (req: Request, res: Response) => {
+    try {
+      const parseResult = insertWorkflowReviewerSchema.safeParse(req.body);
+      
+      if (!parseResult.success) {
+        const validationError = fromZodError(parseResult.error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      
+      const reviewer = await storage.createWorkflowReviewer(parseResult.data);
+      res.status(201).json(reviewer);
+    } catch (err) {
+      console.error("Error creating workflow reviewer:", err);
+      res.status(500).json({ message: "Failed to create workflow reviewer" });
+    }
+  });
+  
+  app.put("/api/workflow-reviewers/:id/status", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status, comments } = req.body;
+      
+      // Validate inputs
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+      
+      if (!Object.values(ApprovalStatus).includes(status as ApprovalStatus)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+      
+      const reviewer = await storage.updateWorkflowReviewerStatus(id, status as ApprovalStatus, comments);
+      
+      if (!reviewer) {
+        return res.status(404).json({ message: "Workflow reviewer not found" });
+      }
+      
+      res.json(reviewer);
+    } catch (err) {
+      console.error(`Error updating workflow reviewer status ${req.params.id}:`, err);
+      res.status(500).json({ message: "Failed to update workflow reviewer status" });
+    }
+  });
+  
+  // ===== Workflow Comments API =====
+  
+  app.get("/api/workflow-comments", async (req: Request, res: Response) => {
+    try {
+      const workflowId = req.query.workflowId ? parseInt(req.query.workflowId as string) : undefined;
+      
+      if (!workflowId) {
+        return res.status(400).json({ message: "workflowId is required" });
+      }
+      
+      const comments = await storage.getWorkflowComments(workflowId);
+      res.json(comments);
+    } catch (err) {
+      console.error("Error fetching workflow comments:", err);
+      res.status(500).json({ message: "Failed to fetch workflow comments" });
+    }
+  });
+  
+  app.post("/api/workflow-comments", async (req: Request, res: Response) => {
+    try {
+      const parseResult = insertWorkflowCommentSchema.safeParse(req.body);
+      
+      if (!parseResult.success) {
+        const validationError = fromZodError(parseResult.error);
+        return res.status(400).json({ message: validationError.message });
+      }
+      
+      const comment = await storage.createWorkflowComment(parseResult.data);
+      res.status(201).json(comment);
+    } catch (err) {
+      console.error("Error creating workflow comment:", err);
+      res.status(500).json({ message: "Failed to create workflow comment" });
+    }
+  });
+  
+  // ===== Workflow History API =====
+  
+  app.get("/api/workflow-history/:workflowId", async (req: Request, res: Response) => {
+    try {
+      const workflowId = parseInt(req.params.workflowId);
+      const history = await storage.getWorkflowHistory(workflowId);
+      res.json(history);
+    } catch (err) {
+      console.error(`Error fetching workflow history for workflow ${req.params.workflowId}:`, err);
+      res.status(500).json({ message: "Failed to fetch workflow history" });
     }
   });
 
