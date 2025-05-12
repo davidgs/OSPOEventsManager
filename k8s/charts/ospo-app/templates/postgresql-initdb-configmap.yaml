@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-postgresql-initdb
+  labels:
+    app: {{ .Release.Name }}-postgresql
+    {{- include "ospo-app.labels" . | nindent 4 }}
+data:
+  init-keycloak-db.sql: |
+    CREATE DATABASE keycloak;
+    GRANT ALL PRIVILEGES ON DATABASE keycloak TO {{ .Values.postgresql.auth.username }};

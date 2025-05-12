@@ -75,3 +75,6 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        - name: postgresql-initdb
+          configMap:
+            name: {{ .Release.Name }}-postgresql-initdb

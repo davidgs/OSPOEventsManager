@@ -24,12 +24,11 @@ spec:
         - name: minio
           image: {{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}
           imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
-          command:
-            - "/bin/bash"
-            - "-c"
-            - |
-              mkdir -p /data/{{ .Values.minio.defaultBuckets }}
-              /usr/bin/minio server /data --console-address :{{ .Values.minio.service.consolePort }}
+          args:
+            - server
+            - /data
+            - --console-address
+            - :{{ .Values.minio.service.consolePort }}
           ports:
             - name: api
               containerPort: {{ .Values.minio.service.port }}
@@ -50,18 +49,25 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+          # Use startup probe to give MinIO time to initialize
+          startupProbe:
+            httpGet:
+              path: /minio/health/live
+              port: api
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
+            timeoutSeconds: 5
           livenessProbe:
             httpGet:
               path: /minio/health/live
               port: api
-            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /minio/health/ready
               port: api
-            initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
       volumes:
