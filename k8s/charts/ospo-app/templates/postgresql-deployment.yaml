@@ -22,8 +22,8 @@ spec:
     spec:
       containers:
         - name: postgresql
-          image: {{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}
-          imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
           ports:
             - name: postgresql
               containerPort: {{ .Values.postgresql.service.port }}
