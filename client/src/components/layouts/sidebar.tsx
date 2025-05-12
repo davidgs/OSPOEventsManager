@@ -2,7 +2,10 @@ import { FC } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Calendar, FileText, Users, DollarSign, Settings, Menu, File, LogOut } from "lucide-react";
+import { 
+  Calendar, FileText, Users, DollarSign, Settings, 
+  Menu, File, LogOut, UserCog, ClipboardList 
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -41,6 +44,16 @@ const navItems = [
     title: "Assets",
     href: "/assets",
     icon: File,
+  },
+  {
+    title: "Stakeholders",
+    href: "/stakeholders",
+    icon: UserCog,
+  },
+  {
+    title: "Approvals",
+    href: "/approval-workflows",
+    icon: ClipboardList,
   },
   {
     title: "Settings",

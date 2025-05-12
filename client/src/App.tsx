@@ -13,6 +13,9 @@ import CfpSubmissionsPage from "@/pages/cfp-submissions/index";
 import AttendeesPage from "@/pages/attendees/index";
 import SponsorshipsPage from "@/pages/sponsorships/index";
 import AssetsPage from "@/pages/assets/index";
+import StakeholdersPage from "@/pages/stakeholders/index";
+import ApprovalWorkflowsPage from "@/pages/approval-workflows/index";
+import ApprovalWorkflowDetailPage from "@/pages/approval-workflows/[id]";
 import SettingsPage from "@/pages/settings";
 import LoginPage from "@/pages/login";
 import UnauthorizedPage from "@/pages/unauthorized";
@@ -84,6 +87,32 @@ function App() {
                   <AssetsPage />
                 </MainLayout>
               </ProtectedRoute>
+            </Route>
+            
+            <Route path="/stakeholders">
+              <ProtectedRoute>
+                <MainLayout>
+                  <StakeholdersPage />
+                </MainLayout>
+              </ProtectedRoute>
+            </Route>
+            
+            <Route path="/approval-workflows">
+              <ProtectedRoute>
+                <MainLayout>
+                  <ApprovalWorkflowsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            </Route>
+            
+            <Route path="/approval-workflows/:id">
+              {() => (
+                <ProtectedRoute>
+                  <MainLayout>
+                    <ApprovalWorkflowDetailPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              )}
             </Route>
             
             <Route path="/settings">
