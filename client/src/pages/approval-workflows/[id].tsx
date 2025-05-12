@@ -254,6 +254,12 @@ export default function WorkflowDetailPage() {
                   <span className="text-muted-foreground">Requester:</span>{' '}
                   {workflow.requesterId ? `User #${workflow.requesterId}` : 'Unknown'}
                 </div>
+                {workflow.estimatedCosts && (
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground font-medium">Estimated Costs:</span>{' '}
+                    <span className="font-semibold">{workflow.estimatedCosts}</span>
+                  </div>
+                )}
               </div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2 border-t pt-4">
