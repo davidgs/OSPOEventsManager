@@ -73,6 +73,10 @@ postgresql:
 keycloak:
   service:
     port: 8080
+  auth:
+    adminUser: admin
+    secretKeys:
+      adminPasswordKey: admin-password
   resources:
     limits:
       cpu: 1000m
@@ -84,6 +88,12 @@ keycloak:
 minio:
   service:
     port: 9000
+  auth:
+    rootUser: minio
+    rootPassword: minio123
+    secretKeys:
+      rootPasswordKey: root-password
+  defaultBuckets: uploads
   resources:
     limits:
       cpu: 500m
