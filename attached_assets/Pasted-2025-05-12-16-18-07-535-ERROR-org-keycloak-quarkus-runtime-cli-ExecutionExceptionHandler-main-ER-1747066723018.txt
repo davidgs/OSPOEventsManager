@@ -1,0 +1,25 @@
+2025-05-12 16:18:07,535 ERROR [org.keycloak.quarkus.runtime.cli.ExecutionExceptionHandler] (main) ERROR: Failed to start server in (development) mode
+
+2025-05-12 16:18:07,535 ERROR [org.keycloak.quarkus.runtime.cli.ExecutionExceptionHandler] (main) ERROR: Failed to update database
+
+2025-05-12 16:18:07,535 ERROR [org.keycloak.quarkus.runtime.cli.ExecutionExceptionHandler] (main) ERROR: liquibase.exception.MigrationFailedException: Migration failed for changeset META-INF/jpa-changelog-8.0.0.xml::8.0.0-updating-credential-data-not-oracle-fixed::keycloak:
+
+     Reason: liquibase.exception.DatabaseException: Syntax error in SQL statement "UPDATE PUBLIC.CREDENTIAL SET CREDENTIAL_DATA = CONCAT('{""hashIterations"":', HASH_ITERATIONS, ',""algorithm"":""', ALGORITHM, '""}'), PRIORITY = '10', SECRET_DATA = CONCAT('{""value"":""', REPLACE([*]VALUE, '""', '\\\\""'), '"",""salt"":""__SALT__""}') WHERE TYPE = 'password' OR TYPE = 'password-history'"; expected "INTERSECTS (, NOT, EXISTS, UNIQUE, INTERSECTS"; SQL statement:
+
+UPDATE PUBLIC.CREDENTIAL SET CREDENTIAL_DATA = CONCAT('{"hashIterations":', HASH_ITERATIONS, ',"algorithm":"', ALGORITHM, '"}'), PRIORITY = '10', SECRET_DATA = CONCAT('{"value":"', REPLACE(VALUE, '"', '\\"'), '","salt":"__SALT__"}') WHERE TYPE = 'password' OR TYPE = 'password-history' [42001-214] [Failed SQL: (42001) UPDATE PUBLIC.CREDENTIAL SET CREDENTIAL_DATA = CONCAT('{"hashIterations":', HASH_ITERATIONS, ',"algorithm":"', ALGORITHM, '"}'), PRIORITY = '10', SECRET_DATA = CONCAT('{"value":"', REPLACE(VALUE, '"', '\\"'), '","salt":"__SALT__"}') WHERE TYPE = 'password' OR TYPE = 'password-history']
+
+2025-05-12 16:18:07,536 ERROR [org.keycloak.quarkus.runtime.cli.ExecutionExceptionHandler] (main) ERROR: Migration failed for changeset META-INF/jpa-changelog-8.0.0.xml::8.0.0-updating-credential-data-not-oracle-fixed::keycloak:
+
+     Reason: liquibase.exception.DatabaseException: Syntax error in SQL statement "UPDATE PUBLIC.CREDENTIAL SET CREDENTIAL_DATA = CONCAT('{""hashIterations"":', HASH_ITERATIONS, ',""algorithm"":""', ALGORITHM, '""}'), PRIORITY = '10', SECRET_DATA = CONCAT('{""value"":""', REPLACE([*]VALUE, '""', '\\\\""'), '"",""salt"":""__SALT__""}') WHERE TYPE = 'password' OR TYPE = 'password-history'"; expected "INTERSECTS (, NOT, EXISTS, UNIQUE, INTERSECTS"; SQL statement:
+
+UPDATE PUBLIC.CREDENTIAL SET CREDENTIAL_DATA = CONCAT('{"hashIterations":', HASH_ITERATIONS, ',"algorithm":"', ALGORITHM, '"}'), PRIORITY = '10', SECRET_DATA = CONCAT('{"value":"', REPLACE(VALUE, '"', '\\"'), '","salt":"__SALT__"}') WHERE TYPE = 'password' OR TYPE = 'password-history' [42001-214] [Failed SQL: (42001) UPDATE PUBLIC.CREDENTIAL SET CREDENTIAL_DATA = CONCAT('{"hashIterations":', HASH_ITERATIONS, ',"algorithm":"', ALGORITHM, '"}'), PRIORITY = '10', SECRET_DATA = CONCAT('{"value":"', REPLACE(VALUE, '"', '\\"'), '","salt":"__SALT__"}') WHERE TYPE = 'password' OR TYPE = 'password-history']
+
+2025-05-12 16:18:07,536 ERROR [org.keycloak.quarkus.runtime.cli.ExecutionExceptionHandler] (main) ERROR: Syntax error in SQL statement "UPDATE PUBLIC.CREDENTIAL SET CREDENTIAL_DATA = CONCAT('{""hashIterations"":', HASH_ITERATIONS, ',""algorithm"":""', ALGORITHM, '""}'), PRIORITY = '10', SECRET_DATA = CONCAT('{""value"":""', REPLACE([*]VALUE, '""', '\\\\""'), '"",""salt"":""__SALT__""}') WHERE TYPE = 'password' OR TYPE = 'password-history'"; expected "INTERSECTS (, NOT, EXISTS, UNIQUE, INTERSECTS"; SQL statement:
+
+UPDATE PUBLIC.CREDENTIAL SET CREDENTIAL_DATA = CONCAT('{"hashIterations":', HASH_ITERATIONS, ',"algorithm":"', ALGORITHM, '"}'), PRIORITY = '10', SECRET_DATA = CONCAT('{"value":"', REPLACE(VALUE, '"', '\\"'), '","salt":"__SALT__"}') WHERE TYPE = 'password' OR TYPE = 'password-history' [42001-214] [Failed SQL: (42001) UPDATE PUBLIC.CREDENTIAL SET CREDENTIAL_DATA = CONCAT('{"hashIterations":', HASH_ITERATIONS, ',"algorithm":"', ALGORITHM, '"}'), PRIORITY = '10', SECRET_DATA = CONCAT('{"value":"', REPLACE(VALUE, '"', '\\"'), '","salt":"__SALT__"}') WHERE TYPE = 'password' OR TYPE = 'password-history']
+
+2025-05-12 16:18:07,536 ERROR [org.keycloak.quarkus.runtime.cli.ExecutionExceptionHandler] (main) ERROR: Syntax error in SQL statement "UPDATE PUBLIC.CREDENTIAL SET CREDENTIAL_DATA = CONCAT('{""hashIterations"":', HASH_ITERATIONS, ',""algorithm"":""', ALGORITHM, '""}'), PRIORITY = '10', SECRET_DATA = CONCAT('{""value"":""', REPLACE([*]VALUE, '""', '\\\\""'), '"",""salt"":""__SALT__""}') WHERE TYPE = 'password' OR TYPE = 'password-history'"; expected "INTERSECTS (, NOT, EXISTS, UNIQUE, INTERSECTS"; SQL statement:
+
+UPDATE PUBLIC.CREDENTIAL SET CREDENTIAL_DATA = CONCAT('{"hashIterations":', HASH_ITERATIONS, ',"algorithm":"', ALGORITHM, '"}'), PRIORITY = '10', SECRET_DATA = CONCAT('{"value":"', REPLACE(VALUE, '"', '\\"'), '","salt":"__SALT__"}') WHERE TYPE = 'password' OR TYPE = 'password-history' [42001-214]
+
+2025-05-12 16:18:07,536 ERROR [org.keycloak.quarkus.runtime.cli.ExecutionExceptionHandler] (main) For more details run the same command passing the '--verbose' option. Also you can use '--help' to see the details about the usage of the particular command.

@@ -24,16 +24,15 @@ spec:
           command: 
             - "/opt/keycloak/bin/kc.sh"
             - "start-dev"
+            - "--db=dev-mem"
           ports:
             - name: http
               containerPort: {{ .Values.keycloak.service.port }}
               protocol: TCP
           env:
-            # Use H2 database for development/testing
+            # Use in-memory database for development/testing
             - name: KC_DB
-              value: "dev-file"
-            - name: KC_DB_URL
-              value: "jdbc:h2:file:/opt/keycloak/data/h2/keycloakdb;AUTO_SERVER=TRUE"
+              value: "dev-mem"
             - name: KEYCLOAK_ADMIN
               value: {{ .Values.keycloak.auth.adminUser }}
             - name: KEYCLOAK_ADMIN_PASSWORD

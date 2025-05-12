@@ -97,7 +97,7 @@ keycloak:
       adminPasswordKey: admin-password
   extraEnv:
     - name: KC_DB
-      value: postgres
+      value: dev-mem
     - name: KC_FEATURES
       value: "preview"
     - name: KC_LOG_LEVEL
