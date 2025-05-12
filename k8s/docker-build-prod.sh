@@ -38,35 +38,15 @@ if [ "$REGISTRY" != "" ]; then
   echo "Images pushed to registry"
 fi
 
-# Update the Helm chart values
+# Update the Helm chart values using the dedicated script
 echo "Updating Helm chart values..."
-VALUES_FILE="k8s/charts/ospo-app/values.yaml"
-
-# Check if values file exists
-if [ -f "$VALUES_FILE" ]; then
-  # Use sed to update only the appServer.image repository and tag values
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS version of sed
-    sed -i '' "/appServer:/,/image:/ s|repository:.*|repository: ${REGISTRY}${IMAGE_NAME}|" "$VALUES_FILE"
-    sed -i '' "/appServer:/,/image:/ s|tag:.*|tag: ${IMAGE_TAG}|" "$VALUES_FILE"
-  else
-    # Linux version of sed
-    sed -i "/appServer:/,/image:/ s|repository:.*|repository: ${REGISTRY}${IMAGE_NAME}|" "$VALUES_FILE"
-    sed -i "/appServer:/,/image:/ s|tag:.*|tag: ${IMAGE_TAG}|" "$VALUES_FILE"
-  fi
-  
-  # Validate the YAML file
-  echo "Validating YAML format..."
-  if command -v yamllint &> /dev/null; then
-    yamllint -d relaxed "$VALUES_FILE" || echo "YAML validation warning: yamllint reported issues, but proceeding anyway"
-  elif command -v python3 &> /dev/null; then
-    echo "import yaml; yaml.safe_load(open('$VALUES_FILE'))" | python3 || { echo "ERROR: Invalid YAML format in $VALUES_FILE"; exit 1; }
-  else
-    echo "WARNING: No YAML validation tool available (install yamllint or python3 for validation)"
-  fi
-  echo "Updated Helm chart values with new image: ${REGISTRY}${IMAGE_NAME}:${IMAGE_TAG}"
+if [ -f "k8s/set-image-values.sh" ]; then
+  # Use the dedicated script for safety
+  ./k8s/set-image-values.sh "${REGISTRY}${IMAGE_NAME}" "${IMAGE_TAG}"
 else
-  echo "WARNING: Could not find Helm values file at $VALUES_FILE"
+  echo "ERROR: Image values update script not found at k8s/set-image-values.sh"
+  echo "Please ensure the script exists and is executable"
+  exit 1
 fi
 
 echo "Build process completed successfully"
