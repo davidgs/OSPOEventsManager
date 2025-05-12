@@ -25,7 +25,7 @@ data:
       }
     }
   # Server directory for the Node.js backend
-  "server/dist/index.js": |-
+  server_dist_index.js: |-
     const express = require('express');
     const fileUpload = require('express-fileupload');
     const fs = require('fs');

@@ -37,7 +37,18 @@ spec:
               # Use the current project files if they are mounted as a volume
               if [ -d "/app-code" ] && [ -f "/app-code/package.json" ]; then
                 echo "Using application code from ConfigMap volume..."
-                cp -r /app-code/* /app/ || echo "Failed to copy from ConfigMap"
+                
+                # Copy package.json 
+                cp /app-code/package.json /app/
+                
+                # Create server directory structure
+                mkdir -p /app/server/dist
+                
+                # Copy and place the server file in the correct location
+                if [ -f "/app-code/server_dist_index.js" ]; then
+                  echo "Found server_dist_index.js, copying to server/dist/index.js"
+                  cp /app-code/server_dist_index.js /app/server/dist/index.js
+                fi
               else
                 echo "WARNING: No complete application code found in ConfigMap!"
                 echo "Creating emergency package.json"
