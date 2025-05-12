@@ -47,40 +47,49 @@ spec:
               cat /app-code/package.json > /app/package.json || echo "ERROR: Cannot read package.json"
               cat /app-code/index.js > /app/index.js || echo "ERROR: Cannot read index.js"
               
-              # If files couldn't be found in volume, create them manually as fallback
-              if [ ! -f /app/package.json ]; then
-                echo "Creating fallback package.json..."
-                echo '{
-                  "name": "ospo-events-app",
-                  "version": "1.0.0",
-                  "main": "index.js",
-                  "scripts": {
-                    "start": "node index.js"
-                  },
-                  "dependencies": {
-                    "express": "^4.18.2"
-                  }
-                }' > /app/package.json
-              fi
+              # Always create the package.json directly to ensure correct formatting
+              echo "Creating package.json file..."
+              cat > /app/package.json << 'EOF'
+{
+  "name": "ospo-events-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+EOF
               
-              if [ ! -f /app/index.js ]; then
-                echo "Creating fallback index.js..."
-                echo 'const express = require("express");
-                const app = express();
-                const port = process.env.PORT || 5000;
-                
-                app.get("/api/health", (req, res) => {
-                  res.json({ status: "healthy", message: "Fallback server is running" });
-                });
-                
-                app.get("/", (req, res) => {
-                  res.send("OSPO Events App - Emergency Fallback Mode");
-                });
-                
-                app.listen(port, "0.0.0.0", () => {
-                  console.log(`Emergency fallback server listening on port ${port}`);
-                });' > /app/index.js
-              fi
+              # Always create index.js directly to ensure proper formatting
+              echo "Creating index.js file..."
+              cat > /app/index.js << 'EOF'
+const express = require("express");
+const app = express();
+const port = process.env.PORT || 5000;
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "healthy", message: "Fallback server is running" });
+});
+
+app.get("/", (req, res) => {
+  res.send("OSPO Events App - Emergency Fallback Mode");
+});
+
+app.get("/api/info", (req, res) => {
+  res.json({ 
+    app: "OSPO Events App", 
+    mode: "Emergency Fallback", 
+    time: new Date().toISOString() 
+  });
+});
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Emergency fallback server listening on port ${port}`);
+});
+EOF
               
               # Show created files
               echo "Contents of working directory:"

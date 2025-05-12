@@ -1,0 +1,25 @@
+Installing express...                                                                                                                                                    │
+│ npm error code EJSONPARSE                                                                                                                                                │
+│ npm error path /app/package.json                                                                                                                                         │
+│ npm error JSON.parse Unexpected end of JSON input while parsing empty string                                                                                             │
+│ npm error JSON.parse Failed to parse JSON data.                                                                                                                          │
+│ npm error JSON.parse Note: package.json must be actual JSON, not just JavaScript.                                                                                        │
+│ npm error A complete log of this run can be found in: /root/.npm/_logs/2025-05-12T18_13_51_292Z-debug-0.log                                                              │
+│ Starting application...                                                                                                                                                  │
+│ node:internal/modules/package_json_reader:93                                                                                                                             │
+│         throw error;                                                                                                                                                     │
+│         ^                                                                                                                                                                │
+│                                                                                                                                                                          │
+│ SyntaxError: Error parsing /app/package.json: Unexpected end of JSON input                                                                                               │
+│     at parse (<anonymous>)                                                                                                                                               │
+│     at read (node:internal/modules/package_json_reader:80:16)                                                                                                            │
+│     at readPackage (node:internal/modules/package_json_reader:141:10)                                                                                                    │
+│     at readPackageScope (node:internal/modules/package_json_reader:164:19)                                                                                               │
+│     at shouldUseESMLoader (node:internal/modules/run_main:79:15)                                                                                                         │
+│     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:157:24)                                                                               │
+│     at node:internal/main/run_main_module:28:49 {                                                                                                                        │
+│   path: '/app/package.json'                                                                                                                                              │
+│ }                                                                                                                                                                        │
+│                                                                                                                                                                          │
+│ Node.js v20.19.1                                                                                                                                                         │
+│ Stream closed EOF for default/ospo-app-app-58568d5d6c-7kkv2 (app-server)
