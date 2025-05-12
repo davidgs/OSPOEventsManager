@@ -14,10 +14,45 @@ spec:
   resources:
     requests:
       storage: {{ .Values.postgresql.persistence.size }}
-{{- end }}
-
-{{- if .Values.sharedVolume.enabled }}
 ---
+{{- end }}
+{{- if .Values.keycloak.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-keycloak-data
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.keycloak.persistence.storageClass }}
+  storageClassName: {{ .Values.keycloak.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.keycloak.persistence.size }}
+---
+{{- end }}
+{{- if .Values.minio.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-minio-data
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.minio.persistence.storageClass }}
+  storageClassName: {{ .Values.minio.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.minio.persistence.size }}
+---
+{{- end }}
+{{- if .Values.sharedVolume.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

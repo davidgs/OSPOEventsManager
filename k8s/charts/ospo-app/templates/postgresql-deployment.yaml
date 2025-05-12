@@ -22,8 +22,8 @@ spec:
     spec:
       containers:
         - name: postgresql
-          image: postgres:16-alpine
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}
+          imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
           ports:
             - name: postgresql
               containerPort: {{ .Values.postgresql.service.port }}
@@ -34,10 +34,7 @@ spec:
             - name: POSTGRES_USER
               value: {{ .Values.postgresql.auth.username }}
             - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "ospo-app.postgresql.secretName" . }}
-                  key: password
+              value: "ospo_password123"
           resources:
             {{- toYaml .Values.postgresql.resources | nindent 12 }}
           volumeMounts:

@@ -22,8 +22,8 @@ spec:
     spec:
       containers:
         - name: minio
-          image: minio/minio:latest
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}
+          imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
           # Create the default bucket and start MinIO server
           args:
             - server
