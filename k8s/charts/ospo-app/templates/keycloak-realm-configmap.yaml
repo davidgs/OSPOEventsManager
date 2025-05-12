@@ -9,7 +9,7 @@ data:
   # A basic initial realm configuration for Keycloak
   ospo-realm.json: |
     {
-      "realm": "ospo",
+      "realm": "ospo-events",
       "enabled": true,
       "displayName": "OSPO Event Management",
       "displayNameHtml": "<div class=\"kc-logo-text\"><span>OSPO Event Management</span></div>",
@@ -43,7 +43,7 @@ data:
       },
       "clients": [
         {
-          "clientId": "ospo-app",
+          "clientId": "ospo-events-app",
           "name": "OSPO Event Management App",
           "enabled": true,
           "publicClient": true,

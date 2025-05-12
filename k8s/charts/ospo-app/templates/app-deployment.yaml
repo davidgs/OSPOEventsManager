@@ -83,8 +83,11 @@ spec:
                 secretKeyRef:
                   name: {{ template "ospo-app.app.secretName" . }}
                   key: session-secret
+            # New Keycloak v21+ doesn't use the /auth path anymore
             - name: KEYCLOAK_URL
-              value: "http://{{ .Release.Name }}-keycloak:{{ .Values.keycloak.service.port }}/auth"
+              value: "http://{{ .Release.Name }}-keycloak:{{ .Values.keycloak.service.port }}"
+            - name: KEYCLOAK_REALM
+              value: "ospo-events"
             - name: KEYCLOAK_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
