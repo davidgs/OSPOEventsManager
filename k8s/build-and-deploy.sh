@@ -24,108 +24,12 @@ if [[ "$DOCKER_REGISTRY" != "localhost:5000" ]]; then
   echo -e "${GREEN}Docker image pushed successfully.${NC}"
 fi
 
-# Update the Helm chart values to use the new image
-echo -e "${YELLOW}Updating Helm chart values...${NC}"
-cat > k8s/charts/ospo-app/values.yaml << EOF
-# Default values for ospo-app chart
-replicaCount: 1
-
-appServer:
-  image:
-    repository: ${IMAGE_NAME}
-    tag: ${IMAGE_TAG}
-    pullPolicy: Always
-  service:
-    type: ClusterIP
-    port: 5000
-  env:
-    NODE_ENV: production
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 200m
-      memory: 256Mi
-
-postgresql:
-  image:
-    repository: postgres
-    tag: 16-alpine
-    pullPolicy: IfNotPresent
-  auth:
-    username: ospo_user
-    password: ospo_password123
-    database: ospo_events
-    existingSecret: null
-  service:
-    port: 5432
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 200m
-      memory: 256Mi
-  persistence:
-    enabled: false
-
-keycloak:
-  service:
-    port: 8080
-  auth:
-    adminUser: admin
-    secretKeys:
-      adminPasswordKey: admin-password
-  persistence:
-    enabled: false
-  resources:
-    limits:
-      cpu: 1000m
-      memory: 2Gi
-    requests:
-      cpu: 500m
-      memory: 1Gi
-
-minio:
-  service:
-    port: 9000
-    consolePort: 9001
-  auth:
-    rootUser: minio
-    rootPassword: minio123
-    secretKeys:
-      rootPasswordKey: root-password
-  defaultBuckets: uploads
-  persistence:
-    enabled: false
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 200m
-      memory: 256Mi
-
-sharedVolume:
-  enabled: false
-  mountPath: /app/shared
-  size: 1Gi
-
-ingress:
-  enabled: true
-  className: "nginx"
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: ospo-app.local
-      paths:
-        - path: /
-          pathType: Prefix
-  tls: []
-EOF
-echo -e "${GREEN}Helm chart values updated successfully.${NC}"
+# Update only the appServer image in values.yaml
+echo -e "${YELLOW}Updating app server image in Helm chart values...${NC}"
+# Use sed to replace the image repository and tag
+sed -i "s|repository: .*|repository: ${IMAGE_NAME}|g" k8s/charts/ospo-app/values.yaml
+sed -i "s|tag: .*|tag: ${IMAGE_TAG}|g" k8s/charts/ospo-app/values.yaml
+echo -e "${GREEN}App server image updated successfully in Helm chart values.${NC}"
 
 # Deploy the application using Helm
 echo -e "${YELLOW}Deploying application with Helm...${NC}"
