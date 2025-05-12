@@ -251,6 +251,7 @@ export const approvalWorkflows = pgTable("approval_workflows", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   dueDate: date("due_date"),
   priority: text("priority").notNull().default("medium").$type<EventPriority>(), // Reusing event priority enum
+  estimatedCosts: text("estimated_costs"), // Add field for estimated costs
   metadata: json("metadata"), // Additional workflow data in JSON format
 });
 

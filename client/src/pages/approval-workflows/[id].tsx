@@ -28,8 +28,15 @@ export default function WorkflowDetailPage() {
 
   // Fetch workflow with related data
   const { data: workflow, isLoading, error } = useQuery({
-    queryKey: ['/api/approval-workflows', workflowId],
-    enabled: !isNaN(workflowId)
+    queryKey: [`/api/approval-workflows/${workflowId}`],
+    enabled: !isNaN(workflowId),
+    onSuccess: (data) => {
+      // Log successful data retrieval
+      console.log("Workflow data received:", data);
+    },
+    onError: (err) => {
+      console.error("Error fetching workflow:", err);
+    }
   });
 
   // Add a new comment
@@ -51,7 +58,7 @@ export default function WorkflowDetailPage() {
       setIsCommentDialogOpen(false);
       setCommentText("");
       // Invalidate workflow data to refresh comments
-      queryClient.invalidateQueries({ queryKey: ['/api/approval-workflows', workflowId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/approval-workflows/${workflowId}`] });
     },
     onError: (error) => {
       toast({
