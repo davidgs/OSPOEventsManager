@@ -208,7 +208,12 @@ export default function WorkflowDetailPage() {
                 <div>
                   <CardTitle className="text-2xl">{workflow.title}</CardTitle>
                   <CardDescription className="mt-1">
-                    {workflow.itemType.replace('_', ' ')} #{workflow.itemId}
+                    {workflow.itemType.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                    {events && (
+                      <span className="ml-1 font-medium">
+                        for {events.find((event: any) => event.id === workflow.itemId)?.name || `Event #${workflow.itemId}`}
+                      </span>
+                    )}
                   </CardDescription>
                 </div>
                 <div className="flex flex-col gap-2 items-end">
