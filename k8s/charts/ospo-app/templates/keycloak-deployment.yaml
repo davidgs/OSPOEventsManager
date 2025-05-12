@@ -27,6 +27,9 @@ spec:
           command: 
             - "/opt/keycloak/bin/kc.sh"
             - "start-dev"
+            - "--db=postgres"
+            - "--db-url-host={{ .Release.Name }}-postgresql"
+            - "--db-url-database=keycloak"
           ports:
             - name: http
               containerPort: {{ .Values.keycloak.service.port }}

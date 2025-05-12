@@ -24,6 +24,7 @@ spec:
         - name: minio
           image: {{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}
           imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
+          # Create the default bucket and start MinIO server
           args:
             - server
             - /data
@@ -44,6 +45,13 @@ spec:
                 secretKeyRef:
                   name: {{ template "ospo-app.minio.secretName" . }}
                   key: {{ .Values.minio.auth.secretKeys.rootPasswordKey }}
+            # Create default bucket on startup
+            - name: MINIO_BROWSER
+              value: "on"
+            - name: MINIO_DOMAIN
+              value: minio
+            - name: MINIO_OPTS
+              value: "--address :{{ .Values.minio.service.port }} --console-address :{{ .Values.minio.service.consolePort }}"
           resources:
             {{- toYaml .Values.minio.resources | nindent 12 }}
           volumeMounts:
