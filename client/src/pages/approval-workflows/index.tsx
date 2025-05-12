@@ -106,10 +106,10 @@ export default function ApprovalWorkflowsPage() {
       return;
     }
 
-    // Convert itemId to number
+    // Convert itemId to number if it's a string
     const workflowData = {
       ...newWorkflow,
-      itemId: parseInt(newWorkflow.itemId),
+      itemId: typeof newWorkflow.itemId === 'string' ? parseInt(newWorkflow.itemId) : newWorkflow.itemId,
     };
 
     createWorkflowMutation.mutate(workflowData);
@@ -277,8 +277,8 @@ export default function ApprovalWorkflowsPage() {
                     <Label htmlFor="itemId">Item ID <span className="text-red-500">*</span></Label>
                     {newWorkflow.itemType === "event" && events ? (
                       <Select 
-                        onValueChange={(value) => setNewWorkflow(prev => ({ ...prev, itemId: parseInt(value) }))} 
-                        value={newWorkflow.itemId.toString()}
+                        onValueChange={(value) => setNewWorkflow(prev => ({ ...prev, itemId: value }))} 
+                        value={newWorkflow.itemId !== "" ? newWorkflow.itemId.toString() : undefined}
                       >
                         <SelectTrigger id="itemId">
                           <SelectValue placeholder="Select event" />
