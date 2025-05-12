@@ -14,8 +14,8 @@ repository:
 appServer:
   image:
     # Using public Node.js image as a base
-    repository: ospo-events-app
-    tag: latest
+    repository: node
+    tag: 20-alpine
     # When using a container registry, replace with your registry URL:
     # repository: your-registry.com/ospo-app
     # tag: version

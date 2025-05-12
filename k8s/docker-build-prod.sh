@@ -44,15 +44,25 @@ VALUES_FILE="k8s/charts/ospo-app/values.yaml"
 
 # Check if values file exists
 if [ -f "$VALUES_FILE" ]; then
-  # Use sed to update the image repository and tag
+  # Use sed to update only the appServer.image repository and tag values
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS version of sed
-    sed -i '' "s|repository:.*|repository: ${REGISTRY}${IMAGE_NAME}|g" "$VALUES_FILE"
-    sed -i '' "s|tag:.*|tag: ${IMAGE_TAG}|g" "$VALUES_FILE"
+    sed -i '' "/appServer:/,/image:/ s|repository:.*|repository: ${REGISTRY}${IMAGE_NAME}|" "$VALUES_FILE"
+    sed -i '' "/appServer:/,/image:/ s|tag:.*|tag: ${IMAGE_TAG}|" "$VALUES_FILE"
   else
     # Linux version of sed
-    sed -i "s|repository:.*|repository: ${REGISTRY}${IMAGE_NAME}|g" "$VALUES_FILE"
-    sed -i "s|tag:.*|tag: ${IMAGE_TAG}|g" "$VALUES_FILE"
+    sed -i "/appServer:/,/image:/ s|repository:.*|repository: ${REGISTRY}${IMAGE_NAME}|" "$VALUES_FILE"
+    sed -i "/appServer:/,/image:/ s|tag:.*|tag: ${IMAGE_TAG}|" "$VALUES_FILE"
+  fi
+  
+  # Validate the YAML file
+  echo "Validating YAML format..."
+  if command -v yamllint &> /dev/null; then
+    yamllint -d relaxed "$VALUES_FILE" || echo "YAML validation warning: yamllint reported issues, but proceeding anyway"
+  elif command -v python3 &> /dev/null; then
+    echo "import yaml; yaml.safe_load(open('$VALUES_FILE'))" | python3 || { echo "ERROR: Invalid YAML format in $VALUES_FILE"; exit 1; }
+  else
+    echo "WARNING: No YAML validation tool available (install yamllint or python3 for validation)"
   fi
   echo "Updated Helm chart values with new image: ${REGISTRY}${IMAGE_NAME}:${IMAGE_TAG}"
 else
