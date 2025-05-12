@@ -635,7 +635,10 @@ export class MemStorage implements IStorage {
       id, 
       status: "pending" as ApprovalStatus, 
       createdAt: now, 
-      updatedAt: now 
+      updatedAt: now,
+      // Make sure estimatedCosts field is properly included if provided
+      estimatedCosts: workflowData.estimatedCosts || null,
+      metadata: workflowData.metadata || null
     };
     
     this.approvalWorkflows.set(id, workflow);
