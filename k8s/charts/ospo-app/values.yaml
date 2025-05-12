@@ -13,9 +13,13 @@ repository:
 # App Server configuration
 appServer:
   image:
-    repository: node
-    tag: 20-alpine
-    pullPolicy: IfNotPresent
+    # For local development using the docker-build.sh script
+    repository: ospo-app
+    tag: latest
+    # When using a container registry, replace with your registry URL:
+    # repository: your-registry.com/ospo-app
+    # tag: version
+    pullPolicy: Always
   resources:
     limits:
       memory: 1Gi
