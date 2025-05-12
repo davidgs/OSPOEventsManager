@@ -34,10 +34,7 @@ spec:
             - name: POSTGRES_USER
               value: {{ .Values.postgresql.auth.username }}
             - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "ospo-app.postgresql.secretName" . }}
-                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+              value: "ospo_password123"
           resources:
             {{- toYaml .Values.postgresql.resources | nindent 12 }}
           volumeMounts:
