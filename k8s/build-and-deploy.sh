@@ -49,10 +49,15 @@ appServer:
       memory: 256Mi
 
 postgresql:
+  image:
+    repository: postgres
+    tag: 16-alpine
+    pullPolicy: IfNotPresent
   auth:
     username: ospo_user
     password: ospo_password123
     database: ospo_events
+    existingSecret: null
   service:
     port: 5432
   resources:
@@ -66,6 +71,12 @@ postgresql:
     enabled: false
 
 keycloak:
+  image:
+    repository: quay.io/keycloak/keycloak
+    tag: 21.1.2
+    pullPolicy: IfNotPresent
+  auth:
+    existingSecret: null
   service:
     port: 8080
   resources:
@@ -77,6 +88,14 @@ keycloak:
       memory: 1Gi
 
 minio:
+  image:
+    repository: minio/minio
+    tag: latest
+    pullPolicy: IfNotPresent
+  auth:
+    rootUser: minio
+    rootPassword: minio123
+    existingSecret: null
   service:
     port: 9000
   resources:

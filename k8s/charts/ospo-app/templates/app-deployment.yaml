@@ -23,7 +23,7 @@ spec:
       # Create a ConfigMap to store the application code
       containers:
         - name: app-server
-          image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
+          image: "{{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}"
           imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
           command:
             - "/bin/sh"
