@@ -432,6 +432,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // This section has been deleted to fix the duplicate declaration issue.
 
   // User profile API routes
+  app.get("/api/users", async (req: Request, res: Response) => {
+    try {
+      // For now, return a list with dummy users as we don't have a getUsers method yet
+      // In a real application, this would fetch users from the database
+      res.json([
+        { id: 1, name: "Alex Johnson", email: "alex@example.com", role: "admin" },
+        { id: 2, name: "Taylor Garcia", email: "taylor@example.com", role: "reviewer" }
+      ]);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+  
   app.get("/api/users/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
