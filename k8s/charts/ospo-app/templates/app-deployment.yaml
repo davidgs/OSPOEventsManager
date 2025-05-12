@@ -20,6 +20,55 @@ spec:
         rollme: {{ randAlphaNum 5 | quote }}
     spec:
       initContainers:
+        # First init container - copy the actual running app code from the repository
+        - name: app-cloner
+          # Use a Node.js Alpine image for building
+          image: node:20-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              # THIS INIT CONTAINER COPIES THE ACTUAL APPLICATION CODE
+              echo "Preparing to copy working application code..."
+              mkdir -p /source-code
+              cd /source-code
+              
+              # Clone the actual app
+              echo "Copying project files from current directory..."
+              
+              # Create all necessary directories to avoid errors
+              mkdir -p client/src server/dist shared public/uploads
+              
+              # Copy application files using tar to maintain ownership and permissions
+              echo "Copying application files (package.json, configs)..."
+              if [ -f "/current-app/package.json" ]; then
+                cp -v /current-app/package.json .
+                cp -v /current-app/tsconfig.json . 2>/dev/null || echo "No tsconfig.json found"
+                cp -v /current-app/drizzle.config.ts . 2>/dev/null || echo "No drizzle config found"
+                cp -v /current-app/tailwind.config.ts . 2>/dev/null || echo "No tailwind config found"
+                cp -v /current-app/postcss.config.js . 2>/dev/null || echo "No postcss config found"
+                cp -v /current-app/vite.config.ts . 2>/dev/null || echo "No vite config found"
+              fi
+              
+              # Copy directories with glob patterns to avoid errors if they don't exist
+              cp -rv /current-app/client/* client/ 2>/dev/null || echo "No client directory found"
+              cp -rv /current-app/server/* server/ 2>/dev/null || echo "No server directory found"
+              cp -rv /current-app/shared/* shared/ 2>/dev/null || echo "No shared directory found"
+              cp -rv /current-app/public/* public/ 2>/dev/null || echo "No public directory found"
+              cp -rv /current-app/dist/* dist/ 2>/dev/null || echo "No dist directory found"
+                
+              echo "Content copied successfully"
+          volumeMounts:
+            # Mount the volume to store the application code
+            - name: app-source
+              mountPath: /source-code
+              
+            # You need to mount the existing application code - using app-code as a temporary mount
+            - name: current-app-code
+              mountPath: /current-app
+              
+        # Second init container - prepare the application for running
         - name: app-setup
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
           imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
@@ -27,50 +76,61 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
+              # Preparing the application for running in Kubernetes
               mkdir -p /setup/app/server/dist
               mkdir -p /setup/app/shared
               mkdir -p /setup/app/public/uploads
               
-              if [ -f "/app-code/package.json" ]; then
-                echo "Copying package.json from ConfigMap"
-                cp -v /app-code/package.json /setup/app/
-              fi
-              
-              if [ -f "/app-code/server_dist_index.js" ]; then
-                echo "Copying server implementation from ConfigMap"
-                cp -v /app-code/server_dist_index.js /setup/app/server/dist/index.js
-              fi
-              
-              if [ -f "/app-code/shared_schema.js" ]; then
-                echo "Copying shared schema from ConfigMap"
-                cp -v /app-code/shared_schema.js /setup/app/shared/schema.js
-              fi
-              
+              # Creating uploads directory with proper permissions
               chmod -R 777 /setup/app/public/uploads
               
-              cat > /setup/app/public/index.html << 'EOF'
-              <!DOCTYPE html>
-              <html lang="en">
-              <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>OSPO Events App</title>
-                <style>
-                  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-                  .container { max-width: 1200px; margin: 0 auto; }
-                  h1 { color: #2563eb; }
-                </style>
-              </head>
-              <body>
-                <div class="container">
-                  <h1>OSPO Events Management</h1>
-                  <p>Application running in Kubernetes production mode.</p>
-                  <div id="app">Loading application...</div>
-                </div>
-              </body>
-              </html>
-              EOF
+              # Copying application code from the source 
+              if [ -d "/app-source" ] && [ -f "/app-source/package.json" ]; then
+                echo "Copying source code from app-source volume..."
+                cp -rv /app-source/* /setup/app/
+              elif [ -f "/app-code/package.json" ]; then
+                # Fallback to ConfigMap
+                echo "Copying package.json from ConfigMap"
+                cp -v /app-code/package.json /setup/app/
+                
+                if [ -f "/app-code/server_dist_index.js" ]; then
+                  echo "Copying server implementation from ConfigMap"
+                  cp -v /app-code/server_dist_index.js /setup/app/server/dist/index.js
+                fi
+                
+                if [ -f "/app-code/shared_schema.js" ]; then
+                  echo "Copying shared schema from ConfigMap"
+                  cp -v /app-code/shared_schema.js /setup/app/shared/schema.js
+                fi
+              fi
               
+              # Create a fallback HTML file if needed
+              if [ ! -f "/setup/app/public/index.html" ]; then
+                cat > /setup/app/public/index.html << 'EOF'
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>OSPO Events App</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
+                    .container { max-width: 1200px; margin: 0 auto; }
+                    h1 { color: #2563eb; }
+                  </style>
+                </head>
+                <body>
+                  <div class="container">
+                    <h1>OSPO Events Management</h1>
+                    <p>Application running in Kubernetes production mode.</p>
+                    <div id="app">Loading application...</div>
+                  </div>
+                </body>
+                </html>
+                EOF
+              fi
+              
+              # Install dependencies
               cd /setup/app
               echo "Installing dependencies..."
               npm install --omit=dev || npm install --no-save express @neondatabase/serverless drizzle-orm express-fileupload express-session
@@ -80,6 +140,8 @@ spec:
               mountPath: /app-code
             - name: app-setup
               mountPath: /setup
+            - name: app-source
+              mountPath: /app-source
       containers:
         - name: app-server
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
@@ -88,6 +150,16 @@ spec:
             - "/bin/sh" 
             - "-c"
             - |
+              # Make the startup script executable
+              if [ -f "/app-scripts/app-entrypoint.sh" ]; then
+                chmod +x /app-scripts/app-entrypoint.sh
+                echo "Running application setup script..."
+                /app-scripts/app-entrypoint.sh
+              else
+                echo "WARNING: App entry script not found!"
+              fi
+              
+              # Start the application
               cd /app
               
               if [ -f "server/dist/index.js" ]; then
@@ -154,6 +226,11 @@ spec:
               mountPath: /app-code
             - name: app-setup
               mountPath: /app
+            - name: app-scripts
+              mountPath: /app-scripts
+            # Mount the source code directory if available
+            - name: app-source
+              mountPath: /app-source
             {{- if .Values.sharedVolume.enabled }}
             - name: shared-volume
               mountPath: /app/public/uploads
@@ -176,8 +253,18 @@ spec:
         - name: app-code
           configMap:
             name: {{ .Release.Name }}-app-code
+        - name: app-scripts
+          configMap:
+            name: {{ .Release.Name }}-app-scripts
         - name: app-setup
           emptyDir: {}
+        - name: app-source
+          emptyDir: {}
+        # Mount current working directory as a host path
+        - name: current-app-code
+          hostPath:
+            path: {{ .Values.repository.localPath | default "/app" }}
+            type: Directory
         {{- if .Values.sharedVolume.enabled }}
         - name: shared-volume
           persistentVolumeClaim:
