@@ -46,6 +46,11 @@ export default function ApprovalWorkflowsPage() {
   const { data: stakeholders } = useQuery({
     queryKey: ['/api/stakeholders'],
   });
+  
+  // Fetch events for item selection when type is "event"
+  const { data: events } = useQuery({
+    queryKey: ['/api/events'],
+  });
 
   // Create a new workflow
   const createWorkflowMutation = useMutation({
@@ -170,7 +175,11 @@ export default function ApprovalWorkflowsPage() {
           </div>
           <div className="flex justify-between items-center">
             <CardDescription className="flex items-center gap-1 capitalize">
-              {workflow.itemType.replace('_', ' ')} #{workflow.itemId}
+              {workflow.itemType.replace('_', ' ')}: {' '}
+              {workflow.itemType === "event" && events 
+                ? events.find((event: any) => event.id === workflow.itemId)?.name || `#${workflow.itemId}`
+                : `#${workflow.itemId}`
+              }
             </CardDescription>
             <div>{getPriorityBadge(workflow.priority)}</div>
           </div>
@@ -266,14 +275,32 @@ export default function ApprovalWorkflowsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="itemId">Item ID <span className="text-red-500">*</span></Label>
-                    <Input 
-                      id="itemId" 
-                      name="itemId" 
-                      type="number"
-                      placeholder="ID of the related item"
-                      value={newWorkflow.itemId}
-                      onChange={handleInputChange}
-                    />
+                    {newWorkflow.itemType === "event" && events ? (
+                      <Select 
+                        onValueChange={(value) => setNewWorkflow(prev => ({ ...prev, itemId: parseInt(value) }))} 
+                        value={newWorkflow.itemId.toString()}
+                      >
+                        <SelectTrigger id="itemId">
+                          <SelectValue placeholder="Select event" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {events.map((event: any) => (
+                            <SelectItem key={event.id} value={event.id.toString()}>
+                              {event.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input 
+                        id="itemId" 
+                        name="itemId" 
+                        type="number"
+                        placeholder="ID of the related item"
+                        value={newWorkflow.itemId}
+                        onChange={handleInputChange}
+                      />
+                    )}
                   </div>
                 </div>
 
