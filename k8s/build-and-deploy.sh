@@ -77,6 +77,8 @@ keycloak:
     adminUser: admin
     secretKeys:
       adminPasswordKey: admin-password
+  persistence:
+    enabled: false
   resources:
     limits:
       cpu: 1000m
@@ -88,12 +90,15 @@ keycloak:
 minio:
   service:
     port: 9000
+    consolePort: 9001
   auth:
     rootUser: minio
     rootPassword: minio123
     secretKeys:
       rootPasswordKey: root-password
   defaultBuckets: uploads
+  persistence:
+    enabled: false
   resources:
     limits:
       cpu: 500m
