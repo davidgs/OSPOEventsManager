@@ -41,7 +41,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAuthenticated(isAuth);
         
         if (isAuth) {
-          setUser(getUserInfo());
+          const userInfo = getUserInfo();
+          if (userInfo) {
+            // Ensure all required properties are present
+            setUser({
+              id: userInfo.id || '',
+              username: userInfo.username || '',
+              email: userInfo.email || '',
+              name: userInfo.name || '',
+              roles: userInfo.roles || []
+            });
+          }
         }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
@@ -59,7 +69,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAuthenticated(authStatus);
     
     if (authStatus) {
-      setUser(getUserInfo());
+      const userInfo = getUserInfo();
+      if (userInfo) {
+        setUser({
+          id: userInfo.id || '',
+          username: userInfo.username || '',
+          email: userInfo.email || '',
+          name: userInfo.name || '',
+          roles: userInfo.roles || []
+        });
+      }
     } else {
       setUser(null);
     }

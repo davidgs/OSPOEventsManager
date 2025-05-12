@@ -45,10 +45,10 @@ function App() {
             </Route>
             
             <Route path="/events/:id">
-              {(params) => (
+              {() => (
                 <ProtectedRoute>
                   <MainLayout>
-                    <EventDetailsPage id={params.id} />
+                    <EventDetailsPage />
                   </MainLayout>
                 </ProtectedRoute>
               )}
