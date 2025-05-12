@@ -6,7 +6,16 @@ import {
   User, InsertUser,
   Asset, InsertAsset,
   AssetType,
-  events, cfpSubmissions, attendees, sponsorships, users, assets
+  Stakeholder, InsertStakeholder,
+  ApprovalWorkflow, InsertApprovalWorkflow,
+  WorkflowReviewer, InsertWorkflowReviewer,
+  WorkflowStakeholder, InsertWorkflowStakeholder,
+  WorkflowComment, InsertWorkflowComment,
+  WorkflowHistory, InsertWorkflowHistory,
+  ApprovalStatus, ApprovalItemType,
+  events, cfpSubmissions, attendees, sponsorships, users, assets,
+  stakeholders, approvalWorkflows, workflowReviewers, workflowStakeholders,
+  workflowComments, workflowHistory
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -60,6 +69,56 @@ export interface IStorage {
   createAsset(asset: InsertAsset): Promise<Asset>;
   updateAsset(id: number, asset: Partial<InsertAsset>): Promise<Asset | undefined>;
   deleteAsset(id: number): Promise<boolean>;
+  
+  // Stakeholder methods
+  getStakeholders(): Promise<Stakeholder[]>;
+  getStakeholdersByRole(role: string): Promise<Stakeholder[]>;
+  getStakeholder(id: number): Promise<Stakeholder | undefined>;
+  createStakeholder(stakeholder: InsertStakeholder): Promise<Stakeholder>;
+  updateStakeholder(id: number, stakeholder: Partial<InsertStakeholder>): Promise<Stakeholder | undefined>;
+  deleteStakeholder(id: number): Promise<boolean>;
+  
+  // Approval workflow methods
+  getApprovalWorkflows(): Promise<ApprovalWorkflow[]>;
+  getApprovalWorkflowsByStatus(status: ApprovalStatus): Promise<ApprovalWorkflow[]>;
+  getApprovalWorkflowsByItemType(itemType: ApprovalItemType): Promise<ApprovalWorkflow[]>;
+  getApprovalWorkflowsByItem(itemType: ApprovalItemType, itemId: number): Promise<ApprovalWorkflow[]>;
+  getApprovalWorkflowsByRequester(requesterId: number): Promise<ApprovalWorkflow[]>;
+  getApprovalWorkflow(id: number): Promise<ApprovalWorkflow | undefined>;
+  createApprovalWorkflow(workflow: InsertApprovalWorkflow): Promise<ApprovalWorkflow>;
+  updateApprovalWorkflow(id: number, workflow: Partial<InsertApprovalWorkflow>): Promise<ApprovalWorkflow | undefined>;
+  updateApprovalWorkflowStatus(id: number, status: ApprovalStatus, userId: number): Promise<ApprovalWorkflow | undefined>;
+  deleteApprovalWorkflow(id: number): Promise<boolean>;
+  
+  // Workflow reviewer methods
+  getWorkflowReviewers(workflowId: number): Promise<WorkflowReviewer[]>;
+  getWorkflowReviewersByUser(userId: number): Promise<WorkflowReviewer[]>;
+  getWorkflowReviewer(id: number): Promise<WorkflowReviewer | undefined>;
+  createWorkflowReviewer(reviewer: InsertWorkflowReviewer): Promise<WorkflowReviewer>;
+  updateWorkflowReviewer(id: number, reviewer: Partial<InsertWorkflowReviewer>): Promise<WorkflowReviewer | undefined>;
+  updateWorkflowReviewerStatus(id: number, status: ApprovalStatus, comments?: string): Promise<WorkflowReviewer | undefined>;
+  deleteWorkflowReviewer(id: number): Promise<boolean>;
+  
+  // Workflow stakeholder methods
+  getWorkflowStakeholders(workflowId: number): Promise<WorkflowStakeholder[]>;
+  getWorkflowStakeholdersByStakeholder(stakeholderId: number): Promise<WorkflowStakeholder[]>;
+  getWorkflowStakeholder(id: number): Promise<WorkflowStakeholder | undefined>;
+  createWorkflowStakeholder(stakeholder: InsertWorkflowStakeholder): Promise<WorkflowStakeholder>;
+  updateWorkflowStakeholder(id: number, stakeholder: Partial<InsertWorkflowStakeholder>): Promise<WorkflowStakeholder | undefined>;
+  notifyWorkflowStakeholder(id: number): Promise<WorkflowStakeholder | undefined>;
+  deleteWorkflowStakeholder(id: number): Promise<boolean>;
+  
+  // Workflow comment methods
+  getWorkflowComments(workflowId: number): Promise<WorkflowComment[]>;
+  getWorkflowCommentsByUser(userId: number): Promise<WorkflowComment[]>;
+  getWorkflowComment(id: number): Promise<WorkflowComment | undefined>;
+  createWorkflowComment(comment: InsertWorkflowComment): Promise<WorkflowComment>;
+  updateWorkflowComment(id: number, comment: Partial<InsertWorkflowComment>): Promise<WorkflowComment | undefined>;
+  deleteWorkflowComment(id: number): Promise<boolean>;
+  
+  // Workflow history methods
+  getWorkflowHistory(workflowId: number): Promise<WorkflowHistory[]>;
+  createWorkflowHistory(history: InsertWorkflowHistory): Promise<WorkflowHistory>;
 }
 
 export class MemStorage implements IStorage {
@@ -69,6 +128,12 @@ export class MemStorage implements IStorage {
   private attendees: Map<number, Attendee>;
   private sponsorships: Map<number, Sponsorship>;
   private assets: Map<number, Asset>;
+  private stakeholders: Map<number, Stakeholder>;
+  private approvalWorkflows: Map<number, ApprovalWorkflow>;
+  private workflowReviewers: Map<number, WorkflowReviewer>;
+  private workflowStakeholders: Map<number, WorkflowStakeholder>;
+  private workflowComments: Map<number, WorkflowComment>;
+  private workflowHistory: Map<number, WorkflowHistory>;
   
   private userId: number;
   private eventId: number;
@@ -76,6 +141,12 @@ export class MemStorage implements IStorage {
   private attendeeId: number;
   private sponsorshipId: number;
   private assetId: number;
+  private stakeholderId: number;
+  private approvalWorkflowId: number;
+  private workflowReviewerId: number;
+  private workflowStakeholderId: number;
+  private workflowCommentId: number;
+  private workflowHistoryId: number;
   
   constructor() {
     this.users = new Map();
@@ -84,6 +155,12 @@ export class MemStorage implements IStorage {
     this.attendees = new Map();
     this.sponsorships = new Map();
     this.assets = new Map();
+    this.stakeholders = new Map();
+    this.approvalWorkflows = new Map();
+    this.workflowReviewers = new Map();
+    this.workflowStakeholders = new Map();
+    this.workflowComments = new Map();
+    this.workflowHistory = new Map();
     
     this.userId = 1;
     this.eventId = 1;
@@ -91,6 +168,12 @@ export class MemStorage implements IStorage {
     this.attendeeId = 1;
     this.sponsorshipId = 1;
     this.assetId = 1;
+    this.stakeholderId = 1;
+    this.approvalWorkflowId = 1;
+    this.workflowReviewerId = 1;
+    this.workflowStakeholderId = 1;
+    this.workflowCommentId = 1;
+    this.workflowHistoryId = 1;
     
     // Add some sample data
     this.seedData();
@@ -459,6 +542,530 @@ export class MemStorage implements IStorage {
   
   async deleteAsset(id: number): Promise<boolean> {
     return this.assets.delete(id);
+  }
+
+  // Stakeholder methods
+  async getStakeholders(): Promise<Stakeholder[]> {
+    return Array.from(this.stakeholders.values());
+  }
+  
+  async getStakeholdersByRole(role: string): Promise<Stakeholder[]> {
+    return Array.from(this.stakeholders.values()).filter(
+      (stakeholder) => stakeholder.role === role
+    );
+  }
+  
+  async getStakeholder(id: number): Promise<Stakeholder | undefined> {
+    return this.stakeholders.get(id);
+  }
+  
+  async createStakeholder(insertStakeholder: InsertStakeholder): Promise<Stakeholder> {
+    const id = this.stakeholderId++;
+    const now = new Date().toISOString();
+    const stakeholder: Stakeholder = { 
+      ...insertStakeholder, 
+      id, 
+      createdAt: now, 
+      updatedAt: now 
+    };
+    this.stakeholders.set(id, stakeholder);
+    return stakeholder;
+  }
+  
+  async updateStakeholder(id: number, updateStakeholder: Partial<InsertStakeholder>): Promise<Stakeholder | undefined> {
+    const stakeholder = this.stakeholders.get(id);
+    if (!stakeholder) return undefined;
+    
+    const now = new Date().toISOString();
+    const updatedStakeholder = { 
+      ...stakeholder, 
+      ...updateStakeholder, 
+      updatedAt: now 
+    };
+    this.stakeholders.set(id, updatedStakeholder);
+    return updatedStakeholder;
+  }
+  
+  async deleteStakeholder(id: number): Promise<boolean> {
+    return this.stakeholders.delete(id);
+  }
+  
+  // Approval workflow methods
+  async getApprovalWorkflows(): Promise<ApprovalWorkflow[]> {
+    return Array.from(this.approvalWorkflows.values());
+  }
+  
+  async getApprovalWorkflowsByStatus(status: ApprovalStatus): Promise<ApprovalWorkflow[]> {
+    return Array.from(this.approvalWorkflows.values()).filter(
+      (workflow) => workflow.status === status
+    );
+  }
+  
+  async getApprovalWorkflowsByItemType(itemType: ApprovalItemType): Promise<ApprovalWorkflow[]> {
+    return Array.from(this.approvalWorkflows.values()).filter(
+      (workflow) => workflow.itemType === itemType
+    );
+  }
+  
+  async getApprovalWorkflowsByItem(itemType: ApprovalItemType, itemId: number): Promise<ApprovalWorkflow[]> {
+    return Array.from(this.approvalWorkflows.values()).filter(
+      (workflow) => workflow.itemType === itemType && workflow.itemId === itemId
+    );
+  }
+  
+  async getApprovalWorkflowsByRequester(requesterId: number): Promise<ApprovalWorkflow[]> {
+    return Array.from(this.approvalWorkflows.values()).filter(
+      (workflow) => workflow.requesterId === requesterId
+    );
+  }
+  
+  async getApprovalWorkflow(id: number): Promise<ApprovalWorkflow | undefined> {
+    return this.approvalWorkflows.get(id);
+  }
+  
+  async createApprovalWorkflow(insertWorkflow: InsertApprovalWorkflow): Promise<ApprovalWorkflow> {
+    const id = this.approvalWorkflowId++;
+    const now = new Date().toISOString();
+    
+    // Extract reviewer and stakeholder IDs before creating the workflow
+    const { reviewerIds, stakeholderIds, ...workflowData } = insertWorkflow;
+    
+    const workflow: ApprovalWorkflow = { 
+      ...workflowData, 
+      id, 
+      status: "pending" as ApprovalStatus, 
+      createdAt: now, 
+      updatedAt: now 
+    };
+    
+    this.approvalWorkflows.set(id, workflow);
+    
+    // Create workflow reviewers
+    for (const reviewerId of reviewerIds) {
+      await this.createWorkflowReviewer({
+        workflowId: id,
+        reviewerId,
+        isRequired: true
+      });
+    }
+    
+    // Create workflow stakeholders if provided
+    if (stakeholderIds && stakeholderIds.length > 0) {
+      for (const stakeholderId of stakeholderIds) {
+        await this.createWorkflowStakeholder({
+          workflowId: id,
+          stakeholderId,
+          notificationType: "email"
+        });
+      }
+    }
+    
+    // Create initial history entry
+    await this.createWorkflowHistory({
+      workflowId: id,
+      userId: insertWorkflow.requesterId,
+      action: "created",
+      details: "Workflow created",
+      newStatus: "pending"
+    });
+    
+    return workflow;
+  }
+  
+  async updateApprovalWorkflow(id: number, updateWorkflow: Partial<InsertApprovalWorkflow>): Promise<ApprovalWorkflow | undefined> {
+    const workflow = this.approvalWorkflows.get(id);
+    if (!workflow) return undefined;
+    
+    const now = new Date().toISOString();
+    
+    // Extract reviewer and stakeholder IDs before updating the workflow
+    const { reviewerIds, stakeholderIds, ...workflowData } = updateWorkflow;
+    
+    const updatedWorkflow = { 
+      ...workflow, 
+      ...workflowData, 
+      updatedAt: now 
+    };
+    
+    this.approvalWorkflows.set(id, updatedWorkflow);
+    
+    // Update workflow reviewers if provided
+    if (reviewerIds && reviewerIds.length > 0) {
+      // First, remove existing reviewers
+      for (const reviewer of Array.from(this.workflowReviewers.values())) {
+        if (reviewer.workflowId === id) {
+          this.workflowReviewers.delete(reviewer.id);
+        }
+      }
+      
+      // Then, create new reviewers
+      for (const reviewerId of reviewerIds) {
+        await this.createWorkflowReviewer({
+          workflowId: id,
+          reviewerId,
+          isRequired: true
+        });
+      }
+    }
+    
+    // Update workflow stakeholders if provided
+    if (stakeholderIds && stakeholderIds.length > 0) {
+      // First, remove existing stakeholders
+      for (const stakeholder of Array.from(this.workflowStakeholders.values())) {
+        if (stakeholder.workflowId === id) {
+          this.workflowStakeholders.delete(stakeholder.id);
+        }
+      }
+      
+      // Then, create new stakeholders
+      for (const stakeholderId of stakeholderIds) {
+        await this.createWorkflowStakeholder({
+          workflowId: id,
+          stakeholderId,
+          notificationType: "email"
+        });
+      }
+    }
+    
+    return updatedWorkflow;
+  }
+  
+  async updateApprovalWorkflowStatus(id: number, status: ApprovalStatus, userId: number): Promise<ApprovalWorkflow | undefined> {
+    const workflow = this.approvalWorkflows.get(id);
+    if (!workflow) return undefined;
+    
+    const now = new Date().toISOString();
+    const previousStatus = workflow.status;
+    
+    const updatedWorkflow = { 
+      ...workflow, 
+      status, 
+      updatedAt: now 
+    };
+    
+    this.approvalWorkflows.set(id, updatedWorkflow);
+    
+    // Create history entry for status change
+    await this.createWorkflowHistory({
+      workflowId: id,
+      userId,
+      action: "status_updated",
+      details: `Status changed from ${previousStatus} to ${status}`,
+      previousStatus,
+      newStatus: status
+    });
+    
+    return updatedWorkflow;
+  }
+  
+  async deleteApprovalWorkflow(id: number): Promise<boolean> {
+    // First delete all related entities
+    for (const reviewer of Array.from(this.workflowReviewers.values())) {
+      if (reviewer.workflowId === id) {
+        this.workflowReviewers.delete(reviewer.id);
+      }
+    }
+    
+    for (const stakeholder of Array.from(this.workflowStakeholders.values())) {
+      if (stakeholder.workflowId === id) {
+        this.workflowStakeholders.delete(stakeholder.id);
+      }
+    }
+    
+    for (const comment of Array.from(this.workflowComments.values())) {
+      if (comment.workflowId === id) {
+        this.workflowComments.delete(comment.id);
+      }
+    }
+    
+    for (const history of Array.from(this.workflowHistory.values())) {
+      if (history.workflowId === id) {
+        this.workflowHistory.delete(history.id);
+      }
+    }
+    
+    // Then delete the workflow itself
+    return this.approvalWorkflows.delete(id);
+  }
+  
+  // Workflow reviewer methods
+  async getWorkflowReviewers(workflowId: number): Promise<WorkflowReviewer[]> {
+    return Array.from(this.workflowReviewers.values()).filter(
+      (reviewer) => reviewer.workflowId === workflowId
+    );
+  }
+  
+  async getWorkflowReviewersByUser(userId: number): Promise<WorkflowReviewer[]> {
+    return Array.from(this.workflowReviewers.values()).filter(
+      (reviewer) => reviewer.reviewerId === userId
+    );
+  }
+  
+  async getWorkflowReviewer(id: number): Promise<WorkflowReviewer | undefined> {
+    return this.workflowReviewers.get(id);
+  }
+  
+  async createWorkflowReviewer(insertReviewer: InsertWorkflowReviewer): Promise<WorkflowReviewer> {
+    const id = this.workflowReviewerId++;
+    const reviewer: WorkflowReviewer = { 
+      ...insertReviewer, 
+      id, 
+      status: "pending" as ApprovalStatus,
+      reviewedAt: null
+    };
+    this.workflowReviewers.set(id, reviewer);
+    return reviewer;
+  }
+  
+  async updateWorkflowReviewer(id: number, updateReviewer: Partial<InsertWorkflowReviewer>): Promise<WorkflowReviewer | undefined> {
+    const reviewer = this.workflowReviewers.get(id);
+    if (!reviewer) return undefined;
+    
+    const updatedReviewer = { ...reviewer, ...updateReviewer };
+    this.workflowReviewers.set(id, updatedReviewer);
+    return updatedReviewer;
+  }
+  
+  async updateWorkflowReviewerStatus(id: number, status: ApprovalStatus, comments?: string): Promise<WorkflowReviewer | undefined> {
+    const reviewer = this.workflowReviewers.get(id);
+    if (!reviewer) return undefined;
+    
+    const now = new Date().toISOString();
+    const updatedReviewer = { 
+      ...reviewer, 
+      status, 
+      reviewedAt: now,
+      comments: comments || reviewer.comments
+    };
+    
+    this.workflowReviewers.set(id, updatedReviewer);
+    
+    // Get user who made the review
+    const user = this.users.get(reviewer.reviewerId);
+    
+    // Get the workflow
+    const workflow = this.approvalWorkflows.get(reviewer.workflowId);
+    if (workflow && user) {
+      // Create history entry for reviewer status change
+      await this.createWorkflowHistory({
+        workflowId: reviewer.workflowId,
+        userId: reviewer.reviewerId,
+        action: "reviewer_updated",
+        details: `Reviewer ${user.name || user.username} changed status to ${status}${comments ? `: "${comments}"` : ""}`,
+        previousStatus: reviewer.status,
+        newStatus: status
+      });
+      
+      // Check if all required reviewers have approved
+      const requiredReviewers = Array.from(this.workflowReviewers.values()).filter(
+        (r) => r.workflowId === reviewer.workflowId && r.isRequired
+      );
+      
+      const allApproved = requiredReviewers.every((r) => r.status === "approved");
+      
+      if (allApproved && workflow.status === "pending") {
+        // Auto-update workflow status if all required reviewers approved
+        await this.updateApprovalWorkflowStatus(
+          reviewer.workflowId,
+          "approved",
+          reviewer.reviewerId
+        );
+      } else if (status === "rejected" && workflow.status === "pending") {
+        // Auto-update workflow status if any required reviewer rejected
+        await this.updateApprovalWorkflowStatus(
+          reviewer.workflowId,
+          "rejected",
+          reviewer.reviewerId
+        );
+      }
+    }
+    
+    return updatedReviewer;
+  }
+  
+  async deleteWorkflowReviewer(id: number): Promise<boolean> {
+    return this.workflowReviewers.delete(id);
+  }
+  
+  // Workflow stakeholder methods
+  async getWorkflowStakeholders(workflowId: number): Promise<WorkflowStakeholder[]> {
+    return Array.from(this.workflowStakeholders.values()).filter(
+      (stakeholder) => stakeholder.workflowId === workflowId
+    );
+  }
+  
+  async getWorkflowStakeholdersByStakeholder(stakeholderId: number): Promise<WorkflowStakeholder[]> {
+    return Array.from(this.workflowStakeholders.values()).filter(
+      (workflowStakeholder) => workflowStakeholder.stakeholderId === stakeholderId
+    );
+  }
+  
+  async getWorkflowStakeholder(id: number): Promise<WorkflowStakeholder | undefined> {
+    return this.workflowStakeholders.get(id);
+  }
+  
+  async createWorkflowStakeholder(insertStakeholder: InsertWorkflowStakeholder): Promise<WorkflowStakeholder> {
+    const id = this.workflowStakeholderId++;
+    const stakeholder: WorkflowStakeholder = { 
+      ...insertStakeholder, 
+      id,
+      notifiedAt: null
+    };
+    this.workflowStakeholders.set(id, stakeholder);
+    return stakeholder;
+  }
+  
+  async updateWorkflowStakeholder(id: number, updateStakeholder: Partial<InsertWorkflowStakeholder>): Promise<WorkflowStakeholder | undefined> {
+    const stakeholder = this.workflowStakeholders.get(id);
+    if (!stakeholder) return undefined;
+    
+    const updatedStakeholder = { ...stakeholder, ...updateStakeholder };
+    this.workflowStakeholders.set(id, updatedStakeholder);
+    return updatedStakeholder;
+  }
+  
+  async notifyWorkflowStakeholder(id: number): Promise<WorkflowStakeholder | undefined> {
+    const stakeholder = this.workflowStakeholders.get(id);
+    if (!stakeholder) return undefined;
+    
+    const now = new Date().toISOString();
+    const updatedStakeholder = { ...stakeholder, notifiedAt: now };
+    this.workflowStakeholders.set(id, updatedStakeholder);
+    
+    // Get actual stakeholder data
+    const actualStakeholder = this.stakeholders.get(stakeholder.stakeholderId);
+    
+    // Get the workflow
+    const workflow = this.approvalWorkflows.get(stakeholder.workflowId);
+    
+    if (workflow && actualStakeholder) {
+      // Create history entry for stakeholder notification
+      await this.createWorkflowHistory({
+        workflowId: stakeholder.workflowId,
+        userId: workflow.requesterId, // Use requester as the actor
+        action: "stakeholder_notified",
+        details: `Stakeholder ${actualStakeholder.name} was notified via ${stakeholder.notificationType}`
+      });
+    }
+    
+    return updatedStakeholder;
+  }
+  
+  async deleteWorkflowStakeholder(id: number): Promise<boolean> {
+    return this.workflowStakeholders.delete(id);
+  }
+  
+  // Workflow comment methods
+  async getWorkflowComments(workflowId: number): Promise<WorkflowComment[]> {
+    return Array.from(this.workflowComments.values()).filter(
+      (comment) => comment.workflowId === workflowId
+    );
+  }
+  
+  async getWorkflowCommentsByUser(userId: number): Promise<WorkflowComment[]> {
+    return Array.from(this.workflowComments.values()).filter(
+      (comment) => comment.userId === userId
+    );
+  }
+  
+  async getWorkflowComment(id: number): Promise<WorkflowComment | undefined> {
+    return this.workflowComments.get(id);
+  }
+  
+  async createWorkflowComment(insertComment: InsertWorkflowComment): Promise<WorkflowComment> {
+    const id = this.workflowCommentId++;
+    const now = new Date().toISOString();
+    const comment: WorkflowComment = { 
+      ...insertComment, 
+      id, 
+      createdAt: now 
+    };
+    this.workflowComments.set(id, comment);
+    
+    // Get user who made the comment
+    const user = this.users.get(insertComment.userId);
+    
+    // Get the workflow
+    const workflow = this.approvalWorkflows.get(insertComment.workflowId);
+    
+    if (workflow && user) {
+      // Create history entry for new comment
+      await this.createWorkflowHistory({
+        workflowId: insertComment.workflowId,
+        userId: insertComment.userId,
+        action: "comment_added",
+        details: `${user.name || user.username} added a comment${insertComment.isPrivate ? " (private)" : ""}`
+      });
+    }
+    
+    return comment;
+  }
+  
+  async updateWorkflowComment(id: number, updateComment: Partial<InsertWorkflowComment>): Promise<WorkflowComment | undefined> {
+    const comment = this.workflowComments.get(id);
+    if (!comment) return undefined;
+    
+    const updatedComment = { ...comment, ...updateComment };
+    this.workflowComments.set(id, updatedComment);
+    
+    // Get user who updated the comment
+    const user = this.users.get(comment.userId);
+    
+    if (user) {
+      // Create history entry for comment update
+      await this.createWorkflowHistory({
+        workflowId: comment.workflowId,
+        userId: comment.userId,
+        action: "comment_updated",
+        details: `${user.name || user.username} updated a comment`
+      });
+    }
+    
+    return updatedComment;
+  }
+  
+  async deleteWorkflowComment(id: number): Promise<boolean> {
+    const comment = this.workflowComments.get(id);
+    if (!comment) return false;
+    
+    const result = this.workflowComments.delete(id);
+    
+    if (result) {
+      // Get user who deleted the comment
+      const user = this.users.get(comment.userId);
+      
+      if (user) {
+        // Create history entry for comment deletion
+        await this.createWorkflowHistory({
+          workflowId: comment.workflowId,
+          userId: comment.userId,
+          action: "comment_deleted",
+          details: `${user.name || user.username} deleted a comment`
+        });
+      }
+    }
+    
+    return result;
+  }
+  
+  // Workflow history methods
+  async getWorkflowHistory(workflowId: number): Promise<WorkflowHistory[]> {
+    // Sort by timestamp in descending order (newest first)
+    return Array.from(this.workflowHistory.values())
+      .filter((history) => history.workflowId === workflowId)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+  
+  async createWorkflowHistory(insertHistory: InsertWorkflowHistory): Promise<WorkflowHistory> {
+    const id = this.workflowHistoryId++;
+    const now = new Date().toISOString();
+    const history: WorkflowHistory = { 
+      ...insertHistory, 
+      id, 
+      timestamp: now
+    };
+    this.workflowHistory.set(id, history);
+    return history;
   }
 
   // Seed method to add initial data

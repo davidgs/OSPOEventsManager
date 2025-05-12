@@ -5,7 +5,13 @@ import {
   insertEventSchema, insertCfpSubmissionSchema, 
   insertAttendeeSchema, insertSponsorshipSchema,
   updateUserProfileSchema, insertAssetSchema,
-  assetTypes
+  assetTypes, insertStakeholderSchema,
+  insertApprovalWorkflowSchema,
+  insertWorkflowReviewerSchema,
+  insertWorkflowStakeholderSchema,
+  insertWorkflowCommentSchema,
+  insertWorkflowHistorySchema,
+  ApprovalStatus, ApprovalItemType
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
