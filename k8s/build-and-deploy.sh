@@ -26,9 +26,18 @@ fi
 
 # Update only the appServer image in values.yaml
 echo -e "${YELLOW}Updating app server image in Helm chart values...${NC}"
-# Use sed to replace the image repository and tag
-sed -i "s|repository: .*|repository: ${IMAGE_NAME}|g" k8s/charts/ospo-app/values.yaml
-sed -i "s|tag: .*|tag: ${IMAGE_TAG}|g" k8s/charts/ospo-app/values.yaml
+
+# Detect OS for sed compatibility
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  # macOS version of sed
+  sed -i '' "s|repository: .*|repository: ${IMAGE_NAME}|g" k8s/charts/ospo-app/values.yaml
+  sed -i '' "s|tag: .*|tag: ${IMAGE_TAG}|g" k8s/charts/ospo-app/values.yaml
+else
+  # Linux/other versions of sed
+  sed -i "s|repository: .*|repository: ${IMAGE_NAME}|g" k8s/charts/ospo-app/values.yaml
+  sed -i "s|tag: .*|tag: ${IMAGE_TAG}|g" k8s/charts/ospo-app/values.yaml
+fi
+
 echo -e "${GREEN}App server image updated successfully in Helm chart values.${NC}"
 
 # Deploy the application using Helm
