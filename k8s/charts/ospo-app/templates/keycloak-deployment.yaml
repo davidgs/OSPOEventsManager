@@ -33,12 +33,12 @@ spec:
               protocol: TCP
           env:
             - name: KEYCLOAK_ADMIN
-              value: {{ .Values.keycloak.auth.adminUser }}
+              value: "admin"
             - name: KEYCLOAK_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ template "ospo-app.keycloak.secretName" . }}
-                  key: {{ .Values.keycloak.auth.secretKeys.adminPasswordKey }}
+                  key: admin-password
             # Database configuration through environment variables
             - name: KC_DB
               value: "postgres"
@@ -47,7 +47,10 @@ spec:
             - name: KC_DB_USERNAME
               value: {{ .Values.postgresql.auth.username }}
             - name: KC_DB_PASSWORD
-              value: "ospo_password123"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "ospo-app.postgresql.secretName" . }}
+                  key: password
             - name: KC_HEALTH_ENABLED
               value: "true"
             - name: KC_HOSTNAME_STRICT

@@ -73,7 +73,10 @@ spec:
             - name: PORT
               value: "{{ .Values.appServer.service.port }}"
             - name: DATABASE_URL
-              value: "postgresql://{{ .Values.postgresql.auth.username }}:ospo_password123@{{ .Release.Name }}-postgresql:{{ .Values.postgresql.service.port }}/{{ .Values.postgresql.auth.database }}"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "ospo-app.postgresql.secretName" . }}
+                  key: database-url
             - name: SESSION_SECRET
               valueFrom:
                 secretKeyRef:

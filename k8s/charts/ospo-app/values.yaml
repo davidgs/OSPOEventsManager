@@ -47,7 +47,9 @@ keycloak:
     tag: 21.1.2
     pullPolicy: IfNotPresent
   auth:
+    adminUser: admin
     existingSecret: null
+  extraEnv: []
   service:
     port: 8080
   resources:
