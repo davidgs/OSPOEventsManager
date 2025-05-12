@@ -9,3 +9,12 @@ data:
   init-keycloak-db.sql: |
     CREATE DATABASE keycloak;
     GRANT ALL PRIVILEGES ON DATABASE keycloak TO {{ .Values.postgresql.auth.username }};
+    \c keycloak;
+    
+    -- Ensure the public schema is owned by the PostgreSQL user
+    ALTER SCHEMA public OWNER TO {{ .Values.postgresql.auth.username }};
+    
+    -- Grant permissions to all future objects in the schema
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO {{ .Values.postgresql.auth.username }};
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO {{ .Values.postgresql.auth.username }};
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO {{ .Values.postgresql.auth.username }};
