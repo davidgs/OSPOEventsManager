@@ -48,4 +48,4 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ template "ospo-app.minio.secretName" . }}
-                  key: {{ .Values.minio.auth.secretKeys.rootPasswordKey }}
+                  key: root-password
