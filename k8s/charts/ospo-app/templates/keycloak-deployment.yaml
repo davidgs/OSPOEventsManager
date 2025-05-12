@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-keycloak
+  labels:
+    app: {{ .Release.Name }}-keycloak
+    {{- include "ospo-app.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-keycloak
+      {{- include "ospo-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-keycloak
+        {{- include "ospo-app.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: keycloak
+          image: {{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}
+          imagePullPolicy: {{ .Values.keycloak.image.pullPolicy }}
+          command: 
+            - "/opt/keycloak/bin/kc.sh"
+            - "start"
+            - "--optimized"
+          ports:
+            - name: http
+              containerPort: {{ .Values.keycloak.service.port }}
+              protocol: TCP
+          env:
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://{{ .Release.Name }}-postgresql:{{ .Values.postgresql.service.port }}/keycloak"
+            - name: KC_DB_USERNAME
+              value: {{ .Values.postgresql.auth.username }}
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "ospo-app.postgresql.secretName" . }}
+                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+            - name: KEYCLOAK_ADMIN
+              value: {{ .Values.keycloak.auth.adminUser }}
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "ospo-app.keycloak.secretName" . }}
+                  key: {{ .Values.keycloak.auth.secretKeys.adminPasswordKey }}
+            {{- range .Values.keycloak.extraEnv }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.keycloak.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /opt/keycloak/data
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          {{- if .Values.keycloak.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-keycloak-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}

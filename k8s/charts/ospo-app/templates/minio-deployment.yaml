@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-minio
+  labels:
+    app: {{ .Release.Name }}-minio
+    {{- include "ospo-app.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-minio
+      {{- include "ospo-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-minio
+        {{- include "ospo-app.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: minio
+          image: {{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}
+          imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              mkdir -p /data/{{ .Values.minio.defaultBuckets }}
+              /usr/bin/minio server /data --console-address :{{ .Values.minio.service.consolePort }}
+          ports:
+            - name: api
+              containerPort: {{ .Values.minio.service.port }}
+              protocol: TCP
+            - name: console
+              containerPort: {{ .Values.minio.service.consolePort }}
+              protocol: TCP
+          env:
+            - name: MINIO_ROOT_USER
+              value: {{ .Values.minio.auth.rootUser }}
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "ospo-app.minio.secretName" . }}
+                  key: {{ .Values.minio.auth.secretKeys.rootPasswordKey }}
+          resources:
+            {{- toYaml .Values.minio.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: api
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: api
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: data
+          {{- if .Values.minio.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-minio-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
