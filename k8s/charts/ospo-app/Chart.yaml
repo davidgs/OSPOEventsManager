@@ -1,0 +1,13 @@
+apiVersion: v2
+name: ospo-app
+description: A Helm chart for the OSPO AI Community Architects Event Management System
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - ospo
+  - events
+  - community
+maintainers:
+  - name: OSPO Team
+    email: support@ospo.org

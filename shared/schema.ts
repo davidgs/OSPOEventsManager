@@ -187,6 +187,7 @@ export const assets = pgTable("assets", {
   fileSize: integer("file_size").notNull(),
   mimeType: text("mime_type").notNull(),
   uploadedBy: integer("uploaded_by").notNull().references(() => users.id),
+  uploadedByName: text("uploaded_by_name"), // Store the name for easier display
   eventId: integer("event_id").references(() => events.id),
   cfpSubmissionId: integer("cfp_submission_id").references(() => cfpSubmissions.id),
   description: text("description"),

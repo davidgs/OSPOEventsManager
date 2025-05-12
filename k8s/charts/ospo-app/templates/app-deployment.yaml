@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-app
+  labels:
+    app: {{ .Release.Name }}-app
+    {{- include "ospo-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-app
+      {{- include "ospo-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-app
+        {{- include "ospo-app.selectorLabels" . | nindent 8 }}
+    spec:
+      initContainers:
+        - name: git-clone
+          image: alpine/git
+          args:
+            - clone
+            - {{ .Values.repository.url }}
+            - -b
+            - {{ .Values.repository.branch }}
+            {{- if .Values.repository.commitHash }}
+            - --single-branch
+            - --depth
+            - "1"
+            {{- end }}
+            - /app
+          volumeMounts:
+            - name: app-source
+              mountPath: /app
+        {{- if .Values.repository.commitHash }}
+        - name: git-checkout
+          image: alpine/git
+          args:
+            - -C
+            - /app
+            - checkout
+            - {{ .Values.repository.commitHash }}
+          volumeMounts:
+            - name: app-source
+              mountPath: /app
+        {{- end }}
+        - name: install-dependencies
+          image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - cd /app && npm ci --production
+          volumeMounts:
+            - name: app-source
+              mountPath: /app
+      containers:
+        - name: app-server
+          image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
+          imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - cd /app && npm start
+          ports:
+            - name: http
+              containerPort: {{ .Values.appServer.service.port }}
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.appServer.env.NODE_ENV }}
+            - name: PORT
+              value: "{{ .Values.appServer.service.port }}"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "ospo-app.postgresql.secretName" . }}
+                  key: database-url
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "ospo-app.app.secretName" . }}
+                  key: session-secret
+            - name: KEYCLOAK_URL
+              value: "http://{{ .Release.Name }}-keycloak:{{ .Values.keycloak.service.port }}/auth"
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "ospo-app.keycloak.secretName" . }}
+                  key: client-secret
+            - name: MINIO_ENDPOINT
+              value: "{{ .Release.Name }}-minio:{{ .Values.minio.service.port }}"
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "ospo-app.minio.secretName" . }}
+                  key: access-key
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "ospo-app.minio.secretName" . }}
+                  key: secret-key
+            # Add any additional environment variables from values
+            {{- if .Values.appServer.env }}
+            {{- range $key, $value := .Values.appServer.env }}
+            {{- if ne $key "NODE_ENV" }}
+            {{- if ne $key "PORT" }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.appServer.resources | nindent 12 }}
+          volumeMounts:
+            - name: app-source
+              mountPath: /app
+            {{- if .Values.sharedVolume.enabled }}
+            - name: shared-volume
+              mountPath: {{ .Values.sharedVolume.mountPath }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: app-source
+          emptyDir: {}
+        {{- if .Values.sharedVolume.enabled }}
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-shared-volume
+        {{- end }}

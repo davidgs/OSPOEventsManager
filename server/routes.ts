@@ -579,13 +579,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         assets = await storage.getAssets();
       }
       
-      // Enhance asset data with user information
+      // For backward compatibility, ensure all assets have uploadedByName
       const enhancedAssets = await Promise.all(assets.map(async (asset) => {
-        const user = await storage.getUser(asset.uploadedBy);
-        return {
-          ...asset,
-          uploadedByName: user ? user.name : 'Unknown User'
-        };
+        if (!asset.uploadedByName) {
+          const user = await storage.getUser(asset.uploadedBy);
+          return {
+            ...asset,
+            uploadedByName: user ? user.name : 'Unknown User'
+          };
+        }
+        return asset;
       }));
       
       res.json(enhancedAssets);
