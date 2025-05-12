@@ -69,6 +69,8 @@ minio:
     rootUser: minio
     rootPassword: minio123
     existingSecret: null
+    secretKeys:
+      rootPasswordKey: root-password
   service:
     port: 9000
   resources:

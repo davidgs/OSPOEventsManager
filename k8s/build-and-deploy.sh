@@ -29,13 +29,13 @@ echo -e "${YELLOW}Updating app server image in Helm chart values...${NC}"
 
 # Detect OS for sed compatibility
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  # macOS version of sed
-  sed -i '' "s|repository: .*|repository: ${IMAGE_NAME}|g" k8s/charts/ospo-app/values.yaml
-  sed -i '' "s|tag: .*|tag: ${IMAGE_TAG}|g" k8s/charts/ospo-app/values.yaml
+  # macOS version of sed - more targeted replacement
+  sed -i '' '/^appServer:/,/^[^ ]/ s|repository: .*|repository: '"${IMAGE_NAME}"'|' k8s/charts/ospo-app/values.yaml
+  sed -i '' '/^appServer:/,/^[^ ]/ s|tag: .*|tag: '"${IMAGE_TAG}"'|' k8s/charts/ospo-app/values.yaml
 else
-  # Linux/other versions of sed
-  sed -i "s|repository: .*|repository: ${IMAGE_NAME}|g" k8s/charts/ospo-app/values.yaml
-  sed -i "s|tag: .*|tag: ${IMAGE_TAG}|g" k8s/charts/ospo-app/values.yaml
+  # Linux/other versions of sed - more targeted replacement
+  sed -i '/^appServer:/,/^[^ ]/ s|repository: .*|repository: '"${IMAGE_NAME}"'|' k8s/charts/ospo-app/values.yaml
+  sed -i '/^appServer:/,/^[^ ]/ s|tag: .*|tag: '"${IMAGE_TAG}"'|' k8s/charts/ospo-app/values.yaml
 fi
 
 echo -e "${GREEN}App server image updated successfully in Helm chart values.${NC}"
