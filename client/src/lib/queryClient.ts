@@ -12,8 +12,26 @@ function safeParseJSON(text: string) {
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    let errorText;
+    try {
+      // Try to parse as JSON first in case the server returned a structured error
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const jsonError = await res.json();
+        errorText = JSON.stringify(jsonError);
+        console.error("Server JSON error:", jsonError);
+      } else {
+        errorText = await res.text();
+        console.error("Server error response text:", errorText);
+      }
+    } catch (e) {
+      // If we can't parse it as JSON or get the text, fall back to status text
+      errorText = res.statusText;
+      console.error("Failed to parse error response:", e);
+    }
+    
+    // Throw an enhanced error with more details
+    throw new Error(`${res.status} ${res.statusText}: ${errorText || 'No additional error details'}`);
   }
 }
 

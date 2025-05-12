@@ -107,12 +107,21 @@ export default function ApprovalWorkflowsPage() {
       return;
     }
 
-    // Convert itemId to number if it's a string
+    // Convert itemId to number if it's a string and ensure correct data types for all fields
     const workflowData = {
       ...newWorkflow,
+      title: String(newWorkflow.title),
+      description: newWorkflow.description ? String(newWorkflow.description) : "",
+      itemType: String(newWorkflow.itemType),
       itemId: typeof newWorkflow.itemId === 'string' ? parseInt(newWorkflow.itemId) : newWorkflow.itemId,
+      priority: String(newWorkflow.priority),
+      dueDate: newWorkflow.dueDate || null,
+      requesterId: Number(newWorkflow.requesterId),
+      reviewerIds: newWorkflow.reviewerIds.map(id => Number(id)),
+      stakeholderIds: (newWorkflow.stakeholderIds || []).map(id => Number(id)),
     };
 
+    console.log("Prepared workflow data:", workflowData);
     createWorkflowMutation.mutate(workflowData);
   };
 

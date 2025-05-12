@@ -903,19 +903,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Creating workflow:", req.body);
       
       // Add validation for the new item types
+      console.log("Request body itemType:", req.body.itemType);
+      console.log("Valid item types:", approvalItemTypes);
+      
       const isValidItemType = approvalItemTypes.includes(req.body.itemType);
       if (!isValidItemType) {
+        console.error(`Invalid itemType: "${req.body.itemType}"`);
         return res.status(400).json({ 
           message: `Invalid itemType. Allowed values: ${approvalItemTypes.join(', ')}` 
         });
       }
       
+      // Log all request body fields for debugging
+      console.log("Request body before validation:", {
+        title: req.body.title,
+        description: req.body.description,
+        itemType: req.body.itemType,
+        itemId: req.body.itemId,
+        priority: req.body.priority,
+        dueDate: req.body.dueDate,
+        requesterId: req.body.requesterId,
+        reviewerIds: req.body.reviewerIds,
+        stakeholderIds: req.body.stakeholderIds
+      });
+      
       const parseResult = insertApprovalWorkflowSchema.safeParse(req.body);
       
       if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
-        console.error("Validation error:", validationError);
-        return res.status(400).json({ message: validationError.message });
+        console.error("Validation error details:", parseResult.error.errors);
+        console.error("Validation error message:", validationError.message);
+        return res.status(400).json({ 
+          message: validationError.message,
+          details: parseResult.error.errors 
+        });
       }
       
       const workflow = await storage.createApprovalWorkflow(parseResult.data);
