@@ -5,12 +5,18 @@ async function migrateDatabase() {
   console.log("Starting database migration...");
 
   try {
-    // Create users table with new Keycloak-focused schema
+    // Create users table with new Keycloak-focused schema plus profile fields
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         keycloak_id TEXT NOT NULL UNIQUE,
         username TEXT NOT NULL UNIQUE,
+        name TEXT,
+        email TEXT,
+        bio TEXT,
+        job_title TEXT,
+        headshot TEXT,
+        role TEXT,
         preferences TEXT,
         last_login TIMESTAMP,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()

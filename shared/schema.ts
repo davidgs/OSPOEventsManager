@@ -36,6 +36,12 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   keycloakId: text("keycloak_id").notNull().unique(), // Reference to Keycloak's user ID
   username: text("username").notNull().unique(),      // Cached from Keycloak for easier queries
+  name: text("name"),                                 // User's full name 
+  email: text("email"),                               // User's email
+  bio: text("bio"),                                   // User's biography
+  jobTitle: text("job_title"),                        // User's job title
+  headshot: text("headshot"),                         // Path to headshot file
+  role: text("role"),                                 // User's role in the organization
   preferences: text("preferences"),                    // App-specific preferences (JSON)
   lastLogin: timestamp("last_login"),                  // Track last login time
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -46,11 +52,23 @@ export const insertUserSchema = createInsertSchema(users).pick({
   keycloakId: true,
   username: true,
 }).extend({
+  name: z.string().optional(),
+  email: z.string().optional(),
+  bio: z.string().optional(),
+  jobTitle: z.string().optional(),
+  headshot: z.string().optional(),
+  role: z.string().optional(),
   preferences: z.string().optional(),
 });
 
-// Schema for updating user preferences 
+// Schema for updating user preferences and profile information
 export const updateUserPreferencesSchema = z.object({
+  name: z.string().optional(),
+  email: z.string().optional(),
+  bio: z.string().optional(),
+  jobTitle: z.string().optional(),
+  headshot: z.string().optional(),
+  role: z.string().optional(),
   preferences: z.string().optional(),
 });
 
