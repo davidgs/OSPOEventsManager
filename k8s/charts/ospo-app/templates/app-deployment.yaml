@@ -29,10 +29,8 @@ spec:
         - name: app-server
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
           imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
-          # Since we're using a base Node.js image, we need to clone the repo and start the app
-          command: ["/bin/sh", "-c"]
-          args:
-            - "mkdir -p /app && cd /app && git clone {{ .Values.repository.url }} . && npm ci && npm start"
+          # Using pre-built docker image with all code included
+          # No custom command needed as the Docker image's CMD will be used
           ports:
             - name: http
               containerPort: {{ .Values.appServer.service.port }}

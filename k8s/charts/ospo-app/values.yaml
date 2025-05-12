@@ -13,9 +13,9 @@ repository:
 # App Server configuration
 appServer:
   image:
-    # Using a public Node.js image instead of the custom image
-    repository: node
-    tag: 20-alpine
+    # Using locally built image
+    repository: ospo-app
+    tag: latest
     # When using a container registry, replace with your registry URL:
     # repository: your-registry.com/ospo-app
     # tag: version
