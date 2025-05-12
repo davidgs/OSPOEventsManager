@@ -23,22 +23,17 @@ spec:
           imagePullPolicy: {{ .Values.keycloak.image.pullPolicy }}
           command: 
             - "/opt/keycloak/bin/kc.sh"
-            - "start"
-            - "--optimized"
+            - "start-dev"
           ports:
             - name: http
               containerPort: {{ .Values.keycloak.service.port }}
               protocol: TCP
           env:
+            # Use H2 database for development/testing
+            - name: KC_DB
+              value: "dev-file"
             - name: KC_DB_URL
-              value: "jdbc:postgresql://{{ .Release.Name }}-postgresql:{{ .Values.postgresql.service.port }}/keycloak"
-            - name: KC_DB_USERNAME
-              value: {{ .Values.postgresql.auth.username }}
-            - name: KC_DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "ospo-app.postgresql.secretName" . }}
-                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+              value: "jdbc:h2:file:/opt/keycloak/data/h2/keycloakdb;AUTO_SERVER=TRUE"
             - name: KEYCLOAK_ADMIN
               value: {{ .Values.keycloak.auth.adminUser }}
             - name: KEYCLOAK_ADMIN_PASSWORD

@@ -94,6 +94,10 @@ keycloak:
   extraEnv:
     - name: KC_DB
       value: postgres
+    - name: KC_FEATURES
+      value: "preview"
+    - name: KC_LOG_LEVEL
+      value: "INFO,org.keycloak:DEBUG,org.infinispan:INFO"
     - name: KC_HEALTH_ENABLED
       value: "true"
     - name: KC_HTTP_ENABLED
