@@ -6,7 +6,8 @@ metadata:
     app: {{ .Release.Name }}-app
     {{- include "ospo-app.labels" . | nindent 4 }}
 data:
-  package.json: |
+  # Important: ConfigMap keys must use proper formatting with spaces after colons
+  package.json: |-
     {
       "name": "ospo-events-app",
       "version": "1.0.0",
@@ -18,13 +19,17 @@ data:
         "express": "^4.18.2"
       }
     }
-  index.js: |
+  index.js: |-
     const express = require('express');
     const app = express();
     const port = process.env.PORT || 5000;
 
     app.get('/api/health', (req, res) => {
       res.json({ status: 'healthy', message: 'Application is running in fallback mode' });
+    });
+
+    app.get('/', (req, res) => {
+      res.send('OSPO Events App - Fallback Mode');
     });
 
     app.listen(port, '0.0.0.0', () => {
