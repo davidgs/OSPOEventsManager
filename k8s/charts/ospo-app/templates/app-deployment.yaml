@@ -20,50 +20,16 @@ spec:
         # Add timestamp annotation to force update on image rebuild
         rollme: {{ randAlphaNum 5 | quote }}
     spec:
-      initContainers:
-        - name: git-clone
-          image: alpine/git
-          args:
-            - clone
-            - {{ .Values.repository.url }}
-            - -b
-            - {{ .Values.repository.branch }}
-            {{- if .Values.repository.commitHash }}
-            - --single-branch
-            - --depth
-            - "1"
-            {{- end }}
-            - /app
-          volumeMounts:
-            - name: app-source
-              mountPath: /app
-        {{- if .Values.repository.commitHash }}
-        - name: git-checkout
-          image: alpine/git
-          args:
-            - -C
-            - /app
-            - checkout
-            - {{ .Values.repository.commitHash }}
-          volumeMounts:
-            - name: app-source
-              mountPath: /app
-        {{- end }}
-        - name: install-dependencies
-          image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
-          command: ["/bin/sh", "-c"]
-          args:
-            - cd /app && npm ci --production
-          volumeMounts:
-            - name: app-source
-              mountPath: /app
+      # Use a persistent volume claim to store application data
+      # This is simpler than git cloning which requires auth
+      volumes:
+        - name: app-data
+          emptyDir: {}
       containers:
         - name: app-server
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
           imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
-          command: ["/bin/sh", "-c"]
-          args:
-            - cd /app && npm start
+          # No need to access /app directory from volume since code is contained in the image
           ports:
             - name: http
               containerPort: {{ .Values.appServer.service.port }}
@@ -119,8 +85,8 @@ spec:
           resources:
             {{- toYaml .Values.appServer.resources | nindent 12 }}
           volumeMounts:
-            - name: app-source
-              mountPath: /app
+            - name: app-data
+              mountPath: /app/uploads
             {{- if .Values.sharedVolume.enabled }}
             - name: shared-volume
               mountPath: {{ .Values.sharedVolume.mountPath }}
@@ -140,7 +106,7 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
       volumes:
-        - name: app-source
+        - name: app-data
           emptyDir: {}
         {{- if .Values.sharedVolume.enabled }}
         - name: shared-volume
