@@ -1644,8 +1644,289 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return !!deletedSponsorship;
   }
+
+  // Approval workflow methods
+  async getApprovalWorkflows(): Promise<ApprovalWorkflow[]> {
+    return await db.select().from(approvalWorkflows);
+  }
+
+  async getApprovalWorkflowsByStatus(status: ApprovalStatus): Promise<ApprovalWorkflow[]> {
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(eq(approvalWorkflows.status, status));
+  }
+
+  async getApprovalWorkflowsByItemType(itemType: ApprovalItemType): Promise<ApprovalWorkflow[]> {
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(eq(approvalWorkflows.itemType, itemType));
+  }
+
+  async getApprovalWorkflowsByItem(
+    itemType: ApprovalItemType,
+    itemId: number
+  ): Promise<ApprovalWorkflow[]> {
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(
+        and(
+          eq(approvalWorkflows.itemType, itemType),
+          eq(approvalWorkflows.itemId, itemId)
+        )
+      );
+  }
+
+  async getApprovalWorkflowsByRequester(requesterId: number): Promise<ApprovalWorkflow[]> {
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(eq(approvalWorkflows.requesterId, requesterId));
+  }
+
+  async getApprovalWorkflow(id: number): Promise<ApprovalWorkflow | undefined> {
+    const [workflow] = await db
+      .select()
+      .from(approvalWorkflows)
+      .where(eq(approvalWorkflows.id, id));
+    return workflow || undefined;
+  }
+
+  async createApprovalWorkflow(insertWorkflow: InsertApprovalWorkflow): Promise<ApprovalWorkflow> {
+    // Extract reviewer and stakeholder IDs before creating the workflow
+    const { reviewerIds, stakeholderIds, ...workflowData } = insertWorkflow;
+    
+    // Insert the workflow and get the new workflow with ID
+    const [workflow] = await db
+      .insert(approvalWorkflows)
+      .values({
+        ...workflowData,
+        status: "pending" as ApprovalStatus,
+      })
+      .returning();
+
+    // Create workflow reviewers
+    for (const reviewerId of reviewerIds) {
+      await db.insert(workflowReviewers).values({
+        workflowId: workflow.id,
+        reviewerId,
+        isRequired: true,
+      });
+    }
+
+    // Create workflow stakeholders if any
+    if (stakeholderIds && stakeholderIds.length > 0) {
+      for (const stakeholderId of stakeholderIds) {
+        await db.insert(workflowStakeholders).values({
+          workflowId: workflow.id,
+          stakeholderId,
+          notificationType: "email",
+        });
+      }
+    }
+
+    // Add an entry to the workflow history
+    await db.insert(workflowHistory).values({
+      workflowId: workflow.id,
+      userId: workflow.requesterId,
+      action: "created",
+      details: `Workflow created with title "${workflow.title}"`,
+      newStatus: "pending" as ApprovalStatus,
+    });
+
+    return workflow;
+  }
+
+  async updateApprovalWorkflow(
+    id: number,
+    updateWorkflow: Partial<InsertApprovalWorkflow>
+  ): Promise<ApprovalWorkflow | undefined> {
+    // Extract reviewer and stakeholder IDs if provided
+    const { reviewerIds, stakeholderIds, ...workflowData } = updateWorkflow;
+
+    // Update the workflow
+    const [workflow] = await db
+      .update(approvalWorkflows)
+      .set({
+        ...workflowData,
+        updatedAt: new Date(),
+      })
+      .where(eq(approvalWorkflows.id, id))
+      .returning();
+
+    if (!workflow) {
+      return undefined;
+    }
+
+    // Update reviewers if provided
+    if (reviewerIds && reviewerIds.length > 0) {
+      // Delete existing reviewers
+      await db.delete(workflowReviewers).where(eq(workflowReviewers.workflowId, id));
+
+      // Insert new reviewers
+      for (const reviewerId of reviewerIds) {
+        await db.insert(workflowReviewers).values({
+          workflowId: id,
+          reviewerId,
+          isRequired: true,
+        });
+      }
+    }
+
+    // Update stakeholders if provided
+    if (stakeholderIds && stakeholderIds.length > 0) {
+      // Delete existing stakeholders
+      await db.delete(workflowStakeholders).where(eq(workflowStakeholders.workflowId, id));
+
+      // Insert new stakeholders
+      for (const stakeholderId of stakeholderIds) {
+        await db.insert(workflowStakeholders).values({
+          workflowId: id,
+          stakeholderId,
+          notificationType: "email",
+        });
+      }
+    }
+
+    // Add an entry to the workflow history
+    await db.insert(workflowHistory).values({
+      workflowId: id,
+      userId: workflow.requesterId, // Use the requester ID for now
+      action: "updated",
+      details: `Workflow details updated`,
+    });
+
+    return workflow;
+  }
+
+  async updateApprovalWorkflowStatus(
+    id: number,
+    status: ApprovalStatus,
+    userId: number
+  ): Promise<ApprovalWorkflow | undefined> {
+    // Get the current workflow to retrieve the previous status
+    const [currentWorkflow] = await db
+      .select()
+      .from(approvalWorkflows)
+      .where(eq(approvalWorkflows.id, id));
+
+    if (!currentWorkflow) {
+      return undefined;
+    }
+
+    const previousStatus = currentWorkflow.status;
+
+    // Update the workflow status
+    const [workflow] = await db
+      .update(approvalWorkflows)
+      .set({
+        status,
+        updatedAt: new Date(),
+      })
+      .where(eq(approvalWorkflows.id, id))
+      .returning();
+
+    if (!workflow) {
+      return undefined;
+    }
+
+    // Add an entry to the workflow history
+    await db.insert(workflowHistory).values({
+      workflowId: id,
+      userId,
+      action: "status_changed",
+      details: `Workflow status changed from ${previousStatus} to ${status}`,
+      previousStatus: previousStatus as ApprovalStatus,
+      newStatus: status,
+    });
+
+    return workflow;
+  }
+
+  async deleteApprovalWorkflow(id: number): Promise<boolean> {
+    // Delete related records first
+    await db.delete(workflowReviewers).where(eq(workflowReviewers.workflowId, id));
+    await db.delete(workflowStakeholders).where(eq(workflowStakeholders.workflowId, id));
+    await db.delete(workflowComments).where(eq(workflowComments.workflowId, id));
+    await db.delete(workflowHistory).where(eq(workflowHistory.workflowId, id));
+
+    // Delete the workflow
+    const [deletedWorkflow] = await db
+      .delete(approvalWorkflows)
+      .where(eq(approvalWorkflows.id, id))
+      .returning();
+
+    return !!deletedWorkflow;
+  }
+
+  // Workflow reviewer methods
+  async getWorkflowReviewers(workflowId: number): Promise<WorkflowReviewer[]> {
+    return await db
+      .select()
+      .from(workflowReviewers)
+      .where(eq(workflowReviewers.workflowId, workflowId));
+  }
+
+  async createWorkflowReviewer(insertReviewer: InsertWorkflowReviewer): Promise<WorkflowReviewer> {
+    const [reviewer] = await db
+      .insert(workflowReviewers)
+      .values(insertReviewer)
+      .returning();
+    return reviewer;
+  }
+
+  async updateWorkflowReviewerStatus(
+    id: number,
+    status: ApprovalStatus,
+    comments: string | null
+  ): Promise<WorkflowReviewer | undefined> {
+    const [reviewer] = await db
+      .update(workflowReviewers)
+      .set({
+        status,
+        comments,
+        reviewedAt: new Date(),
+      })
+      .where(eq(workflowReviewers.id, id))
+      .returning();
+    return reviewer;
+  }
+
+  // Workflow comment methods
+  async getWorkflowComments(workflowId: number): Promise<WorkflowComment[]> {
+    return await db
+      .select()
+      .from(workflowComments)
+      .where(eq(workflowComments.workflowId, workflowId));
+  }
+
+  async createWorkflowComment(insertComment: InsertWorkflowComment): Promise<WorkflowComment> {
+    const [comment] = await db
+      .insert(workflowComments)
+      .values(insertComment)
+      .returning();
+    return comment;
+  }
+
+  // Workflow history methods
+  async getWorkflowHistory(workflowId: number): Promise<WorkflowHistory[]> {
+    return await db
+      .select()
+      .from(workflowHistory)
+      .where(eq(workflowHistory.workflowId, workflowId))
+      .orderBy(workflowHistory.timestamp);
+  }
+
+  async createWorkflowHistory(insertHistory: InsertWorkflowHistory): Promise<WorkflowHistory> {
+    const [history] = await db
+      .insert(workflowHistory)
+      .values(insertHistory)
+      .returning();
+    return history;
+  }
 }
 
-// Use MemStorage instead of DatabaseStorage to handle the goals as arrays without DB schema changes
-// We need to use memory storage since the database schema has 'goal' not 'goals' column
-export const storage = new MemStorage();
+// Switch from MemStorage to DatabaseStorage to use persistent database storage
+export const storage = new DatabaseStorage();
