@@ -3,7 +3,10 @@ kind: Job
 metadata:
   name: minio-setup
 spec:
+  ttlSecondsAfterFinished: 100
   template:
+    metadata:
+      name: minio-setup
     spec:
       restartPolicy: OnFailure
       containers:
@@ -12,8 +15,12 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
         - |
-          # Configure MinIO client
-          mc alias set myminio http://minio:9000 minioadmin minioadmin
+          # Wait for MinIO to be available
+          echo "Waiting for MinIO to be available..."
+          until mc alias set myminio http://minio:9000 minioadmin minioadmin 2>/dev/null; do
+            echo "MinIO not ready, waiting 5 seconds..."
+            sleep 5
+          done
           
           # Create bucket if it doesn't exist
           mc mb --ignore-existing myminio/uploads
@@ -22,4 +29,3 @@ spec:
           mc policy set download myminio/uploads
           
           echo "MinIO setup complete"
-      restartPolicy: OnFailure
