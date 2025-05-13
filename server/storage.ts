@@ -1970,8 +1970,28 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Switch from MemStorage to DatabaseStorage to use persistent database storage
-// Temporarily use MemStorage instead of DatabaseStorage for testing
-// export const storage = new DatabaseStorage();
-// Switch back to DatabaseStorage to use persistent database storage
-export const storage = new DatabaseStorage();
+// Decide which storage implementation to use based on environment
+// For Kubernetes deployment, use DatabaseStorage with PostgreSQL
+// For Replit testing environment, use MemStorage as a fallback
+
+// Detect if we're running in Replit (for testing)
+const isRunningInReplit = process.env.REPL_ID && process.env.REPL_OWNER;
+const isKubernetes = process.env.KUBERNETES_SERVICE_HOST;
+
+// Check if we can connect to the database
+let useDatabase = true;
+try {
+  // If we're in Replit and not in Kubernetes, default to MemStorage for testing
+  if (isRunningInReplit && !isKubernetes) {
+    console.log('Running in Replit: Using MemStorage for testing');
+    useDatabase = false;
+  }
+} catch (err) {
+  console.error('Error checking database connection, falling back to MemStorage:', err);
+  useDatabase = false;
+}
+
+// Export the appropriate storage based on environment
+export const storage = useDatabase ? new DatabaseStorage() : new MemStorage();
+
+console.log(`Using ${useDatabase ? 'DatabaseStorage (PostgreSQL)' : 'MemStorage (in-memory)'} for data storage`);
