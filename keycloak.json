@@ -10,5 +10,10 @@
     "secret": "supersecret"
   },
   "use-resource-role-mappings": true,
-  "enable-cors": true
+  "enable-cors": true,
+  "enable-registration": true,
+  "enable-pkce": true,
+  "two-factor-authentication": true,
+  "register-node": true,
+  "register-timeout": 600
 }

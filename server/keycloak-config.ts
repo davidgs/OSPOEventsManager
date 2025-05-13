@@ -30,21 +30,32 @@ export function initKeycloak(app: Express) {
     // Load Keycloak configuration
     const keycloakConfigPath = path.join(process.cwd(), 'keycloak.json');
     const keycloakConfig = JSON.parse(fs.readFileSync(keycloakConfigPath, 'utf8'));
+    
+    // Override auth-server-url for Replit environment if needed
+    if (!process.env.KUBERNETES_SERVICE_HOST) {
+      // For Replit: Use a publicly accessible Keycloak instance
+      // This will be the URL of the deployed Keycloak service
+      console.log("Using Keycloak in Replit mode with custom server URL");
+      keycloakConfig["auth-server-url"] = process.env.KEYCLOAK_URL || "https://keycloak-repl.example.com/";
+    }
+    
+    // Enable registration flag
+    keycloakConfig["enable-registration"] = true;
 
     // Initialize Keycloak
     const keycloak = new Keycloak({ store: memoryStore }, keycloakConfig);
     
     // Register Keycloak middleware
-    app.use(keycloak.middleware());
+    app.use(keycloak.middleware({
+      logout: '/logout',
+      admin: '/'
+    }));
     
     return keycloak;
   } catch (error) {
     console.error('Error initializing Keycloak:', error);
-    // Return a mock Keycloak instance for development
-    return {
-      middleware: () => (req: any, res: any, next: any) => next(),
-      protect: () => (req: any, res: any, next: any) => next()
-    };
+    // Even in dev mode, don't use a mock - throw the error to ensure it's fixed
+    throw new Error(`Failed to initialize Keycloak: ${error.message}`);
   }
 }
 

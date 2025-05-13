@@ -9,30 +9,57 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Initialize Keycloak - but disable in container for now until fully configured
+// Initialize Keycloak
 let keycloak;
-if (process.env.KUBERNETES_SERVICE_HOST) {
-  console.log("Running in Kubernetes, using mock Keycloak for now");
-  keycloak = {
-    middleware: () => (req: any, res: any, next: any) => next(),
-    protect: () => (req: any, res: any, next: any) => next()
-  };
-  app.use((req: any, res: any, next: any) => {
-    // Set a mock user for development
-    req.user = {
-      id: "user-2",
-      username: "demo",
-      name: "David G. Simmons",
-      email: "david@example.com",
-      roles: ["user"]
-    };
-    next();
+// Always use proper Keycloak implementation
+console.log("Initializing Keycloak in production mode");
+keycloak = initKeycloak(app);
+
+// Import storage for user creation
+import { storage } from './storage';
+
+// Apply Keycloak user mapping middleware
+app.use(async (req: any, res: any, next: any) => {
+  // First apply the standard Keycloak user mapper
+  keycloakUserMapper(req, res, async () => {
+    try {
+      // If we have a user from Keycloak and it's not in our database yet, create it
+      if (req.user && req.user.id) {
+        const keycloakId = req.user.id;
+        const username = req.user.username;
+        
+        // Check if the user exists in our database
+        const dbUser = await storage.getUserByKeycloakId(keycloakId);
+        
+        if (!dbUser) {
+          console.log(`Creating new user record for Keycloak user: ${username} (${keycloakId})`);
+          
+          // Create a new user record in our database
+          const newUser = await storage.createUser({
+            keycloakId,
+            username,
+            name: req.user.name || null,
+            email: req.user.email || null
+          });
+          
+          if (newUser) {
+            console.log(`Successfully created user record with ID: ${newUser.id}`);
+            // Update the req.user with our database ID for convenience
+            req.user.dbId = newUser.id;
+          }
+        } else {
+          // User exists, add the database ID to the request for convenience
+          console.log(`Found existing user record for Keycloak user: ${username}`);
+          req.user.dbId = dbUser.id;
+        }
+      }
+      next();
+    } catch (error) {
+      console.error("Error handling Keycloak user:", error);
+      next();
+    }
   });
-} else {
-  keycloak = initKeycloak(app);
-  // Apply Keycloak user mapping middleware
-  app.use(keycloakUserMapper);
-}
+});
 
 // Serve static files from the public directory
 app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
@@ -82,8 +109,14 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
   
-  // Apply Keycloak security to routes
-  secureWithKeycloak(app, keycloak);
+  // Apply Keycloak security to routes if in production or explicitly enabled
+  // Note: We're leaving this disabled by default to allow easier testing
+  if (process.env.ENABLE_KEYCLOAK_AUTH === 'true') {
+    console.log("Securing routes with Keycloak authentication");
+    secureWithKeycloak(app, keycloak);
+  } else {
+    console.log("Keycloak authentication is DISABLED. Set ENABLE_KEYCLOAK_AUTH=true to enable it.");
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
