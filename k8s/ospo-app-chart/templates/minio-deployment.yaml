@@ -6,6 +6,8 @@ metadata:
   labels:
     {{- include "ospo-app.labels" . | nindent 4 }}
     app.kubernetes.io/component: storage
+  annotations:
+    "helm.sh/hook-weight": "-5"
 spec:
   replicas: 1
   selector:

@@ -7,11 +7,11 @@ metadata:
     {{- include "ospo-app.labels" . | nindent 4 }}
     app.kubernetes.io/component: keycloak-setup
   annotations:
-    "helm.sh/hook": pre-install
-    "helm.sh/hook-weight": "0"
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "15"
     "helm.sh/hook-delete-policy": hook-succeeded
 spec:
-  backoffLimit: 5
+  backoffLimit: 10
   template:
     metadata:
       labels:
@@ -19,6 +19,10 @@ spec:
         app.kubernetes.io/component: keycloak-setup
     spec:
       restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:{{ .Values.postgresql.image.tag }}
+          command: ['sh', '-c', 'until pg_isready -h postgres -p 5432; do echo "Waiting for postgres..."; sleep 2; done;']
       containers:
         - name: postgres-client
           image: postgres:{{ .Values.postgresql.image.tag }}
@@ -29,6 +33,23 @@ spec:
           args:
             - |
               set -e
+              echo "Waiting for PostgreSQL to be ready..."
+              # Wait for PostgreSQL service to be available
+              for i in $(seq 1 30); do
+                if nc -z postgres 5432; then
+                  echo "PostgreSQL is available"
+                  break
+                fi
+                echo "Waiting for PostgreSQL... attempt $i/30"
+                sleep 2
+              done
+              
+              # If PostgreSQL didn't become available after 30 attempts, exit with error
+              if ! nc -z postgres 5432; then
+                echo "PostgreSQL did not become available in time, exiting"
+                exit 1
+              fi
+              
               echo "Creating keycloak schema in PostgreSQL..."
               PGPASSWORD={{ .Values.postgresql.auth.password }} psql -h postgres -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "CREATE SCHEMA IF NOT EXISTS keycloak;"
               PGPASSWORD={{ .Values.postgresql.auth.password }} psql -h postgres -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
