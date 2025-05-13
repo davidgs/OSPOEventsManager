@@ -39,7 +39,7 @@ RUN mkdir -p /app/public/uploads && chmod -R 777 /app/public/uploads
 
 # Create a separate directory for the Vite static files and ensure it has the content
 RUN mkdir -p /app/server/public && cp -r /app/dist/* /app/server/public/ && \
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" /></head><body><div id="root"></div><script src="/assets/index.js"></script></body></html>' > /app/server/public/index.html && \
+    # Don't create a custom index.html - use the one from the build
     ls -la /app/server/public/
 
 # Set environment variables
