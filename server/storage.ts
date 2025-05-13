@@ -1979,16 +1979,16 @@ const isRunningInReplit = process.env.REPL_ID && process.env.REPL_OWNER;
 const isKubernetes = process.env.KUBERNETES_SERVICE_HOST;
 
 // Check if we can connect to the database
-let useDatabase = true;
-try {
-  // If we're in Replit and not in Kubernetes, default to MemStorage for testing
-  if (isRunningInReplit && !isKubernetes) {
-    console.log('Running in Replit: Using MemStorage for testing');
-    useDatabase = false;
-  }
-} catch (err) {
-  console.error('Error checking database connection, falling back to MemStorage:', err);
+let useDatabase = db !== null;
+
+// If we're in Replit and not in Kubernetes, default to MemStorage for testing
+if (isRunningInReplit && !isKubernetes) {
+  console.log('Running in Replit: Using MemStorage for testing');
   useDatabase = false;
+}
+
+if (!useDatabase) {
+  console.log('Database connection not available, falling back to MemStorage');
 }
 
 // Create storage instance 

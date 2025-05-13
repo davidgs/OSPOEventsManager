@@ -1,5 +1,6 @@
-import { db } from "./db";
+import { db, pool } from "./db";
 import { sql } from "drizzle-orm";
+import { Pool } from '@neondatabase/serverless';
 
 /**
  * Initializes the database by creating the required tables
@@ -7,10 +8,16 @@ import { sql } from "drizzle-orm";
  */
 export async function initializeDatabase(): Promise<boolean> {
   console.log("Initializing database tables (if they don't exist)...");
+  
+  // If there is no pool, we can't initialize the database
+  if (!pool) {
+    console.error("Database connection pool not available for initialization");
+    return false;
+  }
 
   try {
-    // Create users table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    // Create tables using direct pool.query for more reliable execution
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         keycloak_id TEXT NOT NULL UNIQUE,
@@ -29,7 +36,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.log("✅ Users table initialized");
 
     // Create events table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS events (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
@@ -49,7 +56,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.log("✅ Events table initialized");
     
     // Create CFP submissions table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS cfp_submissions (
         id SERIAL PRIMARY KEY,
         event_id INTEGER NOT NULL,
@@ -65,7 +72,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.log("✅ CFP submissions table initialized");
 
     // Create attendees table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS attendees (
         id SERIAL PRIMARY KEY,
         event_id INTEGER NOT NULL,
