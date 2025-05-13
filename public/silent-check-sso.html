@@ -3,10 +3,18 @@
 <head>
     <title>Silent SSO Check</title>
     <script>
-        parent.postMessage(location.href, location.origin);
+        try {
+            // The checks if any session is active
+            parent.postMessage(location.href, location.origin);
+            console.log("Silent check SSO - posted message to parent");
+        } catch (error) {
+            console.error("Silent check SSO - failed to post message", error);
+        }
     </script>
 </head>
 <body>
     <!-- This is a silent SSO check page used by Keycloak -->
+    <h1>Silent Check SSO</h1>
+    <p>This page is used for silent SSO checks by Keycloak.</p>
 </body>
 </html>

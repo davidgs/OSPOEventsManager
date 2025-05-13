@@ -33,12 +33,13 @@ export const initKeycloak = (): Promise<boolean> => {
         onLoad: 'check-sso',
         silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
         checkLoginIframe: false, // Disable iframe to avoid timeout issues
+        silentCheckSsoFallback: false, // Don't redirect on silent check failures
         enableLogging: true,
         flow: 'standard',
         pkceMethod: 'S256', 
         timeSkew: 30, // Allow for some clock skew
-        responseMode: 'fragment',
-        silentCheckSsoFallback: false, // Don't redirect on silent check failures
+        checkLoginIframeInterval: 300, // Longer interval to avoid timeouts
+        enableRetrieveInfo: true
       })
       .then((authenticated) => {
         console.log('Keycloak initialization complete. Authenticated:', authenticated);
