@@ -102,7 +102,7 @@ loadBalancer:
   
 # NodePort configuration
 nodePort:
-  enabled: true
+  enabled: false
   port: 32123
   
 
