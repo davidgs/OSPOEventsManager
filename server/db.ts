@@ -5,35 +5,41 @@ import * as schema from "@shared/schema";
 // THIS APP IS DESIGNED FOR DEPLOYMENT IN KUBERNETES ON DOCKER DESKTOP
 // IT WILL NOT BE DEPLOYED IN PRODUCTION ON REPLIT
 
-// Configure PostgreSQL connection specifically for Kubernetes
-// Default to internal postgres service in Kubernetes
-const connectionConfig = {
-  host: process.env.PGHOST || 'postgres', // Service name in Kubernetes
-  port: parseInt(process.env.PGPORT || '5432'),
-  database: process.env.PGDATABASE || 'postgres',
-  user: process.env.PGUSER || 'postgres',
-  password: process.env.PGPASSWORD,
-  // Local Kubernetes on Docker Desktop doesn't need SSL
-  ssl: false
-};
+// Determine connection configuration
+let connectionConfig;
 
-// Log connection info for debugging (but never show password)
-console.log("Kubernetes PostgreSQL connection info:");
-console.log(`Host: ${connectionConfig.host}`);
-console.log(`Port: ${connectionConfig.port}`);
-console.log(`Database: ${connectionConfig.database}`);
-console.log(`User: ${connectionConfig.user}`);
-
-// WARNING - When testing in Replit, we use DATABASE_URL temporarily
-if (!connectionConfig.password && process.env.DATABASE_URL) {
-  console.log("TEMPORARY DEVELOPMENT MODE: Using DATABASE_URL for testing in Replit only");
-  console.log("NOTE: This will be REMOVED for Kubernetes deployment");
-  
-  // Create a new configuration object instead of modifying the existing one
+// First check if DATABASE_URL is available (for development in Replit)
+if (process.env.DATABASE_URL) {
+  console.log("Using connection string for temporary development");
   connectionConfig = {
     connectionString: process.env.DATABASE_URL,
-    ssl: false
+    // Based on error, we need SSL for Neon Postgres
+    ssl: { rejectUnauthorized: false }
   };
+  
+  // Mask password in connection string for logging
+  const maskedConnString = process.env.DATABASE_URL.replace(/:([^:@]+)@/, ':****@');
+  console.log(`Connection string: ${maskedConnString}`);
+} 
+// For Kubernetes deployment, use individual parameters
+else {
+  console.log("Using Kubernetes PostgreSQL configuration");
+  connectionConfig = {
+    host: process.env.PGHOST || 'postgres', // Service name in Kubernetes
+    port: parseInt(process.env.PGPORT || '5432'),
+    database: process.env.PGDATABASE || 'postgres',
+    user: process.env.PGUSER || 'postgres',
+    password: process.env.PGPASSWORD,
+    // For Kubernetes deployment, SSL depends on the PostgreSQL setup
+    ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : false
+  };
+  
+  // Log connection info for debugging (but never show password)
+  console.log(`Host: ${connectionConfig.host}`);
+  console.log(`Port: ${connectionConfig.port}`);
+  console.log(`Database: ${connectionConfig.database}`);
+  console.log(`User: ${connectionConfig.user}`);
+  console.log(`SSL: ${!!connectionConfig.ssl}`);
 }
 
 // Create connection pool
