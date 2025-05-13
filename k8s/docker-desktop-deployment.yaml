@@ -24,13 +24,25 @@ spec:
               protocol: TCP
           env:
             - name: NODE_ENV
-              value: "production"
+              value: "development"
             - name: PORT
               value: "5000"
             - name: HOST
               value: "0.0.0.0"
             - name: VITE_SERVE_CLIENT
               value: "true"
+            - name: DATABASE_URL
+              value: "postgresql://ospo_user:ospo_password123@postgres:5432/ospo_events"
+            - name: PGUSER
+              value: "ospo_user"
+            - name: PGHOST
+              value: "postgres"
+            - name: PGPASSWORD
+              value: "ospo_password123"
+            - name: PGDATABASE
+              value: "ospo_events"
+            - name: PGPORT
+              value: "5432"
 ---
 apiVersion: v1
 kind: Service
