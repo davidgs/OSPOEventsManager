@@ -28,21 +28,24 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, isLoading, toast, setLocation]);
 
-  // Handle login - direct to server route instead of using client-side Keycloak
+  // Handle login using Keycloak
   const handleLogin = async () => {
     try {
       setIsLoggingIn(true);
       setLoginError(null);
       
-      // Redirect to the server's login route which will handle Keycloak authentication
-      window.location.href = '/api/login';
+      // Use the keycloak service from lib/keycloak.ts
+      await login();
+      
+      // If login doesn't redirect, we'll fall through to this code
+      setIsLoggingIn(false);
     } catch (error) {
       console.error('Login error:', error);
       setLoginError('Failed to sign in. Please try again.');
       toast({
         variant: 'destructive',
         title: 'Authentication failed',
-        description: 'There was a problem signing you in.',
+        description: 'There was a problem signing in with Keycloak.',
       });
       setIsLoggingIn(false);
     }

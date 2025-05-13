@@ -1,8 +1,8 @@
 import Keycloak from 'keycloak-js';
 
-// Initialize Keycloak instance
+// Create Keycloak instance
 const keycloak = new Keycloak({
-  url: process.env.KEYCLOAK_URL || 'http://localhost:8080/',
+  url: 'http://localhost:8080/',  // Will be overridden by the keycloak.json config
   realm: 'ospo-events',
   clientId: 'ospo-events-app',
 });
@@ -14,9 +14,10 @@ const isDevelopmentMode = () => {
   // Consider Replit as development environment
   const isReplitEnv = window.location.hostname.includes('replit.app') || 
                       window.location.hostname.includes('replit.dev');
-  return process.env.NODE_ENV === 'development' || 
-         window.location.hostname === 'localhost' || 
-         isReplitEnv;
+  const isDev = window.location.hostname === 'localhost' || isReplitEnv;
+  
+  console.log('Environment check - development mode:', isDev);
+  return isDev;
 };
 
 /**
@@ -25,33 +26,14 @@ const isDevelopmentMode = () => {
  */
 export const initKeycloak = (): Promise<boolean> => {
   return new Promise((resolve, reject) => {
-    // In development mode, we can bypass Keycloak authentication
-    if (isDevelopmentMode()) {
-      console.log('Development mode detected, using mock authentication');
-      // Create a mock Keycloak token for development
-      keycloak.authenticated = true;
-      keycloak.token = 'mock-dev-token';
-      keycloak.tokenParsed = {
-        sub: 'dev-user-id',
-        preferred_username: 'developer',
-        email: 'developer@example.com',
-        name: 'Developer User',
-        realm_access: {
-          roles: ['user']
-        }
-      };
-      
-      // Resolve with authenticated status
-      setTimeout(() => resolve(true), 500);
-      return;
-    }
+    // Always use real Keycloak authentication (no development bypasses)
+    console.log('Initializing Keycloak in production mode');
     
-    // Normal Keycloak authentication for production
     keycloak
       .init({
         onLoad: 'check-sso',
         silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
-        checkLoginIframe: false,
+        checkLoginIframe: false, // Disable iframe to avoid timeout issues
         enableLogging: true,
         flow: 'standard',
         pkceMethod: 'S256',
@@ -59,31 +41,14 @@ export const initKeycloak = (): Promise<boolean> => {
         responseMode: 'fragment',
       })
       .then((authenticated) => {
+        console.log('Keycloak initialization complete. Authenticated:', authenticated);
         // Set up automatic token refresh
         refreshTokenSetup(keycloak);
         resolve(authenticated);
       })
       .catch((error) => {
         console.error('Keycloak initialization error:', error);
-        
-        // In development, let's auto-resolve with a fake auth to avoid breaking the app
-        if (isDevelopmentMode()) {
-          console.log('Recovering in development mode with mock authentication');
-          keycloak.authenticated = true;
-          keycloak.token = 'mock-dev-token';
-          keycloak.tokenParsed = {
-            sub: 'dev-user-id',
-            preferred_username: 'developer',
-            email: 'developer@example.com',
-            name: 'Developer User',
-            realm_access: {
-              roles: ['user']
-            }
-          };
-          resolve(true);
-        } else {
-          reject(error);
-        }
+        reject(error);
       });
   });
 };
@@ -93,13 +58,11 @@ export const initKeycloak = (): Promise<boolean> => {
  * @param keycloak The Keycloak instance
  */
 const refreshTokenSetup = (keycloak: Keycloak) => {
-  // Don't set up refresh for development mode
-  if (isDevelopmentMode()) {
-    return;
-  }
+  console.log('Setting up token refresh mechanism');
   
-  // Set up a timer for 70% of token lifespan
+  // Set up a timer for token refresh
   keycloak.onTokenExpired = () => {
+    console.log('Token expired, attempting to refresh');
     keycloak
       .updateToken(30) // Refresh token if it has less than 30 seconds left
       .then((refreshed) => {
@@ -110,8 +73,8 @@ const refreshTokenSetup = (keycloak: Keycloak) => {
             Math.round(keycloak.tokenParsed!.exp! - Date.now() / 1000) + ' seconds');
         }
       })
-      .catch(() => {
-        console.error('Failed to refresh token');
+      .catch((error) => {
+        console.error('Failed to refresh token:', error);
         // Force logout if refresh fails
         keycloak.logout();
       });
@@ -123,24 +86,7 @@ const refreshTokenSetup = (keycloak: Keycloak) => {
  * @returns Promise with the login result
  */
 export const login = (): Promise<void> => {
-  if (isDevelopmentMode()) {
-    console.log('Development mode: Simulating login');
-    return new Promise((resolve) => {
-      // Set authenticated state
-      keycloak.authenticated = true;
-      keycloak.token = 'mock-dev-token';
-      keycloak.tokenParsed = {
-        sub: 'dev-user-id',
-        preferred_username: 'developer',
-        email: 'developer@example.com',
-        name: 'Developer User',
-        realm_access: {
-          roles: ['user']
-        }
-      };
-      setTimeout(resolve, 500);
-    });
-  }
+  console.log('Initiating Keycloak login');
   return keycloak.login();
 };
 
@@ -149,16 +95,7 @@ export const login = (): Promise<void> => {
  * @returns Promise with the logout result
  */
 export const logout = (): Promise<void> => {
-  if (isDevelopmentMode()) {
-    console.log('Development mode: Simulating logout');
-    return new Promise((resolve) => {
-      // Clear authenticated state
-      keycloak.authenticated = false;
-      keycloak.token = undefined;
-      keycloak.tokenParsed = undefined;
-      setTimeout(resolve, 500);
-    });
-  }
+  console.log('Initiating Keycloak logout');
   return keycloak.logout({ redirectUri: window.location.origin });
 };
 

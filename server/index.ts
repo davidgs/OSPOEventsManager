@@ -110,17 +110,9 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
   
-  // Check for environment variable in different ways since .env loading is inconsistent
-  const isKeycloakEnabled = process.env.ENABLE_KEYCLOAK_AUTH === 'true' || 
-                           fs.existsSync('.env') && fs.readFileSync('.env', 'utf8').includes('ENABLE_KEYCLOAK_AUTH=true');
-  
-  // Apply Keycloak security to routes if explicitly enabled
-  if (isKeycloakEnabled) {
-    console.log("Securing routes with Keycloak authentication");
-    secureWithKeycloak(app, keycloak);
-  } else {
-    console.log("Keycloak authentication is DISABLED. Set ENABLE_KEYCLOAK_AUTH=true to enable it.");
-  }
+  // Always enable Keycloak authentication in production (no option to bypass)
+  console.log("Securing routes with Keycloak authentication");
+  secureWithKeycloak(app, keycloak);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

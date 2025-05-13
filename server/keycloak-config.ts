@@ -21,12 +21,17 @@ export function initKeycloak(app: Express) {
     expressSession({
       secret: 'ospo-events-secret',
       resave: false,
-      saveUninitialized: true,
+      saveUninitialized: false, // Changed to false for better security
       store: memoryStore,
+      cookie: {
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      }
     })
   );
 
   try {
+    console.log("Initializing Keycloak in production mode");
+    
     // Load Keycloak configuration
     const keycloakConfigPath = path.join(process.cwd(), 'keycloak.json');
     const keycloakConfig = JSON.parse(fs.readFileSync(keycloakConfigPath, 'utf8'));
@@ -48,13 +53,21 @@ export function initKeycloak(app: Express) {
     // Enable registration flag
     keycloakConfig["enable-registration"] = true;
 
-    // Initialize Keycloak
-    const keycloak = new Keycloak({ store: memoryStore }, keycloakConfig);
+    // Ensure registration is enabled
+    keycloakConfig["enable-registration"] = true;
     
-    // Register Keycloak middleware
+    // Initialize Keycloak
+    const keycloak = new Keycloak(
+      { store: memoryStore }, 
+      keycloakConfig
+    );
+    
+    // Register Keycloak middleware with production settings
     app.use(keycloak.middleware({
       logout: '/logout',
-      admin: '/'
+      admin: '/',
+      // Use secure defaults
+      protected: '/protected'
     }));
     
     return keycloak;
