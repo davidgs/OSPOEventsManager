@@ -11,7 +11,7 @@ app:
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
-    port: 5000
+    port: 6000
   resources:
     limits:
       cpu: 500m
@@ -21,7 +21,7 @@ app:
       memory: 256Mi
   env:
     NODE_ENV: production
-    PORT: "5000"
+    PORT: "6000"
     SESSION_SECRET: "ospo-session-secret-123"
     SESSION_STORE_TYPE: "memory"
     VITE_SERVE_CLIENT: "true"
@@ -99,7 +99,6 @@ minio:
 loadBalancer:
   enabled: true
   port: 7777
-  targetPort: 5000
 
 # Shared volume configuration
 sharedVolume:

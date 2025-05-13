@@ -44,7 +44,9 @@ spec:
             - name: SESSION_STORE_TYPE
               value: {{ .Values.app.env.SESSION_STORE_TYPE }}
             - name: VITE_SERVE_CLIENT
-              value: {{ .Values.app.env.VITE_SERVE_CLIENT | quote }}
+              value: "true"
+            - name: BASE_URL
+              value: "/"
             {{- if .Values.keycloak.enabled }}
             - name: KEYCLOAK_URL
               value: "http://keycloak:{{ .Values.keycloak.service.port }}"
@@ -135,7 +137,7 @@ spec:
   type: LoadBalancer
   ports:
     - port: {{ .Values.loadBalancer.port }}
-      targetPort: {{ .Values.loadBalancer.targetPort }}
+      targetPort: {{ .Values.app.service.port }}
       protocol: TCP
       name: http
   selector:
