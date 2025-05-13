@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: post-install-job
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: installer
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "25"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        {{- include "ospo-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: installer
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: post-install
+          image: curlimages/curl:8.5.0
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "Post-installation tasks"
+              echo "Waiting for services to be ready..."
+              
+              # Wait for Keycloak to be ready
+              echo "Waiting for Keycloak to start..."
+              until curl -s http://keycloak:8080/realms/master; do
+                echo "Keycloak not ready yet, retrying in 5 seconds..."
+                sleep 5
+              done
+              echo "Keycloak is ready!"
+              
+              # Check MinIO
+              echo "Checking MinIO..."
+              until curl -s -f http://minio:9000/minio/health/ready; do
+                echo "MinIO not ready yet, retrying in 5 seconds..."
+                sleep 5
+              done
+              echo "MinIO is ready!"
+              
+              # Check application service
+              echo "Checking application service..."
+              until curl -s http://ospo-app:5000/api/health; do
+                echo "Application not ready yet, retrying in 5 seconds..."
+                sleep 5
+              done
+              echo "Application is ready!"
+              
+              echo "Post-installation checks completed successfully!"
