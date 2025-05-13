@@ -1,0 +1,27 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named {{ .Release.Name }}.
+
+To get the application URL:
+{{- if .Values.loadBalancer.enabled }}
+  The application should be available at: http://localhost:{{ .Values.loadBalancer.port }}
+{{- else }}
+  kubectl port-forward svc/{{ include "ospo-app.fullname" . }} {{ .Values.app.service.port }}:{{ .Values.app.service.port }}
+  Then access the application at: http://localhost:{{ .Values.app.service.port }}
+{{- end }}
+
+{{- if .Values.keycloak.enabled }}
+To access Keycloak:
+  kubectl port-forward svc/keycloak {{ .Values.keycloak.service.port }}:{{ .Values.keycloak.service.port }}
+  Then visit: http://localhost:{{ .Values.keycloak.service.port }}
+  Admin credentials: {{ .Values.keycloak.admin.username }} / {{ .Values.keycloak.admin.password }}
+{{- end }}
+
+{{- if .Values.minio.enabled }}
+To access MinIO console:
+  kubectl port-forward svc/minio {{ .Values.minio.service.consolePort }}:{{ .Values.minio.service.consolePort }}
+  Then visit: http://localhost:{{ .Values.minio.service.consolePort }}
+  Credentials: {{ .Values.minio.auth.rootUser }} / {{ .Values.minio.auth.rootPassword }}
+{{- end }}
+
+For more information and configuration options, please refer to the README.md file.

@@ -1,0 +1,36 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keycloak-db-init
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak-setup
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        {{- include "ospo-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: keycloak-setup
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: postgres-client
+          image: postgres:{{ .Values.postgresql.image.tag }}
+          imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -e
+              echo "Creating keycloak schema in PostgreSQL..."
+              PGPASSWORD={{ .Values.postgresql.auth.password }} psql -h postgres -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "CREATE SCHEMA IF NOT EXISTS keycloak;"
+              PGPASSWORD={{ .Values.postgresql.auth.password }} psql -h postgres -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+              echo "Schema created successfully!"
+{{- end }}
