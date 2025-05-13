@@ -2,18 +2,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres
+  name: postgres-direct
   labels:
-    app: postgres
+    app: postgres-direct
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
+      app: postgres-direct
   template:
     metadata:
       labels:
-        app: postgres
+        app: postgres-direct
     spec:
       containers:
         - name: postgres
@@ -42,7 +42,7 @@ kind: Service
 metadata:
   name: postgres
   labels:
-    app: postgres
+    app: postgres-direct
 spec:
   type: ClusterIP
   ports:
@@ -50,4 +50,4 @@ spec:
       targetPort: 5432
       protocol: TCP
   selector:
-    app: postgres
+    app: postgres-direct
