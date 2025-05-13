@@ -11,17 +11,33 @@ console.log(`PGUSER: ${process.env.PGUSER}`);
 console.log(`DATABASE_URL is set: ${!!process.env.DATABASE_URL}`);
 
 // Validate connection info
-if (!process.env.DATABASE_URL) {
-  console.error("DATABASE_URL environment variable not set");
-  throw new Error("Database configuration incomplete. DATABASE_URL is required.");
+// In Kubernetes we might not use DATABASE_URL but individual environment variables
+const isKubernetes = process.env.KUBERNETES_SERVICE_HOST || process.env.NODE_ENV === 'production';
+if (!process.env.DATABASE_URL && !isKubernetes) {
+  console.error("DATABASE_URL environment variable not set and not in Kubernetes environment");
+  throw new Error("Database configuration incomplete. DATABASE_URL or individual PG* variables required.");
 }
 
 // Configure PostgreSQL connection
-const connectionConfig = {
-  connectionString: process.env.DATABASE_URL,
-  // Disable SSL for local Replit database
-  ssl: false
-};
+const connectionConfig = process.env.DATABASE_URL 
+  ? {
+      // Use connection string if provided (Replit environment)
+      connectionString: process.env.DATABASE_URL,
+      // Disable SSL for local Replit database, but allow it for Kubernetes with proper config
+      ssl: isKubernetes ? { rejectUnauthorized: false } : false
+    } 
+  : {
+      // Use individual connection parameters (Kubernetes environment)
+      host: process.env.PGHOST || 'postgres', // Use 'postgres' service name in Kubernetes by default
+      port: parseInt(process.env.PGPORT || '5432'),
+      database: process.env.PGDATABASE || 'postgres',
+      user: process.env.PGUSER || 'postgres',
+      password: process.env.PGPASSWORD,
+      // SSL configuration for Kubernetes environment
+      ssl: isKubernetes ? { rejectUnauthorized: false } : false
+    };
+
+console.log(`Running in ${isKubernetes ? 'Kubernetes' : 'local'} environment`);
 
 console.log("Connecting to PostgreSQL using connection string");
 
