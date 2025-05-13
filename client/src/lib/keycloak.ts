@@ -2,7 +2,7 @@ import Keycloak from 'keycloak-js';
 
 // Initialize Keycloak instance
 const keycloak = new Keycloak({
-  url: 'http://localhost:8080/auth',
+  url: process.env.KEYCLOAK_URL || 'http://localhost:8080/',
   realm: 'ospo-events',
   clientId: 'ospo-events-app',
 });
@@ -11,7 +11,12 @@ const keycloak = new Keycloak({
  * Check if we are in development mode
  */
 const isDevelopmentMode = () => {
-  return process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+  // Consider Replit as development environment
+  const isReplitEnv = window.location.hostname.includes('replit.app') || 
+                      window.location.hostname.includes('replit.dev');
+  return process.env.NODE_ENV === 'development' || 
+         window.location.hostname === 'localhost' || 
+         isReplitEnv;
 };
 
 /**
