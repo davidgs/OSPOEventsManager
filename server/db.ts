@@ -8,12 +8,16 @@ import * as schema from "@shared/schema";
 // Determine connection configuration
 let connectionConfig;
 
-// First check if DATABASE_URL is available (for development in Replit)
-if (process.env.DATABASE_URL) {
-  console.log("Using connection string for temporary development");
+// Detect Kubernetes environment
+const isKubernetes = process.env.KUBERNETES_SERVICE_HOST || 
+                     process.env.NODE_ENV === 'production';
+
+// Use DATABASE_URL if available for development/testing in Replit
+if (process.env.DATABASE_URL && !isKubernetes) {
+  console.log("DEVELOPMENT MODE: Using connection string temporarily");
   connectionConfig = {
     connectionString: process.env.DATABASE_URL,
-    // Based on error, we need SSL for Neon Postgres
+    // Neon Postgres requires SSL
     ssl: { rejectUnauthorized: false }
   };
   
@@ -21,17 +25,27 @@ if (process.env.DATABASE_URL) {
   const maskedConnString = process.env.DATABASE_URL.replace(/:([^:@]+)@/, ':****@');
   console.log(`Connection string: ${maskedConnString}`);
 } 
-// For Kubernetes deployment, use individual parameters
+// For Kubernetes deployment, connect to local PostgreSQL pod
 else {
-  console.log("Using Kubernetes PostgreSQL configuration");
+  console.log("KUBERNETES DEPLOYMENT: Connecting to local PostgreSQL");
+  
+  // Values from the Helm chart (k8s/ospo-app-chart/values.yaml)
+  const k8sPostgresValues = {
+    host: 'postgres', // Service name from postgresql-deployment.yaml
+    port: 5432,       // Default PostgreSQL port
+    database: process.env.PGDATABASE || 'ospo_events', // From values.yaml
+    user: process.env.PGUSER || 'ospo_user',           // From values.yaml
+    password: process.env.PGPASSWORD || 'ospo_password123'  // From values.yaml
+  };
+  
   connectionConfig = {
-    host: process.env.PGHOST || 'postgres', // Service name in Kubernetes
-    port: parseInt(process.env.PGPORT || '5432'),
-    database: process.env.PGDATABASE || 'postgres',
-    user: process.env.PGUSER || 'postgres',
-    password: process.env.PGPASSWORD,
-    // For Kubernetes deployment, SSL depends on the PostgreSQL setup
-    ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : false
+    host: k8sPostgresValues.host,
+    port: k8sPostgresValues.port,
+    database: k8sPostgresValues.database,
+    user: k8sPostgresValues.user,
+    password: k8sPostgresValues.password,
+    // Local PostgreSQL in Kubernetes doesn't need SSL
+    ssl: false
   };
   
   // Log connection info for debugging (but never show password)
