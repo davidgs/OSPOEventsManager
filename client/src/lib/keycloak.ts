@@ -26,8 +26,7 @@ const isDevelopmentMode = () => {
  */
 export const initKeycloak = (): Promise<boolean> => {
   return new Promise((resolve, reject) => {
-    // Always use real Keycloak authentication (no development bypasses)
-    console.log('Initializing Keycloak in production mode');
+    // Initialize Keycloak with the appropriate configuration
     
     keycloak
       .init({

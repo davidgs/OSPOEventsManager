@@ -30,8 +30,6 @@ export function initKeycloak(app: Express) {
   );
 
   try {
-    console.log("Initializing Keycloak in production mode");
-    
     // Load Keycloak configuration
     const keycloakConfigPath = path.join(process.cwd(), 'keycloak.json');
     const keycloakConfig = JSON.parse(fs.readFileSync(keycloakConfigPath, 'utf8'));

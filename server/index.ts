@@ -12,8 +12,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Initialize Keycloak
 let keycloak;
-// Always use proper Keycloak implementation
-console.log("Initializing Keycloak in production mode");
+// Initialize Keycloak with the appropriate mode
 keycloak = initKeycloak(app);
 
 // Import storage for user creation
