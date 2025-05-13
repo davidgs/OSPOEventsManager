@@ -1,12 +1,9 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-neonConfig.webSocketConstructor = ws;
-
 // Configure database connection for Kubernetes or Replit
-const getPgConnectionString = () => {
+const getDatabaseConfig = () => {
   const isKubernetes = process.env.KUBERNETES_SERVICE_HOST;
 
   if (isKubernetes) {
@@ -23,28 +20,36 @@ const getPgConnectionString = () => {
     console.log(`Database: ${database}`);
     console.log(`User: ${user}`);
 
-    return `postgresql://${user}:${password}@${host}:${port}/${database}`;
+    return {
+      host,
+      port,
+      database,
+      user,
+      password
+    };
   } else if (process.env.DATABASE_URL) {
     // Use provided DATABASE_URL (e.g. for Replit PostgreSQL)
     console.log("Using provided DATABASE_URL from environment");
-    return process.env.DATABASE_URL;
+    return {
+      connectionString: process.env.DATABASE_URL
+    };
   } else {
     console.log("No database configuration found, using in-memory storage");
     return null;
   }
 };
 
-const connectionString = getPgConnectionString();
+const dbConfig = getDatabaseConfig();
 
 // Set up the database connection if available
 export let pool: Pool | null = null;
 export let db: ReturnType<typeof drizzle> | null = null;
 
-if (connectionString) {
+if (dbConfig) {
   try {
-    pool = new Pool({ connectionString });
+    pool = new Pool(dbConfig);
     db = drizzle(pool, { schema });
-    console.log("PostgreSQL connection pool created for Kubernetes deployment");
+    console.log("PostgreSQL connection pool created");
   } catch (err) {
     console.error("Failed to create PostgreSQL connection pool:", err);
     pool = null;

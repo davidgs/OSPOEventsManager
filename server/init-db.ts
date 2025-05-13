@@ -1,5 +1,5 @@
 import { db, pool } from "./db";
-import { Pool } from '@neondatabase/serverless';
+import { Pool } from 'pg';
 
 /**
  * Initializes the database by creating the required tables
@@ -11,6 +11,15 @@ export async function initializeDatabase(): Promise<boolean> {
   // If there is no pool, we can't initialize the database
   if (!pool) {
     console.error("Database connection pool not available for initialization");
+    return false;
+  }
+  
+  // Test the connection
+  try {
+    await pool.query('SELECT NOW()');
+    console.log("✅ Database connection test successful");
+  } catch (error) {
+    console.error("❌ Database connection test failed:", error);
     return false;
   }
 
