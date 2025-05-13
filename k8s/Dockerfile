@@ -38,7 +38,7 @@ COPY --from=builder /app/keycloak.json ./keycloak.json
 RUN mkdir -p /app/public/uploads && chmod -R 777 /app/public/uploads
 
 # Create a separate directory for the Vite static files
-RUN mkdir -p /app/server/public && ln -s /app/dist /app/server/public
+RUN mkdir -p /app/server/public && cp -r /app/dist/* /app/server/public/
 
 # Set environment variables
 ENV NODE_ENV=production
