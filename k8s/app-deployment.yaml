@@ -27,10 +27,16 @@ spec:
           value: "postgresql://ospo_user:ospo_password123@postgres:5432/ospo_events"
         - name: SESSION_SECRET
           value: "ospo-session-secret-123"
+        - name: SESSION_STORE_TYPE
+          value: "memory"
+        - name: VITE_SERVE_CLIENT
+          value: "true"
         - name: KEYCLOAK_URL
           value: "http://keycloak:8080"
         - name: KEYCLOAK_REALM
           value: "ospo-events"
+        - name: KEYCLOAK_CLIENT_ID
+          value: "ospo-events-app"
         - name: KEYCLOAK_CLIENT_SECRET
           value: "client-secret-123"
         - name: MINIO_ENDPOINT

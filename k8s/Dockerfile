@@ -1,19 +1,40 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package.json and install dependencies
+# Copy package.json and install all dependencies (including dev)
 COPY package*.json ./
 RUN npm ci
 
 # Copy application code
 COPY . .
 
-# Install TypeScript compilation tools
-RUN npm install -g tsx typescript
+# Build the client application
+RUN npm run build
+
+# Create a production image
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package.json and install production dependencies
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Install TypeScript execution tools
+RUN npm install -g tsx
+
+# Copy the built application from the builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/server ./server
+COPY --from=builder /app/shared ./shared
 
 # Create uploads directory
 RUN mkdir -p /app/public/uploads && chmod -R 777 /app/public/uploads
+
+# Create a separate directory for the Vite static files
+RUN mkdir -p /app/server/public && ln -s /app/dist /app/server/public
 
 # Set environment variables
 ENV NODE_ENV=production

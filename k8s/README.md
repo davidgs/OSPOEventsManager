@@ -29,7 +29,14 @@ This script will:
 
 ## Accessing the Application
 
-Once deployed, the following services will be available:
+To access the deployed services, use the port-forwarding script:
+
+```bash
+chmod +x k8s/ports-forward.sh
+./k8s/ports-forward.sh
+```
+
+This will make the following services available locally:
 
 - **Main Application**: http://localhost:7777
 - **Keycloak Admin UI**: http://localhost:8080/admin (admin/admin)
