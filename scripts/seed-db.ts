@@ -6,20 +6,23 @@ async function seedDatabase() {
   console.log("🌱 Starting database seeding...");
 
   try {
-    // Clear existing data if any
-    console.log("Clearing existing data...");
-    await db.delete(sponsorships);
-    await db.delete(attendees);
-    await db.delete(cfpSubmissions);
-    await db.delete(events);
-    await db.delete(users);
+    // Check if data already exists - don't clear if it does
+    const existingUsers = await db.select().from(users).limit(1);
+    const userCount = existingUsers.length;
     
-    // Create demo user
+    if (userCount > 0) {
+      console.log(`Found ${userCount} existing users, skipping seed operation to preserve data`);
+      return;
+    }
+    
+    console.log("No existing data found, proceeding with database seeding...");
+    
+    // Create demo user for Keycloak integration - note the required keycloakId field
     console.log("Creating demo user...");
     const [user] = await db.insert(users)
       .values({
         username: "demo_user",
-        password: "password123",
+        keycloakId: "user-1", // Required for Keycloak reference
         name: "Alex Johnson",
         email: "alex@example.com",
         bio: "Senior Developer Advocate with expertise in Kubernetes and cloud-native technologies.",
