@@ -1973,4 +1973,5 @@ export class DatabaseStorage implements IStorage {
 // Switch from MemStorage to DatabaseStorage to use persistent database storage
 // Temporarily use MemStorage instead of DatabaseStorage for testing
 // export const storage = new DatabaseStorage();
-export const storage = new MemStorage();
+// Switch back to DatabaseStorage to use persistent database storage
+export const storage = new DatabaseStorage();

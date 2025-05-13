@@ -1,35 +1,49 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-neonConfig.webSocketConstructor = ws;
-
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
-
-// For debugging
+// Log database connection info for debugging
 console.log("Database configuration:");
 console.log(`PGHOST: ${process.env.PGHOST}`);
 console.log(`PGPORT: ${process.env.PGPORT}`);
 console.log(`PGDATABASE: ${process.env.PGDATABASE}`);
 console.log(`PGUSER: ${process.env.PGUSER}`);
-console.log("DATABASE_URL is set:", !!process.env.DATABASE_URL);
+console.log(`DATABASE_URL is set: ${!!process.env.DATABASE_URL}`);
 
-// When not using Neon, construct the connection URL directly
-let connectionString = process.env.DATABASE_URL;
-
-// For Kubernetes environment, use direct PostgreSQL connection instead of WebSocket
-if (process.env.KUBERNETES_SERVICE_HOST) {
-  // In Kubernetes, the service name will be 'postgres'
-  connectionString = `postgres://${process.env.PGUSER}:${process.env.PGPASSWORD}@postgres:${process.env.PGPORT}/${process.env.PGDATABASE}`;
-  console.log("Running in Kubernetes, using direct Postgres connection");
+// Validate connection info
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL environment variable not set");
+  throw new Error("Database configuration incomplete. DATABASE_URL is required.");
 }
 
-console.log("Connection string:", connectionString.replace(/:[^:]*@/, ':****@')); // Hide password in logs
+// Configure PostgreSQL connection
+const connectionConfig = {
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false } // Required for Neon Postgres
+};
 
-export const pool = new Pool({ connectionString });
-export const db = drizzle(pool, { schema });
+console.log("Connecting to PostgreSQL using connection string");
+
+// Create connection pool
+const pool = new Pool(connectionConfig);
+
+// Set up error handler
+pool.on('error', (err) => {
+  console.error('Unexpected PostgreSQL error:', err);
+});
+
+console.log("PostgreSQL connection pool created, initializing Drizzle ORM");
+const db = drizzle(pool, { schema });
+
+// Function to properly shut down the pool on application exit
+const closePool = async () => {
+  console.log('Closing PostgreSQL connection pool');
+  await pool.end();
+};
+
+// Handle application shutdown correctly
+process.on('SIGTERM', closePool);
+process.on('SIGINT', closePool);
+
+// Export the pool and db
+export { pool, db };
