@@ -29,10 +29,7 @@ spec:
           image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"
           imagePullPolicy: {{ .Values.keycloak.image.pullPolicy }}
           args:
-            - start
-            - --optimized
-            - --import-realm
-            - --db=postgres
+            - start-dev
           ports:
             - name: http
               containerPort: 8080
@@ -40,24 +37,24 @@ spec:
           env:
             - name: KC_HOSTNAME_STRICT
               value: "false"
-            - name: KC_HOSTNAME_STRICT_HTTPS
-              value: "false"
-            - name: KC_HTTP_ENABLED
-              value: "true"
-            - name: KC_PROXY
-              value: "edge"
-            - name: KC_DB
+            - name: KC_HTTP_RELATIVE_PATH
+              value: "/"
+            - name: KEYCLOAK_LOGLEVEL
+              value: "DEBUG"
+            - name: DB_VENDOR
               value: "postgres"
-            - name: KC_DB_URL
-              value: "jdbc:postgresql://postgres:5432/{{ .Values.postgresql.auth.database }}"
-            - name: KC_TRANSACTION_XA_ENABLED
-              value: "false"
-            - name: KC_DB_SCHEMA
-              value: "keycloak"
-            - name: KC_DB_USERNAME
+            - name: DB_ADDR
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE
+              value: {{ .Values.postgresql.auth.database }}
+            - name: DB_USER
               value: {{ .Values.postgresql.auth.username }}
-            - name: KC_DB_PASSWORD
+            - name: DB_PASSWORD
               value: {{ .Values.postgresql.auth.password }}
+            - name: DB_SCHEMA
+              value: "public"
             - name: KEYCLOAK_ADMIN
               value: {{ .Values.keycloak.admin.username }}
             - name: KEYCLOAK_ADMIN_PASSWORD
