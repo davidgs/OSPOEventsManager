@@ -37,10 +37,14 @@ COPY --from=builder /app/keycloak.json ./keycloak.json
 # Create uploads directory
 RUN mkdir -p /app/public/uploads && chmod -R 777 /app/public/uploads
 
-# Create a separate directory for the Vite static files and ensure it has the content
-RUN mkdir -p /app/server/public && cp -r /app/dist/* /app/server/public/ && \
-    # Don't create a custom index.html - use the one from the build
-    ls -la /app/server/public/
+# Create a separate directory for the Vite static files and make sure the index.html exists
+RUN mkdir -p /app/server/public && \
+    cp -r /app/dist/* /app/server/public/ && \
+    cp /app/client/index.html /app/server/public/index.html && \
+    # Add debugging information
+    ls -la /app/server/public/ && \
+    echo "Content of index.html:" && \
+    cat /app/server/public/index.html
 
 # Set environment variables
 ENV NODE_ENV=production
