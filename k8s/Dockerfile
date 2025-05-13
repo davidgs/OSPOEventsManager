@@ -42,10 +42,12 @@ RUN mkdir -p /app/server/public && ln -s /app/dist /app/server/public
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=5000
+ENV PORT=6000
+ENV HOST=0.0.0.0
+ENV VITE_SERVE_CLIENT=true
 
 # Expose the port
-EXPOSE 5000
+EXPOSE 6000
 
 # Command to run the application
-CMD ["tsx", "server/index.ts"]
+CMD ["sh", "-c", "echo \"Starting application on port $PORT...\" && tsx server/index.ts"]
