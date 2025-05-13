@@ -1,120 +1,159 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { initKeycloak, isAuthenticated, login, logout, getUserInfo } from '@/lib/keycloak';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { 
+  initKeycloak, 
+  isAuthenticated, 
+  getUserInfo, 
+  login as keycloakLogin, 
+  logout as keycloakLogout 
+} from '@/lib/keycloak';
 
-interface AuthContextType {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  user: {
-    id: string;
-    username: string;
-    email: string;
-    name: string;
-    roles: string[];
-  } | null;
-  login: () => Promise<void>;
-  logout: () => Promise<void>;
+// Define the shape of our user info
+interface UserInfo {
+  id: string;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  name: string;
+  roles: string[];
 }
 
-// Create context with default values
+// Define the shape of our auth context
+interface AuthContextType {
+  initialized: boolean;
+  authenticated: boolean;
+  user: UserInfo | null;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
+  hasRole: (role: string) => boolean;
+}
+
+// Create the auth context with default values
 const AuthContext = createContext<AuthContextType>({
-  isAuthenticated: false,
-  isLoading: true,
+  initialized: false,
+  authenticated: false,
   user: null,
-  login: () => Promise.resolve(),
-  logout: () => Promise.resolve(),
+  login: async () => {},
+  logout: async () => {},
+  hasRole: () => false,
 });
 
-// Hook to use the auth context
-export const useAuth = () => useContext(AuthContext);
-
 // Auth provider component
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [authenticated, setAuthenticated] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [user, setUser] = useState<AuthContextType['user']>(null);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [initialized, setInitialized] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [user, setUser] = useState<UserInfo | null>(null);
 
+  // Initialize Keycloak on component mount
   useEffect(() => {
-    // Initialize Keycloak on component mount
     const initAuth = async () => {
       try {
-        const isAuth = await initKeycloak();
-        setAuthenticated(isAuth);
+        console.log('Initializing Keycloak...');
+        const authenticated = await initKeycloak();
         
-        if (isAuth) {
+        setAuthenticated(authenticated);
+        
+        if (authenticated) {
           const userInfo = getUserInfo();
-          if (userInfo) {
-            // Ensure all required properties are present
-            setUser({
-              id: userInfo.id || '',
-              username: userInfo.username || '',
-              email: userInfo.email || '',
-              name: userInfo.name || '',
-              roles: userInfo.roles || []
-            });
-          }
-        } else {
-          // Handle the case where Keycloak is available but the user is not authenticated
-          console.log('User not authenticated');
-          setUser(null);
+          setUser(userInfo);
         }
+        
+        setInitialized(true);
+        console.log('Keycloak initialization complete');
       } catch (error) {
-        // This should not happen now that initKeycloak always resolves
-        console.error('Failed to initialize auth:', error);
-        setAuthenticated(false);
-        setUser(null);
-      } finally {
-        setLoading(false);
+        console.error('Failed to initialize Keycloak:', error);
+        setInitialized(true);
       }
     };
 
     initAuth();
   }, []);
 
-  // Refresh auth state function
-  const refreshAuthState = () => {
-    const authStatus = isAuthenticated();
-    setAuthenticated(authStatus);
-    
-    if (authStatus) {
-      const userInfo = getUserInfo();
-      if (userInfo) {
-        setUser({
-          id: userInfo.id || '',
-          username: userInfo.username || '',
-          email: userInfo.email || '',
-          name: userInfo.name || '',
-          roles: userInfo.roles || []
-        });
-      }
-    } else {
-      setUser(null);
+  // Handler for login
+  const login = async (): Promise<void> => {
+    try {
+      await keycloakLogin();
+      // Login will redirect, so we don't update state here
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
     }
   };
 
-  // Login handler
-  const handleLogin = async () => {
-    await login();
-    refreshAuthState();
+  // Handler for logout
+  const logout = async (): Promise<void> => {
+    try {
+      setUser(null);
+      setAuthenticated(false);
+      await keycloakLogout();
+      // Logout will redirect, so we don't update state further
+    } catch (error) {
+      console.error('Logout failed:', error);
+      throw error;
+    }
   };
 
-  // Logout handler
-  const handleLogout = async () => {
-    await logout();
-    setAuthenticated(false);
-    setUser(null);
+  // Check if user has a specific role
+  const hasRole = (role: string): boolean => {
+    if (!authenticated || !user || !user.roles) {
+      return false;
+    }
+    return user.roles.includes(role);
   };
 
-  const value = {
-    isAuthenticated: authenticated,
-    isLoading: loading,
-    user,
-    login: handleLogin,
-    logout: handleLogout,
-  };
-
+  // Provide the auth context to children
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        initialized,
+        authenticated,
+        user,
+        login,
+        logout,
+        hasRole,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-};
+}
+
+// Hook for accessing the auth context
+export function useAuth() {
+  const context = useContext(AuthContext);
+  
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  
+  return context;
+}
+
+// Higher-order component to protect routes
+export function withAuthProtection<P extends object>(
+  Component: React.ComponentType<P>,
+  roles: string[] = []
+) {
+  return function AuthProtectedComponent(props: P) {
+    const { initialized, authenticated, hasRole } = useAuth();
+
+    if (!initialized) {
+      // Show loading spinner while Keycloak initializes
+      return <div>Loading...</div>;
+    }
+
+    if (!authenticated) {
+      // Redirect to login page if not authenticated
+      keycloakLogin();
+      return <div>Redirecting to login...</div>;
+    }
+
+    // Check roles if specified
+    if (roles.length > 0 && !roles.some(role => hasRole(role))) {
+      return <div>You don't have permission to access this page.</div>;
+    }
+
+    // Render the protected component
+    return <Component {...props} />;
+  };
+}

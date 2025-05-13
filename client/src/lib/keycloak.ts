@@ -150,8 +150,44 @@ export const login = (): Promise<void> => {
  * @returns Promise with the logout result
  */
 export const logout = (): Promise<void> => {
-  console.log('Initiating Keycloak logout');
-  return keycloak.logout({ redirectUri: window.location.origin });
+  return new Promise((resolve, reject) => {
+    try {
+      console.log('Initiating logout process...');
+      
+      // Clear any local session/storage data first
+      sessionStorage.removeItem('keycloak-token');
+      localStorage.removeItem('keycloak-token');
+      
+      // Attempt to logout with Keycloak
+      keycloak.logout({
+        redirectUri: window.location.origin
+      })
+      .then(() => {
+        console.log('Logout initiated successfully');
+        resolve();
+      })
+      .catch((error) => {
+        console.error('Logout failed:', error);
+        
+        // Fallback - direct redirect to logout endpoint
+        try {
+          const logoutUrl = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/logout`;
+          const redirectUri = encodeURIComponent(window.location.origin);
+          
+          window.location.href = `${logoutUrl}?redirect_uri=${redirectUri}`;
+          resolve(); // This will resolve but page will redirect
+        } catch (err) {
+          console.error('Fallback logout also failed:', err);
+          reject(err);
+        }
+      });
+    } catch (error) {
+      console.error('Unexpected error during logout:', error);
+      // Try to recover by reloading the page
+      window.location.reload();
+      resolve();
+    }
+  });
 };
 
 /**
@@ -159,24 +195,34 @@ export const logout = (): Promise<void> => {
  * @returns Boolean indicating authentication status
  */
 export const isAuthenticated = (): boolean => {
-  return !!keycloak.authenticated;
+  return !!keycloak.authenticated && !!keycloak.token;
 };
 
 /**
  * Get user information from Keycloak
- * @returns User information object
+ * @returns User information object or null if not authenticated
  */
 export const getUserInfo = () => {
-  if (keycloak.tokenParsed) {
-    return {
-      id: keycloak.tokenParsed.sub || '',
-      username: keycloak.tokenParsed.preferred_username || '',
-      email: keycloak.tokenParsed.email || '',
-      name: keycloak.tokenParsed.name || keycloak.tokenParsed.preferred_username || '',
-      roles: keycloak.tokenParsed.realm_access?.roles || [],
-    };
+  if (!keycloak.authenticated || !keycloak.tokenParsed) {
+    return null;
   }
-  return null;
+  
+  try {
+    const token = keycloak.tokenParsed;
+    
+    return {
+      id: token.sub || '',
+      username: token.preferred_username || '',
+      email: token.email || '',
+      firstName: token.given_name || '',
+      lastName: token.family_name || '',
+      name: token.name || token.preferred_username || '',
+      roles: token.realm_access?.roles || [],
+    };
+  } catch (error) {
+    console.error('Error parsing user info from token:', error);
+    return null;
+  }
 };
 
 /**
@@ -184,8 +230,32 @@ export const getUserInfo = () => {
  * @returns Headers object with Authorization header
  */
 export const getAuthHeaders = (): Record<string, string> => {
+  if (!keycloak.authenticated || !keycloak.token) {
+    console.warn('Attempted to get auth headers when not authenticated');
+    return {};
+  }
+  
   return {
-    Authorization: `Bearer ${keycloak.token}`,
+    'Authorization': `Bearer ${keycloak.token}`
+  };
+};
+
+/**
+ * Add authorization headers to fetch options
+ * @param options Fetch options object
+ * @returns Fetch options with authorization headers
+ */
+export const withAuth = (options: RequestInit = {}): RequestInit => {
+  if (!keycloak.authenticated) {
+    return options;
+  }
+  
+  return {
+    ...options,
+    headers: {
+      ...options.headers,
+      ...getAuthHeaders()
+    }
   };
 };
 
@@ -195,7 +265,16 @@ export const getAuthHeaders = (): Record<string, string> => {
  * @returns Boolean indicating if user has the role
  */
 export const hasRole = (role: string): boolean => {
-  return keycloak.hasRealmRole(role);
+  if (!keycloak.authenticated) {
+    return false;
+  }
+  
+  try {
+    return keycloak.hasRealmRole(role);
+  } catch (error) {
+    console.error('Error checking role:', error);
+    return false;
+  }
 };
 
 // Export the keycloak instance for advanced usage
