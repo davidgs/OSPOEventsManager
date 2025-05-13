@@ -31,12 +31,18 @@ export function initKeycloak(app: Express) {
     const keycloakConfigPath = path.join(process.cwd(), 'keycloak.json');
     const keycloakConfig = JSON.parse(fs.readFileSync(keycloakConfigPath, 'utf8'));
     
-    // Override auth-server-url for Replit environment if needed
-    if (!process.env.KUBERNETES_SERVICE_HOST) {
-      // For Replit: Use a publicly accessible Keycloak instance
-      // This will be the URL of the deployed Keycloak service
-      console.log("Using Keycloak in Replit mode with custom server URL");
-      keycloakConfig["auth-server-url"] = process.env.KEYCLOAK_URL || "https://keycloak-repl.example.com/";
+    // Override auth-server-url based on environment
+    if (process.env.KEYCLOAK_URL) {
+      console.log(`Using custom Keycloak URL: ${process.env.KEYCLOAK_URL}`);
+      keycloakConfig["auth-server-url"] = process.env.KEYCLOAK_URL;
+    } else if (process.env.KUBERNETES_SERVICE_HOST) {
+      // In Kubernetes, use the service name
+      console.log("Using Keycloak in Kubernetes mode");
+      keycloakConfig["auth-server-url"] = "http://keycloak:8080/auth/";
+    } else {
+      // Local development
+      console.log("Using Keycloak in local development mode");
+      keycloakConfig["auth-server-url"] = "http://localhost:8080/auth/";
     }
     
     // Enable registration flag
