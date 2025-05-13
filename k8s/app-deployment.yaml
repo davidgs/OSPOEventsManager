@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ospo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ospo-app
+  template:
+    metadata:
+      labels:
+        app: ospo-app
+    spec:
+      containers:
+      - name: ospo-app
+        image: ospo-events-app:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "5000"
+        - name: DATABASE_URL
+          value: "postgresql://ospo_user:ospo_password123@postgres:5432/ospo_events"
+        - name: SESSION_SECRET
+          value: "ospo-session-secret-123"
+        - name: KEYCLOAK_URL
+          value: "http://keycloak:8080"
+        - name: KEYCLOAK_REALM
+          value: "ospo-events"
+        - name: KEYCLOAK_CLIENT_SECRET
+          value: "client-secret-123"
+        - name: MINIO_ENDPOINT
+          value: "minio:9000"
+        - name: MINIO_ACCESS_KEY
+          value: "minioadmin"
+        - name: MINIO_SECRET_KEY
+          value: "minioadmin"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 5
+        volumeMounts:
+        - name: uploads
+          mountPath: /app/public/uploads
+      volumes:
+      - name: uploads
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ospo-app
+spec:
+  selector:
+    app: ospo-app
+  ports:
+  - port: 5000
+    targetPort: 5000
+  type: ClusterIP

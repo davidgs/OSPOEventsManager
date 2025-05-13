@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-setup
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: mc
+        image: minio/mc:RELEASE.2023-07-21T21-40-07Z
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          # Configure MinIO client
+          mc alias set myminio http://minio:9000 minioadmin minioadmin
+          
+          # Create bucket if it doesn't exist
+          mc mb --ignore-existing myminio/uploads
+          
+          # Set bucket public policy for anonymous read access
+          mc policy set download myminio/uploads
+          
+          echo "MinIO setup complete"
+      restartPolicy: OnFailure
