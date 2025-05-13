@@ -44,7 +44,7 @@ export function initKeycloak(app: Express) {
       keycloakConfig["auth-server-url"] = "http://keycloak:8080/auth/";
     } else {
       // Local environment
-      console.log("Using Keycloak in production mode");
+      console.log("Using Keycloak in development mode");
       keycloakConfig["auth-server-url"] = "http://localhost:8080/auth/";
     }
     
