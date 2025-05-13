@@ -15,7 +15,7 @@ spec:
       containers:
       - name: keycloak
         image: quay.io/keycloak/keycloak:23.0.6
-        args: ["start-dev"]
+        args: ["start", "--optimized"]
         ports:
         - containerPort: 8080
         env:
@@ -33,6 +33,14 @@ spec:
           value: "ospo_password123"
         - name: KC_HOSTNAME_STRICT
           value: "false"
+        - name: KC_PROXY
+          value: "edge"
+        - name: KC_HTTP_ENABLED
+          value: "true"
+        - name: KC_HTTP_RELATIVE_PATH
+          value: "/"
+        - name: KEYCLOAK_PRODUCTION
+          value: "true"
 ---
 apiVersion: v1
 kind: Service

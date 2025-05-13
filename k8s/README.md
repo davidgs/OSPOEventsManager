@@ -54,7 +54,7 @@ This will make the following services available locally:
 
 ### Keycloak
 
-- Authentication server
+- Authentication server (running in production mode)
 - Admin credentials:
   - Username: admin
   - Password: admin

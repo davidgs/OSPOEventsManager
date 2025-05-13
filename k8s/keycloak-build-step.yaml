@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keycloak-build
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: keycloak-build
+        image: quay.io/keycloak/keycloak:23.0.6
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          /opt/keycloak/bin/kc.sh build
+          echo "Keycloak optimized build completed"

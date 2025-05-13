@@ -24,7 +24,14 @@ kubectl apply -f k8s/minio-setup.yaml
 # Apply Keycloak config
 kubectl apply -f k8s/keycloak-realm-config.yaml
 
-# Apply Keycloak
+# Apply Keycloak build step (required for production mode)
+kubectl apply -f k8s/keycloak-build-step.yaml
+
+# Wait for Keycloak build to complete
+echo "Waiting for Keycloak build to complete..."
+kubectl wait --for=condition=complete --timeout=300s job/keycloak-build
+
+# Apply Keycloak deployment
 kubectl apply -f k8s/keycloak-deployment.yaml
 
 # Wait for Keycloak to be ready
