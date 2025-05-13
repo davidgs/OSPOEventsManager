@@ -19,7 +19,8 @@ if (!process.env.DATABASE_URL) {
 // Configure PostgreSQL connection
 const connectionConfig = {
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Required for Neon Postgres
+  // Disable SSL for local Replit database
+  ssl: false
 };
 
 console.log("Connecting to PostgreSQL using connection string");
