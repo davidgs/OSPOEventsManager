@@ -103,7 +103,7 @@ loadBalancer:
 # NodePort configuration
 nodePort:
   enabled: true
-  port: 30777
+  port: 30555
   
 
 
