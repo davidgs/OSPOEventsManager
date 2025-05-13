@@ -24,11 +24,13 @@ spec:
         - name: minio
           image: "{{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}"
           imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
-          args:
-            - server
-            - /data
-            - --console-address
-            - ":{{ .Values.minio.service.consolePort }}"
+          env:
+            - name: MINIO_ROOT_USER
+              value: {{ .Values.minio.auth.rootUser }}
+            - name: MINIO_ROOT_PASSWORD
+              value: {{ .Values.minio.auth.rootPassword }}
+            - name: MINIO_DEFAULT_BUCKETS
+              value: "uploads:download"
           ports:
             - name: api
               containerPort: {{ .Values.minio.service.apiPort }}
@@ -36,11 +38,6 @@ spec:
             - name: console
               containerPort: {{ .Values.minio.service.consolePort }}
               protocol: TCP
-          env:
-            - name: MINIO_ROOT_USER
-              value: {{ .Values.minio.auth.rootUser }}
-            - name: MINIO_ROOT_PASSWORD
-              value: {{ .Values.minio.auth.rootPassword }}
           volumeMounts:
             - name: minio-data
               mountPath: /data
@@ -95,21 +92,35 @@ spec:
         - name: mc
           image: "{{ .Values.minio.mc.image.repository }}:{{ .Values.minio.mc.image.tag }}"
           imagePullPolicy: {{ .Values.minio.mc.image.pullPolicy }}
+          env:
+            - name: MINIO_SERVER_HOST
+              value: minio
+            - name: MINIO_SERVER_PORT_NUMBER
+              value: "{{ .Values.minio.service.apiPort }}"
+            - name: MINIO_SERVER_ACCESS_KEY
+              value: {{ .Values.minio.auth.rootUser }}
+            - name: MINIO_SERVER_SECRET_KEY
+              value: {{ .Values.minio.auth.rootPassword }}
           command:
-            - /bin/sh
+            - /bin/bash
             - -c
           args:
             - |
-              sleep 5
-              mc alias set myminio http://minio:{{ .Values.minio.service.apiPort }} {{ .Values.minio.auth.rootUser }} {{ .Values.minio.auth.rootPassword }}
+              sleep 10
+              # Wait for MinIO to be ready
+              until curl -s -f http://minio:{{ .Values.minio.service.apiPort }}/minio/health/live; do
+                echo "Waiting for MinIO to become available..."
+                sleep 2
+              done
+              # Create buckets and set policies
               {{- range .Values.minio.buckets }}
-              mc mb --ignore-existing myminio/{{ .name }}
+              mc mb --ignore-existing myminio/{{ .name }} || echo "Bucket already exists"
               {{- if eq .policy "download" }}
-              mc anonymous set download myminio/{{ .name }}
+              mc policy set download myminio/{{ .name }} || echo "Policy already set"
               {{- else if eq .policy "upload" }}
-              mc anonymous set upload myminio/{{ .name }}
+              mc policy set upload myminio/{{ .name }} || echo "Policy already set"
               {{- else if eq .policy "public" }}
-              mc anonymous set public myminio/{{ .name }}
+              mc policy set public myminio/{{ .name }} || echo "Policy already set"
               {{- end }}
               {{- end }}
 {{- end }}

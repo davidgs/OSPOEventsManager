@@ -70,13 +70,13 @@ keycloak:
 minio:
   enabled: true
   image:
-    repository: quay.io/minio/minio
-    tag: RELEASE.2024-05-07T00-31-49Z
+    repository: bitnami/minio
+    tag: 2023.12.23
     pullPolicy: IfNotPresent
   mc:
     image:
-      repository: quay.io/minio/mc
-      tag: RELEASE.2024-05-07T00-31-49Z
+      repository: bitnami/minio-client
+      tag: 2023.12.23
       pullPolicy: Always
   auth:
     rootUser: minioadmin
