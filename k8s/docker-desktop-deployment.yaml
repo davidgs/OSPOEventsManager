@@ -63,14 +63,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ospo-app-lb-direct
+  name: ospo-app-nodeport
   labels:
     app: ospo-app-direct
 spec:
-  type: LoadBalancer
+  type: NodePort
   ports:
-    - port: 7777
+    - port: 5000
       targetPort: 5000
+      nodePort: 30777
       protocol: TCP
       name: web
   selector:

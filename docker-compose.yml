@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ospo_user
+      POSTGRES_PASSWORD: ospo_password123
+      POSTGRES_DB: ospo_events
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ospo_user -d ospo_events"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: k8s/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - HOST=0.0.0.0
+      - VITE_SERVE_CLIENT=true
+      - DATABASE_URL=postgresql://ospo_user:ospo_password123@postgres:5432/ospo_events
+      - PGUSER=ospo_user
+      - PGHOST=postgres
+      - PGPASSWORD=ospo_password123
+      - PGDATABASE=ospo_events
+      - PGPORT=5432
+    ports:
+      - "7777:5000"
+    volumes:
+      - uploads_data:/app/uploads
+
+volumes:
+  postgres_data:
+  uploads_data:
