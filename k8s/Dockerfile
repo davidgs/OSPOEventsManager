@@ -37,8 +37,10 @@ COPY --from=builder /app/keycloak.json ./keycloak.json
 # Create uploads directory
 RUN mkdir -p /app/public/uploads && chmod -R 777 /app/public/uploads
 
-# Create a separate directory for the Vite static files
-RUN mkdir -p /app/server/public && cp -r /app/dist/* /app/server/public/
+# Create a separate directory for the Vite static files and ensure it has the content
+RUN mkdir -p /app/server/public && cp -r /app/dist/* /app/server/public/ && \
+    echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" /></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script><script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script></body></html>' > /app/server/public/index.html && \
+    ls -la /app/server/public/
 
 # Set environment variables
 ENV NODE_ENV=production
