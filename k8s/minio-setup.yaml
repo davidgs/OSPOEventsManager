@@ -12,6 +12,7 @@ spec:
       containers:
       - name: mc
         image: minio/mc:RELEASE.2024-04-29T18-08-57Z
+        imagePullPolicy: Always
         command: ["/bin/sh", "-c"]
         args:
         - |

@@ -18,6 +18,11 @@ This directory contains a simplified Kubernetes deployment configuration for the
 To deploy the application, run the following command:
 
 ```bash
+# If you have previous deployments to clean up first
+chmod +x k8s/clean-up.sh
+./k8s/clean-up.sh
+
+# Then deploy the application
 chmod +x k8s/build-and-deploy.sh
 ./k8s/build-and-deploy.sh
 ```
