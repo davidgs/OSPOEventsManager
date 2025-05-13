@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
+import fs from "fs";
 import { initKeycloak, secureWithKeycloak, keycloakUserMapper } from "./keycloak-config";
 import { initializeDatabase } from "./init-db";
 
@@ -109,9 +110,12 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
   
-  // Apply Keycloak security to routes if in production or explicitly enabled
-  // Note: We're leaving this disabled by default to allow easier testing
-  if (process.env.ENABLE_KEYCLOAK_AUTH === 'true') {
+  // Check for environment variable in different ways since .env loading is inconsistent
+  const isKeycloakEnabled = process.env.ENABLE_KEYCLOAK_AUTH === 'true' || 
+                           fs.existsSync('.env') && fs.readFileSync('.env', 'utf8').includes('ENABLE_KEYCLOAK_AUTH=true');
+  
+  // Apply Keycloak security to routes if explicitly enabled
+  if (isKeycloakEnabled) {
     console.log("Securing routes with Keycloak authentication");
     secureWithKeycloak(app, keycloak);
   } else {

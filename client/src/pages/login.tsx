@@ -28,12 +28,14 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, isLoading, toast, setLocation]);
 
-  // Handle login
+  // Handle login - direct to server route instead of using client-side Keycloak
   const handleLogin = async () => {
     try {
       setIsLoggingIn(true);
       setLoginError(null);
-      await login();
+      
+      // Redirect to the server's login route which will handle Keycloak authentication
+      window.location.href = '/api/login';
     } catch (error) {
       console.error('Login error:', error);
       setLoginError('Failed to sign in. Please try again.');
@@ -42,7 +44,6 @@ export default function LoginPage() {
         title: 'Authentication failed',
         description: 'There was a problem signing you in.',
       });
-    } finally {
       setIsLoggingIn(false);
     }
   };
