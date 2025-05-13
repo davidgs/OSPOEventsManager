@@ -29,7 +29,8 @@ spec:
           image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"
           imagePullPolicy: {{ .Values.keycloak.image.pullPolicy }}
           args:
-            - start-dev
+            - start
+            - --optimized
           ports:
             - name: http
               containerPort: 8080
@@ -40,7 +41,19 @@ spec:
             - name: KC_HTTP_RELATIVE_PATH
               value: "/"
             - name: KEYCLOAK_LOGLEVEL
-              value: "DEBUG"
+              value: "INFO"
+            - name: KC_CACHE
+              value: "ispn"
+            - name: KC_CACHE_STACK
+              value: "kubernetes"
+            - name: KC_METRICS_ENABLED
+              value: "true"
+            - name: KC_PROXY
+              value: "edge"
+            - name: KC_DB_URL_HOST
+              value: "postgres"
+            - name: KC_TRANSACTION_XA_ENABLED
+              value: "true"
             - name: DB_VENDOR
               value: "postgres"
             - name: DB_ADDR

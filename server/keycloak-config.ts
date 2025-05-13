@@ -43,8 +43,8 @@ export function initKeycloak(app: Express) {
       console.log("Using Keycloak in Kubernetes mode");
       keycloakConfig["auth-server-url"] = "http://keycloak:8080/auth/";
     } else {
-      // Local development
-      console.log("Using Keycloak in local development mode");
+      // Local environment
+      console.log("Using Keycloak in production mode");
       keycloakConfig["auth-server-url"] = "http://localhost:8080/auth/";
     }
     
