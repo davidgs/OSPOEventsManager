@@ -191,6 +191,12 @@ export class MemStorage implements IStorage {
     );
   }
   
+  async getUserByKeycloakId(keycloakId: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.keycloakId === keycloakId,
+    );
+  }
+  
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userId++;
     const user: User = { 
