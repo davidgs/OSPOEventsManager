@@ -20,27 +20,22 @@ spec:
         rollme: {{ randAlphaNum 5 | quote }}
     spec:
       initContainers:
-        # First init container - copy the actual running app code from the repository
-        - name: app-cloner
-          # Use a Node.js Alpine image for building
-          image: node:20-alpine
-          imagePullPolicy: IfNotPresent
+        # First init container to copy application code
+        - name: app-copy
+          image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
+          imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
           command:
             - "/bin/sh"
             - "-c"
             - |
-              # THIS INIT CONTAINER COPIES THE ACTUAL APPLICATION CODE
               echo "Preparing to copy working application code..."
               mkdir -p /source-code
               cd /source-code
               
-              # Clone the actual app
-              echo "Copying project files from current directory..."
-              
-              # Create all necessary directories to avoid errors
+              # Create all necessary directories
               mkdir -p client/src server/dist shared public/uploads
               
-              # Copy application files using tar to maintain ownership and permissions
+              # Copy application files
               echo "Copying application files (package.json, configs)..."
               if [ -f "/current-app/package.json" ]; then
                 cp -v /current-app/package.json .
@@ -48,23 +43,42 @@ spec:
                 cp -v /current-app/drizzle.config.ts . 2>/dev/null || echo "No drizzle config found"
                 cp -v /current-app/tailwind.config.ts . 2>/dev/null || echo "No tailwind config found"
                 cp -v /current-app/postcss.config.js . 2>/dev/null || echo "No postcss config found"
-                cp -v /current-app/vite.config.ts . 2>/dev/null || echo "No vite config found"
               fi
               
-              # Copy directories with glob patterns to avoid errors if they don't exist
-              cp -rv /current-app/client/* client/ 2>/dev/null || echo "No client directory found"
-              cp -rv /current-app/server/* server/ 2>/dev/null || echo "No server directory found"
-              cp -rv /current-app/shared/* shared/ 2>/dev/null || echo "No shared directory found"
-              cp -rv /current-app/public/* public/ 2>/dev/null || echo "No public directory found"
-              cp -rv /current-app/dist/* dist/ 2>/dev/null || echo "No dist directory found"
-                
-              echo "Content copied successfully"
+              # Copy server files
+              echo "Copying server files..."
+              if [ -d "/current-app/server" ]; then
+                cp -rv /current-app/server/* server/ 2>/dev/null || echo "No server files found"
+              fi
+              
+              # Copy shared schema
+              echo "Copying shared schema..."
+              if [ -d "/current-app/shared" ]; then
+                cp -rv /current-app/shared/* shared/ 2>/dev/null || echo "No shared files found"
+              fi
+              
+              # Copy client files if they exist
+              echo "Copying client files..."
+              if [ -d "/current-app/client" ]; then
+                cp -rv /current-app/client/* client/ 2>/dev/null || echo "No client files found"
+              fi
+              
+              # Copy public files
+              echo "Copying public files..."
+              if [ -d "/current-app/public" ]; then
+                mkdir -p public
+                cp -rv /current-app/public/* public/ 2>/dev/null || echo "No public files found"
+              fi
+              
+              if [ -d "/current-app/dist" ]; then
+                mkdir -p dist
+                cp -rv /current-app/dist/* dist/ 2>/dev/null || echo "No dist files found"
+              fi
+              
+              echo "Complete application copy process"
           volumeMounts:
-            # Mount the volume to store the application code
             - name: app-source
               mountPath: /source-code
-              
-            # You need to mount the existing application code - using app-code as a temporary mount
             - name: current-app-code
               mountPath: /current-app
               
@@ -84,50 +98,40 @@ spec:
               # Creating uploads directory with proper permissions
               chmod -R 777 /setup/app/public/uploads
               
-              # Copying application code from the source 
-              if [ -d "/app-source" ] && [ -f "/app-source/package.json" ]; then
-                echo "Copying source code from app-source volume..."
-                cp -rv /app-source/* /setup/app/
-              elif [ -f "/app-code/package.json" ]; then
-                # Fallback to ConfigMap
-                echo "Copying package.json from ConfigMap"
-                cp -v /app-code/package.json /setup/app/
-                
-                if [ -f "/app-code/server_dist_index.js" ]; then
-                  echo "Copying server implementation from ConfigMap"
-                  cp -v /app-code/server_dist_index.js /setup/app/server/dist/index.js
-                fi
-                
-                if [ -f "/app-code/shared_schema.js" ]; then
-                  echo "Copying shared schema from ConfigMap"
-                  cp -v /app-code/shared_schema.js /setup/app/shared/schema.js
-                fi
+              # Copy server files from previous init container
+              echo "Copying server code to setup directory..."
+              if [ -d "/app-source/server" ]; then
+                cp -rv /app-source/server/* /setup/app/server/ 2>/dev/null
               fi
               
-              # Create a fallback HTML file if needed
-              if [ ! -f "/setup/app/public/index.html" ]; then
-                cat > /setup/app/public/index.html << 'EOF'
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                  <meta charset="UTF-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <title>OSPO Events App</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-                    .container { max-width: 1200px; margin: 0 auto; }
-                    h1 { color: #2563eb; }
-                  </style>
-                </head>
-                <body>
-                  <div class="container">
-                    <h1>OSPO Events Management</h1>
-                    <p>Application running in Kubernetes production mode.</p>
-                    <div id="app">Loading application...</div>
-                  </div>
-                </body>
-                </html>
-                EOF
+              # Copy shared schema
+              echo "Copying shared schema..."
+              if [ -d "/app-source/shared" ]; then
+                cp -rv /app-source/shared/* /setup/app/shared/ 2>/dev/null
+              fi
+              
+              # Copy frontend files if they exist
+              echo "Copying public files..."
+              if [ -d "/app-source/public" ]; then
+                cp -rv /app-source/public/* /setup/app/public/ 2>/dev/null
+              fi
+              
+              if [ -d "/app-source/dist" ]; then
+                cp -rv /app-source/dist/* /setup/app/public/ 2>/dev/null
+              fi
+              
+              # If shared schema doesn't exist, copy from app-code
+              if [ ! -f "/setup/app/shared/schema.js" ] && [ -f "/app-code/shared_schema.js" ]; then
+                echo "Using backup schema from ConfigMap..."
+                mkdir -p /setup/app/shared
+                cp -v /app-code/shared_schema.js /setup/app/shared/schema.js
+              fi
+              
+              # If server doesn't exist, copy from app-code
+              if [ ! -f "/setup/app/server/dist/index.js" ] && [ -f "/app-code/server_dist_index.js" ]; then
+                echo "Using backup server code from ConfigMap..."
+                mkdir -p /setup/app/server/dist
+                cp -v /app-code/server_dist_index.js /setup/app/server/dist/index.js
               fi
               
               # Install dependencies
@@ -146,7 +150,6 @@ spec:
         - name: app-server
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
           imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
-          # Use specific command to start the application directly
           command: 
             - "/bin/sh"
             - "-c"
@@ -157,10 +160,10 @@ spec:
               if [ -f "/app/server/dist/index.js" ]; then
                 echo "Found server file. Starting application..."
                 node /app/server/dist/index.js
-              elif [ -f "/app-code/server-backup/index.js" ]; then
+              elif [ -f "/app-code/server_dist_index.js" ]; then
                 echo "Using backup server code..."
                 mkdir -p /app/server/dist
-                cp -v /app-code/server-backup/index.js /app/server/dist/index.js
+                cp -v /app-code/server_dist_index.js /app/server/dist/index.js
                 node /app/server/dist/index.js
               else
                 echo "ERROR: No server entry point found! Check volume mounts."
@@ -243,7 +246,6 @@ spec:
               mountPath: /app
             - name: app-scripts
               mountPath: /app-scripts
-            # Mount the source code directory if available
             - name: app-source
               mountPath: /app-source
             {{- if .Values.sharedVolume.enabled }}
@@ -261,27 +263,35 @@ spec:
             httpGet:
               path: /api/health
               port: http
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
       volumes:
+        # Volume for ConfigMap with app code
         - name: app-code
           configMap:
             name: {{ .Release.Name }}-app-code
+        # Volume for init container setup
+        - name: app-setup
+          emptyDir: {}
+        # Volume for app scripts
         - name: app-scripts
           configMap:
             name: {{ .Release.Name }}-app-scripts
-        - name: app-setup
-          emptyDir: {}
+        # Volume for source code
         - name: app-source
           emptyDir: {}
-        # Mount current working directory as a host path
+        # Volume with current app code from local
         - name: current-app-code
           hostPath:
-            path: {{ .Values.repository.localPath | default "/app" }}
-            type: Directory
+            path: {{ .Values.currentAppPath | default "/app" }}
         {{- if .Values.sharedVolume.enabled }}
+        # Volume for shared uploads
         - name: shared-volume
+          {{- if .Values.sharedVolume.persistentVolumeClaim.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-shared-volume
+            claimName: {{ .Values.sharedVolume.persistentVolumeClaim.name }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
         {{- end }}
