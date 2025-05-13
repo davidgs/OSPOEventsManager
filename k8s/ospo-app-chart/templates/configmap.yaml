@@ -1,0 +1,51 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realm-config
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+data:
+  ospo-realm.json: |-
+    {
+      "realm": "{{ .Values.keycloak.realm }}",
+      "enabled": true,
+      "sslRequired": "external",
+      "registrationAllowed": true,
+      "registrationEmailAsUsername": false,
+      "rememberMe": true,
+      "verifyEmail": false,
+      "loginWithEmailAllowed": true,
+      "duplicateEmailsAllowed": false,
+      "resetPasswordAllowed": true,
+      "editUsernameAllowed": false,
+      "bruteForceProtected": true,
+      "clients": [
+        {
+          "clientId": "{{ .Values.app.env.KEYCLOAK_CLIENT_ID }}",
+          "enabled": true,
+          "publicClient": false,
+          "secret": "{{ .Values.app.env.KEYCLOAK_CLIENT_SECRET }}",
+          "redirectUris": ["*"],
+          "webOrigins": ["*"],
+          "protocol": "openid-connect",
+          "frontchannelLogout": false,
+          "fullScopeAllowed": true,
+          "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"]
+        }
+      ],
+      "roles": {
+        "realm": [
+          {
+            "name": "user",
+            "description": "Regular user role"
+          },
+          {
+            "name": "admin",
+            "description": "Administrator role"
+          }
+        ]
+      },
+      "defaultRoles": ["user"]
+    }
+{{- end }}

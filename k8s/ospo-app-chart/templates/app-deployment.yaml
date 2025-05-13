@@ -1,0 +1,151 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ospo-app
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: application
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ospo-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: application
+  template:
+    metadata:
+      labels:
+        {{- include "ospo-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: application
+    spec:
+      initContainers:
+        - name: wait-for-db
+          image: postgres:{{ .Values.postgresql.image.tag }}
+          command: ['sh', '-c', 'until pg_isready -h postgres -p 5432; do echo "Waiting for postgres..."; sleep 2; done;']
+        {{- if .Values.keycloak.enabled }}
+        - name: wait-for-keycloak
+          image: curlimages/curl:8.5.0
+          command: ['sh', '-c', 'until curl -s http://keycloak:8080/realms/master; do echo "Waiting for keycloak..."; sleep 2; done;']
+        {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.app.service.port }}
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.app.env.NODE_ENV }}
+            - name: PORT
+              value: "{{ .Values.app.service.port }}"
+            - name: SESSION_SECRET
+              value: {{ .Values.app.env.SESSION_SECRET }}
+            - name: SESSION_STORE_TYPE
+              value: {{ .Values.app.env.SESSION_STORE_TYPE }}
+            - name: VITE_SERVE_CLIENT
+              value: {{ .Values.app.env.VITE_SERVE_CLIENT | quote }}
+            {{- if .Values.keycloak.enabled }}
+            - name: KEYCLOAK_URL
+              value: "http://keycloak:{{ .Values.keycloak.service.port }}"
+            - name: KEYCLOAK_REALM
+              value: {{ .Values.keycloak.realm }}
+            - name: KEYCLOAK_CLIENT_ID
+              value: {{ .Values.app.env.KEYCLOAK_CLIENT_ID }}
+            - name: KEYCLOAK_CLIENT_SECRET
+              value: {{ .Values.app.env.KEYCLOAK_CLIENT_SECRET }}
+            {{- end }}
+            {{- if .Values.postgresql.enabled }}
+            - name: DATABASE_URL
+              value: "postgres://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@postgres:{{ .Values.postgresql.service.port }}/{{ .Values.postgresql.auth.database }}"
+            - name: PGUSER
+              value: {{ .Values.postgresql.auth.username }}
+            - name: PGHOST
+              value: "postgres"
+            - name: PGPASSWORD
+              value: {{ .Values.postgresql.auth.password }}
+            - name: PGDATABASE
+              value: {{ .Values.postgresql.auth.database }}
+            - name: PGPORT
+              value: "{{ .Values.postgresql.service.port }}"
+            {{- end }}
+            {{- if .Values.minio.enabled }}
+            - name: UPLOADS_DIR
+              value: "/app/uploads"
+            - name: MINIO_ENDPOINT
+              value: "minio"
+            - name: MINIO_PORT
+              value: "{{ .Values.minio.service.apiPort }}"
+            - name: MINIO_ROOT_USER
+              value: {{ .Values.minio.auth.rootUser }}
+            - name: MINIO_ROOT_PASSWORD
+              value: {{ .Values.minio.auth.rootPassword }}
+            - name: MINIO_BUCKET
+              value: "uploads"
+            {{- end }}
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}
+      volumes:
+        - name: uploads
+          {{- if and .Values.sharedVolume.enabled .Values.sharedVolume.persistentVolumeClaim.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.sharedVolume.persistentVolumeClaim.name }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ospo-app
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: application
+spec:
+  type: {{ .Values.app.service.type }}
+  ports:
+    - port: {{ .Values.app.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "ospo-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: application
+{{- if .Values.loadBalancer.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lb-ospo-app
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: loadbalancer
+spec:
+  type: LoadBalancer
+  ports:
+    - port: {{ .Values.loadBalancer.port }}
+      targetPort: {{ .Values.loadBalancer.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "ospo-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: application
+{{- end }}
+{{- if and .Values.sharedVolume.enabled .Values.sharedVolume.persistentVolumeClaim.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.sharedVolume.persistentVolumeClaim.name }}
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.sharedVolume.persistentVolumeClaim.size }}
+{{- end }}
