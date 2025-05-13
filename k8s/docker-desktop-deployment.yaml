@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ospo-app
+  labels:
+    app: ospo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ospo-app
+  template:
+    metadata:
+      labels:
+        app: ospo-app
+    spec:
+      containers:
+        - name: ospo-app
+          image: ospo-events-app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "5000"
+            - name: HOST
+              value: "0.0.0.0"
+            - name: VITE_SERVE_CLIENT
+              value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ospo-app
+  labels:
+    app: ospo-app
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: ospo-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ospo-app-lb
+  labels:
+    app: ospo-app
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 7777
+      targetPort: 5000
+      protocol: TCP
+      name: http
+  selector:
+    app: ospo-app
