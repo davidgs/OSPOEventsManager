@@ -2,44 +2,39 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-// Log database connection info for debugging
-console.log("Database configuration:");
-console.log(`PGHOST: ${process.env.PGHOST}`);
-console.log(`PGPORT: ${process.env.PGPORT}`);
-console.log(`PGDATABASE: ${process.env.PGDATABASE}`);
-console.log(`PGUSER: ${process.env.PGUSER}`);
-console.log(`DATABASE_URL is set: ${!!process.env.DATABASE_URL}`);
+// THIS APP IS DESIGNED FOR DEPLOYMENT IN KUBERNETES ON DOCKER DESKTOP
+// IT WILL NOT BE DEPLOYED IN PRODUCTION ON REPLIT
 
-// Validate connection info
-// In Kubernetes we might not use DATABASE_URL but individual environment variables
-const isKubernetes = process.env.KUBERNETES_SERVICE_HOST || process.env.NODE_ENV === 'production';
-if (!process.env.DATABASE_URL && !isKubernetes) {
-  console.error("DATABASE_URL environment variable not set and not in Kubernetes environment");
-  throw new Error("Database configuration incomplete. DATABASE_URL or individual PG* variables required.");
+// Configure PostgreSQL connection specifically for Kubernetes
+// Default to internal postgres service in Kubernetes
+const connectionConfig = {
+  host: process.env.PGHOST || 'postgres', // Service name in Kubernetes
+  port: parseInt(process.env.PGPORT || '5432'),
+  database: process.env.PGDATABASE || 'postgres',
+  user: process.env.PGUSER || 'postgres',
+  password: process.env.PGPASSWORD,
+  // Local Kubernetes on Docker Desktop doesn't need SSL
+  ssl: false
+};
+
+// Log connection info for debugging (but never show password)
+console.log("Kubernetes PostgreSQL connection info:");
+console.log(`Host: ${connectionConfig.host}`);
+console.log(`Port: ${connectionConfig.port}`);
+console.log(`Database: ${connectionConfig.database}`);
+console.log(`User: ${connectionConfig.user}`);
+
+// WARNING - When testing in Replit, we use DATABASE_URL temporarily
+if (!connectionConfig.password && process.env.DATABASE_URL) {
+  console.log("TEMPORARY DEVELOPMENT MODE: Using DATABASE_URL for testing in Replit only");
+  console.log("NOTE: This will be REMOVED for Kubernetes deployment");
+  
+  // Create a new configuration object instead of modifying the existing one
+  connectionConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: false
+  };
 }
-
-// Configure PostgreSQL connection
-const connectionConfig = process.env.DATABASE_URL 
-  ? {
-      // Use connection string if provided (Replit environment)
-      connectionString: process.env.DATABASE_URL,
-      // Disable SSL for local Replit database, but allow it for Kubernetes with proper config
-      ssl: isKubernetes ? { rejectUnauthorized: false } : false
-    } 
-  : {
-      // Use individual connection parameters (Kubernetes environment)
-      host: process.env.PGHOST || 'postgres', // Use 'postgres' service name in Kubernetes by default
-      port: parseInt(process.env.PGPORT || '5432'),
-      database: process.env.PGDATABASE || 'postgres',
-      user: process.env.PGUSER || 'postgres',
-      password: process.env.PGPASSWORD,
-      // SSL configuration for Kubernetes environment
-      ssl: isKubernetes ? { rejectUnauthorized: false } : false
-    };
-
-console.log(`Running in ${isKubernetes ? 'Kubernetes' : 'local'} environment`);
-
-console.log("Connecting to PostgreSQL using connection string");
 
 // Create connection pool
 const pool = new Pool(connectionConfig);
@@ -49,7 +44,7 @@ pool.on('error', (err) => {
   console.error('Unexpected PostgreSQL error:', err);
 });
 
-console.log("PostgreSQL connection pool created, initializing Drizzle ORM");
+console.log("PostgreSQL connection pool created for Kubernetes deployment");
 const db = drizzle(pool, { schema });
 
 // Function to properly shut down the pool on application exit
