@@ -133,8 +133,11 @@ metadata:
   labels:
     {{- include "ospo-app.labels" . | nindent 4 }}
     app.kubernetes.io/component: loadbalancer
+  annotations:
+    metallb.universe.tf/loadBalancerIPs: 127.0.0.1
 spec:
   type: LoadBalancer
+  externalTrafficPolicy: Local
   ports:
     - port: {{ .Values.loadBalancer.port }}
       targetPort: {{ .Values.app.service.port }}

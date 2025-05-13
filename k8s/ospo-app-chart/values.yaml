@@ -99,6 +99,11 @@ minio:
 loadBalancer:
   enabled: true
   port: 7777
+  
+# NodePort direct access configuration  
+nodePort:
+  enabled: true
+  port: 30080
 
 # Shared volume configuration
 sharedVolume:

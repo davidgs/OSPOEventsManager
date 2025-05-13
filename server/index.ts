@@ -70,8 +70,8 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Get port from environment variable or use 6000 as fallback
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 6000;
+  // Revert to using port 5000 for Replit compatibility
+  const port = 5000;
   server.listen({
     port,
     host: "0.0.0.0",
