@@ -1,0 +1,14 @@
+Warning: connect.session() MemoryStore is not                                                                                                                            │
+│ designed for a production environment, as it will leak                                                                                                                   │
+│ memory, and will not scale past a single process.                                                                                                                        │
+│ Error initializing Keycloak: Error: ENOENT: no such file or directory, open '/app/keycloak.json'                                                                         │
+│     at Object.readFileSync (node:fs:449:20)                                                                                                                              │
+│     at initKeycloak (/app/server/keycloak-config.ts:32:42)                                                                                                               │
+│     at <anonymous> (/app/server/index.ts:12:18) {                                                                                                                        │
+│   errno: -2,                                                                                                                                                             │
+│   code: 'ENOENT',                                                                                                                                                        │
+│   syscall: 'open',                                                                                                                                                       │
+│   path: '/app/keycloak.json'                                                                                                                                             │
+│ }                                                                                                                                                                        │
+│ 1:58:08 PM [express] serving on port 5000                                                                                                                                │
+│

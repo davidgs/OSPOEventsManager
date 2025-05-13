@@ -32,6 +32,7 @@ COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/vite.config.ts ./vite.config.ts
+COPY --from=builder /app/keycloak.json ./keycloak.json
 
 # Create uploads directory
 RUN mkdir -p /app/public/uploads && chmod -R 777 /app/public/uploads

@@ -54,6 +54,8 @@ spec:
               value: {{ .Values.app.env.KEYCLOAK_CLIENT_ID }}
             - name: KEYCLOAK_CLIENT_SECRET
               value: {{ .Values.app.env.KEYCLOAK_CLIENT_SECRET }}
+            - name: KEYCLOAK_CONFIG_FILE
+              value: "/app/keycloak.json"
             {{- end }}
             {{- if .Values.postgresql.enabled }}
             - name: DATABASE_URL
@@ -86,6 +88,9 @@ spec:
           volumeMounts:
             - name: uploads
               mountPath: /app/uploads
+            - name: keycloak-config
+              mountPath: /app/keycloak.json
+              subPath: keycloak.json
           resources:
             {{- toYaml .Values.app.resources | nindent 12 }}
       volumes:
@@ -96,6 +101,9 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        - name: keycloak-config
+          configMap:
+            name: keycloak-client-config
 ---
 apiVersion: v1
 kind: Service

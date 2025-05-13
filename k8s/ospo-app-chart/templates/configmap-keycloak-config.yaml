@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-client-config
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+data:
+  keycloak.json: |-
+    {
+      "realm": "{{ .Values.keycloak.realm }}",
+      "auth-server-url": "http://keycloak:{{ .Values.keycloak.service.port }}/",
+      "ssl-required": "external",
+      "resource": "{{ .Values.app.env.KEYCLOAK_CLIENT_ID }}",
+      "credentials": {
+        "secret": "{{ .Values.app.env.KEYCLOAK_CLIENT_SECRET }}"
+      },
+      "confidential-port": 0
+    }
