@@ -11,6 +11,10 @@ echo "Applying Kubernetes configurations..."
 # Apply database
 kubectl apply -f k8s/postgres-deployment.yaml
 
+# Wait for PostgreSQL to be ready
+echo "Waiting for PostgreSQL to be ready..."
+kubectl wait --for=condition=available --timeout=120s deployment/postgres
+
 # Apply MinIO storage
 kubectl apply -f k8s/minio-deployment.yaml
 
@@ -23,6 +27,13 @@ kubectl apply -f k8s/minio-setup.yaml
 
 # Apply Keycloak config
 kubectl apply -f k8s/keycloak-realm-config.yaml
+
+# Initialize Keycloak database
+kubectl apply -f k8s/keycloak-db-init.yaml
+
+# Wait for Keycloak DB initialization to complete
+echo "Waiting for Keycloak database initialization to complete..."
+kubectl wait --for=condition=complete --timeout=300s job/keycloak-db-init
 
 # Apply Keycloak build step (required for production mode)
 kubectl apply -f k8s/keycloak-build-step.yaml
