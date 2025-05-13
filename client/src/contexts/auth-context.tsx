@@ -52,9 +52,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               roles: userInfo.roles || []
             });
           }
+        } else {
+          // Handle the case where Keycloak is available but the user is not authenticated
+          console.log('User not authenticated');
+          setUser(null);
         }
       } catch (error) {
+        // This should not happen now that initKeycloak always resolves
         console.error('Failed to initialize auth:', error);
+        setAuthenticated(false);
+        setUser(null);
       } finally {
         setLoading(false);
       }

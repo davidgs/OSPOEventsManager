@@ -35,9 +35,10 @@ export const initKeycloak = (): Promise<boolean> => {
         checkLoginIframe: false, // Disable iframe to avoid timeout issues
         enableLogging: true,
         flow: 'standard',
-        pkceMethod: 'S256',
-        timeSkew: 0,
+        pkceMethod: 'S256', 
+        timeSkew: 30, // Allow for some clock skew
         responseMode: 'fragment',
+        silentCheckSsoFallback: false, // Don't redirect on silent check failures
       })
       .then((authenticated) => {
         console.log('Keycloak initialization complete. Authenticated:', authenticated);
@@ -47,7 +48,9 @@ export const initKeycloak = (): Promise<boolean> => {
       })
       .catch((error) => {
         console.error('Keycloak initialization error:', error);
-        reject(error);
+        // Don't fail the app if Keycloak is not available - just continue as unauthenticated
+        console.warn('Continuing without authentication due to Keycloak initialization failure');
+        resolve(false); // Resolve with false instead of rejecting to allow the app to continue
       });
   });
 };
