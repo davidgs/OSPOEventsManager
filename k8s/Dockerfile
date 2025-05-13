@@ -37,10 +37,10 @@ COPY --from=builder /app/keycloak.json ./keycloak.json
 # Create uploads directory
 RUN mkdir -p /app/public/uploads && chmod -R 777 /app/public/uploads
 
-# Create a separate directory for the Vite static files and copy the original index.html
+# Create a separate directory for the Vite static files and copy from the build directory
 RUN mkdir -p /app/server/public && \
-    cp -r /app/dist/* /app/server/public/ && \
-    cp /app/public/index.html /app/server/public/index.html && \
+    cp -r /app/dist/public/* /app/server/public/ && \
+    cp /app/dist/public/index.html /app/server/public/index.html && \
     # Add debugging information
     ls -la /app/server/public/ && \
     echo "Content of index.html:" && \
