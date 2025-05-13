@@ -47,12 +47,8 @@ spec:
               value: "edge"
             - name: KC_DB
               value: "postgres"
-            - name: KC_DB_URL_HOST
-              value: "postgres"
-            - name: KC_DB_URL_PORT
-              value: "5432"
-            - name: KC_DB_URL_DATABASE
-              value: {{ .Values.postgresql.auth.database }}
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://postgres:5432/{{ .Values.postgresql.auth.database }}"
             - name: KC_DB_USERNAME
               value: {{ .Values.postgresql.auth.username }}
             - name: KC_DB_PASSWORD
