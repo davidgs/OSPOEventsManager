@@ -29,7 +29,11 @@ This script will:
 
 ## Accessing the Application
 
-Once deployed, the application will be accessible at http://localhost:7777
+Once deployed, the following services will be available:
+
+- **Main Application**: http://localhost:7777
+- **Keycloak Admin UI**: http://localhost:8080/admin (admin/admin)
+- **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin)
 
 ## Components
 
@@ -48,6 +52,8 @@ Once deployed, the application will be accessible at http://localhost:7777
   - Username: admin
   - Password: admin
 - Realm: ospo-events
+- Client: ospo-events-app
+- Client Secret: client-secret-123
 
 ### MinIO
 
@@ -72,3 +78,12 @@ All components are configured to communicate within the Kubernetes cluster using
 - MinIO: minio:9000
 
 The application container is configured with all necessary environment variables to connect to these services.
+
+## Initialization Jobs
+
+The deployment includes initialization jobs that run automatically:
+
+1. **MinIO Setup**: Creates the 'uploads' bucket and configures permissions
+2. **Keycloak Setup**: Creates the 'ospo-events' realm and configures the client
+
+These jobs ensure all components are properly configured and ready to use.
