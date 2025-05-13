@@ -1,7 +1,7 @@
 {
   "realm": "ospo-events",
-  "auth-server-url": "http://localhost:8080/auth/",
-  "ssl-required": "external",
+  "auth-server-url": "http://localhost:8080/",
+  "ssl-required": "none",
   "resource": "ospo-events-app",
   "public-client": true,
   "confidential-port": 0,
@@ -13,7 +13,5 @@
   "enable-cors": true,
   "enable-registration": true,
   "enable-pkce": true,
-  "two-factor-authentication": true,
-  "register-node": true,
-  "register-timeout": 600
+  "cors-exposed-headers": ["Authorization"]
 }

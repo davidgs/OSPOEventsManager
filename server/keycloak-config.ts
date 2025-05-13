@@ -41,11 +41,11 @@ export function initKeycloak(app: Express) {
     } else if (process.env.KUBERNETES_SERVICE_HOST) {
       // In Kubernetes, use the service name
       console.log("Using Keycloak in Kubernetes mode");
-      keycloakConfig["auth-server-url"] = "http://keycloak:8080/auth/";
+      keycloakConfig["auth-server-url"] = "http://keycloak:8080/";
     } else {
       // Local environment
       console.log("Using Keycloak in development mode");
-      keycloakConfig["auth-server-url"] = "http://localhost:8080/auth/";
+      keycloakConfig["auth-server-url"] = "http://localhost:8080/";
     }
     
     // Enable registration flag

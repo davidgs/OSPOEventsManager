@@ -30,17 +30,14 @@ export const initKeycloak = (): Promise<boolean> => {
     
     keycloak
       .init({
-        onLoad: 'login-required', // Change to login-required to force authentication
-        silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
-        checkLoginIframe: false, // Disable iframe to avoid timeout issues
-        silentCheckSsoFallback: false, // Don't redirect on silent check failures
+        onLoad: 'check-sso', // Just check and don't force login
         enableLogging: true,
-        flow: 'standard',
+        checkLoginIframe: false, // Completely disable iframe checks
+        silentCheckSsoFallback: false,
         pkceMethod: 'S256',
         timeSkew: 60, // Allow for more clock skew
-
-        checkLoginIframeInterval: 1, // Set to minimum to avoid long waits
-        responseMode: 'query'
+        responseMode: 'fragment',
+        adapter: 'default'
       })
       .then((authenticated) => {
         console.log('Keycloak initialization complete. Authenticated:', authenticated);
@@ -91,7 +88,32 @@ const refreshTokenSetup = (keycloak: Keycloak) => {
  */
 export const login = (): Promise<void> => {
   console.log('Initiating Keycloak login');
-  return keycloak.login();
+  return new Promise((resolve, reject) => {
+    try {
+      // Use a direct login approach with fewer options to minimize failures
+      const loginOptions = {
+        redirectUri: window.location.origin + '/',
+        prompt: 'login',
+        maxAge: 900, // 15 minutes
+        scope: 'openid profile email'
+      };
+      
+      keycloak.login(loginOptions).then(() => {
+        console.log('Login initiated successfully');
+        resolve();
+      }).catch((error: any) => {
+        console.error('Keycloak login error:', error);
+        // Try a more direct approach as fallback
+        window.location.href = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/auth?client_id=${keycloak.clientId}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid`;
+        
+        // We don't reject here because we're using the fallback redirect
+        resolve();
+      });
+    } catch (error) {
+      console.error('Unexpected error during login:', error);
+      reject(error);
+    }
+  });
 };
 
 /**
