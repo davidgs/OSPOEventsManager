@@ -1,85 +1,109 @@
 import Keycloak from 'keycloak-js';
 
-// Create Keycloak instance
+// Determine the Keycloak URL based on the environment
+const getKeycloakUrl = () => {
+  // Check for Replit environment
+  const isReplitEnv = window.location.hostname.includes('replit.app') || 
+                      window.location.hostname.includes('replit.dev');
+  
+  if (isReplitEnv) {
+    // For Replit, we use the same hostname but on port 8080
+    return window.location.protocol + '//' + window.location.hostname.replace('.replit.dev', '-8080.replit.dev');
+  } else if (window.location.hostname === 'localhost') {
+    // Local development
+    return 'http://localhost:8080';
+  } else {
+    // Production environment assumes Keycloak is at /auth
+    return window.location.origin + '/auth';
+  }
+};
+
+// Create Keycloak instance with dynamic URL
 const keycloak = new Keycloak({
-  url: 'http://localhost:8080/',  // Will be overridden by the keycloak.json config
+  url: getKeycloakUrl(),
   realm: 'ospo-events',
   clientId: 'ospo-events-app',
 });
 
-/**
- * Check if we are in development mode
- */
-const isDevelopmentMode = () => {
-  // Consider Replit as development environment
-  const isReplitEnv = window.location.hostname.includes('replit.app') || 
-                      window.location.hostname.includes('replit.dev');
-  const isDev = window.location.hostname === 'localhost' || isReplitEnv;
-  
-  console.log('Environment check - development mode:', isDev);
-  return isDev;
-};
+// Log the Keycloak configuration for debugging
+console.log('Keycloak configuration:', {
+  url: getKeycloakUrl(),
+  realm: 'ospo-events',
+  clientId: 'ospo-events-app'
+});
 
 /**
  * Initialize Keycloak and handle authentication
  * @returns Promise with the authentication result
  */
 export const initKeycloak = (): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    // Initialize Keycloak with the appropriate configuration
+  return new Promise((resolve) => {
+    console.log('Initializing Keycloak...');
     
+    // Simple initialization with minimal options
     keycloak
       .init({
-        onLoad: 'check-sso', // Just check and don't force login
+        onLoad: 'check-sso',
+        silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+        checkLoginIframe: false,
         enableLogging: true,
-        checkLoginIframe: false, // Completely disable iframe checks
-        silentCheckSsoFallback: false,
-        pkceMethod: 'S256',
-        timeSkew: 60, // Allow for more clock skew
-        responseMode: 'fragment',
-        adapter: 'default'
+        pkceMethod: 'S256'
       })
       .then((authenticated) => {
-        console.log('Keycloak initialization complete. Authenticated:', authenticated);
-        // Set up automatic token refresh
-        refreshTokenSetup(keycloak);
+        console.log('Keycloak initialized successfully. Authenticated:', authenticated);
+        if (authenticated) {
+          setupTokenRefresh();
+        }
         resolve(authenticated);
       })
       .catch((error) => {
-        console.error('Keycloak initialization error:', error);
-        // Don't fail the app if Keycloak is not available - just continue as unauthenticated
-        console.warn('Continuing without authentication due to Keycloak initialization failure');
-        resolve(false); // Resolve with false instead of rejecting to allow the app to continue
+        console.error('Failed to initialize Keycloak:', error);
+        // Continue without authentication
+        resolve(false);
       });
   });
 };
 
 /**
  * Setup token refresh mechanism
- * @param keycloak The Keycloak instance
  */
-const refreshTokenSetup = (keycloak: Keycloak) => {
-  console.log('Setting up token refresh mechanism');
+const setupTokenRefresh = () => {
+  if (!keycloak.authenticated) return;
+  
+  // Setup token refresh
+  const updateInterval = (keycloak.tokenParsed?.exp ?? 0) - (keycloak.tokenParsed?.iat ?? 0);
+  const refreshBuffer = Math.max(updateInterval * 0.75, 60); // At least 1 minute before expiry
+  
+  console.log(`Setting up token refresh. Token valid for ${updateInterval}s, will refresh after ${refreshBuffer}s`);
   
   // Set up a timer for token refresh
   keycloak.onTokenExpired = () => {
     console.log('Token expired, attempting to refresh');
-    keycloak
-      .updateToken(30) // Refresh token if it has less than 30 seconds left
-      .then((refreshed) => {
-        if (refreshed) {
-          console.log('Token refreshed successfully');
-        } else {
-          console.log('Token not refreshed, valid for ' + 
-            Math.round(keycloak.tokenParsed!.exp! - Date.now() / 1000) + ' seconds');
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to refresh token:', error);
-        // Force logout if refresh fails
-        keycloak.logout();
-      });
+    refreshToken();
   };
+  
+  // Also set up a regular interval refresh as a backup
+  setInterval(() => {
+    if (keycloak.authenticated) {
+      refreshToken();
+    }
+  }, refreshBuffer * 1000);
+};
+
+/**
+ * Refresh the token
+ */
+const refreshToken = () => {
+  keycloak.updateToken(30)
+    .then((refreshed) => {
+      if (refreshed) {
+        console.log('Token refreshed successfully');
+      }
+    })
+    .catch(() => {
+      console.error('Failed to refresh token, logging out');
+      keycloak.logout();
+    });
 };
 
 /**
@@ -87,27 +111,32 @@ const refreshTokenSetup = (keycloak: Keycloak) => {
  * @returns Promise with the login result
  */
 export const login = (): Promise<void> => {
-  console.log('Initiating Keycloak login');
   return new Promise((resolve, reject) => {
+    console.log('Initiating login process...');
+    
     try {
-      // Use a direct login approach with fewer options to minimize failures
-      const loginOptions = {
-        redirectUri: window.location.origin + '/',
-        prompt: 'login',
-        maxAge: 900, // 15 minutes
-        scope: 'openid profile email'
-      };
-      
-      keycloak.login(loginOptions).then(() => {
+      keycloak.login({
+        redirectUri: window.location.origin,
+      })
+      .then(() => {
         console.log('Login initiated successfully');
         resolve();
-      }).catch((error: any) => {
-        console.error('Keycloak login error:', error);
-        // Try a more direct approach as fallback
-        window.location.href = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/auth?client_id=${keycloak.clientId}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid`;
+      })
+      .catch((error) => {
+        console.error('Login failed:', error);
         
-        // We don't reject here because we're using the fallback redirect
-        resolve();
+        // Try direct redirect as fallback
+        try {
+          const authUrl = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/auth`;
+          const clientId = keycloak.clientId;
+          const redirectUri = encodeURIComponent(window.location.origin);
+          
+          window.location.href = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
+          resolve(); // This will resolve but page will redirect
+        } catch (err) {
+          console.error('Fallback login also failed:', err);
+          reject(err);
+        }
       });
     } catch (error) {
       console.error('Unexpected error during login:', error);
