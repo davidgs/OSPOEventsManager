@@ -1,6 +1,9 @@
 import { db } from "../server/db";
 import { sql } from "drizzle-orm";
 
+// Log that we're running migrations for the Kubernetes PostgreSQL database
+console.log("Running database migration to the PostgreSQL service in Kubernetes");
+
 async function migrateDatabase() {
   console.log("Starting database migration...");
 
