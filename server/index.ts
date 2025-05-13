@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import { initKeycloak, secureWithKeycloak, keycloakUserMapper } from "./keycloak-config";
+import { initializeDatabase } from "./init-db";
 
 const app = express();
 app.use(express.json());
@@ -67,6 +68,18 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize the database tables if we're using the database
+  if (process.env.KUBERNETES_SERVICE_HOST) {
+    try {
+      const dbInitialized = await initializeDatabase();
+      if (!dbInitialized) {
+        console.error("Failed to initialize database tables. Some functionality may not work correctly.");
+      }
+    } catch (error) {
+      console.error("Error initializing database:", error);
+    }
+  }
+
   const server = await registerRoutes(app);
   
   // Apply Keycloak security to routes
