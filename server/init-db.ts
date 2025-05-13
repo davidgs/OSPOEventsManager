@@ -1,5 +1,4 @@
 import { db, pool } from "./db";
-import { sql } from "drizzle-orm";
 import { Pool } from '@neondatabase/serverless';
 
 /**
@@ -86,7 +85,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.log("✅ Attendees table initialized");
 
     // Create sponsorships table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS sponsorships (
         id SERIAL PRIMARY KEY,
         event_id INTEGER NOT NULL,
@@ -101,7 +100,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.log("✅ Sponsorships table initialized");
 
     // Create assets table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS assets (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
@@ -120,7 +119,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.log("✅ Assets table initialized");
 
     // Create stakeholders table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS stakeholders (
         id SERIAL PRIMARY KEY,
         user_id INTEGER,
@@ -137,7 +136,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.log("✅ Stakeholders table initialized");
 
     // Create approval_workflows table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS approval_workflows (
         id SERIAL PRIMARY KEY,
         title TEXT NOT NULL,
@@ -157,7 +156,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.log("✅ Approval workflows table initialized");
 
     // Create workflow_reviewers table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS workflow_reviewers (
         id SERIAL PRIMARY KEY,
         workflow_id INTEGER NOT NULL,
@@ -171,7 +170,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.log("✅ Workflow reviewers table initialized");
 
     // Create workflow_stakeholders table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS workflow_stakeholders (
         id SERIAL PRIMARY KEY,
         workflow_id INTEGER NOT NULL,
@@ -183,7 +182,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.log("✅ Workflow stakeholders table initialized");
 
     // Create workflow_comments table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS workflow_comments (
         id SERIAL PRIMARY KEY,
         workflow_id INTEGER NOT NULL,
@@ -197,7 +196,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.log("✅ Workflow comments table initialized");
 
     // Create workflow_history table with IF NOT EXISTS to preserve existing data
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS workflow_history (
         id SERIAL PRIMARY KEY,
         workflow_id INTEGER NOT NULL,
