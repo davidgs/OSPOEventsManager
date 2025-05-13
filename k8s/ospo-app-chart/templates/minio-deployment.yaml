@@ -101,26 +101,29 @@ spec:
               value: {{ .Values.minio.auth.rootUser }}
             - name: MINIO_SERVER_SECRET_KEY
               value: {{ .Values.minio.auth.rootPassword }}
+            - name: MC_HOST_myminio
+              value: "http://{{ .Values.minio.auth.rootUser }}:{{ .Values.minio.auth.rootPassword }}@minio:{{ .Values.minio.service.apiPort }}"
           command:
-            - /bin/bash
+            - /bin/sh
             - -c
           args:
             - |
-              sleep 10
-              # Wait for MinIO to be ready
-              until curl -s -f http://minio:{{ .Values.minio.service.apiPort }}/minio/health/live; do
-                echo "Waiting for MinIO to become available..."
-                sleep 2
-              done
+              sleep 15
+              echo "Waiting for MinIO to become available..."
               # Create buckets and set policies
               {{- range .Values.minio.buckets }}
-              mc mb --ignore-existing myminio/{{ .name }} || echo "Bucket already exists"
+              echo "Creating bucket {{ .name }}..."
+              mc mb --ignore-existing myminio/{{ .name }} || echo "Bucket already exists or creation failed"
               {{- if eq .policy "download" }}
-              mc policy set download myminio/{{ .name }} || echo "Policy already set"
+              echo "Setting download policy for {{ .name }}..."
+              mc policy set download myminio/{{ .name }} || echo "Policy setting failed"
               {{- else if eq .policy "upload" }}
-              mc policy set upload myminio/{{ .name }} || echo "Policy already set"
+              echo "Setting upload policy for {{ .name }}..."
+              mc policy set upload myminio/{{ .name }} || echo "Policy setting failed"
               {{- else if eq .policy "public" }}
-              mc policy set public myminio/{{ .name }} || echo "Policy already set"
+              echo "Setting public policy for {{ .name }}..."
+              mc policy set public myminio/{{ .name }} || echo "Policy setting failed"
               {{- end }}
               {{- end }}
+              echo "MinIO setup completed"
 {{- end }}
