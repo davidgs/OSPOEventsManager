@@ -257,11 +257,16 @@ async function seedDatabase() {
   } catch (error) {
     console.error("❌ Error seeding database:", error);
   } finally {
-    // Close the pool connection for @neondatabase/serverless
+    // Close the pool connection
     if (db) {
       try {
+        // Access the underlying pool - works with both drizzle-orm/node-postgres and drizzle-orm/neon-serverless
         // @ts-ignore - Access the underlying pool
-        await db[Symbol.for('driver')].session.end();
+        if (db.driver?.pool) {
+          await db.driver.pool.end();
+        } else if (db[Symbol.for('driver')]?.session) {
+          await db[Symbol.for('driver')].session.end();
+        }
         console.log("Database connection closed");
       } catch (err) {
         console.log("Note: Could not explicitly close connection, but data was seeded successfully");

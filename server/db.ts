@@ -8,16 +8,33 @@ import * as schema from "@shared/schema";
 // Determine connection configuration
 let connectionConfig;
 
-// Detect Kubernetes environment
-const isKubernetes = process.env.KUBERNETES_SERVICE_HOST || 
-                     process.env.NODE_ENV === 'production';
-
-// Use DATABASE_URL if available for development/testing in Replit
-if (process.env.DATABASE_URL && !isKubernetes) {
-  console.log("DEVELOPMENT MODE: Using connection string temporarily");
+// For Replit environment, use the provided PostgreSQL database
+if (process.env.PGDATABASE && process.env.PGUSER && process.env.PGHOST) {
+  console.log("REPLIT ENVIRONMENT: Using local PostgreSQL");
+  
+  // Check if we're connecting to Neon cloud database (requires SSL)
+  const isNeonDatabase = process.env.PGHOST?.includes('neon.tech');
+  
+  connectionConfig = {
+    host: process.env.PGHOST,
+    port: Number(process.env.PGPORT) || 5432,
+    database: process.env.PGDATABASE,
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
+    ssl: isNeonDatabase ? { rejectUnauthorized: false } : false
+  };
+  
+  // Log connection info for debugging (but never show password)
+  console.log(`Host: ${connectionConfig.host}`);
+  console.log(`Port: ${connectionConfig.port}`);
+  console.log(`Database: ${connectionConfig.database}`);
+  console.log(`User: ${connectionConfig.user}`);
+} 
+// Fallback to DATABASE_URL if available
+else if (process.env.DATABASE_URL) {
+  console.log("FALLBACK MODE: Using connection string from DATABASE_URL");
   connectionConfig = {
     connectionString: process.env.DATABASE_URL,
-    // Neon Postgres requires SSL
     ssl: { rejectUnauthorized: false }
   };
   
@@ -25,7 +42,7 @@ if (process.env.DATABASE_URL && !isKubernetes) {
   const maskedConnString = process.env.DATABASE_URL.replace(/:([^:@]+)@/, ':****@');
   console.log(`Connection string: ${maskedConnString}`);
 } 
-// For Kubernetes deployment, connect to local PostgreSQL pod
+// Default case for Kubernetes deployment
 else {
   console.log("KUBERNETES DEPLOYMENT: Connecting to local PostgreSQL");
   
@@ -33,9 +50,9 @@ else {
   const k8sPostgresValues = {
     host: 'postgres', // Service name from postgresql-deployment.yaml
     port: 5432,       // Default PostgreSQL port
-    database: process.env.PGDATABASE || 'ospo_events', // From values.yaml
-    user: process.env.PGUSER || 'ospo_user',           // From values.yaml
-    password: process.env.PGPASSWORD || 'ospo_password123'  // From values.yaml
+    database: 'ospo_events', // From values.yaml
+    user: 'ospo_user',       // From values.yaml
+    password: 'ospo_password123'  // From values.yaml
   };
   
   connectionConfig = {
@@ -44,7 +61,6 @@ else {
     database: k8sPostgresValues.database,
     user: k8sPostgresValues.user,
     password: k8sPostgresValues.password,
-    // Local PostgreSQL in Kubernetes doesn't need SSL
     ssl: false
   };
   
@@ -53,7 +69,6 @@ else {
   console.log(`Port: ${connectionConfig.port}`);
   console.log(`Database: ${connectionConfig.database}`);
   console.log(`User: ${connectionConfig.user}`);
-  console.log(`SSL: ${!!connectionConfig.ssl}`);
 }
 
 // Create connection pool
