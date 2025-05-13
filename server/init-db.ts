@@ -218,6 +218,21 @@ export async function initializeDatabase(): Promise<boolean> {
       )
     `);
     console.log("✅ Workflow history table initialized");
+    
+    // Create sessions table for authentication
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        sid VARCHAR(255) NOT NULL PRIMARY KEY,
+        sess JSON NOT NULL,
+        expire TIMESTAMP(6) NOT NULL
+      )
+    `);
+    
+    // Add index on expire for faster session cleanup
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS IDX_session_expire ON sessions (expire)
+    `);
+    console.log("✅ Sessions table initialized");
 
     console.log("✅ Database initialization completed successfully!");
     return true;

@@ -97,11 +97,14 @@ app.use((req, res, next) => {
 
 (async () => {
   // Initialize the database tables if we're using the database
-  if (process.env.KUBERNETES_SERVICE_HOST) {
+  if (process.env.KUBERNETES_SERVICE_HOST || process.env.DATABASE_URL) {
     try {
+      console.log("Attempting to initialize database tables...");
       const dbInitialized = await initializeDatabase();
       if (!dbInitialized) {
         console.error("Failed to initialize database tables. Some functionality may not work correctly.");
+      } else {
+        console.log("Database tables initialized successfully");
       }
     } catch (error) {
       console.error("Error initializing database:", error);
