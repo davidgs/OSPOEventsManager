@@ -1991,7 +1991,17 @@ try {
   useDatabase = false;
 }
 
+// Create storage instance 
+const memStorage = new MemStorage();
+const dbStorage = useDatabase ? new DatabaseStorage() : memStorage;
+
+// For MemStorage, ensure seed data is loaded for testing
+if (!useDatabase) {
+  console.log('Initializing MemStorage with seed data for testing');
+  // The MemStorage constructor already loads seed data
+}
+
 // Export the appropriate storage based on environment
-export const storage = useDatabase ? new DatabaseStorage() : new MemStorage();
+export const storage = dbStorage;
 
 console.log(`Using ${useDatabase ? 'DatabaseStorage (PostgreSQL)' : 'MemStorage (in-memory)'} for data storage`);
