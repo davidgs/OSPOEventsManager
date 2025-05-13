@@ -147,7 +147,46 @@ spec:
           image: {{ .Values.appServer.image.repository }}:{{ .Values.appServer.image.tag }}
           imagePullPolicy: {{ .Values.appServer.image.pullPolicy }}
           # Use specific command to start the application directly
-          command: ["node", "/app/server/dist/index.js"]
+          command: 
+            - "/bin/sh"
+            - "-c"
+            - |
+              echo "Starting the application from prepared environment..."
+              ls -la /app /app/server /app/server/dist || echo "Directory listing failed"
+              
+              if [ -f "/app/server/dist/index.js" ]; then
+                echo "Found server file. Starting application..."
+                node /app/server/dist/index.js
+              elif [ -f "/app-code/server-backup/index.js" ]; then
+                echo "Using backup server code..."
+                mkdir -p /app/server/dist
+                cp -v /app-code/server-backup/index.js /app/server/dist/index.js
+                node /app/server/dist/index.js
+              else
+                echo "ERROR: No server entry point found! Check volume mounts."
+                # Create a minimal emergency server
+                mkdir -p /app/server/dist
+                echo 'const express = require("express");
+                const app = express();
+                const PORT = process.env.PORT || 5000;
+                
+                app.get("/api/health", (req, res) => {
+                  res.json({
+                    status: "error",
+                    message: "Emergency server - no proper server files found",
+                    time: new Date().toISOString()
+                  });
+                });
+                
+                app.get("*", (req, res) => {
+                  res.status(503).send("Application server entry point not found.");
+                });
+                
+                app.listen(PORT, "0.0.0.0", () => {
+                  console.log(`Emergency server started on port ${PORT}`);
+                });' > /app/server/dist/index.js
+                node /app/server/dist/index.js
+              fi
           ports:
             - name: http
               containerPort: {{ .Values.appServer.service.port }}
