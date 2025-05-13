@@ -1988,10 +1988,9 @@ const isKubernetes = process.env.KUBERNETES_SERVICE_HOST;
 // Check if we can connect to the database
 let useDatabase = db !== null;
 
-// If we're in Replit and not in Kubernetes, default to MemStorage for testing
+// If we're in Replit and not in Kubernetes, we'll prefer DatabaseStorage if available
 if (isRunningInReplit && !isKubernetes) {
-  console.log('Running in Replit: Using MemStorage for testing');
-  useDatabase = false;
+  console.log('Running in Replit with DATABASE_URL available');
 }
 
 if (!useDatabase) {
