@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ospo-app
+  name: ospo-app-direct
   labels:
-    app: ospo-app
+    app: ospo-app-direct
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ospo-app
+      app: ospo-app-direct
   template:
     metadata:
       labels:
-        app: ospo-app
+        app: ospo-app-direct
     spec:
       containers:
         - name: ospo-app
@@ -35,9 +35,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ospo-app
+  name: ospo-app-direct
   labels:
-    app: ospo-app
+    app: ospo-app-direct
 spec:
   type: ClusterIP
   ports:
@@ -46,20 +46,20 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: ospo-app
+    app: ospo-app-direct
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: ospo-app-lb
+  name: ospo-app-lb-direct
   labels:
-    app: ospo-app
+    app: ospo-app-direct
 spec:
   type: LoadBalancer
   ports:
     - port: 7777
       targetPort: 5000
       protocol: TCP
-      name: http
+      name: web
   selector:
-    app: ospo-app
+    app: ospo-app-direct
