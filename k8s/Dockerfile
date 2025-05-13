@@ -19,7 +19,8 @@ WORKDIR /app
 
 # Copy package.json and install production dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev
+# Install all dependencies including dev since we need vite at runtime
+RUN npm ci
 
 # Install TypeScript execution tools
 RUN npm install -g tsx
@@ -29,6 +30,8 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/vite.config.ts ./vite.config.ts
 
 # Create uploads directory
 RUN mkdir -p /app/public/uploads && chmod -R 777 /app/public/uploads
