@@ -1,0 +1,100 @@
+Starting application on port 5000...
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+6:45:50 PM [express] serving on port 5000
+GET /api/events called
+Error in GET /api/events: ErrorEvent {
+  [Symbol(kTarget)]: WebSocket {
+    _events: [Object: null prototype] {
+      error: [Function],
+      message: [Function],
+      close: [Function],
+      open: [Function]
+    },
+    _eventsCount: 4,
+    _maxListeners: undefined,
+    _binaryType: 'arraybuffer',
+    _closeCode: 1006,
+    _closeFrameReceived: false,
+    _closeFrameSent: false,
+    _closeMessage: <Buffer >,
+    _closeTimer: null,
+    _errorEmitted: true,
+    _extensions: {},
+    _paused: false,
+    _protocol: '',
+    _readyState: 3,
+    _receiver: null,
+    _sender: null,
+    _socket: null,
+    _bufferedAmount: 0,
+    _isServer: false,
+    _redirects: 0,
+    _autoPong: true,
+    _url: 'wss://postgres/v2',
+    _req: null,
+    [Symbol(shapeMode)]: false,
+    [Symbol(kCapture)]: false
+  },
+  [Symbol(kType)]: 'error',
+  [Symbol(kError)]: Error: connect ECONNREFUSED 10.103.185.225:443
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+    errno: -111,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '10.103.185.225',
+    port: 443
+  },
+  [Symbol(kMessage)]: 'connect ECONNREFUSED 10.103.185.225:443'
+}
+6:47:38 PM [express] GET /api/events 500 in 75054ms :: {"message":"Failed to fetch events"}
+6:47:38 PM [express] GET /api/cfp-submissions 500 in 75006ms :: {"message":"Failed to fetch CFP subm…
+6:47:38 PM [express] GET /api/attendees 500 in 75004ms :: {"message":"Failed to fetch attendees"}
+6:47:38 PM [express] GET /api/users/2 500 in 75055ms :: {"message":"Failed to fetch user"}
+Error fetching assets: ErrorEvent {
+  [Symbol(kTarget)]: WebSocket {
+    _events: [Object: null prototype] {
+      error: [Function],
+      message: [Function],
+      close: [Function],
+      open: [Function]
+    },
+    _eventsCount: 4,
+    _maxListeners: undefined,
+    _binaryType: 'arraybuffer',
+    _closeCode: 1006,
+    _closeFrameReceived: false,
+    _closeFrameSent: false,
+    _closeMessage: <Buffer >,
+    _closeTimer: null,
+    _errorEmitted: true,
+    _extensions: {},
+    _paused: false,
+    _protocol: '',
+    _readyState: 3,
+    _receiver: null,
+    _sender: null,
+    _socket: null,
+    _bufferedAmount: 0,
+    _isServer: false,
+    _redirects: 0,
+    _autoPong: true,
+    _url: 'wss://postgres/v2',
+    _req: null,
+    [Symbol(shapeMode)]: false,
+    [Symbol(kCapture)]: false
+  },
+  [Symbol(kType)]: 'error',
+  [Symbol(kError)]: Error: connect ECONNREFUSED 10.103.185.225:443
+      at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+    errno: -111,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '10.103.185.225',
+    port: 443
+  },
+  [Symbol(kMessage)]: 'connect ECONNREFUSED 10.103.185.225:443'
+}
+6:47:38 PM [express] GET /api/assets 500 in 75006ms :: {"message":"Failed to fetch assets"}
+6:48:26 PM [express] GET /api/attendees 500 in 75009ms :: {"message":"Failed to fetch attendees"}
