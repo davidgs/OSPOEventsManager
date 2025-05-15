@@ -48,16 +48,14 @@ spec:
             - name: BASE_URL
               value: "/"
             {{- if .Values.keycloak.enabled }}
-            # K8s service connection details
+            # K8s service connection details - keep it simple with just service name
             - name: KEYCLOAK_SERVICE_NAME
               value: "keycloak"
             - name: KEYCLOAK_SERVICE_PORT
               value: "{{ .Values.keycloak.service.port }}"
-            - name: KEYCLOAK_SERVICE_NAMESPACE
-              value: "{{ .Release.Namespace }}"
             # Standard Keycloak configuration
             - name: KEYCLOAK_URL
-              value: "http://keycloak.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.keycloak.service.port }}"
+              value: "http://keycloak:{{ .Values.keycloak.service.port }}"
             - name: KEYCLOAK_REALM
               value: {{ .Values.keycloak.realm }}
             - name: KEYCLOAK_CLIENT_ID

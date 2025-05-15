@@ -58,13 +58,12 @@ export function initKeycloak(app: Express) {
       console.log(`Using custom Keycloak URL: ${process.env.KEYCLOAK_URL}`);
       keycloakConfig["auth-server-url"] = process.env.KEYCLOAK_URL;
     } else {
-      // Construct the correct Kubernetes service URL using DNS
+      // In Kubernetes, use simple service name which will be resolved by K8s DNS
       const keycloakServiceName = process.env.KEYCLOAK_SERVICE_NAME || 'keycloak';
       const keycloakServicePort = process.env.KEYCLOAK_SERVICE_PORT || '8080';
-      const keycloakServiceNamespace = process.env.KEYCLOAK_SERVICE_NAMESPACE || 'default';
       
-      // Format: http://service-name.namespace.svc.cluster.local:port/
-      const keycloakUrl = `http://${keycloakServiceName}.${keycloakServiceNamespace}.svc.cluster.local:${keycloakServicePort}/`;
+      // Format: http://service-name:port/
+      const keycloakUrl = `http://${keycloakServiceName}:${keycloakServicePort}/`;
       
       console.log(`Using Kubernetes service URL for Keycloak: ${keycloakUrl}`);
       keycloakConfig["auth-server-url"] = keycloakUrl;

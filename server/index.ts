@@ -14,15 +14,13 @@ app.use(express.urlencoded({ extended: false }));
 // Set up proxy for Keycloak authentication
 // This proxies requests from /auth to the internal Keycloak service
 // We need to use the correct K8s service name and port
-// In Kubernetes, services are only available after they're fully initialized
-// We need to add a connection retry mechanism for reliability
+// In Kubernetes, services are accessed by their service name
+// No need for full DNS name - Kubernetes DNS will handle the resolution
 const keycloakServiceName = process.env.KEYCLOAK_SERVICE_NAME || 'keycloak';
 const keycloakServicePort = process.env.KEYCLOAK_SERVICE_PORT || '8080';
-const keycloakServiceNamespace = process.env.KEYCLOAK_SERVICE_NAMESPACE || 'default';
 
-// Construct the internal Kubernetes DNS name for the service
-// Format: service-name.namespace.svc.cluster.local
-const keycloakInternalUrl = `http://${keycloakServiceName}.${keycloakServiceNamespace}.svc.cluster.local:${keycloakServicePort}`;
+// Use simple service name which will be resolved by Kubernetes DNS automatically
+const keycloakInternalUrl = `http://${keycloakServiceName}:${keycloakServicePort}`;
 
 console.log(`Using Keycloak service at: ${keycloakInternalUrl}`);
 
