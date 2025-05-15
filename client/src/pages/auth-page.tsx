@@ -39,21 +39,22 @@ export default function AuthPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
+                  Or
                 </span>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-2">
-              <Button variant="outline" disabled>
-                Single Sign-On
-              </Button>
-            </div>
+            <Button 
+              variant="outline"
+              onClick={() => window.location.href = `${import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080'}/realms/ospo-events/protocol/openid-connect/registrations?client_id=ospo-events-app&redirect_uri=${encodeURIComponent(window.location.origin)}`}
+              className="w-full"
+            >
+              Create an Account
+            </Button>
           </CardContent>
-          <CardFooter className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-sm text-muted-foreground">
-              <span className="mr-1 hidden sm:inline-block">Don't have an account?</span>
-              <Button variant="link" className="p-0 h-auto">Contact your administrator</Button>
-            </div>
+          <CardFooter className="flex flex-wrap items-center justify-center gap-2 pt-0">
+            <p className="text-xs text-muted-foreground">
+              By signing up, you agree to our Terms of Service and Privacy Policy
+            </p>
           </CardFooter>
         </Card>
 

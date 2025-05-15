@@ -2,13 +2,21 @@ import Keycloak from 'keycloak-js';
 
 // Determine the Keycloak URL based on the environment
 const getKeycloakUrl = () => {
+  // First, check if there's an environment variable set
+  if (import.meta.env.VITE_KEYCLOAK_URL) {
+    return import.meta.env.VITE_KEYCLOAK_URL;
+  }
+  
   // Check for Replit environment
   const isReplitEnv = window.location.hostname.includes('replit.app') || 
                       window.location.hostname.includes('replit.dev');
   
   if (isReplitEnv) {
-    // For Replit, we use the same hostname but on port 8080
-    return window.location.protocol + '//' + window.location.hostname.replace('.replit.dev', '-8080.replit.dev');
+    // For Replit, we need to use the Keycloak service running at port 8080
+    // This could be in the same Repl or a separate one
+    const keycloakUrl = window.location.protocol + '//' + window.location.hostname.replace('.replit.dev', '-8080.replit.dev');
+    console.log('Using Replit Keycloak URL:', keycloakUrl);
+    return keycloakUrl;
   } else if (window.location.hostname === 'localhost') {
     // Local development
     return 'http://localhost:8080';

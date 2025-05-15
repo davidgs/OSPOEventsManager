@@ -32,34 +32,24 @@ export function Header() {
     <header className="border-b">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-6">
-          <Link href="/">
-            <a className="flex items-center gap-2 font-bold text-xl">
-              <Calendar className="h-6 w-6" />
-              <span>OSPO Events</span>
-            </a>
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+            <Calendar className="h-6 w-6" />
+            <span>OSPO Events</span>
           </Link>
           
           {authenticated && (
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="/events">
-                <a className="text-sm font-medium transition-colors hover:text-primary">
-                  Events
-                </a>
+              <Link href="/events" className="text-sm font-medium transition-colors hover:text-primary">
+                Events
               </Link>
-              <Link href="/cfp-submissions">
-                <a className="text-sm font-medium transition-colors hover:text-primary">
-                  CFP Submissions
-                </a>
+              <Link href="/cfp-submissions" className="text-sm font-medium transition-colors hover:text-primary">
+                CFP Submissions
               </Link>
-              <Link href="/attendees">
-                <a className="text-sm font-medium transition-colors hover:text-primary">
-                  Attendees
-                </a>
+              <Link href="/attendees" className="text-sm font-medium transition-colors hover:text-primary">
+                Attendees
               </Link>
-              <Link href="/sponsorships">
-                <a className="text-sm font-medium transition-colors hover:text-primary">
-                  Sponsorships
-                </a>
+              <Link href="/sponsorships" className="text-sm font-medium transition-colors hover:text-primary">
+                Sponsorships
               </Link>
             </nav>
           )}
@@ -89,35 +79,27 @@ export function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard">
-                    <a className="flex cursor-pointer items-center">
-                      <BarChart2 className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </a>
+                  <Link href="/dashboard" className="flex cursor-pointer items-center">
+                    <BarChart2 className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">
-                    <a className="flex cursor-pointer items-center">
-                      <Users className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </a>
+                  <Link href="/profile" className="flex cursor-pointer items-center">
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/saved">
-                    <a className="flex cursor-pointer items-center">
-                      <Bookmark className="mr-2 h-4 w-4" />
-                      <span>Saved</span>
-                    </a>
+                  <Link href="/saved" className="flex cursor-pointer items-center">
+                    <Bookmark className="mr-2 h-4 w-4" />
+                    <span>Saved</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <a className="flex cursor-pointer items-center">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </a>
+                  <Link href="/settings" className="flex cursor-pointer items-center">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
