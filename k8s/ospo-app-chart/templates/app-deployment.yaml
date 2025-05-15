@@ -20,11 +20,11 @@ spec:
       initContainers:
         - name: wait-for-db
           image: postgres:{{ .Values.postgresql.image.tag }}
-          command: ['sh', '-c', 'until pg_isready -h postgres -p 5432; do echo "Waiting for postgres..."; sleep 2; done;']
+          command: ['sh', '-c', 'until pg_isready -h postgres.{{ .Release.Namespace }}.svc.cluster.local -p {{ .Values.postgresql.service.port }}; do echo "Waiting for postgres..."; sleep 5; done;']
         {{- if .Values.keycloak.enabled }}
         - name: wait-for-keycloak
           image: curlimages/curl:8.5.0
-          command: ['sh', '-c', 'until curl -s http://keycloak:8080/realms/master; do echo "Waiting for keycloak..."; sleep 2; done;']
+          command: ['sh', '-c', 'until curl -s http://keycloak.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.keycloak.service.port }}/auth/realms/master; do echo "Waiting for keycloak..."; sleep 5; done;']
         {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -67,11 +67,11 @@ spec:
             {{- end }}
             {{- if .Values.postgresql.enabled }}
             - name: DATABASE_URL
-              value: "postgres://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@postgres:{{ .Values.postgresql.service.port }}/{{ .Values.postgresql.auth.database }}"
+              value: "postgres://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@postgres.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.postgresql.service.port }}/{{ .Values.postgresql.auth.database }}"
             - name: PGUSER
               value: {{ .Values.postgresql.auth.username }}
             - name: PGHOST
-              value: "postgres"
+              value: "postgres.{{ .Release.Namespace }}.svc.cluster.local"
             - name: PGPASSWORD
               value: {{ .Values.postgresql.auth.password }}
             - name: PGDATABASE

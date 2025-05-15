@@ -23,7 +23,7 @@ spec:
       initContainers:
         - name: wait-for-db
           image: postgres:{{ .Values.postgresql.image.tag }}
-          command: ['sh', '-c', 'until pg_isready -h postgres -p 5432; do echo "Waiting for postgres..."; sleep 2; done;']
+          command: ['sh', '-c', 'until pg_isready -h postgres.{{ .Release.Namespace }}.svc.cluster.local -p {{ .Values.postgresql.service.port }}; do echo "Waiting for postgres..."; sleep 2; done;']
       containers:
         - name: keycloak
           image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"
@@ -49,11 +49,11 @@ spec:
             - name: KC_PROXY
               value: "edge"
             - name: KC_DB_URL_HOST
-              value: "postgres"
+              value: "postgres.{{ .Release.Namespace }}.svc.cluster.local"
             - name: DB_VENDOR
               value: "postgres"
             - name: DB_ADDR
-              value: "postgres"
+              value: "postgres.{{ .Release.Namespace }}.svc.cluster.local"
             - name: DB_PORT
               value: "5432"
             - name: DB_DATABASE
@@ -75,6 +75,28 @@ spec:
           volumeMounts:
             - name: realm-config
               mountPath: /opt/keycloak/data/import
+          # Add health checks to help with startup sequencing
+          startupProbe:
+            httpGet:
+              path: /auth/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /auth/health/ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /auth/health/live
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           resources:
             {{- toYaml .Values.keycloak.resources | nindent 12 }}
       volumes:
