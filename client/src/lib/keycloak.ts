@@ -5,13 +5,20 @@ const getKeycloakUrl = () => {
   // First, check if there's an environment variable set
   const envKeycloakUrl = import.meta.env.VITE_KEYCLOAK_URL;
   if (envKeycloakUrl) {
+    // If it's a relative path, prefix with the current origin
+    if (envKeycloakUrl.startsWith('/')) {
+      const url = window.location.origin + envKeycloakUrl;
+      console.log('Using relative Keycloak URL:', url);
+      return url;
+    }
     console.log('Using configured Keycloak URL from env:', envKeycloakUrl);
     return envKeycloakUrl;
   }
   
-  // Default for local development
-  console.log('Using default Keycloak URL');
-  return 'http://localhost:9090';
+  // Default to current origin plus /auth path
+  const url = window.location.origin + '/auth';
+  console.log('Using default Keycloak URL:', url);
+  return url;
 };
 
 // Create Keycloak instance with dynamic URL
