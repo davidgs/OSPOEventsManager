@@ -14,19 +14,52 @@ app.use(express.urlencoded({ extended: false }));
 // Set up proxy for Keycloak authentication
 // This proxies requests from /auth to the internal Keycloak service
 // We need to use the correct K8s service name and port
-// Use the simple Kubernetes service name with port
-const keycloakInternalUrl = 'http://keycloak:8080';
+// In Kubernetes, services are only available after they're fully initialized
+// We need to add a connection retry mechanism for reliability
+const keycloakServiceName = process.env.KEYCLOAK_SERVICE_NAME || 'keycloak';
+const keycloakServicePort = process.env.KEYCLOAK_SERVICE_PORT || '8080';
+const keycloakServiceNamespace = process.env.KEYCLOAK_SERVICE_NAMESPACE || 'default';
+
+// Construct the internal Kubernetes DNS name for the service
+// Format: service-name.namespace.svc.cluster.local
+const keycloakInternalUrl = `http://${keycloakServiceName}.${keycloakServiceNamespace}.svc.cluster.local:${keycloakServicePort}`;
+
+console.log(`Using Keycloak service at: ${keycloakInternalUrl}`);
 
 console.log(`Setting up Keycloak proxy to internal URL: ${keycloakInternalUrl}`);
 
-// Create a simple proxy middleware with basic options
-const keycloakProxy = createProxyMiddleware({
-  target: keycloakInternalUrl,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/auth': '/' // Remove /auth prefix when forwarding
-  }
-});
+// Function to create the proxy middleware
+function createKeycloakProxy() {
+  return createProxyMiddleware({
+    target: keycloakInternalUrl,
+    changeOrigin: true,
+    pathRewrite: {
+      '^/auth': '/' // Remove /auth prefix when forwarding
+    },
+    // Add connection retry options
+    proxyTimeout: 10000, // 10 seconds timeout
+    onProxyReqWs: undefined, // Disable WebSocket handling
+    onError: (err, req, res, target) => {
+      console.error(`Keycloak proxy error: ${err.message}`);
+      
+      if (!res.headersSent) {
+        res.status(503).send(`
+          <html>
+            <head><title>Keycloak Service Unavailable</title></head>
+            <body>
+              <h1>Keycloak Service Temporarily Unavailable</h1>
+              <p>The authentication service is currently starting or unavailable. Please try again in a few moments.</p>
+              <p><a href="javascript:window.location.reload()">Click here to retry</a></p>
+            </body>
+          </html>
+        `);
+      }
+    }
+  });
+}
+
+// Create the proxy middleware
+const keycloakProxy = createKeycloakProxy();
 
 // Add custom logging for proxy requests
 app.use('/auth', (req, res, next) => {
