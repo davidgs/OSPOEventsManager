@@ -8,7 +8,7 @@ data:
   keycloak.json: |-
     {
       "realm": "{{ .Values.keycloak.realm }}",
-      "auth-server-url": "http://keycloak:{{ .Values.keycloak.service.port }}/auth/",
+      "auth-server-url": "http://keycloak.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.keycloak.service.port }}/auth/",
       "ssl-required": "external",
       "resource": "{{ .Values.app.env.KEYCLOAK_CLIENT_ID }}",
       "credentials": {

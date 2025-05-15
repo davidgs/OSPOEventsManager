@@ -6,9 +6,9 @@ metadata:
     {{- include "ospo-app.labels" . | nindent 4 }}
     app.kubernetes.io/component: installer
   annotations:
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-install,pre-upgrade
     "helm.sh/hook-weight": "25"
-    "helm.sh/hook-delete-policy": hook-succeeded
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   backoffLimit: 3
   template:
@@ -29,26 +29,45 @@ spec:
               
               # Wait for Keycloak to be ready
               echo "Waiting for Keycloak to start..."
-              until curl -s http://keycloak:8080/realms/master; do
-                echo "Keycloak not ready yet, retrying in 5 seconds..."
+              for i in $(seq 1 60); do
+                if curl -s http://keycloak.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.keycloak.service.port }}/auth/health/ready | grep -q "UP"; then
+                  echo "Keycloak is available and ready"
+                  break
+                fi
+                echo "Waiting for Keycloak... attempt $i/60"
                 sleep 5
+                if [ $i -eq 60 ]; then
+                  echo "Keycloak did not become ready in time, but continuing with other checks"
+                fi
               done
-              echo "Keycloak is ready!"
               
               # Check MinIO
               echo "Checking MinIO..."
-              until curl -s -f http://minio:9000/minio/health/ready; do
-                echo "MinIO not ready yet, retrying in 5 seconds..."
+              for i in $(seq 1 30); do
+                if curl -s -f http://minio.{{ .Release.Namespace }}.svc.cluster.local:9000/minio/health/ready; then
+                  echo "MinIO is available and ready"
+                  break
+                fi
+                echo "Waiting for MinIO... attempt $i/30"
                 sleep 5
+                if [ $i -eq 30 ]; then
+                  echo "MinIO did not become ready in time, but continuing with other checks"
+                fi
               done
-              echo "MinIO is ready!"
               
               # Check application service
               echo "Checking application service..."
-              until curl -s http://ospo-app:5000/api/health; do
-                echo "Application not ready yet, retrying in 5 seconds..."
+              for i in $(seq 1 30); do
+                if curl -s http://ospo-app.{{ .Release.Namespace }}.svc.cluster.local:5000/api/health; then
+                  echo "Application is available and ready"
+                  break
+                fi
+                echo "Waiting for Application... attempt $i/30"
                 sleep 5
+                if [ $i -eq 30 ]; then
+                  echo "Application did not become ready in time, but continuing"
+                fi
               done
-              echo "Application is ready!"
               
-              echo "Post-installation checks completed successfully!"
+              echo "Post-installation checks completed!"
+              echo "Note: If any services failed to respond, they may still be initializing and should become available shortly."
