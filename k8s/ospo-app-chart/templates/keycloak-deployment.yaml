@@ -30,6 +30,7 @@ spec:
           imagePullPolicy: {{ .Values.keycloak.image.pullPolicy }}
           args:
             - start-dev
+            - --import-realm
           ports:
             - name: http
               containerPort: 8080
@@ -81,8 +82,8 @@ spec:
           configMap:
             name: keycloak-realm-config
             items:
-              - key: ospo-realm.json
-                path: ospo-realm.json
+              - key: realm.json
+                path: realm.json
 ---
 apiVersion: v1
 kind: Service

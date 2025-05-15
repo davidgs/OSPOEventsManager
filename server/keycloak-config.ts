@@ -62,8 +62,8 @@ export function initKeycloak(app: Express) {
       const keycloakServiceName = process.env.KEYCLOAK_SERVICE_NAME || 'keycloak';
       const keycloakServicePort = process.env.KEYCLOAK_SERVICE_PORT || '8080';
       
-      // Format: http://service-name:port/
-      const keycloakUrl = `http://${keycloakServiceName}:${keycloakServicePort}/`;
+      // Format: http://service-name:port/auth/ to match KC_HTTP_RELATIVE_PATH in Keycloak
+      const keycloakUrl = `http://${keycloakServiceName}:${keycloakServicePort}/auth/`;
       
       console.log(`Using Kubernetes service URL for Keycloak: ${keycloakUrl}`);
       keycloakConfig["auth-server-url"] = keycloakUrl;

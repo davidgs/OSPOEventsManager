@@ -33,9 +33,9 @@ console.log(`Setting up Keycloak proxy to internal URL: ${keycloakInternalUrl}`)
 const proxyOptions = {
   target: keycloakInternalUrl,
   changeOrigin: true,
-  pathRewrite: {
-    '^/auth': '/' // Remove /auth prefix when forwarding to match KC_HTTP_RELATIVE_PATH in Keycloak
-  }
+  // Don't rewrite the path since we're using KC_HTTP_RELATIVE_PATH = "/auth" in Keycloak
+  pathRewrite: {}
+  // The full URL will be: http://keycloak:8080/auth/...
 };
 
 // Create the proxy middleware

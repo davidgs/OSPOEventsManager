@@ -55,7 +55,7 @@ spec:
               value: "{{ .Values.keycloak.service.port }}"
             # Standard Keycloak configuration
             - name: KEYCLOAK_URL
-              value: "http://keycloak:{{ .Values.keycloak.service.port }}"
+              value: "http://keycloak:{{ .Values.keycloak.service.port }}/auth"
             - name: KEYCLOAK_REALM
               value: {{ .Values.keycloak.realm }}
             - name: KEYCLOAK_CLIENT_ID
