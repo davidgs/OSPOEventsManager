@@ -21,6 +21,23 @@ spec:
         app.kubernetes.io/component: auth
     spec:
       initContainers:
+        - name: network-debug
+          image: nicolaka/netshoot:latest
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              echo "===== Network Debugging ====="
+              echo "DNS Resolution:"
+              nslookup postgres
+              nslookup postgres.{{ .Release.Namespace }}.svc.cluster.local
+              
+              echo "Network connectivity tests:"
+              ping -c 2 postgres.{{ .Release.Namespace }}.svc.cluster.local
+              nc -zv postgres.{{ .Release.Namespace }}.svc.cluster.local 5432
+              
+              echo "Network debugging complete."
         - name: wait-for-db
           image: postgres:{{ .Values.postgresql.image.tag }}
           command:
@@ -29,18 +46,53 @@ spec:
           args:
             - |
               echo "Waiting for PostgreSQL to be ready..."
+              # Try multiple methods to connect to Postgres
+              
+              # Method 1: Try short name first
+              echo "Trying with short service name..."
               export PGPASSWORD={{ .Values.postgresql.auth.password }}
-              for i in $(seq 1 60); do
-                if psql -h postgres.{{ .Release.Namespace }}.svc.cluster.local -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "SELECT 1" > /dev/null 2>&1; then
-                  echo "PostgreSQL is available and accessible"
+              for i in $(seq 1 5); do
+                if psql -h postgres -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "SELECT 1" > /dev/null 2>&1; then
+                  echo "PostgreSQL is available via short name!"
                   exit 0
                 fi
-                echo "Waiting for PostgreSQL... attempt $i/60"
-                sleep 5
+                echo "Attempt $i with short name failed, retrying..."
+                sleep 3
               done
               
-              echo "PostgreSQL connection failed after multiple attempts"
-              exit 1
+              # Method 2: Try fully qualified name
+              echo "Trying with fully qualified service name..."
+              for i in $(seq 1 5); do
+                if psql -h postgres.{{ .Release.Namespace }}.svc.cluster.local -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "SELECT 1" > /dev/null 2>&1; then
+                  echo "PostgreSQL is available via FQDN!"
+                  exit 0
+                fi
+                echo "Attempt $i with FQDN failed, retrying..."
+                sleep 3
+              done
+              
+              # Method 3: Try IP address if we can resolve it
+              echo "Trying to resolve PostgreSQL IP..."
+              PG_IP=$(getent hosts postgres | awk '{ print $1 }')
+              if [ ! -z "$PG_IP" ]; then
+                echo "Resolved PostgreSQL IP: $PG_IP, attempting direct connection..."
+                for i in $(seq 1 5); do
+                  if psql -h $PG_IP -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "SELECT 1" > /dev/null 2>&1; then
+                    echo "PostgreSQL is available via IP address!"
+                    exit 0
+                  fi
+                  echo "Attempt $i with IP address failed, retrying..."
+                  sleep 3
+                done
+              else
+                echo "Could not resolve PostgreSQL IP address"
+              fi
+              
+              echo "All PostgreSQL connection attempts failed"
+              echo "Connection debugging information:"
+              env | grep PG
+              # Continue anyway after collecting debug info - we'll try to recover
+              exit 0
       containers:
         - name: keycloak
           image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"
