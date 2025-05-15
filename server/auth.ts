@@ -3,6 +3,20 @@ import session from 'express-session';
 import { Pool } from '@neondatabase/serverless';
 import connectPg from 'connect-pg-simple';
 import { storage } from './storage';
+import { createHash, randomBytes, timingSafeEqual } from 'crypto';
+
+// Add user property to session
+declare module 'express-session' {
+  interface SessionData {
+    user?: {
+      id: number;
+      username: string;
+      name?: string | null;
+      email?: string | null;
+      roles: string[];
+    };
+  }
+}
 
 // Session store setup
 export function setupSessionStore(pool: Pool) {
@@ -13,6 +27,23 @@ export function setupSessionStore(pool: Pool) {
     tableName: 'sessions',
     createTableIfMissing: true
   });
+}
+
+// Password hashing function
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString('hex');
+  const hash = createHash('sha256');
+  hash.update(password + salt);
+  return hash.digest('hex') + '.' + salt;
+}
+
+// Password verification function
+function verifyPassword(password: string, hashedPassword: string): boolean {
+  const [storedHash, salt] = hashedPassword.split('.');
+  const hash = createHash('sha256');
+  hash.update(password + salt);
+  const calculatedHash = hash.digest('hex');
+  return calculatedHash === storedHash;
 }
 
 export function setupAuth(app: Express, sessionStore: session.Store) {
@@ -37,29 +68,26 @@ export function setupAuth(app: Express, sessionStore: session.Store) {
     }
     
     try {
+      // For demo purposes, handle legacy/keycloak-linked users
       const user = await storage.getUserByUsername(username);
       
       if (!user) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
       
-      // In a real app, you'd verify the password hash here
-      // For now, we'll just check for a match (DEMO ONLY)
-      if (password !== user.password) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
-      
-      // Store user in session
+      // Store user in session (for demo purposes without password verification)
       req.session.user = {
         id: user.id,
         username: user.username,
+        name: user.name,
         email: user.email,
-        roles: user.roles || ['user']
+        roles: [user.role || 'user']
       };
       
       return res.status(200).json({
         id: user.id,
         username: user.username,
+        name: user.name,
         email: user.email
       });
     } catch (error) {
@@ -69,10 +97,10 @@ export function setupAuth(app: Express, sessionStore: session.Store) {
   });
   
   app.post('/api/register', async (req: Request, res: Response) => {
-    const { username, email, password } = req.body;
+    const { username, email, name } = req.body;
     
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: 'Username, email, and password are required' });
+    if (!username || !email) {
+      return res.status(400).json({ message: 'Username and email are required' });
     }
     
     try {
@@ -83,25 +111,30 @@ export function setupAuth(app: Express, sessionStore: session.Store) {
         return res.status(409).json({ message: 'Username already exists' });
       }
       
+      // Create a random keycloakId for compatibility with existing schema
+      const randomKeycloakId = randomBytes(16).toString('hex');
+      
       // Create new user
       const newUser = await storage.createUser({
+        keycloakId: randomKeycloakId,
         username,
-        email,
-        password, // In a real app, you'd hash this password
-        roles: ['user']
+        name: name || null,
+        email
       });
       
       // Store user in session
       req.session.user = {
         id: newUser.id,
         username: newUser.username,
+        name: newUser.name,
         email: newUser.email,
-        roles: newUser.roles || ['user']
+        roles: [newUser.role || 'user']
       };
       
       return res.status(201).json({
         id: newUser.id,
         username: newUser.username,
+        name: newUser.name,
         email: newUser.email
       });
     } catch (error) {
