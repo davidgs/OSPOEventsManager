@@ -47,13 +47,20 @@ export function initKeycloak(app: Express) {
       console.log(`Using custom Keycloak URL: ${process.env.KEYCLOAK_URL}`);
       keycloakConfig["auth-server-url"] = process.env.KEYCLOAK_URL;
     } else if (process.env.KUBERNETES_SERVICE_HOST) {
-      // In Kubernetes, use the service name
+      // In Kubernetes, use the service name (internal cluster communication)
       console.log("Using Keycloak in Kubernetes mode");
       keycloakConfig["auth-server-url"] = "http://keycloak:8080/";
     } else {
-      // Local environment
+      // Local development environment - when running outside Kubernetes
       console.log("Using Keycloak in development mode");
-      keycloakConfig["auth-server-url"] = "http://localhost:8080/";
+      // For Replit environments, we need to use different public and internal URLs
+      if (process.env.REPL_ID) {
+        // For internal server-side communication - use service name
+        keycloakConfig["auth-server-url"] = "http://localhost:8080/";
+      } else {
+        // Default fallback for other environments
+        keycloakConfig["auth-server-url"] = "http://localhost:8080/";
+      }
     }
     
     // Additional configuration for reliability

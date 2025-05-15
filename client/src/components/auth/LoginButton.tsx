@@ -10,8 +10,12 @@ export function LoginButton() {
   const handleLogin = async () => {
     setIsLoading(true);
     try {
-      await login();
-      // Login will redirect, so we don't need to handle success
+      // Direct login approach
+      const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:9090';
+      const redirectUri = encodeURIComponent(window.location.origin);
+      const loginUrl = `${keycloakUrl}/realms/ospo-events/protocol/openid-connect/auth?client_id=ospo-events-app&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
+      console.log('Login URL:', loginUrl);
+      window.location.href = loginUrl;
     } catch (error) {
       console.error('Login error:', error);
       toast({
@@ -19,7 +23,6 @@ export function LoginButton() {
         description: "There was a problem connecting to the authentication server.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
