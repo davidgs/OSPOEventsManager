@@ -3,25 +3,63 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import fs from "fs";
+import { initKeycloak, secureWithKeycloak, keycloakUserMapper } from "./keycloak-config";
 import { initializeDatabase } from "./init-db";
-import { setupAuth, setupSessionStore } from "./auth";
-import { pool } from "./db";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Import storage for database operations
+// Initialize Keycloak
+let keycloak;
+// Initialize Keycloak with the appropriate mode
+keycloak = initKeycloak(app);
+
+// Import storage for user creation
 import { storage } from './storage';
 
-// Setup authentication with express-session and PostgreSQL
-if (pool) {
-  console.log("Setting up session and authentication with PostgreSQL...");
-  const sessionStore = setupSessionStore(pool);
-  setupAuth(app, sessionStore);
-} else {
-  console.warn("Database connection not available - authentication disabled");
-}
+// Apply Keycloak user mapping middleware
+app.use(async (req: any, res: any, next: any) => {
+  // First apply the standard Keycloak user mapper
+  keycloakUserMapper(req, res, async () => {
+    try {
+      // If we have a user from Keycloak and it's not in our database yet, create it
+      if (req.user && req.user.id) {
+        const keycloakId = req.user.id;
+        const username = req.user.username;
+        
+        // Check if the user exists in our database
+        const dbUser = await storage.getUserByKeycloakId(keycloakId);
+        
+        if (!dbUser) {
+          console.log(`Creating new user record for Keycloak user: ${username} (${keycloakId})`);
+          
+          // Create a new user record in our database
+          const newUser = await storage.createUser({
+            keycloakId,
+            username,
+            name: req.user.name || null,
+            email: req.user.email || null
+          });
+          
+          if (newUser) {
+            console.log(`Successfully created user record with ID: ${newUser.id}`);
+            // Update the req.user with our database ID for convenience
+            req.user.dbId = newUser.id;
+          }
+        } else {
+          // User exists, add the database ID to the request for convenience
+          console.log(`Found existing user record for Keycloak user: ${username}`);
+          req.user.dbId = dbUser.id;
+        }
+      }
+      next();
+    } catch (error) {
+      console.error("Error handling Keycloak user:", error);
+      next();
+    }
+  });
+});
 
 // Serve static files from the public directory
 app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
@@ -73,6 +111,10 @@ app.use((req, res, next) => {
   }
 
   const server = await registerRoutes(app);
+  
+  // Always enable Keycloak authentication in production (no option to bypass)
+  console.log("Securing routes with Keycloak authentication");
+  secureWithKeycloak(app, keycloak);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
