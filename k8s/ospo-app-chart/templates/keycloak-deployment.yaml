@@ -23,7 +23,24 @@ spec:
       initContainers:
         - name: wait-for-db
           image: postgres:{{ .Values.postgresql.image.tag }}
-          command: ['sh', '-c', 'until pg_isready -h postgres.{{ .Release.Namespace }}.svc.cluster.local -p {{ .Values.postgresql.service.port }}; do echo "Waiting for postgres..."; sleep 2; done;']
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              export PGPASSWORD={{ .Values.postgresql.auth.password }}
+              for i in $(seq 1 60); do
+                if psql -h postgres.{{ .Release.Namespace }}.svc.cluster.local -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "SELECT 1" > /dev/null 2>&1; then
+                  echo "PostgreSQL is available and accessible"
+                  exit 0
+                fi
+                echo "Waiting for PostgreSQL... attempt $i/60"
+                sleep 5
+              done
+              
+              echo "PostgreSQL connection failed after multiple attempts"
+              exit 1
       containers:
         - name: keycloak
           image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"

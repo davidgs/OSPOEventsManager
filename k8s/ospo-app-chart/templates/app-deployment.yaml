@@ -20,11 +20,46 @@ spec:
       initContainers:
         - name: wait-for-db
           image: postgres:{{ .Values.postgresql.image.tag }}
-          command: ['sh', '-c', 'until pg_isready -h postgres.{{ .Release.Namespace }}.svc.cluster.local -p {{ .Values.postgresql.service.port }}; do echo "Waiting for postgres..."; sleep 5; done;']
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              # More reliable check using actual connection test
+              export PGPASSWORD={{ .Values.postgresql.auth.password }}
+              for i in $(seq 1 30); do
+                if psql -h postgres.{{ .Release.Namespace }}.svc.cluster.local -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "SELECT 1" > /dev/null 2>&1; then
+                  echo "PostgreSQL is available and accessible"
+                  exit 0
+                fi
+                echo "Waiting for PostgreSQL... attempt $i/30"
+                sleep 5
+              done
+              
+              echo "PostgreSQL connection failed after multiple attempts"
+              exit 1
         {{- if .Values.keycloak.enabled }}
         - name: wait-for-keycloak
           image: curlimages/curl:8.5.0
-          command: ['sh', '-c', 'until curl -s http://keycloak.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.keycloak.service.port }}/auth/realms/master; do echo "Waiting for keycloak..."; sleep 5; done;']
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              echo "Waiting for Keycloak to be ready..."
+              # More reliable health check using Keycloak's health endpoint
+              for i in $(seq 1 60); do
+                if curl -s http://keycloak.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.keycloak.service.port }}/auth/health/ready | grep -q "UP"; then
+                  echo "Keycloak is available and ready"
+                  exit 0
+                fi
+                echo "Waiting for Keycloak... attempt $i/60"
+                sleep 5
+              done
+              
+              echo "Keycloak did not become ready in time"
+              exit 1
         {{- end }}
       containers:
         - name: {{ .Chart.Name }}

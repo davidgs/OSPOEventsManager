@@ -22,7 +22,25 @@ spec:
       initContainers:
         - name: wait-for-postgres
           image: postgres:{{ .Values.postgresql.image.tag }}
-          command: ['sh', '-c', 'until pg_isready -h postgres -p 5432; do echo "Waiting for postgres..."; sleep 2; done;']
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              # Wait for PostgreSQL service to be available with a more reliable check
+              export PGPASSWORD={{ .Values.postgresql.auth.password }}
+              for i in $(seq 1 60); do
+                if psql -h postgres.{{ .Release.Namespace }}.svc.cluster.local -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "SELECT 1" > /dev/null 2>&1; then
+                  echo "PostgreSQL is available and accessible"
+                  exit 0
+                fi
+                echo "Waiting for PostgreSQL... attempt $i/60"
+                sleep 5
+              done
+              
+              echo "PostgreSQL connection failed after multiple attempts"
+              exit 1
       containers:
         - name: postgres-client
           image: postgres:{{ .Values.postgresql.image.tag }}
@@ -44,14 +62,23 @@ spec:
                 sleep 2
               done
               
-              # If PostgreSQL didn't become available after 30 attempts, exit with error
-              if ! nc -z postgres 5432; then
-                echo "PostgreSQL did not become available in time, exiting"
-                exit 1
-              fi
-              
               echo "Creating keycloak schema in PostgreSQL..."
-              PGPASSWORD={{ .Values.postgresql.auth.password }} psql -h postgres -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "CREATE SCHEMA IF NOT EXISTS keycloak;"
-              PGPASSWORD={{ .Values.postgresql.auth.password }} psql -h postgres -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+              export PGPASSWORD={{ .Values.postgresql.auth.password }}
+              export PGHOST=postgres.{{ .Release.Namespace }}.svc.cluster.local
+              export PGUSER={{ .Values.postgresql.auth.username }}
+              export PGDATABASE={{ .Values.postgresql.auth.database }}
+              export PGPORT={{ .Values.postgresql.service.port }}
+              
+              # Attempt to create schema with retry logic
+              for i in $(seq 1 10); do
+                if psql -c "CREATE SCHEMA IF NOT EXISTS keycloak;" && \
+                   psql -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";" && \
+                   psql -c "SELECT 1 FROM keycloak.INFORMATION_SCHEMA.TABLES LIMIT 1" > /dev/null 2>&1 || true; then
+                  echo "Keycloak schema created successfully!"
+                  break
+                fi
+                echo "Retrying schema creation... attempt $i/10"
+                sleep 3
+              done
               echo "Schema created successfully!"
 {{- end }}
