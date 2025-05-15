@@ -13,33 +13,35 @@ app.use(express.urlencoded({ extended: false }));
 
 // Set up proxy for Keycloak authentication
 // This proxies requests from /auth to the internal Keycloak service
-const keycloakInternalUrl = process.env.KUBERNETES_SERVICE_HOST 
-  ? 'http://keycloak:8080' // Inside Kubernetes, use service name
-  : 'http://localhost:8080'; // Local development
+// We need to use the correct K8s service name and port
+// Use the simple Kubernetes service name with port
+const keycloakInternalUrl = 'http://keycloak:8080';
 
 console.log(`Setting up Keycloak proxy to internal URL: ${keycloakInternalUrl}`);
 
-app.use('/auth', createProxyMiddleware({
+// Create a simple proxy middleware with basic options
+const keycloakProxy = createProxyMiddleware({
   target: keycloakInternalUrl,
   changeOrigin: true,
   pathRewrite: {
     '^/auth': '/' // Remove /auth prefix when forwarding
-  },
-  // Use 'on' for event handling
-  on: {
-    proxyReq: (proxyReq: any, req: Request, res: Response) => {
-      console.log(`Proxying request to Keycloak: ${req.method} ${req.url}`);
-    },
-    error: (err: Error, req: Request, res: Response) => {
+  }
+});
+
+// Add custom logging for proxy requests
+app.use('/auth', (req, res, next) => {
+  console.log(`Proxying Keycloak request: ${req.method} ${req.url}`);
+  keycloakProxy(req, res, (err: any) => {
+    if (err) {
       console.error('Proxy error:', err);
-      res.writeHead(500, {
-        'Content-Type': 'text/plain'
-      });
-      res.end('Keycloak proxy error. Please try again later.');
+      if (!res.headersSent) {
+        res.status(500).send('Keycloak proxy error. Please try again later.');
+      }
+      return;
     }
-  },
-  logLevel: 'debug'
-}));
+    next();
+  });
+});
 
 // Initialize Keycloak
 let keycloak;
