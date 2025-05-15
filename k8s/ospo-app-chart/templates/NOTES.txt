@@ -25,3 +25,20 @@ To access MinIO console:
 {{- end }}
 
 For more information and configuration options, please refer to the README.md file.
+
+IMPORTANT CLEANUP NOTES:
+------------------------
+To properly uninstall this application and all its components, use the following command:
+
+  helm uninstall {{ .Release.Name }}
+
+If you encounter issues where resources are not being properly removed:
+
+1. You can force delete any remaining resources with:
+   kubectl delete deployment,service,job,pod,configmap,secret -l app.kubernetes.io/instance={{ .Release.Name }}
+
+2. To verify all resources are removed:
+   kubectl get all,job,cm,secret -l app.kubernetes.io/part-of={{ .Release.Name }}
+
+3. For persistent resources (like PVCs), you may need to manually delete them:
+   kubectl delete pvc -l app.kubernetes.io/instance={{ .Release.Name }}
