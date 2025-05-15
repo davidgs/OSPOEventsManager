@@ -15,12 +15,23 @@ const Keycloak = require('keycloak-connect');
  * @returns Keycloak instance
  */
 export function initKeycloak(app: Express) {
-  // Create a PostgreSQL session store
-  const PgStore = connectPgSimple(expressSession);
-  const sessionStore = new PgStore({
-    pool,
-    createTableIfMissing: true
-  });
+  // Create a session store based on database availability
+  let sessionStore;
+  
+  if (pool) {
+    // Use PostgreSQL if available (with type assertion)
+    const PgStore = connectPgSimple(expressSession);
+    sessionStore = new PgStore({
+      pool: pool as any, // Type assertion to resolve TS error
+      createTableIfMissing: true
+    });
+    console.log("Using PostgreSQL session store");
+  } else {
+    // Fallback to memory store if no database
+    const MemoryStore = expressSession.MemoryStore;
+    sessionStore = new MemoryStore();
+    console.log("WARNING: Using memory session store (not suitable for production)");
+  }
 
   // Set up session middleware with PostgreSQL store
   app.use(

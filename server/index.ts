@@ -28,20 +28,45 @@ console.log(`Using Keycloak service at: ${keycloakInternalUrl}`);
 
 console.log(`Setting up Keycloak proxy to internal URL: ${keycloakInternalUrl}`);
 
-// Function to create the proxy middleware
-function createKeycloakProxy() {
-  return createProxyMiddleware({
-    target: keycloakInternalUrl,
-    changeOrigin: true,
-    pathRewrite: {
-      '^/auth': '/' // Remove /auth prefix when forwarding
-    },
-    // Add connection retry options
-    proxyTimeout: 10000, // 10 seconds timeout
-    onProxyReqWs: undefined, // Disable WebSocket handling
-    onError: (err, req, res, target) => {
-      console.error(`Keycloak proxy error: ${err.message}`);
-      
+// Basic proxy configuration
+const proxyOptions = {
+  target: keycloakInternalUrl,
+  changeOrigin: true,
+  pathRewrite: {
+    '^/auth': '/' // Remove /auth prefix when forwarding
+  }
+};
+
+// Create the proxy middleware
+const keycloakProxy = createProxyMiddleware(proxyOptions);
+
+// Add custom logging and error handling for proxy requests
+app.use('/auth', (req, res, next) => {
+  console.log(`Proxying Keycloak request: ${req.method} ${req.url}`);
+  
+  // Set a timeout to handle connection issues
+  const timeoutId = setTimeout(() => {
+    if (!res.headersSent) {
+      console.error('Keycloak proxy request timed out');
+      res.status(503).send(`
+        <html>
+          <head><title>Keycloak Service Unavailable</title></head>
+          <body>
+            <h1>Keycloak Service Temporarily Unavailable</h1>
+            <p>The authentication service is currently starting or unavailable. Please try again in a few moments.</p>
+            <p><a href="javascript:window.location.reload()">Click here to retry</a></p>
+          </body>
+        </html>
+      `);
+    }
+  }, 10000); // 10 second timeout
+  
+  keycloakProxy(req, res, (err: any) => {
+    // Clear the timeout since the request completed (with or without error)
+    clearTimeout(timeoutId);
+    
+    if (err) {
+      console.error('Proxy error:', err);
       if (!res.headersSent) {
         res.status(503).send(`
           <html>
@@ -53,22 +78,6 @@ function createKeycloakProxy() {
             </body>
           </html>
         `);
-      }
-    }
-  });
-}
-
-// Create the proxy middleware
-const keycloakProxy = createKeycloakProxy();
-
-// Add custom logging for proxy requests
-app.use('/auth', (req, res, next) => {
-  console.log(`Proxying Keycloak request: ${req.method} ${req.url}`);
-  keycloakProxy(req, res, (err: any) => {
-    if (err) {
-      console.error('Proxy error:', err);
-      if (!res.headersSent) {
-        res.status(500).send('Keycloak proxy error. Please try again later.');
       }
       return;
     }
