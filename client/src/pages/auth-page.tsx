@@ -45,7 +45,7 @@ export default function AuthPage() {
             </div>
             <Button 
               variant="outline"
-              onClick={() => window.location.href = `${import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080'}/realms/ospo-events/protocol/openid-connect/registrations?client_id=ospo-events-app&redirect_uri=${encodeURIComponent(window.location.origin)}`}
+              onClick={() => window.location.href = `${import.meta.env.VITE_KEYCLOAK_URL || 'http://localhost:8080'}/realms/ospo-events/protocol/openid-connect/auth?client_id=ospo-events-app&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid&kc_action=register`}
               className="w-full"
             >
               Create an Account
