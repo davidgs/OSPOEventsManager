@@ -3,22 +3,27 @@ import Keycloak from 'keycloak-js';
 // Determine the Keycloak URL based on the environment
 const getKeycloakUrl = () => {
   // First, check if there's an environment variable set
-  const envKeycloakUrl = import.meta.env.VITE_KEYCLOAK_URL;
-  if (envKeycloakUrl) {
-    // If it's a relative path, prefix with the current origin
-    if (envKeycloakUrl.startsWith('/')) {
-      const url = window.location.origin + envKeycloakUrl;
-      console.log('Using relative Keycloak URL:', url);
-      return url;
-    }
-    console.log('Using configured Keycloak URL from env:', envKeycloakUrl);
-    return envKeycloakUrl;
+  if (import.meta.env.VITE_KEYCLOAK_URL) {
+    return import.meta.env.VITE_KEYCLOAK_URL;
   }
   
-  // Default to current origin plus /auth path
-  const url = window.location.origin + '/auth';
-  console.log('Using default Keycloak URL:', url);
-  return url;
+  // Check for Replit environment
+  const isReplitEnv = window.location.hostname.includes('replit.app') || 
+                      window.location.hostname.includes('replit.dev');
+  
+  if (isReplitEnv) {
+    // For Replit, we need to use the Keycloak service running at port 8080
+    // This could be in the same Repl or a separate one
+    const keycloakUrl = window.location.protocol + '//' + window.location.hostname.replace('.replit.dev', '-8080.replit.dev');
+    console.log('Using Replit Keycloak URL:', keycloakUrl);
+    return keycloakUrl;
+  } else if (window.location.hostname === 'localhost') {
+    // Local development
+    return 'http://localhost:8080';
+  } else {
+    // Production environment assumes Keycloak is at /auth
+    return window.location.origin + '/auth';
+  }
 };
 
 // Create Keycloak instance with dynamic URL
