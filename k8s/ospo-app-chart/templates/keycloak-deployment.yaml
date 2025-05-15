@@ -38,7 +38,7 @@ spec:
             - name: KC_HOSTNAME_STRICT
               value: "false"
             - name: KC_HTTP_RELATIVE_PATH
-              value: "/"
+              value: "/auth"
             - name: KEYCLOAK_LOGLEVEL
               value: "INFO"
             - name: KC_CACHE

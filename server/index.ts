@@ -26,12 +26,15 @@ console.log(`Using Keycloak service at: ${keycloakInternalUrl}`);
 
 console.log(`Setting up Keycloak proxy to internal URL: ${keycloakInternalUrl}`);
 
-// Basic proxy configuration
+// Basic proxy configuration 
+// We need to match the KC_HTTP_RELATIVE_PATH setting in the Keycloak container
+// If Keycloak is at '/', we need to rewrite '/auth' to '/'
+// If Keycloak is at '/auth', we need to keep the path as is
 const proxyOptions = {
   target: keycloakInternalUrl,
   changeOrigin: true,
   pathRewrite: {
-    '^/auth': '/' // Remove /auth prefix when forwarding
+    '^/auth': '/' // Remove /auth prefix when forwarding to match KC_HTTP_RELATIVE_PATH in Keycloak
   }
 };
 

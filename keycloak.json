@@ -1,6 +1,6 @@
 {
   "realm": "ospo-events",
-  "auth-server-url": "http://localhost:8080/",
+  "auth-server-url": "http://localhost:8080/auth/",
   "ssl-required": "none",
   "resource": "ospo-events-app",
   "public-client": true,
