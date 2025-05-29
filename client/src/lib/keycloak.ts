@@ -118,9 +118,13 @@ export const login = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     console.log('Initiating login process...');
     
+    // Get the current URL with port included
+    const currentUrl = window.location.href.split('?')[0].split('#')[0];
+    console.log('Using redirect URI:', currentUrl);
+    
     try {
       keycloak.login({
-        redirectUri: window.location.origin,
+        redirectUri: currentUrl,
       })
       .then(() => {
         console.log('Login initiated successfully');
@@ -133,7 +137,7 @@ export const login = (): Promise<void> => {
         try {
           const authUrl = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/auth`;
           const clientId = keycloak.clientId;
-          const redirectUri = encodeURIComponent(window.location.origin);
+          const redirectUri = encodeURIComponent(currentUrl);
           
           window.location.href = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
           resolve(); // This will resolve but page will redirect
