@@ -6,24 +6,14 @@ import * as schema from "@shared/schema";
 const getDatabaseConfig = () => {
   const isKubernetes = process.env.KUBERNETES_SERVICE_HOST;
 
-  if (isKubernetes) {
-    console.log("KUBERNETES DEPLOYMENT: Connecting to PostgreSQL service in Kubernetes");
-    // Get the namespace - in Docker Desktop this is typically "default"
-    const namespace = process.env.KUBERNETES_NAMESPACE || "default";
+  const isDockerCompose = process.env.COMPOSE_PROJECT_NAME || process.env.DOCKER_COMPOSE;
+  
+  if (isKubernetes || isDockerCompose) {
+    const deploymentType = isDockerCompose ? "DOCKER COMPOSE" : "KUBERNETES";
+    console.log(`${deploymentType} DEPLOYMENT: Connecting to PostgreSQL service`);
     
-    // Try multiple host options with fallbacks
-    let host = "postgres"; // First try the short name
-    
-    // Try the fully qualified name if specified or as fallback
-    if (process.env.PGHOST) {
-      console.log(`Using PGHOST from environment: ${process.env.PGHOST}`);
-      host = process.env.PGHOST;
-    } else {
-      // Assuming fully qualified service name - try all possibilities
-      console.log(`Trying to connect using service in namespace ${namespace}`);
-      console.log(`Will attempt: postgres, postgres.${namespace}, postgres.${namespace}.svc.cluster.local`);
-    }
-    
+    // Use environment variables or sensible defaults
+    const host = process.env.PGHOST || "postgres";
     const port = parseInt(process.env.PGPORT || "5432", 10);
     const database = process.env.PGDATABASE || "ospo_events";
     const user = process.env.PGUSER || "ospo_user";

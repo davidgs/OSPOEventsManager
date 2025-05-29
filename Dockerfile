@@ -46,9 +46,14 @@ USER nodejs
 # Expose the application port
 EXPOSE 5000
 
-# Add health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-    CMD wget -q --spider http://localhost:5000/api/health || exit 1
+# Install curl for health checks
+USER root
+RUN apk add --no-cache curl
+USER nodejs
 
-# Start the application
-CMD ["node", "server/dist/index.js"]
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:5000/api/health || exit 1
+
+# Start the application using tsx for TypeScript support
+CMD ["npx", "tsx", "server/index.ts"]

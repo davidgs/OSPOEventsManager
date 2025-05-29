@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # Development overrides
+  ospo-app:
+    environment:
+      NODE_ENV: development
+    volumes:
+      # Mount source code for development
+      - ./server:/app/server
+      - ./client:/app/client
+      - ./shared:/app/shared
+      - ./public:/app/public
+    command: ["npm", "run", "dev"]
+    
+  # Add a development database admin tool
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ospo.example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - ospo-network
