@@ -48,9 +48,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/auth/health/ready || exit 1"]
       interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+      timeout: 15s
+      retries: 10
+      start_period: 120s
     networks:
       - ospo-network
 
