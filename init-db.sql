@@ -150,11 +150,11 @@ ON CONFLICT (id) DO NOTHING;
 -- Events
 INSERT INTO "events" ("id", "name", "description", "location", "start_date", "end_date", "website", "type", "goals", "status")
 VALUES 
-  (6, 'KubeCon + CloudNativeCon Europe', 'The Cloud Native Computing Foundation's flagship conference', 'Paris, France', '2025-03-18', '2025-03-21', 'https://events.linuxfoundation.org/kubecon-cloudnativecon-europe/', 'conference', ARRAY['community_growth', 'networking', 'lead_generation'], 'confirmed'),
-  (7, 'Open Source Summit North America', 'The premier event for open source developers and communities', 'Seattle, WA', '2025-04-15', '2025-04-18', 'https://events.linuxfoundation.org/open-source-summit-north-america/', 'conference', ARRAY['thought_leadership', 'networking'], 'confirmed'),
-  (8, 'DevOps Days Seattle', 'Local DevOps community conference', 'Seattle, WA', '2025-05-12', '2025-05-13', 'https://devopsdays.org/seattle', 'conference', ARRAY['community_growth'], 'planned'),
-  (9, 'CNCF AI Summit', 'Cloud Native AI Solutions', 'San Francisco, CA', '2025-06-24', '2025-06-25', 'https://www.cncf.io/events/', 'summit', ARRAY['thought_leadership', 'community_growth'], 'planned'),
-  (10, 'OSPO Con Europe', 'Conference for Open Source Program Offices', 'London, UK', '2025-09-10', '2025-09-12', 'https://ospocon.org', 'conference', ARRAY['thought_leadership', 'networking'], 'tentative')
+  (6, 'KubeCon + CloudNativeCon Europe', 'The Cloud Native Computing Foundation flagship conference', 'Paris, France', '2025-03-18', '2025-03-21', 'https://events.linuxfoundation.org/kubecon-cloudnativecon-europe/', 'conference', '{"community_growth", "networking", "lead_generation"}', 'confirmed'),
+  (7, 'Open Source Summit North America', 'The premier event for open source developers and communities', 'Seattle, WA', '2025-04-15', '2025-04-18', 'https://events.linuxfoundation.org/open-source-summit-north-america/', 'conference', '{"thought_leadership", "networking"}', 'confirmed'),
+  (8, 'DevOps Days Seattle', 'Local DevOps community conference', 'Seattle, WA', '2025-05-12', '2025-05-13', 'https://devopsdays.org/seattle', 'conference', '{"community_growth"}', 'planned'),
+  (9, 'CNCF AI Summit', 'Cloud Native AI Solutions', 'San Francisco, CA', '2025-06-24', '2025-06-25', 'https://www.cncf.io/events/', 'summit', '{"thought_leadership", "community_growth"}', 'planned'),
+  (10, 'OSPO Con Europe', 'Conference for Open Source Program Offices', 'London, UK', '2025-09-10', '2025-09-12', 'https://ospocon.org', 'conference', '{"thought_leadership", "networking"}', 'tentative')
 ON CONFLICT (id) DO NOTHING;
 
 -- CFP Submissions
