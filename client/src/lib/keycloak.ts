@@ -51,7 +51,8 @@ export const initKeycloak = (): Promise<boolean> => {
         silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
         checkLoginIframe: false,
         enableLogging: true,
-        pkceMethod: 'S256'
+        pkceMethod: 'S256',
+        checkLoginIframeInterval: 5
       })
       .then((authenticated) => {
         console.log('Keycloak initialized successfully. Authenticated:', authenticated);
@@ -148,6 +149,49 @@ export const login = (): Promise<void> => {
       });
     } catch (error) {
       console.error('Unexpected error during login:', error);
+      reject(error);
+    }
+  });
+};
+
+/**
+ * Register using Keycloak
+ * @returns Promise with the registration result
+ */
+export const register = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    console.log('Initiating registration process...');
+    
+    // Get the current URL with port included
+    const currentUrl = window.location.href.split('?')[0].split('#')[0];
+    console.log('Using redirect URI for registration:', currentUrl);
+    
+    try {
+      keycloak.register({
+        redirectUri: currentUrl,
+      })
+      .then(() => {
+        console.log('Registration initiated successfully');
+        resolve();
+      })
+      .catch((error) => {
+        console.error('Registration failed:', error);
+        
+        // Try direct redirect as fallback
+        try {
+          const authUrl = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/registrations`;
+          const clientId = keycloak.clientId;
+          const redirectUri = encodeURIComponent(currentUrl);
+          
+          window.location.href = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
+          resolve(); // This will resolve but page will redirect
+        } catch (err) {
+          console.error('Fallback registration also failed:', err);
+          reject(err);
+        }
+      });
+    } catch (error) {
+      console.error('Unexpected error during registration:', error);
       reject(error);
     }
   });
