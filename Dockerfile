@@ -13,6 +13,9 @@ COPY . .
 # Build the client application
 RUN npm run build
 
+# Build the server (compile TypeScript)
+RUN npx tsc --project server/tsconfig.json --outDir dist/server || echo "TypeScript compilation failed, will use tsx at runtime"
+
 # Production stage
 FROM node:20-alpine
 
@@ -22,9 +25,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=5000
 
-# Copy package files and install production dependencies only
+# Copy package files and install all dependencies for tsx support
 COPY package*.json ./
-RUN npm ci --production
+RUN npm ci
 
 # Copy built assets from the builder stage
 COPY --from=client-builder /app/dist ./dist
@@ -55,5 +58,5 @@ USER nodejs
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5000/api/health || exit 1
 
-# Start the application using tsx for TypeScript support
+# Start the application with tsx (which is now installed)
 CMD ["npx", "tsx", "server/index.ts"]

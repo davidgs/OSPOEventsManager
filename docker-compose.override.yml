@@ -3,6 +3,10 @@ version: '3.8'
 services:
   # Development overrides
   ospo-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: client-builder
     environment:
       NODE_ENV: development
     volumes:
@@ -11,7 +15,10 @@ services:
       - ./client:/app/client
       - ./shared:/app/shared
       - ./public:/app/public
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
     command: ["npm", "run", "dev"]
+    working_dir: /app
     
   # Add a development database admin tool
   pgadmin:
