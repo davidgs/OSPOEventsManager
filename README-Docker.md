@@ -10,7 +10,7 @@ This guide explains how to run the OSPO Event Management application using Docke
    ```
 
 2. **Access the application:**
-   - Main Application: http://localhost
+   - Main Application: http://localhost:4576
    - Direct App Access: http://localhost:5000
    - Keycloak Admin: http://localhost:8080/auth/admin
    - PgAdmin (dev): http://localhost:5050
@@ -184,7 +184,7 @@ curl -f http://localhost/health
 
 **Services not starting:**
 1. Check Docker is running: `docker info`
-2. Check ports are available: `netstat -tulpn | grep :80`
+2. Check ports are available: `netstat -tulpn | grep :4576`
 3. View service logs: `docker-compose logs [service-name]`
 
 **Database connection issues:**

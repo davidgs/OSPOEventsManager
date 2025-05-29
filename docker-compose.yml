@@ -94,7 +94,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     ports:
-      - "80:80"
+      - "4576:80"
     depends_on:
       - ospo-app
       - keycloak

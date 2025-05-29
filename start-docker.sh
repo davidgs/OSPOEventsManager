@@ -45,7 +45,7 @@ echo "🌐 Application:"
 curl -s -f http://localhost:5000/api/health > /dev/null && echo "✅ Application ready" || echo "❌ Application not ready"
 
 echo "🔄 Nginx Proxy:"
-curl -s -f http://localhost/health > /dev/null && echo "✅ Nginx ready" || echo "❌ Nginx not ready"
+curl -s -f http://localhost:4576/health > /dev/null && echo "✅ Nginx ready" || echo "❌ Nginx not ready"
 
 echo ""
 echo "🎉 Services Status:"
@@ -53,7 +53,7 @@ docker-compose ps
 
 echo ""
 echo "🔗 Access URLs:"
-echo "   Application:     http://localhost"
+echo "   Application:     http://localhost:4576"
 echo "   Direct App:      http://localhost:5000"
 echo "   Keycloak Admin:  http://localhost:8080/auth/admin"
 echo "   PgAdmin:         http://localhost:5050 (development only)"
