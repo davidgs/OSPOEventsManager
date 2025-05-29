@@ -10,11 +10,8 @@ RUN npm ci
 # Copy the rest of the application code
 COPY . .
 
-# Build the client application
-RUN npm run build
-
-# Build the server (compile TypeScript)
-RUN npx tsc --project server/tsconfig.json --outDir dist/server || echo "TypeScript compilation failed, will use tsx at runtime"
+# Build only the client application (skip server bundling)
+RUN npx vite build
 
 # Production stage
 FROM node:20-alpine
