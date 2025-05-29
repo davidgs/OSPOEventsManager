@@ -34,8 +34,25 @@ const proxyOptions = {
   target: keycloakInternalUrl,
   changeOrigin: true,
   // Don't rewrite the path since we're using KC_HTTP_RELATIVE_PATH = "/auth" in Keycloak
-  pathRewrite: {}
-  // The full URL will be: http://keycloak:8080/auth/...
+  pathRewrite: {},
+  // Preserve the original host header to maintain port information
+  headers: {
+    'X-Forwarded-Host': 'localhost:4576',
+    'X-Forwarded-Proto': 'http',
+    'X-Forwarded-Port': '4576'
+  },
+  // Handle redirects properly
+  followRedirects: false,
+  onProxyRes: (proxyRes, req, res) => {
+    // Intercept redirect responses and fix the location header
+    if (proxyRes.statusCode >= 300 && proxyRes.statusCode < 400) {
+      const location = proxyRes.headers.location;
+      if (location && location.includes('localhost/auth')) {
+        proxyRes.headers.location = location.replace('localhost/auth', 'localhost:4576/auth');
+        console.log(`Fixed redirect from ${location} to ${proxyRes.headers.location}`);
+      }
+    }
+  }
 };
 
 // Create the proxy middleware

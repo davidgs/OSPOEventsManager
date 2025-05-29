@@ -1,0 +1,35 @@
+Updating the configuration and installing your custom providers, if any. Please wait.
+
+2025-05-29 16:09:35,887 INFO  [io.quarkus.deployment.QuarkusAugmentor] (main) Quarkus augmentation completed in 3055ms
+
+2025-05-29 16:09:36,563 INFO  [org.keycloak.quarkus.runtime.hostname.DefaultHostnameProvider] (main) Hostname settings: Base URL: <unset>, Hostname: <request>, Strict HTTPS: false, Path: <request>, Strict BackChannel: false, Admin URL: <unset>, Admin: <request>, Port: -1, Proxied: false
+
+2025-05-29 16:09:37,283 WARN  [io.quarkus.agroal.runtime.DataSources] (main) Datasource <default> enables XA but transaction recovery is not enabled. Please enable transaction recovery by setting quarkus.transaction-manager.enable-recovery=true, otherwise data may be lost if the application is terminated abruptly
+
+2025-05-29 16:09:37,493 WARN  [org.infinispan.PERSISTENCE] (keycloak-cache-init) ISPN000554: jboss-marshalling is deprecated and planned for removal
+
+2025-05-29 16:09:37,514 WARN  [org.infinispan.CONFIG] (keycloak-cache-init) ISPN000569: Unable to persist Infinispan internal caches as no global state enabled
+
+2025-05-29 16:09:37,578 INFO  [org.infinispan.CONTAINER] (keycloak-cache-init) ISPN000556: Starting user marshaller 'org.infinispan.jboss.marshalling.core.JBossUserMarshaller'
+
+2025-05-29 16:09:38,038 INFO  [org.keycloak.broker.provider.AbstractIdentityProviderMapper] (main) Registering class org.keycloak.broker.provider.mappersync.ConfigSyncEventListener
+
+2025-05-29 16:09:38,047 INFO  [org.keycloak.connections.infinispan.DefaultInfinispanConnectionProviderFactory] (main) Node name: node_58741, Site name: null
+
+2025-05-29 16:09:38,339 INFO  [org.keycloak.exportimport.singlefile.SingleFileImportProvider] (main) Full importing from file /opt/keycloak/bin/../data/import/realm.json
+
+2025-05-29 16:09:38,435 INFO  [org.keycloak.exportimport.util.ImportUtils] (main) Realm 'ospo-events' already exists. Import skipped
+
+2025-05-29 16:09:38,439 INFO  [org.keycloak.exportimport.dir.DirImportProvider] (main) Importing from directory /opt/keycloak/bin/../data/import
+
+2025-05-29 16:09:38,439 INFO  [org.keycloak.services] (main) KC-SERVICES0030: Full model import requested. Strategy: IGNORE_EXISTING
+
+2025-05-29 16:09:38,439 INFO  [org.keycloak.services] (main) KC-SERVICES0032: Import finished successfully
+
+2025-05-29 16:09:38,502 INFO  [io.quarkus] (main) Keycloak 23.0.6 on JVM (powered by Quarkus 3.2.10.Final) started in 2.548s. Listening on: http://0.0.0.0:8080⁠
+
+2025-05-29 16:09:38,502 INFO  [io.quarkus] (main) Profile dev activated. 
+
+2025-05-29 16:09:38,502 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, hibernate-orm, jdbc-h2, jdbc-mariadb, jdbc-mssql, jdbc-mysql, jdbc-oracle, jdbc-postgresql, keycloak, logging-gelf, micrometer, narayana-jta, reactive-routes, resteasy-reactive, resteasy-reactive-jackson, smallrye-context-propagation, smallrye-health, vertx]
+
+2025-05-29 16:09:38,529 WARN  [org.keycloak.quarkus.runtime.KeycloakMain] (main) Running the server in development mode. DO NOT use this configuration in production.
