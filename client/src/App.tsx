@@ -4,7 +4,7 @@ import { withAuthProtection } from "@/contexts/auth-context";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
-import EventsPage from "@/pages/events/index";
+import EventsPage from "@/pages/events";
 
 // Define our simplified routes for testing authentication
 function App() {
