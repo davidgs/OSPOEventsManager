@@ -119,8 +119,8 @@ export const login = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     console.log('Initiating login process...');
     
-    // Use callback route for redirect
-    const redirectUri = window.location.origin + '/callback';
+    // Use current page for redirect
+    const redirectUri = window.location.origin;
     console.log('Using redirect URI:', redirectUri);
     
     try {
