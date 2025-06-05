@@ -109,16 +109,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/events", async (req: Request, res: Response) => {
     try {
+      console.log('POST /api/events - Request body:', JSON.stringify(req.body, null, 2));
+      
       const eventData = insertEventSchema.safeParse(req.body);
       
       if (!eventData.success) {
+        console.error('Validation error:', eventData.error);
         const validationError = fromZodError(eventData.error);
         return res.status(400).json({ message: validationError.message });
       }
       
+      console.log('Parsed event data:', JSON.stringify(eventData.data, null, 2));
+      
       const event = await storage.createEvent(eventData.data);
+      console.log('Created event:', JSON.stringify(event, null, 2));
       res.status(201).json(event);
     } catch (error) {
+      console.error('Error creating event - Full error:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       res.status(500).json({ message: "Failed to create event" });
     }
   });
