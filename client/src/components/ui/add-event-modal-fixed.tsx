@@ -51,7 +51,7 @@ const AddEventModal: FC<AddEventModalProps> = ({
       location: "",
       priority: "medium",
       type: "conference",
-      goal: ["attending"], // Default to attending, now as an array
+      goal: ["attending"],
       notes: "",
     },
   });
@@ -60,9 +60,9 @@ const AddEventModal: FC<AddEventModalProps> = ({
     // Convert Date objects to ISO strings for API submission
     const formattedData = {
       ...data,
-      startDate: data.startDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
-      endDate: data.endDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
-      cfpDeadline: data.cfpDeadline ? data.cfpDeadline.toISOString().split('T')[0] : null, // Format as YYYY-MM-DD if exists
+      startDate: data.startDate.toISOString().split('T')[0],
+      endDate: data.endDate.toISOString().split('T')[0],
+      cfpDeadline: data.cfpDeadline ? data.cfpDeadline.toISOString().split('T')[0] : null,
     };
     
     onSubmit(formattedData);
@@ -104,7 +104,22 @@ const AddEventModal: FC<AddEventModalProps> = ({
                   <FormItem className="sm:col-span-2">
                     <FormLabel>Event Website <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="https://" {...field} />
+                      <Input placeholder="https://example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Location */}
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Location <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="City, Country or Virtual" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -118,34 +133,34 @@ const AddEventModal: FC<AddEventModalProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Start Date <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Popover>
-                        <PopoverTrigger asChild>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
                           <Button
-                            variant="outline"
+                            variant={"outline"}
                             className={cn(
-                              "w-full justify-start text-left font-normal",
+                              "w-full pl-3 text-left font-normal",
                               !field.value && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
                             {field.value ? (
                               format(field.value, "PPP")
                             ) : (
-                              <span>Select date</span>
+                              <span>Pick a date</span>
                             )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </FormControl>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -158,49 +173,34 @@ const AddEventModal: FC<AddEventModalProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>End Date <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Popover>
-                        <PopoverTrigger asChild>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
                           <Button
-                            variant="outline"
+                            variant={"outline"}
                             className={cn(
-                              "w-full justify-start text-left font-normal",
+                              "w-full pl-3 text-left font-normal",
                               !field.value && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
                             {field.value ? (
                               format(field.value, "PPP")
                             ) : (
-                              <span>Select date</span>
+                              <span>Pick a date</span>
                             )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {/* Location */}
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="City, Country or Virtual" {...field} />
-                    </FormControl>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -232,13 +232,13 @@ const AddEventModal: FC<AddEventModalProps> = ({
                 )}
               />
               
-              {/* Event Type */}
+              {/* Type */}
               <FormField
                 control={form.control}
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Event Type <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>Type <span className="text-red-500">*</span></FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -258,7 +258,7 @@ const AddEventModal: FC<AddEventModalProps> = ({
                 )}
               />
               
-              {/* Event Goals - using checkboxes for multiple selection */}
+              {/* Event Goals */}
               <FormField
                 control={form.control}
                 name="goal"
@@ -266,34 +266,29 @@ const AddEventModal: FC<AddEventModalProps> = ({
                   <FormItem className="sm:col-span-2">
                     <FormLabel>Event Goals <span className="text-red-500">*</span></FormLabel>
                     <div className="grid grid-cols-2 gap-2 mt-2">
-                      {eventGoals.map((goal) => (
-                        <FormItem key={goal} className="flex flex-row items-start space-x-3 space-y-0">
+                      {eventGoals.map((goalOption) => (
+                        <FormItem key={goalOption} className="flex flex-row items-start space-x-3 space-y-0">
                           <FormControl>
                             <Checkbox
-                              checked={field.value?.includes(goal)}
+                              checked={field.value?.includes(goalOption)}
                               onCheckedChange={(checked) => {
                                 const currentValue = field.value || [];
                                 if (checked) {
-                                  field.onChange([...currentValue, goal]);
+                                  field.onChange([...currentValue, goalOption]);
                                 } else {
                                   field.onChange(
-                                    currentValue.filter(
-                                      (value: string) => value !== goal
-                                    )
+                                    currentValue.filter((value: string) => value !== goalOption)
                                   );
                                 }
                               }}
                             />
                           </FormControl>
                           <FormLabel className="font-normal">
-                            {goal.charAt(0).toUpperCase() + goal.slice(1)}
+                            {goalOption.charAt(0).toUpperCase() + goalOption.slice(1)}
                           </FormLabel>
                         </FormItem>
                       ))}
                     </div>
-                    <FormDescription>
-                      Select all goals that apply to this event
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -306,34 +301,34 @@ const AddEventModal: FC<AddEventModalProps> = ({
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
                     <FormLabel>CFP Deadline</FormLabel>
-                    <FormControl>
-                      <Popover>
-                        <PopoverTrigger asChild>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
                           <Button
-                            variant="outline"
+                            variant={"outline"}
                             className={cn(
-                              "w-full justify-start text-left font-normal",
+                              "w-full pl-3 text-left font-normal",
                               !field.value && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
                             {field.value ? (
                               format(field.value, "PPP")
                             ) : (
-                              <span>Select date (optional)</span>
+                              <span>Pick a date (optional)</span>
                             )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </FormControl>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value || undefined}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormDescription>
                       The deadline for Call for Proposals submissions
                     </FormDescription>
@@ -353,12 +348,10 @@ const AddEventModal: FC<AddEventModalProps> = ({
                       <Textarea 
                         placeholder="Add any additional details or notes about the event" 
                         className="min-h-[100px]" 
-                        {...field} 
+                        {...field}
+                        value={field.value || ""}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Optional: Add any important notes or context about this event
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -370,7 +363,7 @@ const AddEventModal: FC<AddEventModalProps> = ({
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save Event"}
+                {isSubmitting ? "Adding..." : "Add Event"}
               </Button>
             </DialogFooter>
           </form>
