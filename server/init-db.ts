@@ -61,6 +61,28 @@ export async function initializeDatabase(): Promise<boolean> {
         status TEXT NOT NULL DEFAULT 'planning'
       )
     `);
+    
+    // Add missing columns if they don't exist
+    try {
+      await pool.query(`
+        ALTER TABLE events 
+        ADD COLUMN IF NOT EXISTS link TEXT NOT NULL DEFAULT 'https://example.com'
+      `);
+      console.log("✅ Added link column to events table if missing");
+    } catch (error) {
+      console.log("Link column already exists or other constraint issue");
+    }
+    
+    // Remove the default after adding the column
+    try {
+      await pool.query(`
+        ALTER TABLE events 
+        ALTER COLUMN link DROP DEFAULT
+      `);
+    } catch (error) {
+      // Ignore if column doesn't have default
+    }
+    
     console.log("✅ Events table initialized");
     
     // Create CFP submissions table with IF NOT EXISTS to preserve existing data
