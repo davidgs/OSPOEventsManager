@@ -119,13 +119,13 @@ export const login = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     console.log('Initiating login process...');
     
-    // Get the current URL with port included
-    const currentUrl = window.location.href.split('?')[0].split('#')[0];
-    console.log('Using redirect URI:', currentUrl);
+    // Use callback route for redirect
+    const redirectUri = window.location.origin + '/callback';
+    console.log('Using redirect URI:', redirectUri);
     
     try {
       keycloak.login({
-        redirectUri: currentUrl,
+        redirectUri: redirectUri,
         loginHint: ''
       })
       .then(() => {
@@ -140,10 +140,10 @@ export const login = (): Promise<void> => {
           const baseUrl = (keycloak.authServerUrl || getKeycloakUrl()).replace(/\/+$/, '');
           const authUrl = `${baseUrl}/realms/ospo-events/protocol/openid-connect/auth`;
           const clientId = keycloak.clientId;
-          const redirectUri = encodeURIComponent(currentUrl);
+          const encodedRedirectUri = encodeURIComponent(redirectUri);
           
           console.log('Direct auth URL:', authUrl);
-          window.location.href = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
+          window.location.href = `${authUrl}?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=openid`;
           resolve(); // This will resolve but page will redirect
         } catch (err) {
           console.error('Fallback login also failed:', err);
