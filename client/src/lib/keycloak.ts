@@ -48,11 +48,9 @@ export const initKeycloak = (): Promise<boolean> => {
     keycloak
       .init({
         onLoad: 'check-sso',
-        silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
         checkLoginIframe: false,
         enableLogging: true,
-        pkceMethod: 'S256',
-        checkLoginIframeInterval: 5
+        pkceMethod: 'S256'
       })
       .then((authenticated) => {
         console.log('Keycloak initialized successfully. Authenticated:', authenticated);
