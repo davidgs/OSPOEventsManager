@@ -126,6 +126,7 @@ export const login = (): Promise<void> => {
     try {
       keycloak.login({
         redirectUri: currentUrl,
+        loginHint: ''
       })
       .then(() => {
         console.log('Login initiated successfully');
@@ -134,12 +135,14 @@ export const login = (): Promise<void> => {
       .catch((error) => {
         console.error('Login failed:', error);
         
-        // Try direct redirect as fallback
+        // Try direct redirect as fallback with explicit realm
         try {
-          const authUrl = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/auth`;
+          const baseUrl = (keycloak.authServerUrl || getKeycloakUrl()).replace(/\/+$/, '');
+          const authUrl = `${baseUrl}/realms/ospo-events/protocol/openid-connect/auth`;
           const clientId = keycloak.clientId;
           const redirectUri = encodeURIComponent(currentUrl);
           
+          console.log('Direct auth URL:', authUrl);
           window.location.href = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
           resolve(); // This will resolve but page will redirect
         } catch (err) {
