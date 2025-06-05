@@ -76,14 +76,14 @@ services:
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
       SESSION_SECRET: ${SESSION_SECRET}
     ports:
-      - "5000:5000"
+      - "5555:5555"
     depends_on:
       postgres:
         condition: service_healthy
       keycloak:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:5555/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

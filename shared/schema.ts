@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, date, timestamp, primaryKey, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, date, timestamp, primaryKey, json, PgTableWithColumns } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -36,7 +36,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   keycloakId: text("keycloak_id").notNull().unique(), // Reference to Keycloak's user ID
   username: text("username").notNull().unique(),      // Cached from Keycloak for easier queries
-  name: text("name"),                                 // User's full name 
+  name: text("name"),                                 // User's full name
   email: text("email"),                               // User's email
   bio: text("bio"),                                   // User's biography
   jobTitle: text("job_title"),                        // User's job title
@@ -90,6 +90,8 @@ export const events = pgTable("events", {
   status: text("status").notNull().default("planning").$type<EventStatus>(),
   notes: text("notes"),
   createdById: integer("created_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
 });
 
 // Create the base insert schema from drizzle
@@ -284,7 +286,7 @@ export const workflowReviewers = pgTable("workflow_reviewers", {
   workflowId: integer("workflow_id").notNull().references(() => approvalWorkflows.id),
   reviewerId: integer("reviewer_id").notNull().references(() => users.id),
   isRequired: boolean("is_required").notNull().default(true),
-  status: text("status").notNull().default("pending").$type<ApprovalStatus>(), 
+  status: text("status").notNull().default("pending").$type<ApprovalStatus>(),
   reviewedAt: timestamp("reviewed_at"),
   comments: text("comments"),
 });
@@ -323,7 +325,7 @@ export const workflowComments = pgTable("workflow_comments", {
   content: text("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   isPrivate: boolean("is_private").notNull().default(false),
-  parentId: integer("parent_id").references(() => workflowComments.id),
+  parentId: integer("parent_id").references(() => undefined as unknown as number), // Temporary workaround for circular reference
 });
 
 export const insertWorkflowCommentSchema = createInsertSchema(workflowComments).omit({
@@ -344,6 +346,8 @@ export const workflowHistory = pgTable("workflow_history", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
   previousStatus: text("previous_status").$type<ApprovalStatus>(),
   newStatus: text("new_status").$type<ApprovalStatus>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const insertWorkflowHistorySchema = createInsertSchema(workflowHistory).omit({

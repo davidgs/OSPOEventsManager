@@ -26,7 +26,7 @@ console.log(`Using Keycloak service at: ${keycloakInternalUrl}`);
 
 console.log(`Setting up Keycloak proxy to internal URL: ${keycloakInternalUrl}`);
 
-// Basic proxy configuration 
+// Basic proxy configuration
 // We need to match the KC_HTTP_RELATIVE_PATH setting in the Keycloak container
 // If Keycloak is at '/', we need to rewrite '/auth' to '/'
 // If Keycloak is at '/auth', we need to keep the path as is
@@ -43,11 +43,11 @@ const proxyOptions = {
   },
   // Handle redirects properly
   followRedirects: false,
-  onProxyRes: (proxyRes, req, res) => {
+  onProxyRes: (proxyRes: import("http").IncomingMessage, req: express.Request, res: express.Response) => {
     // Intercept redirect responses and fix the location header
-    if (proxyRes.statusCode >= 300 && proxyRes.statusCode < 400) {
+    if (proxyRes.statusCode && proxyRes.statusCode >= 300 && proxyRes.statusCode < 400) {
       const location = proxyRes.headers.location;
-      if (location && location.includes('localhost/auth')) {
+      if (location && typeof location === "string" && location.includes('localhost/auth')) {
         proxyRes.headers.location = location.replace('localhost/auth', 'localhost:4576/auth');
         console.log(`Fixed redirect from ${location} to ${proxyRes.headers.location}`);
       }
@@ -61,7 +61,7 @@ const keycloakProxy = createProxyMiddleware(proxyOptions);
 // Add custom logging and error handling for proxy requests
 app.use('/auth', (req, res, next) => {
   console.log(`Proxying Keycloak request: ${req.method} ${req.url}`);
-  
+
   // Set a timeout to handle connection issues
   const timeoutId = setTimeout(() => {
     if (!res.headersSent) {
@@ -78,11 +78,11 @@ app.use('/auth', (req, res, next) => {
       `);
     }
   }, 10000); // 10 second timeout
-  
+
   keycloakProxy(req, res, (err: any) => {
     // Clear the timeout since the request completed (with or without error)
     clearTimeout(timeoutId);
-    
+
     if (err) {
       console.error('Proxy error:', err);
       if (!res.headersSent) {
@@ -120,13 +120,13 @@ app.use(async (req: any, res: any, next: any) => {
       if (req.user && req.user.id) {
         const keycloakId = req.user.id;
         const username = req.user.username;
-        
+
         // Check if the user exists in our database
         const dbUser = await storage.getUserByKeycloakId(keycloakId);
-        
+
         if (!dbUser) {
           console.log(`Creating new user record for Keycloak user: ${username} (${keycloakId})`);
-          
+
           // Create a new user record in our database
           const newUser = await storage.createUser({
             keycloakId,
@@ -134,7 +134,7 @@ app.use(async (req: any, res: any, next: any) => {
             name: req.user.name || null,
             email: req.user.email || null
           });
-          
+
           if (newUser) {
             console.log(`Successfully created user record with ID: ${newUser.id}`);
             // Update the req.user with our database ID for convenience
@@ -204,7 +204,7 @@ app.use((req, res, next) => {
   }
 
   const server = await registerRoutes(app);
-  
+
   // Always enable Keycloak authentication in production (no option to bypass)
   console.log("Securing routes with Keycloak authentication");
   secureWithKeycloak(app, keycloak);
@@ -227,7 +227,7 @@ app.use((req, res, next) => {
   }
 
   // Revert to using port 5000 for Replit compatibility
-  const port = 5000;
+  const port = 5555;
   server.listen({
     port,
     host: "0.0.0.0",
