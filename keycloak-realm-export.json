@@ -46,7 +46,7 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "ospo-events-client-secret-12345",
       "rootUrl": "http://localhost:4576",
-      "baseUrl": "http://localhost:4576/",
+      "baseUrl": "/",
       "redirectUris": [
         "http://localhost:80/*",
         "http://localhost:4576/*",
