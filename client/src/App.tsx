@@ -7,6 +7,7 @@ import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import EventsPage from "@/pages/events";
 import EventDetailsPage from "@/pages/event-details";
+import ProfilePage from "@/pages/profile";
 
 // Define our simplified routes for testing authentication
 function App() {
@@ -21,6 +22,7 @@ function App() {
             <Route path="/auth" component={AuthPage} />
             <Route path="/events" component={EventsPage} />
             <Route path="/events/:id" component={EventDetailsPage} />
+            <Route path="/profile" component={ProfilePage} />
             
             {/* 404 page */}
             <Route component={NotFound} />
