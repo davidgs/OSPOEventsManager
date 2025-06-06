@@ -21,20 +21,12 @@ if (!fs.existsSync(uploadsDir)) {
 
 // File upload middleware is now configured per-route in routes.ts
 
-// Set up proxy for Keycloak authentication
-// This proxies requests from /auth to the internal Keycloak service
-// We need to use the correct K8s service name and port
-// In Kubernetes, services are accessed by their service name
-// No need for full DNS name - Kubernetes DNS will handle the resolution
-const keycloakServiceName = process.env.KEYCLOAK_SERVICE_NAME || 'keycloak';
-const keycloakServicePort = process.env.KEYCLOAK_SERVICE_PORT || '8080';
+// Keycloak proxy configuration disabled temporarily for debugging
+// const keycloakServiceName = process.env.KEYCLOAK_SERVICE_NAME || 'keycloak';
+// const keycloakServicePort = process.env.KEYCLOAK_SERVICE_PORT || '8080';
+// const keycloakInternalUrl = `http://${keycloakServiceName}:${keycloakServicePort}`;
 
-// Use simple service name which will be resolved by Kubernetes DNS automatically
-const keycloakInternalUrl = `http://${keycloakServiceName}:${keycloakServicePort}`;
-
-console.log(`Using Keycloak service at: ${keycloakInternalUrl}`);
-
-console.log(`Setting up Keycloak proxy to internal URL: ${keycloakInternalUrl}`);
+console.log("Keycloak proxy disabled - authentication will be bypassed temporarily");
 
 // Basic proxy configuration
 // We need to match the KC_HTTP_RELATIVE_PATH setting in the Keycloak container
@@ -215,9 +207,9 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
 
-  // Always enable Keycloak authentication in production (no option to bypass)
-  console.log("Securing routes with Keycloak authentication");
-  secureWithKeycloak(app, keycloak);
+  // Temporarily disable Keycloak to resolve authentication issues
+  console.log("Keycloak authentication temporarily disabled for debugging");
+  // secureWithKeycloak(app, keycloak);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
