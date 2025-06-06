@@ -280,7 +280,15 @@ export class DatabaseStorage implements IStorage {
   // Sponsorship operations
   async getSponsorships(): Promise<Sponsorship[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(sponsorships).orderBy(desc(sponsorships.created_at));
+    try {
+      console.log("Executing getSponsorships query...");
+      const result = await db.select().from(sponsorships).orderBy(desc(sponsorships.created_at));
+      console.log("getSponsorships query successful, found", result.length, "records");
+      return result;
+    } catch (error) {
+      console.error("Error in getSponsorships:", error);
+      throw error;
+    }
   }
 
   async getSponsorshipsByEvent(eventId: number): Promise<Sponsorship[]> {

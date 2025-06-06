@@ -390,17 +390,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sponsorships API routes
   app.get("/api/sponsorships", async (req: Request, res: Response) => {
     try {
+      console.log("GET /api/sponsorships called");
       const eventId = req.query.eventId ? parseInt(req.query.eventId as string) : undefined;
       
       let sponsorships;
       if (eventId) {
+        console.log(`Fetching sponsorships for event ID: ${eventId}`);
         sponsorships = await storage.getSponsorshipsByEvent(eventId);
       } else {
+        console.log("Fetching all sponsorships");
         sponsorships = await storage.getSponsorships();
       }
       
+      console.log(`Retrieved ${sponsorships.length} sponsorships`);
       res.json(sponsorships);
     } catch (error) {
+      console.error("Error in GET /api/sponsorships:", error);
       res.status(500).json({ message: "Failed to fetch sponsorships" });
     }
   });
