@@ -55,6 +55,13 @@ const EventsPage: FC = () => {
     isError: isErrorEvents,
   } = useQuery({
     queryKey: ['/api/events'],
+    queryFn: async () => {
+      const response = await fetch('/api/events');
+      if (!response.ok) {
+        throw new Error('Failed to load events');
+      }
+      return response.json();
+    },
   });
   
   // Fetch CFP counts
