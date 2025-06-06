@@ -236,8 +236,8 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Use port 5000 for Replit compatibility
-  const port = 5000;
+  // DO NOT CARE about Replit compatibility
+  const port = 5555;
   server.listen({
     port,
     host: "0.0.0.0",
