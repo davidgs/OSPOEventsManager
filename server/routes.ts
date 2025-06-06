@@ -27,7 +27,15 @@ import path from "path";
 import fs from "fs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Note: File upload middleware is now configured globally in server/index.ts
+  // Configure file upload middleware for specific routes only
+  const fileUploadMiddleware = fileUpload({
+    limits: { fileSize: 10 * 1024 * 1024 },
+    abortOnLimit: true, 
+    createParentPath: true,
+    useTempFiles: true,
+    tempFileDir: '/tmp/',
+    debug: false
+  });
   const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
 
   // Health check endpoint for Kubernetes
@@ -560,7 +568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users/:id/headshot", async (req: Request, res: Response) => {
+  app.post("/api/users/:id/headshot", fileUploadMiddleware, async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
       console.log("Headshot upload request for user ID:", id);
@@ -770,7 +778,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/assets", async (req: Request, res: Response) => {
+  app.post("/api/assets", fileUploadMiddleware, async (req: Request, res: Response) => {
     try {
       // Check if a file was uploaded
       if (!req.files || !req.files.file) {

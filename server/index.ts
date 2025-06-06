@@ -19,15 +19,7 @@ if (!fs.existsSync(uploadsDir)) {
   console.log(`Created uploads directory: ${uploadsDir}`);
 }
 
-// Configure file upload middleware globally
-app.use(fileUpload({
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-  abortOnLimit: true, 
-  createParentPath: true,
-  useTempFiles: true,
-  tempFileDir: '/tmp/',
-  debug: process.env.NODE_ENV === 'development'
-}));
+// File upload middleware is now configured per-route in routes.ts
 
 // Set up proxy for Keycloak authentication
 // This proxies requests from /auth to the internal Keycloak service
