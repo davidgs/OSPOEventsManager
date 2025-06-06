@@ -75,3 +75,30 @@ export const attendeeRoles = [
   "media",
   "vip"
 ] as const;
+
+export const stakeholderRoles = [
+  "primary_contact",
+  "decision_maker",
+  "technical_reviewer",
+  "budget_approver",
+  "legal_reviewer",
+  "marketing_contact",
+  "logistics_coordinator"
+] as const;
+
+export const cfpStatuses = [
+  "draft",
+  "submitted",
+  "under_review",
+  "accepted",
+  "rejected",
+  "withdrawn"
+] as const;
+
+export const sponsorshipStatuses = [
+  "pending",
+  "confirmed", 
+  "cancelled",
+  "negotiating",
+  "declined"
+] as const;
