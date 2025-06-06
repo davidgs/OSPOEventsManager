@@ -102,17 +102,17 @@ const baseInsertEventSchema = createInsertSchema(events).omit({
 
 // Override the schema to explicitly define how we want date fields handled
 export const insertEventSchema = z.object({
-  name: baseInsertEventSchema.shape.name,
-  link: baseInsertEventSchema.shape.link,
+  name: z.string().min(1, "Event name is required"),
+  link: z.string().url("Must be a valid URL"),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
-  location: baseInsertEventSchema.shape.location,
-  priority: baseInsertEventSchema.shape.priority,
-  type: baseInsertEventSchema.shape.type,
-  goal: eventGoalsArraySchema, // Changed from goals to goal to match schema
+  location: z.string().min(1, "Location is required"),
+  priority: z.enum(eventPriorities),
+  type: z.enum(eventTypes),
+  goal: eventGoalsArraySchema,
   cfpDeadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format").nullable().optional(),
-  notes: baseInsertEventSchema.shape.notes,
-  createdById: baseInsertEventSchema.shape.createdById,
+  notes: z.string().optional(),
+  createdById: z.number().optional(),
 });
 
 export type InsertEvent = z.infer<typeof insertEventSchema>;
