@@ -155,6 +155,16 @@ export async function initializeDatabase(): Promise<boolean> {
       console.log("Status column already exists or other constraint issue");
     }
     
+    try {
+      await pool.query(`
+        ALTER TABLE events 
+        ADD COLUMN IF NOT EXISTS notes TEXT
+      `);
+      console.log("✅ Added notes column to events table if missing");
+    } catch (error) {
+      console.log("Notes column already exists or other constraint issue");
+    }
+    
     // Remove the defaults after adding the columns
     try {
       await pool.query(`

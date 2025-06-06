@@ -79,17 +79,17 @@ export type User = typeof users.$inferSelect;
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  link: text("link").notNull(),
+  website: text("website").notNull(),
+  description: text("description"),
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
   location: text("location").notNull(),
   priority: text("priority").notNull().$type<EventPriority>(),
   type: text("type").notNull().$type<EventType>(),
-  goal: text("goal").array(), // Changed from 'goals' to match database schema
+  goals: text("goals").array(),
   cfpDeadline: date("cfp_deadline"),
   status: text("status").notNull().default("planning").$type<EventStatus>(),
   notes: text("notes"),
-  createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()
 });

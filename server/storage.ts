@@ -1443,19 +1443,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
-    // Handle goal vs goals field
-    const { goals, ...restEvent } = insertEvent as any;
+    console.log('Creating event with data:', insertEvent);
     
-    // If there's a goals field from the client, use it for the goal column
+    // Map form fields to actual database columns
     const eventData = {
-      ...restEvent,
+      name: insertEvent.name,
+      website: insertEvent.link, // Form sends 'link', DB has 'website'
+      location: insertEvent.location,
+      startDate: insertEvent.startDate,
+      endDate: insertEvent.endDate,
+      type: insertEvent.type,
+      priority: insertEvent.priority,
+      goals: insertEvent.goal, // Form sends 'goal', DB has 'goals' 
+      cfpDeadline: insertEvent.cfpDeadline,
+      notes: insertEvent.notes,
       status: "planning"
     };
     
-    // If goals exists in the client data, convert it to goal for db storage
-    if (goals) {
-      eventData.goal = Array.isArray(goals) ? goals : [goals];
-    }
+    console.log('Mapped data for database:', eventData);
     
     const [event] = await db
       .insert(events)
