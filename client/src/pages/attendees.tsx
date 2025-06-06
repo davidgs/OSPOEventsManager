@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users, Plus, Search, Edit, Trash2, Calendar, Mail, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AttendanceForm } from "@/components/forms/attendance-form";
 
 const AttendeesPage: FC = () => {
   const { toast } = useToast();

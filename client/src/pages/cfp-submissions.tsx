@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, Plus, Search, Edit, Trash2, Calendar, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { CfpSubmissionForm } from "@/components/forms/cfp-submission-form";
 
 const CfpSubmissionsPage: FC = () => {
   const { toast } = useToast();
@@ -75,10 +76,9 @@ const CfpSubmissionsPage: FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">CFP Submissions</h1>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Submission
-        </Button>
+        <CfpSubmissionForm onSuccess={() => {
+          // Refresh the submissions list
+        }} />
       </div>
 
       {/* Filters */}
