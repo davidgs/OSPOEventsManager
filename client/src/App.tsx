@@ -5,16 +5,16 @@ import { Header } from "@/components/layout/Header";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
-import EventsPage from "@/pages/events";
+import EventsPage from "@/pages/events/index";
 import EventDetailsPage from "@/pages/events/details";
 import ProfilePage from "@/pages/profile";
-import CfpSubmissionsPage from "@/pages/cfp-submissions";
-import AttendeesPage from "@/pages/attendees";
-import SponsorshipsPage from "@/pages/sponsorships";
+import CfpSubmissionsPage from "@/pages/cfp-submissions/index";
+import AttendeesPage from "@/pages/attendees/index";
+import SponsorshipsPage from "@/pages/sponsorships/index";
 import DashboardPage from "@/pages/dashboard";
-import AssetsPage from "@/pages/assets";
-import StakeholdersPage from "@/pages/stakeholders";
-import ApprovalWorkflowsPage from "@/pages/approval-workflows";
+import AssetsPage from "@/pages/assets/index";
+import StakeholdersPage from "@/pages/stakeholders/index";
+import ApprovalWorkflowsPage from "@/pages/approval-workflows/index";
 import SettingsPage from "@/pages/settings";
 
 // Define our routes using the existing comprehensive pages
