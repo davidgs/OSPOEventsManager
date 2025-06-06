@@ -105,6 +105,16 @@ export async function initializeDatabase(): Promise<boolean> {
       console.log("Updated_at column already exists or other constraint issue");
     }
     
+    try {
+      await pool.query(`
+        ALTER TABLE events 
+        ADD COLUMN IF NOT EXISTS goal TEXT[] NOT NULL DEFAULT '{attending}'
+      `);
+      console.log("✅ Added goal column to events table if missing");
+    } catch (error) {
+      console.log("Goal column already exists or other constraint issue");
+    }
+    
     // Remove the defaults after adding the columns
     try {
       await pool.query(`
