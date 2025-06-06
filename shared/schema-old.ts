@@ -30,9 +30,10 @@ export const cfpStatuses = ["draft", "submitted", "accepted", "rejected", "withd
 export const cfpStatusSchema = z.enum(cfpStatuses);
 export type CFPStatus = z.infer<typeof cfpStatusSchema>;
 
-// Users table - matches actual database structure
+// Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  keycloak_id: text("keycloak_id"),
   username: text("username").notNull(),
   password: text("password"),
   name: text("name"),
@@ -41,9 +42,7 @@ export const users = pgTable("users", {
   role: text("role"),
   job_title: text("job_title"),
   headshot: text("headshot"),
-  keycloak_id: text("keycloak_id"),
-  preferences: text("preferences"),
-  last_login: timestamp("last_login"),
+  preferences: jsonb("preferences"),
   created_at: timestamp("created_at").notNull().defaultNow(),
   updated_at: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -67,21 +66,23 @@ export const updateUserPreferencesSchema = z.object({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-// Events table - matches actual database structure
+// Events table
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   link: text("link").notNull(),
+  description: text("description"),
+  website: text("website"),
   start_date: date("start_date").notNull(),
   end_date: date("end_date").notNull(),
   location: text("location").notNull(),
   priority: text("priority").notNull().$type<EventPriority>(),
   type: text("type").notNull().$type<EventType>(),
+  status: text("status").notNull().$type<EventStatus>().default("planning"),
   goal: text("goal").array().notNull().$type<EventGoals>(),
   cfp_deadline: date("cfp_deadline"),
-  status: text("status").notNull().$type<EventStatus>().default("planning"),
   notes: text("notes"),
-  created_by_id: integer("created_by_id"),
+  created_by_id: integer("created_by_id").references(() => users.id),
   created_at: timestamp("created_at").notNull().defaultNow(),
   updated_at: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -98,13 +99,13 @@ export type Event = typeof events.$inferSelect;
 // CFP submissions table
 export const cfpSubmissions = pgTable("cfp_submissions", {
   id: serial("id").primaryKey(),
-  event_id: integer("event_id").notNull(),
+  event_id: integer("event_id").notNull().references(() => events.id),
   title: text("title").notNull(),
   abstract: text("abstract").notNull(),
   submitter_name: text("submitter_name").notNull(),
   status: text("status").notNull().$type<CFPStatus>().default("draft"),
   notes: text("notes"),
-  submitter_id: integer("submitter_id"),
+  submitter_id: integer("submitter_id").references(() => users.id),
   submission_date: text("submission_date"),
 });
 
@@ -118,11 +119,11 @@ export type CfpSubmission = typeof cfpSubmissions.$inferSelect;
 // Attendees table
 export const attendees = pgTable("attendees", {
   id: serial("id").primaryKey(),
-  event_id: integer("event_id").notNull(),
+  event_id: integer("event_id").notNull().references(() => events.id),
   name: text("name").notNull(),
   email: text("email").notNull(),
   role: text("role").notNull(),
-  user_id: integer("user_id"),
+  user_id: integer("user_id").references(() => users.id),
   notes: text("notes"),
 });
 
@@ -136,7 +137,7 @@ export type Attendee = typeof attendees.$inferSelect;
 // Sponsorships table
 export const sponsorships = pgTable("sponsorships", {
   id: serial("id").primaryKey(),
-  event_id: integer("event_id").notNull(),
+  event_id: integer("event_id").notNull().references(() => events.id),
   sponsor_name: text("sponsor_name").notNull(),
   tier: text("tier").notNull(),
   amount: text("amount"),
@@ -170,9 +171,9 @@ export const assets = pgTable("assets", {
   file_path: text("file_path").notNull(),
   file_size: integer("file_size").notNull(),
   mime_type: text("mime_type").notNull(),
-  uploaded_by: integer("uploaded_by").notNull(),
-  event_id: integer("event_id"),
-  cfp_submission_id: integer("cfp_submission_id"),
+  uploaded_by: integer("uploaded_by").notNull().references(() => users.id),
+  event_id: integer("event_id").references(() => events.id),
+  cfp_submission_id: integer("cfp_submission_id").references(() => cfpSubmissions.id),
   uploaded_at: timestamp("uploaded_at").notNull().defaultNow(),
 });
 
@@ -189,7 +190,7 @@ export const stakeholderRoles = ["executive", "manager", "legal", "finance", "ma
 export const stakeholderRoleSchema = z.enum(stakeholderRoles);
 export type StakeholderRole = z.infer<typeof stakeholderRoleSchema>;
 
-// Stakeholder table - matches actual database structure
+// Stakeholder table
 export const stakeholders = pgTable("stakeholders", {
   id: serial("id").primaryKey(),
   user_id: integer("user_id"),
@@ -228,7 +229,7 @@ export const approvalWorkflows = pgTable("approval_workflows", {
   title: text("title").notNull(),
   item_type: text("item_type").notNull().$type<ApprovalItemType>(),
   item_id: integer("item_id"),
-  requester_id: integer("requester_id"),
+  requester_id: integer("requester_id").references(() => users.id),
   reviewer_ids: integer("reviewer_ids").array(),
   stakeholder_ids: integer("stakeholder_ids").array(),
   current_status: text("current_status").notNull().$type<ApprovalStatus>().default("pending"),
@@ -252,8 +253,8 @@ export type ApprovalWorkflow = typeof approvalWorkflows.$inferSelect;
 // Workflow reviewers table
 export const workflowReviewers = pgTable("workflow_reviewers", {
   id: serial("id").primaryKey(),
-  workflow_id: integer("workflow_id").notNull(),
-  user_id: integer("user_id").notNull(),
+  workflow_id: integer("workflow_id").notNull().references(() => approvalWorkflows.id),
+  user_id: integer("user_id").notNull().references(() => users.id),
   status: text("status").notNull().$type<ApprovalStatus>().default("pending"),
   review_date: timestamp("review_date"),
   comments: text("comments"),
@@ -269,8 +270,8 @@ export type WorkflowReviewer = typeof workflowReviewers.$inferSelect;
 // Workflow stakeholders table
 export const workflowStakeholders = pgTable("workflow_stakeholders", {
   id: serial("id").primaryKey(),
-  workflow_id: integer("workflow_id").notNull(),
-  stakeholder_id: integer("stakeholder_id").notNull(),
+  workflow_id: integer("workflow_id").notNull().references(() => approvalWorkflows.id),
+  stakeholder_id: integer("stakeholder_id").notNull().references(() => stakeholders.id),
   notified: timestamp("notified"),
 });
 
@@ -284,8 +285,8 @@ export type WorkflowStakeholder = typeof workflowStakeholders.$inferSelect;
 // Workflow comments table
 export const workflowComments = pgTable("workflow_comments", {
   id: serial("id").primaryKey(),
-  workflow_id: integer("workflow_id").notNull(),
-  user_id: integer("user_id").notNull(),
+  workflow_id: integer("workflow_id").notNull().references(() => approvalWorkflows.id),
+  user_id: integer("user_id").notNull().references(() => users.id),
   comment: text("comment").notNull(),
   is_internal: integer("is_internal").notNull().default(0),
   created_at: timestamp("created_at").notNull().defaultNow(),
@@ -302,8 +303,8 @@ export type WorkflowComment = typeof workflowComments.$inferSelect;
 // Workflow history table
 export const workflowHistory = pgTable("workflow_history", {
   id: serial("id").primaryKey(),
-  workflow_id: integer("workflow_id").notNull(),
-  user_id: integer("user_id").notNull(),
+  workflow_id: integer("workflow_id").notNull().references(() => approvalWorkflows.id),
+  user_id: integer("user_id").notNull().references(() => users.id),
   action: text("action").notNull(),
   old_status: text("old_status").$type<ApprovalStatus>(),
   new_status: text("new_status").$type<ApprovalStatus>(),
@@ -353,10 +354,12 @@ export const workflowStakeholdersRelations = relations(workflowStakeholders, ({ 
   stakeholder: one(stakeholders, { fields: [workflowStakeholders.stakeholder_id], references: [stakeholders.id] }),
 }));
 
-export const workflowCommentsRelations = relations(workflowComments, ({ one }) => ({
-  workflow: one(approvalWorkflows, { fields: [workflowComments.workflow_id], references: [approvalWorkflows.id] }),
-  user: one(users, { fields: [workflowComments.user_id], references: [users.id] }),
-}));
+export const workflowCommentsRelations = relations(workflowComments, ({ one, many }) => {
+  return {
+    workflow: one(approvalWorkflows, { fields: [workflowComments.workflow_id], references: [approvalWorkflows.id] }),
+    user: one(users, { fields: [workflowComments.user_id], references: [users.id] }),
+  };
+});
 
 export const workflowHistoryRelations = relations(workflowHistory, ({ one }) => ({
   workflow: one(approvalWorkflows, { fields: [workflowHistory.workflow_id], references: [approvalWorkflows.id] }),
