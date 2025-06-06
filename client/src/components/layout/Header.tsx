@@ -39,6 +39,9 @@ export function Header() {
           
           {authenticated && (
             <nav className="hidden md:flex items-center gap-6">
+              <Link href="/dashboard" className="text-sm font-medium transition-colors hover:text-primary">
+                Dashboard
+              </Link>
               <Link href="/events" className="text-sm font-medium transition-colors hover:text-primary">
                 Events
               </Link>
@@ -50,6 +53,15 @@ export function Header() {
               </Link>
               <Link href="/sponsorships" className="text-sm font-medium transition-colors hover:text-primary">
                 Sponsorships
+              </Link>
+              <Link href="/assets" className="text-sm font-medium transition-colors hover:text-primary">
+                Assets
+              </Link>
+              <Link href="/stakeholders" className="text-sm font-medium transition-colors hover:text-primary">
+                Stakeholders
+              </Link>
+              <Link href="/approval-workflows" className="text-sm font-medium transition-colors hover:text-primary">
+                Workflows
               </Link>
             </nav>
           )}
