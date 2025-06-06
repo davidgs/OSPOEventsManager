@@ -493,12 +493,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/users/:id", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid user ID" });
+      const id = req.params.id;
+      let user;
+      
+      // Check if ID is numeric (database ID) or UUID (Keycloak ID)
+      if (/^[0-9]+$/.test(id)) {
+        user = await storage.getUser(parseInt(id));
+      } else {
+        // UUID - Keycloak user
+        user = await storage.getUserByKeycloakId(id);
       }
-
-      const user = await storage.getUser(id);
+      
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -513,10 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/users/:id/profile", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid user ID" });
-      }
+      const id = req.params.id;
 
       const profileData = updateUserProfileSchema.safeParse(req.body);
       
@@ -525,7 +527,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: validationError.message });
       }
       
-      const user = await storage.updateUserProfile(id, profileData.data);
+      let user;
+      
+      // Handle both numeric IDs and Keycloak UUIDs
+      if (/^[0-9]+$/.test(id)) {
+        user = await storage.updateUserProfile(parseInt(id), profileData.data);
+      } else {
+        // For Keycloak users, find the database user first
+        const existingUser = await storage.getUserByKeycloakId(id);
+        if (existingUser) {
+          user = await storage.updateUserProfile(existingUser.id, profileData.data);
+        } else {
+          // Create a new user record for this Keycloak user
+          const newUser = await storage.createUser({
+            keycloakId: id,
+            username: id, // Will be updated with real data later
+            ...profileData.data
+          });
+          user = newUser;
+        }
+      }
+      
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
