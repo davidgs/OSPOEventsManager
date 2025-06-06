@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -27,7 +27,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 const roleOptions = [
   "Community Manager",
-  "Developer Relations",
+  "Developer Relations", 
   "Technical Writer",
   "Software Engineer",
   "Product Manager",
@@ -40,8 +40,26 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [additionalData, setAdditionalData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch user profile data from server
+  const { data: serverUserData, isLoading, error } = useQuery({
+    queryKey: [`/api/users/${user?.id}`],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      try {
+        const res = await apiRequest("GET", `/api/users/${user.id}`);
+        if (res.ok) {
+          return res.json();
+        }
+        return null;
+      } catch (error) {
+        // User doesn't exist in server, return null
+        return null;
+      }
+    },
+    enabled: !!user?.id,
+    retry: false
+  });
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -54,25 +72,22 @@ export default function ProfilePage() {
     },
   });
 
-  // Load user data from Keycloak and any additional profile data
+  // Load user data when available
   useEffect(() => {
-    if (authenticated && user) {
-      // Set form values from Keycloak data
+    if (authenticated && user && !isLoading) {
+      const profileData = serverUserData || {};
       form.reset({
         name: user.name || user.firstName || user.username || "",
         email: user.email || "",
-        bio: additionalData?.bio || "",
-        jobTitle: additionalData?.jobTitle || "",
-        role: additionalData?.role || "",
+        bio: profileData.bio || "",
+        jobTitle: profileData.jobTitle || "",
+        role: profileData.role || "",
       });
-      setIsLoading(false);
     }
-  }, [user, authenticated, additionalData, form]);
+  }, [user, authenticated, serverUserData, isLoading, form]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      // Store additional profile data (bio, jobTitle, role) in local storage or send to backend
-      setAdditionalData(data);
       const res = await apiRequest("PUT", `/api/users/${user?.id}/profile`, data);
       return res.json();
     },
@@ -82,6 +97,8 @@ export default function ProfilePage() {
         description: "Your profile has been successfully updated.",
       });
       setIsEditing(false);
+      // Refresh the profile data
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}`] });
     },
     onError: (error: Error) => {
       toast({
@@ -171,7 +188,8 @@ export default function ProfilePage() {
     );
   }
 
-  // Create a profile object from Keycloak data and additional data
+  // Create a profile object from Keycloak data and server data
+  const profileData = serverUserData || {};
   const profile = {
     id: user.id,
     username: user.username,
@@ -179,11 +197,11 @@ export default function ProfilePage() {
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
-    bio: additionalData?.bio || "",
-    jobTitle: additionalData?.jobTitle || "",
-    role: additionalData?.role || "",
-    headshot: additionalData?.headshot || "",
-    createdAt: null, // Keycloak doesn't provide creation date
+    bio: profileData.bio || "",
+    jobTitle: profileData.jobTitle || "",
+    role: profileData.role || "",
+    headshot: profileData.headshot || "",
+    createdAt: profileData.createdAt || null,
   };
 
   return (
@@ -205,11 +223,14 @@ export default function ProfilePage() {
                 <Avatar className="h-24 w-24">
                   <AvatarImage src={profile.headshot || ""} alt={profile.name || 'User'} />
                   <AvatarFallback className="text-lg">
-                    {getInitials(profile.name || 'User')}
+                    {profile.name ? getInitials(profile.name) : 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <label htmlFor="headshot-upload" className="absolute bottom-0 right-0 p-1 bg-primary text-primary-foreground rounded-full cursor-pointer hover:bg-primary/90 transition-colors">
-                  <Camera className="h-3 w-3" />
+                <label 
+                  htmlFor="headshot-upload" 
+                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
+                >
+                  <Camera className="h-4 w-4" />
                   <input
                     id="headshot-upload"
                     type="file"
@@ -221,7 +242,7 @@ export default function ProfilePage() {
                 </label>
               </div>
               {uploadingImage && (
-                <p className="text-sm text-muted-foreground">Uploading...</p>
+                <div className="text-sm text-muted-foreground">Uploading...</div>
               )}
             </div>
           </CardContent>
@@ -229,100 +250,103 @@ export default function ProfilePage() {
 
         {/* Profile Information Card */}
         <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle>Profile Information</CardTitle>
+              <CardTitle className="text-lg">Profile Information</CardTitle>
               <CardDescription>
-                Update your personal details and professional information
+                Update your profile information and preferences
               </CardDescription>
             </div>
-            {!isEditing && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2"
-              >
-                <Edit2 className="h-4 w-4" />
-                Edit
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(!isEditing)}
+              disabled={updateMutation.isPending}
+            >
+              {isEditing ? (
+                <>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </>
+              ) : (
+                <>
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Edit
+                </>
+              )}
+            </Button>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent>
             {isEditing ? (
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your full name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your email" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="jobTitle"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Job Title</FormLabel>
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="jobTitle"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Job Title</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Role</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <Input placeholder="Enter your job title" {...field} />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Role</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select your role" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {roleOptions.map((role) => (
-                                <SelectItem key={role} value={role}>
-                                  {role}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
+                          <SelectContent>
+                            {roleOptions.map((role) => (
+                              <SelectItem key={role} value={role}>
+                                {role}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="bio"
@@ -330,102 +354,61 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel>Bio</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Tell us about yourself and your experience with open source..."
-                            className="min-h-[100px]"
-                            {...field}
-                          />
+                          <Textarea {...field} rows={4} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <div className="flex gap-2 pt-4">
+                  <div className="flex space-x-2 pt-4">
                     <Button 
                       type="submit" 
                       disabled={updateMutation.isPending}
-                      className="flex items-center gap-2"
+                      className="flex-1"
                     >
-                      <Save className="h-4 w-4" />
+                      <Save className="h-4 w-4 mr-2" />
                       {updateMutation.isPending ? "Saving..." : "Save Changes"}
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setIsEditing(false)}
-                      className="flex items-center gap-2"
-                    >
-                      <X className="h-4 w-4" />
-                      Cancel
                     </Button>
                   </div>
                 </form>
               </Form>
             ) : (
-              <div className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Name</h4>
-                      <p className="text-lg">{profile.name || "Not set"}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Email</h4>
-                      <p className="text-lg">{profile.email || "Not set"}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Job Title</h4>
-                      <p className="text-lg">{profile.jobTitle || "Not set"}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Role</h4>
-                      <p className="text-lg">{profile.role || "Not set"}</p>
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">Bio</h4>
-                  <p className="text-base leading-relaxed">{profile.bio || "No bio provided"}</p>
+                  <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                  <p className="text-sm">{profile.name || "Not provided"}</p>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                  <p className="text-sm">{profile.email || "Not provided"}</p>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Username</label>
+                  <p className="text-sm">{profile.username || "Not provided"}</p>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Job Title</label>
+                  <p className="text-sm">{profile.jobTitle || "Not provided"}</p>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Role</label>
+                  <p className="text-sm">{profile.role || "Not provided"}</p>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Bio</label>
+                  <p className="text-sm whitespace-pre-wrap">{profile.bio || "No bio provided"}</p>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Account Information Card */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Account Information</CardTitle>
-          <CardDescription>
-            View your account details and login information
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">User ID</h4>
-              <p className="text-lg font-mono">{profile.id}</p>
-            </div>
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Username</h4>
-              <p className="text-lg">{profile.username || "Not set"}</p>
-            </div>
-            <div>
-              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Member Since</h4>
-              <p className="text-lg">
-                {profile.createdAt 
-                  ? new Date(profile.createdAt).toLocaleDateString()
-                  : "Unknown"
-                }
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
