@@ -1,0 +1,103 @@
+ospo-app-1  | Error fetching stakeholders: error: column "user_id" does not exist
+ospo-app-1  |     at /app/node_modules/pg-pool/index.js:45:11
+ospo-app-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+ospo-app-1  |     at async <anonymous> (/app/node_modules/src/node-postgres/session.ts:104:19)
+ospo-app-1  |     at async DatabaseStorage.getStakeholders (/app/server/storage.ts:429:12)
+ospo-app-1  |     at async <anonymous> (/app/server/routes.ts:917:28) {
+ospo-app-1  |   length: 107,
+ospo-app-1  |   severity: 'ERROR',
+ospo-app-1  |   code: '42703',
+ospo-app-1  |   detail: undefined,
+ospo-app-1  |   hint: undefined,
+ospo-app-1  |   position: '14',
+ospo-app-1  |   internalPosition: undefined,
+ospo-app-1  |   internalQuery: undefined,
+ospo-app-1  |   where: undefined,
+ospo-app-1  |   schema: undefined,
+ospo-app-1  |   table: undefined,
+ospo-app-1  |   column: undefined,
+ospo-app-1  |   dataType: undefined,
+ospo-app-1  |   constraint: undefined,
+ospo-app-1  |   file: 'parse_relation.c',
+ospo-app-1  |   line: '3665',
+ospo-app-1  |   routine: 'errorMissingColumn'
+ospo-app-1  | }
+ospo-app-1  | 6:22:34 PM [express] GET /api/stakeholders 500 in 16ms :: {"message":"Failed to fetch stakeholders"}
+ospo-app-1  | Error fetching stakeholders: error: column "user_id" does not exist
+ospo-app-1  |     at /app/node_modules/pg-pool/index.js:45:11
+ospo-app-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+ospo-app-1  |     at async <anonymous> (/app/node_modules/src/node-postgres/session.ts:104:19)
+ospo-app-1  |     at async DatabaseStorage.getStakeholders (/app/server/storage.ts:429:12)
+ospo-app-1  |     at async <anonymous> (/app/server/routes.ts:917:28) {
+ospo-app-1  |   length: 107,
+ospo-app-1  |   severity: 'ERROR',
+ospo-app-1  |   code: '42703',
+ospo-app-1  |   detail: undefined,
+ospo-app-1  |   hint: undefined,
+ospo-app-1  |   position: '14',
+ospo-app-1  |   internalPosition: undefined,
+ospo-app-1  |   internalQuery: undefined,
+ospo-app-1  |   where: undefined,
+ospo-app-1  |   schema: undefined,
+ospo-app-1  |   table: undefined,
+ospo-app-1  |   column: undefined,
+ospo-app-1  |   dataType: undefined,
+ospo-app-1  |   constraint: undefined,
+ospo-app-1  |   file: 'parse_relation.c',
+ospo-app-1  |   line: '3665',
+ospo-app-1  |   routine: 'errorMissingColumn'
+ospo-app-1  | }
+ospo-app-1  | 6:22:35 PM [express] GET /api/stakeholders 500 in 16ms :: {"message":"Failed to fetch stakeholders"}
+ospo-app-1  | 6:22:37 PM [express] GET /api/users 304 in 1ms :: [{"id":1,"name":"Alex Johnson","email":"alex@examp…
+ospo-app-1  | Error fetching stakeholders: error: column "user_id" does not exist
+ospo-app-1  |     at /app/node_modules/pg-pool/index.js:45:11
+ospo-app-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+ospo-app-1  |     at async <anonymous> (/app/node_modules/src/node-postgres/session.ts:104:19)
+ospo-app-1  |     at async DatabaseStorage.getStakeholders (/app/server/storage.ts:429:12)
+ospo-app-1  |     at async <anonymous> (/app/server/routes.ts:917:28) {
+ospo-app-1  |   length: 107,
+ospo-app-1  |   severity: 'ERROR',
+ospo-app-1  |   code: '42703',
+ospo-app-1  |   detail: undefined,
+ospo-app-1  |   hint: undefined,
+ospo-app-1  |   position: '14',
+ospo-app-1  |   internalPosition: undefined,
+ospo-app-1  |   internalQuery: undefined,
+ospo-app-1  |   where: undefined,
+ospo-app-1  |   schema: undefined,
+ospo-app-1  |   table: undefined,
+ospo-app-1  |   column: undefined,
+ospo-app-1  |   dataType: undefined,
+ospo-app-1  |   constraint: undefined,
+ospo-app-1  |   file: 'parse_relation.c',
+ospo-app-1  |   line: '3665',
+ospo-app-1  |   routine: 'errorMissingColumn'
+ospo-app-1  | }
+ospo-app-1  | 6:22:37 PM [express] GET /api/stakeholders 500 in 17ms :: {"message":"Failed to fetch stakeholders"}
+ospo-app-1  | 6:22:37 PM [express] GET /api/approval-workflows 304 in 15ms :: []
+ospo-app-1  | Error fetching stakeholders: error: column "user_id" does not exist
+ospo-app-1  |     at /app/node_modules/pg-pool/index.js:45:11
+ospo-app-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+ospo-app-1  |     at async <anonymous> (/app/node_modules/src/node-postgres/session.ts:104:19)
+ospo-app-1  |     at async DatabaseStorage.getStakeholders (/app/server/storage.ts:429:12)
+ospo-app-1  |     at async <anonymous> (/app/server/routes.ts:917:28) {
+ospo-app-1  |   length: 107,
+ospo-app-1  |   severity: 'ERROR',
+ospo-app-1  |   code: '42703',
+ospo-app-1  |   detail: undefined,
+ospo-app-1  |   hint: undefined,
+ospo-app-1  |   position: '14',
+ospo-app-1  |   internalPosition: undefined,
+ospo-app-1  |   internalQuery: undefined,
+ospo-app-1  |   where: undefined,
+ospo-app-1  |   schema: undefined,
+ospo-app-1  |   table: undefined,
+ospo-app-1  |   column: undefined,
+ospo-app-1  |   dataType: undefined,
+ospo-app-1  |   constraint: undefined,
+ospo-app-1  |   file: 'parse_relation.c',
+ospo-app-1  |   line: '3665',
+ospo-app-1  |   routine: 'errorMissingColumn'
+ospo-app-1  | }
+ospo-app-1  | 6:22:38 PM [express] GET /api/stakeholders 500 in 1ms :: {"message":"Failed to fetch stakeholders"}
+(3.9.18) davidgs@Mac-Studio OSPOEventsManager % 
