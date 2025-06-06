@@ -102,7 +102,7 @@ services:
       ospo-app:
         condition: service_healthy
       keycloak:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
