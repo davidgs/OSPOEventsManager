@@ -1,10 +1,34 @@
 import { QueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from './keycloak';
 
-// Create a client
+// Default query function for all queries
+const defaultQueryFn = async ({ queryKey }: any) => {
+  const [url, params] = queryKey;
+  let finalUrl = url;
+  
+  // Add query parameters if they exist
+  if (params && Object.keys(params).length > 0) {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, String(value));
+      }
+    });
+    finalUrl = `${url}?${searchParams.toString()}`;
+  }
+  
+  const response = await fetch(finalUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.status}`);
+  }
+  return response.json();
+};
+
+// Create a client with default query function
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      queryFn: defaultQueryFn,
       refetchOnWindowFocus: false,
       retry: 1,
       staleTime: 5 * 60 * 1000, // 5 minutes

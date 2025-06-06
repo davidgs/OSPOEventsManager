@@ -36,6 +36,12 @@ export default function ApprovalWorkflowsPage() {
   // Fetch all workflows or filtered by status
   const { data: workflows, isLoading, error } = useQuery({
     queryKey: ['/api/approval-workflows', activeTab !== 'all' ? { status: activeTab } : {}],
+    queryFn: async () => {
+      const params = activeTab !== 'all' ? `?status=${activeTab}` : '';
+      const response = await fetch(`/api/approval-workflows${params}`);
+      if (!response.ok) throw new Error('Failed to fetch workflows');
+      return response.json();
+    },
     select: (data) => {
       // Further filter on client-side if needed
       if (activeTab === 'all') {
