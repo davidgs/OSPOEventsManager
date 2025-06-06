@@ -30,11 +30,10 @@ export const cfpStatuses = ["draft", "submitted", "accepted", "rejected", "withd
 export const cfpStatusSchema = z.enum(cfpStatuses);
 export type CFPStatus = z.infer<typeof cfpStatusSchema>;
 
-// Users table - matches actual database structure
+// Users table - matches actual database structure (Keycloak authentication only)
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull(),
-  password: text("password"),
   name: text("name"),
   email: text("email"),
   bio: text("bio"),
