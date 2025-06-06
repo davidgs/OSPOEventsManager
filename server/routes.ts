@@ -553,7 +553,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users/:id/headshot", async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
+      console.log("Headshot upload request for user ID:", id);
+      console.log("Request files:", req.files);
+      console.log("Request body:", req.body);
+      
       if (!id) {
+        console.log("No user ID provided");
         return res.status(400).json({ message: "Invalid user ID" });
       }
 
@@ -561,33 +566,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user;
       if (/^[0-9]+$/.test(id)) {
         // Numeric ID - use existing storage method
+        console.log("Numeric user ID detected, fetching from storage");
         user = await storage.getUser(parseInt(id));
       } else {
         // UUID or string ID - for Keycloak users, we'll create a basic user record
-        // In a real implementation, you might want to store additional profile data
+        console.log("UUID user ID detected (Keycloak user)");
         user = { id, name: 'Keycloak User', email: '', username: id };
       }
 
       if (!user) {
+        console.log("User not found");
         return res.status(404).json({ message: "User not found" });
       }
 
       if (!req.files || Object.keys(req.files).length === 0) {
+        console.log("No files uploaded");
         return res.status(400).json({ message: "No file was uploaded" });
       }
 
       // The name of the input field is "headshot"
       const headshotFile = req.files.headshot as fileUpload.UploadedFile;
       
+      if (!headshotFile) {
+        console.log("No headshot file found in request");
+        return res.status(400).json({ message: "No headshot file was uploaded" });
+      }
+      
+      console.log("Headshot file details:", {
+        name: headshotFile.name,
+        size: headshotFile.size,
+        mimetype: headshotFile.mimetype
+      });
+      
       // Validate file size (already capped by middleware but double-check)
       if (headshotFile.size > 10 * 1024 * 1024) {
+        console.log("File size too large:", headshotFile.size);
         return res.status(400).json({ message: "Headshot file size exceeds the 10MB limit" });
       }
 
       // Validate file type
       const fileExt = path.extname(headshotFile.name).toLowerCase();
       const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+      console.log("File extension:", fileExt);
+      
       if (!validExtensions.includes(fileExt)) {
+        console.log("Invalid file extension:", fileExt);
         return res.status(400).json({ message: "Invalid file type. Only JPG, PNG, and GIF are allowed" });
       }
 
