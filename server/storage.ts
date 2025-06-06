@@ -504,7 +504,7 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not initialized");
     const [workflow] = await db
       .update(approvalWorkflows)
-      .set({ status: status as any, updated_at: new Date() })
+      .set({ current_status: status as any, updated_at: new Date() })
       .where(eq(approvalWorkflows.id, id))
       .returning();
     return workflow;
@@ -515,7 +515,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(approvalWorkflows)
-      .where(eq(approvalWorkflows.status, status as any))
+      .where(eq(approvalWorkflows.current_status, status as any))
       .orderBy(desc(approvalWorkflows.created_at));
   }
 
@@ -690,7 +690,7 @@ export class DatabaseStorage implements IStorage {
 
   async createWorkflowHistory(insertWorkflowHistory: InsertWorkflowHistory): Promise<WorkflowHistory> {
     if (!db) throw new Error("Database not initialized");
-    const [history] = await db.insert(workflowHistory).values(insertWorkflowHistory).returning();
+    const [history] = await db.insert(workflowHistory).values([insertWorkflowHistory]).returning();
     return history;
   }
 }
