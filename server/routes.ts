@@ -515,8 +515,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Don't return the password
-      const { password, ...userWithoutPassword } = user;
+      // Don't return the password if it exists
+      const { password, ...userWithoutPassword } = user as any;
       res.json(userWithoutPassword);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user" });
@@ -542,8 +542,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Don't return the password
-      const { password, ...userWithoutPassword } = user;
+      // Don't return the password if it exists
+      const { password, ...userWithoutPassword } = user as any;
       res.json(userWithoutPassword);
     } catch (error) {
       res.status(500).json({ message: "Failed to update user profile" });
@@ -552,13 +552,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users/:id/headshot", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
+      const id = req.params.id;
+      if (!id) {
         return res.status(400).json({ message: "Invalid user ID" });
       }
 
-      // Check if user exists
-      const user = await storage.getUser(id);
+      // For Keycloak integration, we'll handle UUID strings as well as numeric IDs
+      let user;
+      if (/^[0-9]+$/.test(id)) {
+        // Numeric ID - use existing storage method
+        user = await storage.getUser(parseInt(id));
+      } else {
+        // UUID or string ID - for Keycloak users, we'll create a basic user record
+        // In a real implementation, you might want to store additional profile data
+        user = { id, name: 'Keycloak User', email: '', username: id };
+      }
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -591,10 +600,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update user profile with the headshot path
       const headshotUrl = `/uploads/${fileName}`;
-      const updatedUser = await storage.updateUserProfile(id, { headshot: headshotUrl });
+      
+      // For UUID users (Keycloak), we'll store the headshot info in a different way
+      // since they don't exist in our local user table
+      let updatedUser;
+      if (/^[0-9]+$/.test(id)) {
+        // Numeric ID - update in storage
+        updatedUser = await storage.updateUserProfile(parseInt(id), { headshot: headshotUrl });
+      } else {
+        // UUID - return the user info with headshot URL
+        // In a real implementation, you might store this in a separate profile table
+        updatedUser = { ...user, headshot: headshotUrl };
+      }
 
-      // Don't return the password
-      const { password, ...userWithoutPassword } = updatedUser!;
+      // Don't return the password if it exists
+      const { password, ...userWithoutPassword } = updatedUser as any;
       res.json({ 
         message: "Headshot uploaded successfully", 
         user: userWithoutPassword 
