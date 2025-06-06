@@ -860,7 +860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Add user information to response
-      const user = await storage.getUser(asset.uploadedBy);
+      const user = await storage.getUser(asset.uploaded_by);
       const enhancedAsset = {
         ...asset,
         uploadedByName: user ? user.name : 'Unknown User'
@@ -887,7 +887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Delete the file from the file system
-      const filePath = path.join(process.cwd(), 'public', asset.filePath);
+      const filePath = path.join(process.cwd(), 'public', asset.file_path);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }

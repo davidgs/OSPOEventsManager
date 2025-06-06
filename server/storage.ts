@@ -171,7 +171,7 @@ export class DatabaseStorage implements IStorage {
 
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
     if (!db) throw new Error("Database not initialized");
-    const [event] = await db.insert(events).values(insertEvent).returning();
+    const [event] = await db.insert(events).values([insertEvent]).returning();
     return event;
   }
 
@@ -214,7 +214,7 @@ export class DatabaseStorage implements IStorage {
 
   async createCfpSubmission(insertCfpSubmission: InsertCfpSubmission): Promise<CfpSubmission> {
     if (!db) throw new Error("Database not initialized");
-    const [cfpSubmission] = await db.insert(cfpSubmissions).values(insertCfpSubmission).returning();
+    const [cfpSubmission] = await db.insert(cfpSubmissions).values([insertCfpSubmission]).returning();
     return cfpSubmission;
   }
 
@@ -343,7 +343,7 @@ export class DatabaseStorage implements IStorage {
 
   async createAsset(insertAsset: InsertAsset): Promise<Asset> {
     if (!db) throw new Error("Database not initialized");
-    const [asset] = await db.insert(assets).values(insertAsset).returning();
+    const [asset] = await db.insert(assets).values([insertAsset]).returning();
     return asset;
   }
 
@@ -480,7 +480,7 @@ export class DatabaseStorage implements IStorage {
 
   async createApprovalWorkflow(insertApprovalWorkflow: InsertApprovalWorkflow): Promise<ApprovalWorkflow> {
     if (!db) throw new Error("Database not initialized");
-    const [workflow] = await db.insert(approvalWorkflows).values(insertApprovalWorkflow).returning();
+    const [workflow] = await db.insert(approvalWorkflows).values([insertApprovalWorkflow]).returning();
     return workflow;
   }
 
@@ -562,7 +562,7 @@ export class DatabaseStorage implements IStorage {
 
   async createWorkflowReviewer(insertWorkflowReviewer: InsertWorkflowReviewer): Promise<WorkflowReviewer> {
     if (!db) throw new Error("Database not initialized");
-    const [reviewer] = await db.insert(workflowReviewers).values(insertWorkflowReviewer).returning();
+    const [reviewer] = await db.insert(workflowReviewers).values([insertWorkflowReviewer]).returning();
     return reviewer;
   }
 
