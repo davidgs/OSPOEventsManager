@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/auth-context";
 import { Edit2, Camera, Save, X } from "lucide-react";
 
@@ -99,12 +99,18 @@ export default function ProfilePage() {
       const res = await apiRequest("POST", `/api/users/${user?.id}/headshot`, formData);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Profile photo updated",
         description: "Your profile photo has been successfully updated.",
       });
       setUploadingImage(false);
+      
+      // Invalidate and refetch profile data to show the new headshot
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}`] });
+      
+      // Also invalidate assets query to show the new asset
+      queryClient.invalidateQueries({ queryKey: ['/api/assets'] });
     },
     onError: (error: Error) => {
       toast({

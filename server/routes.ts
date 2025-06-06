@@ -612,23 +612,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update user profile with the headshot path
       const headshotUrl = `/uploads/${fileName}`;
       
-      // For UUID users (Keycloak), we'll store the headshot info in a different way
-      // since they don't exist in our local user table
+      // Create an asset record for the uploaded file
+      const assetData = {
+        name: headshotFile.name,
+        type: 'headshot' as const,
+        filePath: `/uploads/${fileName}`,
+        fileSize: headshotFile.size,
+        mimeType: headshotFile.mimetype,
+        uploadedBy: /^[0-9]+$/.test(id) ? parseInt(id) : 1, // Use 1 as fallback for Keycloak users
+        uploadedByName: user.name || user.username || 'Unknown User'
+      };
+
+      try {
+        await storage.createAsset(assetData);
+        console.log(`Created asset record for headshot: ${fileName}`);
+      } catch (assetError) {
+        console.error("Failed to create asset record:", assetError);
+        // Continue with headshot update even if asset creation fails
+      }
+      
+      // For UUID users (Keycloak), try to update their profile in the database
       let updatedUser;
       if (/^[0-9]+$/.test(id)) {
         // Numeric ID - update in storage
         updatedUser = await storage.updateUserProfile(parseInt(id), { headshot: headshotUrl });
       } else {
-        // UUID - return the user info with headshot URL
-        // In a real implementation, you might store this in a separate profile table
-        updatedUser = { ...user, headshot: headshotUrl };
+        // UUID - For Keycloak users, try to update or create a user record
+        try {
+          const existingUser = await storage.getUserByKeycloakId(id);
+          if (existingUser) {
+            updatedUser = await storage.updateUserProfile(existingUser.id, { headshot: headshotUrl });
+            console.log(`Updated headshot for existing Keycloak user: ${existingUser.id}`);
+          } else {
+            // Create a minimal user record for Keycloak user
+            const newUser = await storage.createUser({
+              keycloakId: id,
+              username: user.username || id,
+              name: user.name || undefined,
+              email: user.email || undefined,
+              headshot: headshotUrl
+            });
+            updatedUser = newUser;
+            console.log(`Created new user record for Keycloak user: ${newUser.id}`);
+          }
+        } catch (dbError) {
+          console.error("Failed to update user profile in database:", dbError);
+          // Fallback - return user info with headshot URL
+          updatedUser = { ...user, headshot: headshotUrl };
+        }
       }
 
       // Don't return the password if it exists
       const { password, ...userWithoutPassword } = updatedUser as any;
       res.json({ 
         message: "Headshot uploaded successfully", 
-        user: userWithoutPassword 
+        user: userWithoutPassword,
+        headshotUrl: headshotUrl
       });
     } catch (error) {
       console.error("Error uploading headshot:", error);
