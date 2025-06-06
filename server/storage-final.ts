@@ -86,8 +86,10 @@ export interface IStorage {
   // Workflow reviewer operations
   getWorkflowReviewers(): Promise<WorkflowReviewer[]>;
   getWorkflowReviewersByWorkflow(workflowId: number): Promise<WorkflowReviewer[]>;
+  getWorkflowReviewersByUser(userId: number): Promise<WorkflowReviewer[]>;
   createWorkflowReviewer(insertWorkflowReviewer: InsertWorkflowReviewer): Promise<WorkflowReviewer>;
   updateWorkflowReviewer(id: number, updates: Partial<InsertWorkflowReviewer>): Promise<WorkflowReviewer | undefined>;
+  updateWorkflowReviewerStatus(id: number, status: string): Promise<WorkflowReviewer | undefined>;
   deleteWorkflowReviewer(id: number): Promise<boolean>;
 
   // Workflow stakeholder operations
@@ -131,6 +133,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
+    if (!db) throw new Error("Database not initialized");
+    const [user] = await db
+      .update(users)
+      .set({ ...updates, updated_at: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUserProfile(id: number, updates: any): Promise<User | undefined> {
     if (!db) throw new Error("Database not initialized");
     const [user] = await db
       .update(users)
@@ -351,6 +363,33 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount! > 0;
   }
 
+  async getAssetsByEvent(eventId: number): Promise<Asset[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(assets)
+      .where(eq(assets.event_id, eventId))
+      .orderBy(desc(assets.uploaded_at));
+  }
+
+  async getAssetsByCfpSubmission(cfpSubmissionId: number): Promise<Asset[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(assets)
+      .where(eq(assets.cfp_submission_id, cfpSubmissionId))
+      .orderBy(desc(assets.uploaded_at));
+  }
+
+  async getAssetsByType(type: string): Promise<Asset[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(assets)
+      .where(eq(assets.type, type as any))
+      .orderBy(desc(assets.uploaded_at));
+  }
+
   // Stakeholder operations - using raw SQL to bypass schema issues
   async getStakeholders(): Promise<Stakeholder[]> {
     if (!db) throw new Error("Database not initialized");
@@ -416,6 +455,17 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount! > 0;
   }
 
+  async getStakeholdersByRole(role: string): Promise<Stakeholder[]> {
+    if (!db) throw new Error("Database not initialized");
+    const result = await db.execute(sql`
+      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at 
+      FROM stakeholders 
+      WHERE role = ${role}
+      ORDER BY name ASC
+    `);
+    return result.rows as Stakeholder[];
+  }
+
   // Approval workflow operations
   async getApprovalWorkflows(): Promise<ApprovalWorkflow[]> {
     if (!db) throw new Error("Database not initialized");
@@ -448,6 +498,52 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not initialized");
     const result = await db.delete(approvalWorkflows).where(eq(approvalWorkflows.id, id));
     return result.rowCount! > 0;
+  }
+
+  async updateApprovalWorkflowStatus(id: number, status: string): Promise<ApprovalWorkflow | undefined> {
+    if (!db) throw new Error("Database not initialized");
+    const [workflow] = await db
+      .update(approvalWorkflows)
+      .set({ status: status as any, updated_at: new Date() })
+      .where(eq(approvalWorkflows.id, id))
+      .returning();
+    return workflow;
+  }
+
+  async getApprovalWorkflowsByStatus(status: string): Promise<ApprovalWorkflow[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(eq(approvalWorkflows.status, status as any))
+      .orderBy(desc(approvalWorkflows.created_at));
+  }
+
+  async getApprovalWorkflowsByItem(itemType: string, itemId: number): Promise<ApprovalWorkflow[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(and(eq(approvalWorkflows.item_type, itemType as any), eq(approvalWorkflows.item_id, itemId)))
+      .orderBy(desc(approvalWorkflows.created_at));
+  }
+
+  async getApprovalWorkflowsByItemType(itemType: string): Promise<ApprovalWorkflow[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(eq(approvalWorkflows.item_type, itemType as any))
+      .orderBy(desc(approvalWorkflows.created_at));
+  }
+
+  async getApprovalWorkflowsByRequester(requesterId: number): Promise<ApprovalWorkflow[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(eq(approvalWorkflows.requester_id, requesterId))
+      .orderBy(desc(approvalWorkflows.created_at));
   }
 
   // Workflow reviewer operations
@@ -484,6 +580,24 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not initialized");
     const result = await db.delete(workflowReviewers).where(eq(workflowReviewers.id, id));
     return result.rowCount! > 0;
+  }
+
+  async getWorkflowReviewersByUser(userId: number): Promise<WorkflowReviewer[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(workflowReviewers)
+      .where(eq(workflowReviewers.user_id, userId));
+  }
+
+  async updateWorkflowReviewerStatus(id: number, status: string): Promise<WorkflowReviewer | undefined> {
+    if (!db) throw new Error("Database not initialized");
+    const [reviewer] = await db
+      .update(workflowReviewers)
+      .set({ status: status as any })
+      .where(eq(workflowReviewers.id, id))
+      .returning();
+    return reviewer;
   }
 
   // Workflow stakeholder operations

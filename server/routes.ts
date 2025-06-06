@@ -548,13 +548,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           // Create a new user record for this Keycloak user
           const newUser = await storage.createUser({
-            keycloakId: id,
+            keycloak_id: id,
             username: id,
             name: profileData.data.name ?? null,
             email: profileData.data.email ?? null,
             bio: profileData.data.bio ?? null,
             role: profileData.data.role ?? null,
-            jobTitle: profileData.data.jobTitle ?? null,
+            job_title: profileData.data.job_title ?? null,
             headshot: profileData.data.headshot ?? null,
             preferences: profileData.data.preferences ?? null
           });
@@ -682,7 +682,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } else {
             // Create a minimal user record for Keycloak user
             const newUser = await storage.createUser({
-              keycloakId: id,
+              keycloak_id: id,
               username: user.username || id,
               name: user.name || "Keycloak User",
               email: user.email || null,
