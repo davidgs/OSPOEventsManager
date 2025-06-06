@@ -652,11 +652,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assetData = {
         name: headshotFile.name,
         type: 'headshot' as const,
-        filePath: `/uploads/${fileName}`,
-        fileSize: headshotFile.size,
-        mimeType: headshotFile.mimetype,
-        uploadedBy: /^[0-9]+$/.test(id) ? parseInt(id) : 1, // Use 1 as fallback for Keycloak users
-        uploadedByName: user.name || user.username || 'Unknown User'
+        file_path: `/uploads/${fileName}`,
+        file_size: headshotFile.size,
+        mime_type: headshotFile.mimetype,
+        uploaded_by: /^[0-9]+$/.test(id) ? parseInt(id) : 1 // Use 1 as fallback for Keycloak users
       };
 
       try {
@@ -741,14 +740,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // For backward compatibility, ensure all assets have uploadedByName
       const enhancedAssets = await Promise.all(assets.map(async (asset) => {
-        if (!asset.uploadedByName) {
-          const user = await storage.getUser(asset.uploadedBy);
-          return {
-            ...asset,
-            uploadedByName: user ? user.name : 'Unknown User'
-          };
-        }
-        return asset;
+        const user = await storage.getUser(asset.uploaded_by);
+        return {
+          ...asset,
+          uploadedByName: user ? user.name : 'Unknown User'
+        };
       }));
       
       res.json(enhancedAssets);
