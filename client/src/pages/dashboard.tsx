@@ -58,7 +58,7 @@ const DashboardPage: FC = () => {
   // Calculate statistics
   const stats = {
     totalEvents: events.length,
-    upcomingEvents: events.filter((e: any) => new Date(e.startDate) > new Date()).length,
+    upcomingEvents: events.filter((e: any) => new Date(e.start_date) > new Date()).length,
     totalCfpSubmissions: cfpSubmissions.length,
     acceptedSubmissions: cfpSubmissions.filter((s: any) => s.status === 'accepted').length,
     totalAttendees: attendees.length,
@@ -68,12 +68,12 @@ const DashboardPage: FC = () => {
   // Get upcoming events (next 30 days)
   const upcomingEvents = events
     .filter((e: any) => {
-      const eventDate = new Date(e.startDate);
+      const eventDate = new Date(e.start_date);
       const now = new Date();
       const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
       return eventDate >= now && eventDate <= thirtyDaysFromNow;
     })
-    .sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+    .sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
     .slice(0, 5);
 
   // Get recent CFP submissions
@@ -85,13 +85,13 @@ const DashboardPage: FC = () => {
   // Get CFP deadlines approaching (next 14 days)
   const approachingDeadlines = events
     .filter((e: any) => {
-      if (!e.cfpDeadline) return false;
-      const deadline = new Date(e.cfpDeadline);
+      if (!e.cfp_deadline) return false;
+      const deadline = new Date(e.cfp_deadline);
       const now = new Date();
       const fourteenDaysFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
       return deadline >= now && deadline <= fourteenDaysFromNow;
     })
-    .sort((a: any, b: any) => new Date(a.cfpDeadline).getTime() - new Date(b.cfpDeadline).getTime());
+    .sort((a: any, b: any) => new Date(a.cfp_deadline).getTime() - new Date(b.cfp_deadline).getTime());
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -180,7 +180,7 @@ const DashboardPage: FC = () => {
                       <h4 className="font-medium">{event.name}</h4>
                       <p className="text-sm text-gray-600">{event.location}</p>
                       <p className="text-xs text-gray-500">
-                        {format(new Date(event.startDate), "MMM d, yyyy")}
+                        {format(new Date(event.start_date), "MMM d, yyyy")}
                       </p>
                     </div>
                     <Badge className={
@@ -215,7 +215,7 @@ const DashboardPage: FC = () => {
                     <div>
                       <h4 className="font-medium">{event.name}</h4>
                       <p className="text-sm text-gray-600">
-                        Deadline: {format(new Date(event.cfpDeadline), "MMM d, yyyy")}
+                        Deadline: {format(new Date(event.cfp_deadline), "MMM d, yyyy")}
                       </p>
                     </div>
                     <Clock className="h-4 w-4 text-orange-500" />

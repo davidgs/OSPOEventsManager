@@ -31,9 +31,9 @@ const formSchema = z.object({
   priority: z.enum(eventPriorities),
   type: z.enum(eventTypes),
   goal: z.array(z.enum(eventGoals)).min(1, "Select at least one goal"),
-  startDate: z.date({ required_error: "Start date is required" }),
-  endDate: z.date({ required_error: "End date is required" }),
-  cfpDeadline: z.date().optional().nullable(),
+  start_date: z.date({ required_error: "Start date is required" }),
+  end_date: z.date({ required_error: "End date is required" }),
+  cfp_deadline: z.date().optional().nullable(),
   notes: z.string().optional(),
 });
 
@@ -60,9 +60,9 @@ const AddEventModal: FC<AddEventModalProps> = ({
     // Convert Date objects to ISO strings for API submission
     const formattedData = {
       ...data,
-      startDate: data.startDate.toISOString().split('T')[0],
-      endDate: data.endDate.toISOString().split('T')[0],
-      cfpDeadline: data.cfpDeadline ? data.cfpDeadline.toISOString().split('T')[0] : null,
+      start_date: data.start_date.toISOString().split('T')[0],
+      end_date: data.end_date.toISOString().split('T')[0],
+      cfp_deadline: data.cfp_deadline ? data.cfp_deadline.toISOString().split('T')[0] : null,
     };
     
     onSubmit(formattedData);
@@ -302,7 +302,7 @@ const AddEventModal: FC<AddEventModalProps> = ({
               {/* CFP Deadline */}
               <FormField
                 control={form.control}
-                name="cfpDeadline"
+                name="cfp_deadline"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
                     <FormLabel>CFP Deadline</FormLabel>

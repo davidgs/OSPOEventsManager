@@ -101,9 +101,9 @@ const EventCard: FC<EventCardProps> = ({
 
   // Check if this event has a CFP deadline that's coming soon (within the next 7 days)
   const hasCfpDeadlineSoon = () => {
-    if (!event.cfpDeadline) return false;
+    if (!event.cfp_deadline) return false;
     
-    const deadline = new Date(event.cfpDeadline);
+    const deadline = new Date(event.cfp_deadline);
     const now = new Date();
     const diffTime = deadline.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -113,9 +113,9 @@ const EventCard: FC<EventCardProps> = ({
 
   // Calculate days left for CFP deadline
   const getDaysLeftForCfp = () => {
-    if (!event.cfpDeadline) return 0;
+    if (!event.cfp_deadline) return 0;
     
-    const deadline = new Date(event.cfpDeadline);
+    const deadline = new Date(event.cfp_deadline);
     const now = new Date();
     const diffTime = deadline.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -160,7 +160,7 @@ const EventCard: FC<EventCardProps> = ({
         <div className="flex items-center text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3">
           <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 mr-1 flex-shrink-0" />
           <span className="truncate">
-            {format(new Date(event.startDate), "MMM d, yyyy")} - {format(new Date(event.endDate), "MMM d, yyyy")}
+            {format(new Date(event.start_date), "MMM d, yyyy")} - {format(new Date(event.end_date), "MMM d, yyyy")}
           </span>
         </div>
         
@@ -168,7 +168,7 @@ const EventCard: FC<EventCardProps> = ({
           <div className="bg-yellow-50 p-2 rounded mb-2 sm:mb-3">
             <div className="flex text-xs sm:text-sm text-yellow-800">
               <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-600 mr-1 sm:mr-2 flex-shrink-0" />
-              <span className="break-words">CFP Deadline: <strong>{format(new Date(event.cfpDeadline!), "MMM d, yyyy")} ({getDaysLeftForCfp()} days left)</strong></span>
+              <span className="break-words">CFP Deadline: <strong>{format(new Date(event.cfp_deadline!), "MMM d, yyyy")} ({getDaysLeftForCfp()} days left)</strong></span>
             </div>
           </div>
         )}
