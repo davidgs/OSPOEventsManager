@@ -73,14 +73,45 @@ export async function initializeDatabase(): Promise<boolean> {
       console.log("Link column already exists or other constraint issue");
     }
     
-    // Remove the default after adding the column
     try {
       await pool.query(`
         ALTER TABLE events 
-        ALTER COLUMN link DROP DEFAULT
+        ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'medium'
+      `);
+      console.log("✅ Added priority column to events table if missing");
+    } catch (error) {
+      console.log("Priority column already exists or other constraint issue");
+    }
+    
+    try {
+      await pool.query(`
+        ALTER TABLE events 
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      `);
+      console.log("✅ Added created_at column to events table if missing");
+    } catch (error) {
+      console.log("Created_at column already exists or other constraint issue");
+    }
+    
+    try {
+      await pool.query(`
+        ALTER TABLE events 
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      `);
+      console.log("✅ Added updated_at column to events table if missing");
+    } catch (error) {
+      console.log("Updated_at column already exists or other constraint issue");
+    }
+    
+    // Remove the defaults after adding the columns
+    try {
+      await pool.query(`
+        ALTER TABLE events 
+        ALTER COLUMN link DROP DEFAULT,
+        ALTER COLUMN priority DROP DEFAULT
       `);
     } catch (error) {
-      // Ignore if column doesn't have default
+      // Ignore if columns don't have defaults
     }
     
     console.log("✅ Events table initialized");
