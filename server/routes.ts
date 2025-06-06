@@ -549,8 +549,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Create a new user record for this Keycloak user
           const newUser = await storage.createUser({
             keycloakId: id,
-            username: id, // Will be updated with real data later
-            ...profileData.data
+            username: id,
+            name: profileData.data.name || "Keycloak User",
+            email: profileData.data.email || null,
+            bio: profileData.data.bio || null,
+            role: profileData.data.role || null,
+            jobTitle: profileData.data.jobTitle || null,
+            headshot: profileData.data.headshot || null,
+            preferences: profileData.data.preferences || null
           });
           user = newUser;
         }
@@ -678,8 +684,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const newUser = await storage.createUser({
               keycloakId: id,
               username: user.username || id,
-              name: user.name || undefined,
-              email: user.email || undefined,
+              name: user.name || "Keycloak User",
+              email: user.email || null,
               headshot: headshotUrl
             });
             updatedUser = newUser;

@@ -52,7 +52,7 @@ export async function initializeDatabase(): Promise<boolean> {
       )
     `);
     
-    // Add missing columns to users table if they don't exist
+    // Add missing columns to users table if they don't exist and fix constraints
     try {
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT`);
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS job_title TEXT`);
@@ -60,9 +60,14 @@ export async function initializeDatabase(): Promise<boolean> {
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT`);
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences TEXT`);
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP`);
-      console.log("✅ Added missing columns to users table");
+      
+      // Remove NOT NULL constraints from optional columns
+      await pool.query(`ALTER TABLE users ALTER COLUMN email DROP NOT NULL`);
+      await pool.query(`ALTER TABLE users ALTER COLUMN name DROP NOT NULL`);
+      
+      console.log("✅ Added missing columns to users table and fixed constraints");
     } catch (error) {
-      console.log("Users table columns already exist");
+      console.log("Users table columns already exist or constraints already correct");
     }
     
     console.log("✅ Users table initialized");

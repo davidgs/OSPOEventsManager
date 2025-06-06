@@ -1,0 +1,49 @@
+ospo-app-1  | Headshot upload request for user ID: fb0a232a-d592-45c8-a05f-1850e1ceb265
+ospo-app-1  | Request files: [Object: null prototype] {
+ospo-app-1  |   headshot: {
+ospo-app-1  |     name: 'Simmons_David-18-SM.jpg',
+ospo-app-1  |     data: <Buffer >,
+ospo-app-1  |     size: 614526,
+ospo-app-1  |     encoding: '7bit',
+ospo-app-1  |     tempFilePath: '/tmp/tmp-1-1749230523456',
+ospo-app-1  |     truncated: false,
+ospo-app-1  |     mimetype: 'image/jpeg',
+ospo-app-1  |     md5: '94d86b9891c5561504f639a4be0dd453',
+ospo-app-1  |     mv: [Function: mv]
+ospo-app-1  |   }
+ospo-app-1  | }
+ospo-app-1  | Request body: {}
+ospo-app-1  | UUID user ID detected (Keycloak user)
+ospo-app-1  | Headshot file details: {
+ospo-app-1  |   name: 'Simmons_David-18-SM.jpg',
+ospo-app-1  |   size: 614526,
+ospo-app-1  |   mimetype: 'image/jpeg'
+ospo-app-1  | }
+ospo-app-1  | File extension: .jpg
+ospo-app-1  | Created asset record for headshot: user_fb0a232a-d592-45c8-a05f-1850e1ceb265_1749230523462.jpg
+ospo-app-1  | Failed to update user profile in database: error: null value in column "email" of relation "users" violates not-null constraint
+ospo-app-1  |     at /app/node_modules/pg-pool/index.js:45:11
+ospo-app-1  |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+ospo-app-1  |     at async <anonymous> (/app/node_modules/src/node-postgres/session.ts:104:19)
+ospo-app-1  |     at async DatabaseStorage.createUser (/app/server/storage.ts:1321:20)
+ospo-app-1  |     at async <anonymous> (/app/server/routes.ts:678:29) {
+ospo-app-1  |   length: 447,
+ospo-app-1  |   severity: 'ERROR',
+ospo-app-1  |   code: '23502',
+ospo-app-1  |   detail: 'Failing row contains (2, fb0a232a-d592-45c8-a05f-1850e1ceb265, fb0a232a-d592-45c8-a05f-1850e1ceb265, Keycloak User, null, null, null, 2025-06-06 17:22:03.477963, 2025-06-06 17:22:03.477963, null, /uploads/user_fb0a232a-d592-45c8-a05f-1850e1ceb265_1749230523462..., null, null, null).',
+ospo-app-1  |   hint: undefined,
+ospo-app-1  |   position: undefined,
+ospo-app-1  |   internalPosition: undefined,
+ospo-app-1  |   internalQuery: undefined,
+ospo-app-1  |   where: undefined,
+ospo-app-1  |   schema: 'public',
+ospo-app-1  |   table: 'users',
+ospo-app-1  |   column: 'email',
+ospo-app-1  |   dataType: undefined,
+ospo-app-1  |   constraint: undefined,
+ospo-app-1  |   file: 'execMain.c',
+ospo-app-1  |   line: '1972',
+ospo-app-1  |   routine: 'ExecConstraints'
+ospo-app-1  | }
+ospo-app-1  | 5:22:03 PM [express] POST /api/users/fb0a232a-d592-45c8-a05f-1850e1ceb265/headshot 200 in 33ms :: {"…
+ospo-app-1  | 5:22:03 PM [express] GET /api/users/fb0a232a-d592-45c8-a05f-1850e1ceb265 404 in 6ms :: {"message":"U…
