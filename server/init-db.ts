@@ -58,7 +58,9 @@ export async function initializeDatabase(): Promise<boolean> {
         cfp_deadline TEXT,
         notes TEXT,
         created_by_id INTEGER,
-        status TEXT NOT NULL DEFAULT 'planning'
+        status TEXT NOT NULL DEFAULT 'planning',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
     
