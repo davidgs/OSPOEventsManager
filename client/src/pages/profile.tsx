@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,9 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/auth-context";
-import { User } from "@shared/schema";
 import { Edit2, Camera, Save, X } from "lucide-react";
 
 const profileSchema = z.object({
@@ -37,42 +36,43 @@ const roleOptions = [
 ];
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, authenticated } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-
-  const { data: profile, isLoading } = useQuery<User>({
-    queryKey: ["/api/users", user?.id],
-    enabled: !!user?.id,
-  });
+  const [additionalData, setAdditionalData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: profile?.name || "",
-      email: profile?.email || "",
-      bio: profile?.bio || "",
-      jobTitle: profile?.jobTitle || "",
-      role: profile?.role || "",
+      name: "",
+      email: "",
+      bio: "",
+      jobTitle: "",
+      role: "",
     },
   });
 
-  // Reset form when profile data loads
-  React.useEffect(() => {
-    if (profile) {
+  // Load user data from Keycloak and any additional profile data
+  useEffect(() => {
+    if (authenticated && user) {
+      // Set form values from Keycloak data
       form.reset({
-        name: profile.name || "",
-        email: profile.email || "",
-        bio: profile.bio || "",
-        jobTitle: profile.jobTitle || "",
-        role: profile.role || "",
+        name: user.name || user.firstName || user.username || "",
+        email: user.email || "",
+        bio: additionalData?.bio || "",
+        jobTitle: additionalData?.jobTitle || "",
+        role: additionalData?.role || "",
       });
+      setIsLoading(false);
     }
-  }, [profile, form]);
+  }, [user, authenticated, additionalData, form]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
+      // Store additional profile data (bio, jobTitle, role) in local storage or send to backend
+      setAdditionalData(data);
       const res = await apiRequest("PUT", `/api/users/${user?.id}/profile`, data);
       return res.json();
     },
@@ -81,7 +81,6 @@ export default function ProfilePage() {
         title: "Profile updated",
         description: "Your profile has been successfully updated.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id] });
       setIsEditing(false);
     },
     onError: (error: Error) => {
@@ -105,7 +104,6 @@ export default function ProfilePage() {
         title: "Profile photo updated",
         description: "Your profile photo has been successfully updated.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/users", user?.id] });
       setUploadingImage(false);
     },
     onError: (error: Error) => {
@@ -139,7 +137,7 @@ export default function ProfilePage() {
       .substring(0, 2);
   };
 
-  if (isLoading) {
+  if (isLoading || !authenticated) {
     return (
       <div className="container mx-auto py-8 px-4 max-w-2xl">
         <div className="animate-pulse space-y-4">
@@ -154,18 +152,33 @@ export default function ProfilePage() {
     );
   }
 
-  if (!profile) {
+  if (!user) {
     return (
       <div className="container mx-auto py-8 px-4 max-w-2xl">
         <Card>
           <CardContent className="p-8 text-center">
             <h2 className="text-lg font-medium mb-2">Profile not found</h2>
-            <p className="text-muted-foreground">Unable to load your profile information.</p>
+            <p className="text-muted-foreground">Please log in to view your profile information.</p>
           </CardContent>
         </Card>
       </div>
     );
   }
+
+  // Create a profile object from Keycloak data and additional data
+  const profile = {
+    id: user.id,
+    username: user.username,
+    name: user.name || user.firstName || user.username,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    bio: additionalData?.bio || "",
+    jobTitle: additionalData?.jobTitle || "",
+    role: additionalData?.role || "",
+    headshot: additionalData?.headshot || "",
+    createdAt: null, // Keycloak doesn't provide creation date
+  };
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
