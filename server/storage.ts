@@ -10,7 +10,7 @@ import {
   type InsertWorkflowHistory
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -18,6 +18,7 @@ export interface IStorage {
   getUserByKeycloakId(keycloakId: string): Promise<User | undefined>;
   createUser(insertUser: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
+  updateUserProfile(id: number, updates: any): Promise<User | undefined>;
   getUsers(): Promise<User[]>;
 
   // Event operations
@@ -54,6 +55,9 @@ export interface IStorage {
   // Asset operations
   getAssets(): Promise<Asset[]>;
   getAssetsByUser(userId: number): Promise<Asset[]>;
+  getAssetsByEvent(eventId: number): Promise<Asset[]>;
+  getAssetsByCfpSubmission(cfpSubmissionId: number): Promise<Asset[]>;
+  getAssetsByType(type: string): Promise<Asset[]>;
   getAsset(id: number): Promise<Asset | undefined>;
   createAsset(insertAsset: InsertAsset): Promise<Asset>;
   updateAsset(id: number, updates: Partial<InsertAsset>): Promise<Asset | undefined>;
@@ -65,19 +69,27 @@ export interface IStorage {
   createStakeholder(insertStakeholder: InsertStakeholder): Promise<Stakeholder>;
   updateStakeholder(id: number, updates: Partial<InsertStakeholder>): Promise<Stakeholder | undefined>;
   deleteStakeholder(id: number): Promise<boolean>;
+  getStakeholdersByRole(role: string): Promise<Stakeholder[]>;
 
   // Approval workflow operations
   getApprovalWorkflows(): Promise<ApprovalWorkflow[]>;
   getApprovalWorkflow(id: number): Promise<ApprovalWorkflow | undefined>;
   createApprovalWorkflow(insertApprovalWorkflow: InsertApprovalWorkflow): Promise<ApprovalWorkflow>;
   updateApprovalWorkflow(id: number, updates: Partial<InsertApprovalWorkflow>): Promise<ApprovalWorkflow | undefined>;
+  updateApprovalWorkflowStatus(id: number, status: string): Promise<ApprovalWorkflow | undefined>;
   deleteApprovalWorkflow(id: number): Promise<boolean>;
+  getApprovalWorkflowsByStatus(status: string): Promise<ApprovalWorkflow[]>;
+  getApprovalWorkflowsByItem(itemType: string, itemId: number): Promise<ApprovalWorkflow[]>;
+  getApprovalWorkflowsByItemType(itemType: string): Promise<ApprovalWorkflow[]>;
+  getApprovalWorkflowsByRequester(requesterId: number): Promise<ApprovalWorkflow[]>;
 
   // Workflow reviewer operations
   getWorkflowReviewers(): Promise<WorkflowReviewer[]>;
   getWorkflowReviewersByWorkflow(workflowId: number): Promise<WorkflowReviewer[]>;
+  getWorkflowReviewersByUser(userId: number): Promise<WorkflowReviewer[]>;
   createWorkflowReviewer(insertWorkflowReviewer: InsertWorkflowReviewer): Promise<WorkflowReviewer>;
   updateWorkflowReviewer(id: number, updates: Partial<InsertWorkflowReviewer>): Promise<WorkflowReviewer | undefined>;
+  updateWorkflowReviewerStatus(id: number, status: string): Promise<WorkflowReviewer | undefined>;
   deleteWorkflowReviewer(id: number): Promise<boolean>;
 
   // Workflow stakeholder operations
@@ -121,6 +133,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
+    if (!db) throw new Error("Database not initialized");
+    const [user] = await db
+      .update(users)
+      .set({ ...updates, updated_at: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUserProfile(id: number, updates: any): Promise<User | undefined> {
     if (!db) throw new Error("Database not initialized");
     const [user] = await db
       .update(users)
@@ -341,38 +363,107 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount! > 0;
   }
 
-  // Stakeholder operations
+  async getAssetsByEvent(eventId: number): Promise<Asset[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(assets)
+      .where(eq(assets.event_id, eventId))
+      .orderBy(desc(assets.uploaded_at));
+  }
+
+  async getAssetsByCfpSubmission(cfpSubmissionId: number): Promise<Asset[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(assets)
+      .where(eq(assets.cfp_submission_id, cfpSubmissionId))
+      .orderBy(desc(assets.uploaded_at));
+  }
+
+  async getAssetsByType(type: string): Promise<Asset[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(assets)
+      .where(eq(assets.type, type as any))
+      .orderBy(desc(assets.uploaded_at));
+  }
+
+  // Stakeholder operations - using raw SQL to bypass schema issues
   async getStakeholders(): Promise<Stakeholder[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(stakeholders).orderBy(asc(stakeholders.name));
+    // Use raw SQL to avoid schema issues
+    const result = await db.execute(sql`
+      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at 
+      FROM stakeholders 
+      ORDER BY name ASC
+    `);
+    return result.rows as Stakeholder[];
   }
 
   async getStakeholder(id: number): Promise<Stakeholder | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const [stakeholder] = await db.select().from(stakeholders).where(eq(stakeholders.id, id));
-    return stakeholder;
+    const result = await db.execute(sql`
+      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at 
+      FROM stakeholders 
+      WHERE id = ${id}
+    `);
+    return result.rows[0] as Stakeholder | undefined;
   }
 
   async createStakeholder(insertStakeholder: InsertStakeholder): Promise<Stakeholder> {
     if (!db) throw new Error("Database not initialized");
-    const [stakeholder] = await db.insert(stakeholders).values(insertStakeholder).returning();
-    return stakeholder;
+    const result = await db.execute(sql`
+      INSERT INTO stakeholders (user_id, name, email, role, department, organization, notes)
+      VALUES (${insertStakeholder.user_id}, ${insertStakeholder.name}, ${insertStakeholder.email}, 
+              ${insertStakeholder.role}, ${insertStakeholder.department}, ${insertStakeholder.organization}, 
+              ${insertStakeholder.notes})
+      RETURNING id, user_id, name, email, role, department, organization, notes, created_at, updated_at
+    `);
+    return result.rows[0] as Stakeholder;
   }
 
   async updateStakeholder(id: number, updates: Partial<InsertStakeholder>): Promise<Stakeholder | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const [stakeholder] = await db
-      .update(stakeholders)
-      .set({ ...updates, updated_at: new Date() })
-      .where(eq(stakeholders.id, id))
-      .returning();
-    return stakeholder;
+    const setParts = [];
+    const values = [];
+    
+    if (updates.user_id !== undefined) { setParts.push('user_id = $' + (values.length + 1)); values.push(updates.user_id); }
+    if (updates.name !== undefined) { setParts.push('name = $' + (values.length + 1)); values.push(updates.name); }
+    if (updates.email !== undefined) { setParts.push('email = $' + (values.length + 1)); values.push(updates.email); }
+    if (updates.role !== undefined) { setParts.push('role = $' + (values.length + 1)); values.push(updates.role); }
+    if (updates.department !== undefined) { setParts.push('department = $' + (values.length + 1)); values.push(updates.department); }
+    if (updates.organization !== undefined) { setParts.push('organization = $' + (values.length + 1)); values.push(updates.organization); }
+    if (updates.notes !== undefined) { setParts.push('notes = $' + (values.length + 1)); values.push(updates.notes); }
+    
+    setParts.push('updated_at = NOW()');
+    values.push(id);
+    
+    const result = await db.execute(sql`
+      UPDATE stakeholders 
+      SET ${sql.raw(setParts.join(', '))}
+      WHERE id = $${values.length}
+      RETURNING id, user_id, name, email, role, department, organization, notes, created_at, updated_at
+    `);
+    return result.rows[0] as Stakeholder | undefined;
   }
 
   async deleteStakeholder(id: number): Promise<boolean> {
     if (!db) throw new Error("Database not initialized");
-    const result = await db.delete(stakeholders).where(eq(stakeholders.id, id));
+    const result = await db.execute(sql`DELETE FROM stakeholders WHERE id = ${id}`);
     return result.rowCount! > 0;
+  }
+
+  async getStakeholdersByRole(role: string): Promise<Stakeholder[]> {
+    if (!db) throw new Error("Database not initialized");
+    const result = await db.execute(sql`
+      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at 
+      FROM stakeholders 
+      WHERE role = ${role}
+      ORDER BY name ASC
+    `);
+    return result.rows as Stakeholder[];
   }
 
   // Approval workflow operations
@@ -409,6 +500,52 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount! > 0;
   }
 
+  async updateApprovalWorkflowStatus(id: number, status: string): Promise<ApprovalWorkflow | undefined> {
+    if (!db) throw new Error("Database not initialized");
+    const [workflow] = await db
+      .update(approvalWorkflows)
+      .set({ status: status as any, updated_at: new Date() })
+      .where(eq(approvalWorkflows.id, id))
+      .returning();
+    return workflow;
+  }
+
+  async getApprovalWorkflowsByStatus(status: string): Promise<ApprovalWorkflow[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(eq(approvalWorkflows.status, status as any))
+      .orderBy(desc(approvalWorkflows.created_at));
+  }
+
+  async getApprovalWorkflowsByItem(itemType: string, itemId: number): Promise<ApprovalWorkflow[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(and(eq(approvalWorkflows.item_type, itemType as any), eq(approvalWorkflows.item_id, itemId)))
+      .orderBy(desc(approvalWorkflows.created_at));
+  }
+
+  async getApprovalWorkflowsByItemType(itemType: string): Promise<ApprovalWorkflow[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(eq(approvalWorkflows.item_type, itemType as any))
+      .orderBy(desc(approvalWorkflows.created_at));
+  }
+
+  async getApprovalWorkflowsByRequester(requesterId: number): Promise<ApprovalWorkflow[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(approvalWorkflows)
+      .where(eq(approvalWorkflows.requester_id, requesterId))
+      .orderBy(desc(approvalWorkflows.created_at));
+  }
+
   // Workflow reviewer operations
   async getWorkflowReviewers(): Promise<WorkflowReviewer[]> {
     if (!db) throw new Error("Database not initialized");
@@ -443,6 +580,24 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not initialized");
     const result = await db.delete(workflowReviewers).where(eq(workflowReviewers.id, id));
     return result.rowCount! > 0;
+  }
+
+  async getWorkflowReviewersByUser(userId: number): Promise<WorkflowReviewer[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(workflowReviewers)
+      .where(eq(workflowReviewers.user_id, userId));
+  }
+
+  async updateWorkflowReviewerStatus(id: number, status: string): Promise<WorkflowReviewer | undefined> {
+    if (!db) throw new Error("Database not initialized");
+    const [reviewer] = await db
+      .update(workflowReviewers)
+      .set({ status: status as any })
+      .where(eq(workflowReviewers.id, id))
+      .returning();
+    return reviewer;
   }
 
   // Workflow stakeholder operations

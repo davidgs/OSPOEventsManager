@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage-final";
+import { storage } from "./storage";
 import { 
   insertEventSchema, insertCfpSubmissionSchema, 
   insertAttendeeSchema, insertSponsorshipSchema,
@@ -767,7 +767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Add user information
-      const user = await storage.getUser(asset.uploadedBy);
+      const user = await storage.getUser(asset.uploaded_by);
       const enhancedAsset = {
         ...asset,
         uploadedByName: user ? user.name : 'Unknown User'
@@ -814,19 +814,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assetData = {
         name,
         type: type as any,
-        filePath: publicPath,
-        fileSize: file.size,
-        mimeType: file.mimetype,
-        uploadedBy: parseInt(uploadedBy as string),
-        eventId: eventId ? parseInt(eventId as string) : null,
-        cfpSubmissionId: cfpSubmissionId ? parseInt(cfpSubmissionId as string) : null,
-        description: description || null
+        file_path: publicPath,
+        file_size: file.size,
+        mime_type: file.mimetype,
+        uploaded_by: parseInt(uploadedBy as string),
+        event_id: eventId ? parseInt(eventId as string) : null,
+        cfp_submission_id: cfpSubmissionId ? parseInt(cfpSubmissionId as string) : null
       };
 
       const asset = await storage.createAsset(assetData);
       
       // Add user information to the response
-      const user = await storage.getUser(asset.uploadedBy);
+      const user = await storage.getUser(asset.uploaded_by);
       const enhancedAsset = {
         ...asset,
         uploadedByName: user ? user.name : 'Unknown User'
