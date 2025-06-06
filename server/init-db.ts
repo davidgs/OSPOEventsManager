@@ -18,6 +18,16 @@ export async function initializeDatabase(): Promise<boolean> {
   try {
     await pool.query('SELECT NOW()');
     console.log("✅ Database connection test successful");
+    
+    // Check what columns exist in events table
+    const result = await pool.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'events' 
+      ORDER BY ordinal_position;
+    `);
+    
+    console.log("Current events table columns:", result.rows);
   } catch (error) {
     console.error("❌ Database connection test failed:", error);
     return false;
@@ -113,6 +123,36 @@ export async function initializeDatabase(): Promise<boolean> {
       console.log("✅ Added goal column to events table if missing");
     } catch (error) {
       console.log("Goal column already exists or other constraint issue");
+    }
+    
+    try {
+      await pool.query(`
+        ALTER TABLE events 
+        ADD COLUMN IF NOT EXISTS cfp_deadline TEXT
+      `);
+      console.log("✅ Added cfp_deadline column to events table if missing");
+    } catch (error) {
+      console.log("cfp_deadline column already exists or other constraint issue");
+    }
+    
+    try {
+      await pool.query(`
+        ALTER TABLE events 
+        ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'conference'
+      `);
+      console.log("✅ Added type column to events table if missing");
+    } catch (error) {
+      console.log("Type column already exists or other constraint issue");
+    }
+    
+    try {
+      await pool.query(`
+        ALTER TABLE events 
+        ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'planning'
+      `);
+      console.log("✅ Added status column to events table if missing");
+    } catch (error) {
+      console.log("Status column already exists or other constraint issue");
     }
     
     // Remove the defaults after adding the columns
