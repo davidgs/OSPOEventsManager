@@ -71,12 +71,16 @@ export async function apiRequest(
   // Determine if we should include auth headers
   const authHeaders = getAuthHeaders();
   
-  // Prepare headers
+  // Prepare headers - don't set Content-Type for FormData
   const headers = {
-    'Content-Type': 'application/json',
     ...authHeaders,
     ...options.headers,
   };
+  
+  // Only set Content-Type to application/json if data is not FormData
+  if (data && !(data instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
   
   // Prepare request options
   const requestOptions: RequestInit = {
@@ -87,7 +91,11 @@ export async function apiRequest(
   
   // Add body for non-GET requests
   if (method !== 'GET' && data) {
-    requestOptions.body = JSON.stringify(data);
+    if (data instanceof FormData) {
+      requestOptions.body = data;
+    } else {
+      requestOptions.body = JSON.stringify(data);
+    }
   }
   
   // Make the request
