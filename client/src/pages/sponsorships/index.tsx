@@ -73,8 +73,8 @@ const SponsorshipsPage: FC = () => {
     queryKey: ['/api/events'],
   });
   
-  // Extract unique levels and statuses for filters
-  const levels = Array.from(new Set(sponsorships.map((sponsorship: any) => sponsorship.level)));
+  // Extract unique tiers and statuses for filters
+  const tiers = Array.from(new Set(sponsorships.map((sponsorship: any) => sponsorship.tier)));
   const statuses = Array.from(new Set(sponsorships.map((sponsorship: any) => sponsorship.status)));
   
   // Add sponsorship mutation
@@ -125,12 +125,13 @@ const SponsorshipsPage: FC = () => {
   const form = useForm<z.infer<typeof insertSponsorshipSchema>>({
     resolver: zodResolver(insertSponsorshipSchema),
     defaultValues: {
-      eventId: eventId || undefined,
-      level: "",
+      event_id: eventId || undefined,
+      sponsor_name: "",
+      tier: "",
       amount: "",
       status: "pending",
-      contactName: "",
-      contactEmail: "",
+      contact_name: "",
+      contact_email: "",
       notes: "",
     },
   });
@@ -271,13 +272,13 @@ const SponsorshipsPage: FC = () => {
                 onValueChange={setLevelFilter}
               >
                 <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="All Levels" />
+                  <SelectValue placeholder="All Tiers" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  {levels.map((level) => (
-                    <SelectItem key={level} value={level}>
-                      {level}
+                  <SelectItem value="all">All Tiers</SelectItem>
+                  {tiers.map((tier) => (
+                    <SelectItem key={tier} value={tier}>
+                      {tier}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -482,7 +483,7 @@ const SponsorshipsPage: FC = () => {
               {!eventId && (
                 <FormField
                   control={form.control}
-                  name="eventId"
+                  name="event_id"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Event <span className="text-red-500">*</span></FormLabel>
@@ -512,7 +513,7 @@ const SponsorshipsPage: FC = () => {
               {/* Level */}
               <FormField
                 control={form.control}
-                name="level"
+                name="tier"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Sponsorship Level <span className="text-red-500">*</span></FormLabel>
@@ -569,7 +570,7 @@ const SponsorshipsPage: FC = () => {
               {/* Contact Name */}
               <FormField
                 control={form.control}
-                name="contactName"
+                name="contact_name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Contact Name</FormLabel>
@@ -587,7 +588,7 @@ const SponsorshipsPage: FC = () => {
               {/* Contact Email */}
               <FormField
                 control={form.control}
-                name="contactEmail"
+                name="contact_email"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Contact Email</FormLabel>

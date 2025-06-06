@@ -242,14 +242,47 @@ export async function initializeDatabase(): Promise<boolean> {
       CREATE TABLE IF NOT EXISTS sponsorships (
         id SERIAL PRIMARY KEY,
         event_id INTEGER NOT NULL,
-        level TEXT NOT NULL,
+        sponsor_name TEXT NOT NULL,
+        tier TEXT NOT NULL,
         amount TEXT,
-        status TEXT NOT NULL,
-        contact_name TEXT,
         contact_email TEXT,
-        notes TEXT
+        contact_name TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
+    
+    // Add missing columns to existing sponsorships table if they don't exist
+    try {
+      await pool.query(`
+        ALTER TABLE sponsorships 
+        ADD COLUMN IF NOT EXISTS sponsor_name TEXT,
+        ADD COLUMN IF NOT EXISTS tier TEXT,
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW(),
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()
+      `);
+      
+      // Update any existing records to have default values
+      await pool.query(`
+        UPDATE sponsorships 
+        SET sponsor_name = COALESCE(sponsor_name, 'Unknown Sponsor'),
+            tier = COALESCE(tier, level, 'Standard'),
+            created_at = COALESCE(created_at, NOW()),
+            updated_at = COALESCE(updated_at, NOW())
+        WHERE sponsor_name IS NULL OR tier IS NULL OR created_at IS NULL OR updated_at IS NULL
+      `);
+      
+      // Make sponsor_name and tier NOT NULL after setting defaults
+      await pool.query(`
+        ALTER TABLE sponsorships 
+        ALTER COLUMN sponsor_name SET NOT NULL,
+        ALTER COLUMN tier SET NOT NULL
+      `);
+    } catch (error) {
+      console.log("Note: Could not update sponsorships table structure:", error);
+    }
     console.log("✅ Sponsorships table initialized");
 
     // Create assets table with IF NOT EXISTS to preserve existing data
