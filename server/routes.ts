@@ -1044,10 +1044,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Found workflow:`, workflow);
       
       // Get related data
-      const reviewers = await storage.getWorkflowReviewers(id);
-      const stakeholders = await storage.getWorkflowStakeholders(id);
-      const comments = await storage.getWorkflowComments(id);
-      const history = await storage.getWorkflowHistory(id);
+      const reviewers = await storage.getWorkflowReviewersByWorkflow(id);
+      const stakeholders = await storage.getWorkflowStakeholdersByWorkflow(id);
+      const comments = await storage.getWorkflowCommentsByWorkflow(id);
+      const history = await storage.getWorkflowHistoryByWorkflow(id);
       
       console.log(`Related data: reviewers=${reviewers.length || 0}, stakeholders=${stakeholders.length || 0}, comments=${comments.length || 0}, history=${history.length || 0}`);
       
@@ -1154,7 +1154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid status value" });
       }
       
-      const workflow = await storage.updateApprovalWorkflowStatus(id, status, userId);
+      const workflow = await storage.updateApprovalWorkflowStatus(id, status);
       
       if (!workflow) {
         return res.status(404).json({ message: "Approval workflow not found" });
@@ -1193,7 +1193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let reviewers;
       
       if (workflowId) {
-        reviewers = await storage.getWorkflowReviewers(workflowId);
+        reviewers = await storage.getWorkflowReviewersByWorkflow(workflowId);
       } else if (userId) {
         reviewers = await storage.getWorkflowReviewersByUser(userId);
       } else {
@@ -1238,7 +1238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid status value" });
       }
       
-      const reviewer = await storage.updateWorkflowReviewerStatus(id, status, comments);
+      const reviewer = await storage.updateWorkflowReviewerStatus(id, status);
       
       if (!reviewer) {
         return res.status(404).json({ message: "Workflow reviewer not found" });
@@ -1261,7 +1261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "workflowId is required" });
       }
       
-      const comments = await storage.getWorkflowComments(workflowId);
+      const comments = await storage.getWorkflowCommentsByWorkflow(workflowId);
       res.json(comments);
     } catch (err) {
       console.error("Error fetching workflow comments:", err);
@@ -1291,7 +1291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/workflow-history/:workflowId", async (req: Request, res: Response) => {
     try {
       const workflowId = parseInt(req.params.workflowId);
-      const history = await storage.getWorkflowHistory(workflowId);
+      const history = await storage.getWorkflowHistoryByWorkflow(workflowId);
       res.json(history);
     } catch (err) {
       console.error(`Error fetching workflow history for workflow ${req.params.workflowId}:`, err);

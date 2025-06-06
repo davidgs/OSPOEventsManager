@@ -139,7 +139,7 @@ app.use(async (req: any, res: any, next: any) => {
 
           // Create a new user record in our database
           const newUser = await storage.createUser({
-            keycloakId,
+            keycloak_id: keycloakId,
             username,
             name: req.user.name || null,
             email: req.user.email || null
