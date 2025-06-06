@@ -8,6 +8,10 @@ import AuthPage from "@/pages/auth-page";
 import EventsPage from "@/pages/events";
 import EventDetailsPage from "@/pages/event-details";
 import ProfilePage from "@/pages/profile";
+import CfpSubmissionsPage from "@/pages/cfp-submissions";
+import AttendeesPage from "@/pages/attendees";
+import SponsorshipsPage from "@/pages/sponsorships";
+import DashboardPage from "@/pages/dashboard";
 
 // Define our simplified routes for testing authentication
 function App() {
@@ -20,8 +24,12 @@ function App() {
             {/* Public routes */}
             <Route path="/" component={HomePage} />
             <Route path="/auth" component={AuthPage} />
+            <Route path="/dashboard" component={DashboardPage} />
             <Route path="/events" component={EventsPage} />
             <Route path="/events/:id" component={EventDetailsPage} />
+            <Route path="/cfp-submissions" component={CfpSubmissionsPage} />
+            <Route path="/attendees" component={AttendeesPage} />
+            <Route path="/sponsorships" component={SponsorshipsPage} />
             <Route path="/profile" component={ProfilePage} />
             
             {/* 404 page */}
