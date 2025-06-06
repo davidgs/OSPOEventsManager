@@ -115,27 +115,8 @@ app.use('/auth', (req, res, next) => {
 
 // Initialize Keycloak
 let keycloak;
-// Check if we're in development mode without Keycloak service
-const BYPASS_AUTH = process.env.NODE_ENV === 'development' && !process.env.KEYCLOAK_ENABLED;
-
-if (BYPASS_AUTH) {
-  console.log("Running in development mode without Keycloak authentication");
-  // Add a simple middleware to simulate authenticated user
-  app.use((req: any, res, next) => {
-    if (!req.user) {
-      req.user = {
-        preferred_username: 'dev-user',
-        name: 'Development User',
-        email: 'dev@example.com',
-        dbId: 1
-      };
-    }
-    next();
-  });
-} else {
-  // Initialize Keycloak with the appropriate mode
-  keycloak = initKeycloak(app);
-}
+// Initialize Keycloak with the appropriate mode
+keycloak = initKeycloak(app);
 
 // Import storage for user creation
 import { storage } from './storage';
