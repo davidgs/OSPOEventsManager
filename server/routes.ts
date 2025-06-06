@@ -27,20 +27,8 @@ import path from "path";
 import fs from "fs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Create uploads directory if it doesn't exist
+  // Note: File upload middleware is now configured globally in server/index.ts
   const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-
-  // Configure file upload middleware
-  app.use(fileUpload({
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-    abortOnLimit: true, 
-    createParentPath: true,
-    useTempFiles: true,
-    tempFileDir: '/tmp/'
-  }));
 
   // Health check endpoint for Kubernetes
   app.get("/api/health", async (_req: Request, res: Response) => {

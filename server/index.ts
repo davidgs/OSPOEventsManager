@@ -6,10 +6,26 @@ import fs from "fs";
 import { initKeycloak, secureWithKeycloak, keycloakUserMapper } from "./keycloak-config";
 import { initializeDatabase } from "./init-db";
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import fileUpload from "express-fileupload";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Configure file upload middleware globally
+app.use(fileUpload({
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  abortOnLimit: true, 
+  createParentPath: true,
+  useTempFiles: true,
+  tempFileDir: '/tmp/'
+}));
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Set up proxy for Keycloak authentication
 // This proxies requests from /auth to the internal Keycloak service
