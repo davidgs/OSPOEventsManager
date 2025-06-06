@@ -70,6 +70,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API Health check endpoint  
+  app.get("/api/health", async (req: Request, res: Response) => {
+    try {
+      await storage.getEvents();
+      res.json({
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        database: "connected"
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: "unhealthy", 
+        timestamp: new Date().toISOString(),
+        database: "disconnected"
+      });
+    }
+  });
+
   // Events API routes
   app.get("/api/events", async (req: Request, res: Response) => {
     try {
