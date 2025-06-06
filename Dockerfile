@@ -20,7 +20,7 @@ WORKDIR /app
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=5000
+ENV PORT=5555
 
 # Copy package files and install all dependencies for tsx support
 COPY package*.json ./
@@ -44,7 +44,7 @@ RUN addgroup -g 1001 -S nodejs && \
 USER nodejs
 
 # Expose the application port
-EXPOSE 5000
+EXPOSE 5555
 
 # Install curl for health checks
 USER root
@@ -53,7 +53,7 @@ USER nodejs
 
 # Add health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health || exit 1
+    CMD curl -f http://localhost:5555/api/health || exit 1
 
 # Start the application with tsx (which is now installed)
 CMD ["npx", "tsx", "server/index.ts"]
