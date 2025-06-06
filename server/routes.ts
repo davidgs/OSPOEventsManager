@@ -1119,11 +1119,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Status and userId are required" });
       }
       
-      if (!Object.values(ApprovalStatus).includes(status as ApprovalStatus)) {
+      if (!approvalStatuses.includes(status)) {
         return res.status(400).json({ message: "Invalid status value" });
       }
       
-      const workflow = await storage.updateApprovalWorkflowStatus(id, status as ApprovalStatus, userId);
+      const workflow = await storage.updateApprovalWorkflowStatus(id, status, userId);
       
       if (!workflow) {
         return res.status(404).json({ message: "Approval workflow not found" });
@@ -1203,11 +1203,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Status is required" });
       }
       
-      if (!Object.values(ApprovalStatus).includes(status as ApprovalStatus)) {
+      if (!approvalStatuses.includes(status)) {
         return res.status(400).json({ message: "Invalid status value" });
       }
       
-      const reviewer = await storage.updateWorkflowReviewerStatus(id, status as ApprovalStatus, comments);
+      const reviewer = await storage.updateWorkflowReviewerStatus(id, status, comments);
       
       if (!reviewer) {
         return res.status(404).json({ message: "Workflow reviewer not found" });
