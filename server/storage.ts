@@ -16,82 +16,88 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByKeycloakId(keycloakId: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUserProfile(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
+  createUser(insertUser: InsertUser): Promise<User>;
+  updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
+  getUsers(): Promise<User[]>;
 
   // Event operations
   getEvents(): Promise<Event[]>;
   getEvent(id: number): Promise<Event | undefined>;
-  createEvent(event: InsertEvent): Promise<Event>;
-  updateEvent(id: number, event: Partial<InsertEvent>): Promise<Event | undefined>;
+  createEvent(insertEvent: InsertEvent): Promise<Event>;
+  updateEvent(id: number, updates: Partial<InsertEvent>): Promise<Event | undefined>;
   deleteEvent(id: number): Promise<boolean>;
 
   // CFP submission operations
   getCfpSubmissions(): Promise<CfpSubmission[]>;
   getCfpSubmissionsByEvent(eventId: number): Promise<CfpSubmission[]>;
   getCfpSubmission(id: number): Promise<CfpSubmission | undefined>;
-  createCfpSubmission(submission: InsertCfpSubmission): Promise<CfpSubmission>;
-  updateCfpSubmission(id: number, submission: Partial<InsertCfpSubmission>): Promise<CfpSubmission | undefined>;
+  createCfpSubmission(insertCfpSubmission: InsertCfpSubmission): Promise<CfpSubmission>;
+  updateCfpSubmission(id: number, updates: Partial<InsertCfpSubmission>): Promise<CfpSubmission | undefined>;
   deleteCfpSubmission(id: number): Promise<boolean>;
 
   // Attendee operations
   getAttendees(): Promise<Attendee[]>;
   getAttendeesByEvent(eventId: number): Promise<Attendee[]>;
   getAttendee(id: number): Promise<Attendee | undefined>;
-  createAttendee(attendee: InsertAttendee): Promise<Attendee>;
-  updateAttendee(id: number, attendee: Partial<InsertAttendee>): Promise<Attendee | undefined>;
+  createAttendee(insertAttendee: InsertAttendee): Promise<Attendee>;
+  updateAttendee(id: number, updates: Partial<InsertAttendee>): Promise<Attendee | undefined>;
   deleteAttendee(id: number): Promise<boolean>;
 
   // Sponsorship operations
   getSponsorships(): Promise<Sponsorship[]>;
   getSponsorshipsByEvent(eventId: number): Promise<Sponsorship[]>;
   getSponsorship(id: number): Promise<Sponsorship | undefined>;
-  createSponsorship(sponsorship: InsertSponsorship): Promise<Sponsorship>;
-  updateSponsorship(id: number, sponsorship: Partial<InsertSponsorship>): Promise<Sponsorship | undefined>;
+  createSponsorship(insertSponsorship: InsertSponsorship): Promise<Sponsorship>;
+  updateSponsorship(id: number, updates: Partial<InsertSponsorship>): Promise<Sponsorship | undefined>;
   deleteSponsorship(id: number): Promise<boolean>;
 
   // Asset operations
   getAssets(): Promise<Asset[]>;
-  getAssetsByEvent(eventId: number): Promise<Asset[]>;
   getAssetsByUser(userId: number): Promise<Asset[]>;
   getAsset(id: number): Promise<Asset | undefined>;
-  createAsset(asset: InsertAsset): Promise<Asset>;
-  updateAsset(id: number, asset: Partial<InsertAsset>): Promise<Asset | undefined>;
+  createAsset(insertAsset: InsertAsset): Promise<Asset>;
+  updateAsset(id: number, updates: Partial<InsertAsset>): Promise<Asset | undefined>;
   deleteAsset(id: number): Promise<boolean>;
 
   // Stakeholder operations
   getStakeholders(): Promise<Stakeholder[]>;
-  getStakeholdersByRole(role: string): Promise<Stakeholder[]>;
   getStakeholder(id: number): Promise<Stakeholder | undefined>;
-  createStakeholder(stakeholder: InsertStakeholder): Promise<Stakeholder>;
-  updateStakeholder(id: number, stakeholder: Partial<InsertStakeholder>): Promise<Stakeholder | undefined>;
+  createStakeholder(insertStakeholder: InsertStakeholder): Promise<Stakeholder>;
+  updateStakeholder(id: number, updates: Partial<InsertStakeholder>): Promise<Stakeholder | undefined>;
   deleteStakeholder(id: number): Promise<boolean>;
 
   // Approval workflow operations
   getApprovalWorkflows(): Promise<ApprovalWorkflow[]>;
   getApprovalWorkflow(id: number): Promise<ApprovalWorkflow | undefined>;
-  createApprovalWorkflow(workflow: InsertApprovalWorkflow): Promise<ApprovalWorkflow>;
-  updateApprovalWorkflow(id: number, workflow: Partial<InsertApprovalWorkflow>): Promise<ApprovalWorkflow | undefined>;
+  createApprovalWorkflow(insertApprovalWorkflow: InsertApprovalWorkflow): Promise<ApprovalWorkflow>;
+  updateApprovalWorkflow(id: number, updates: Partial<InsertApprovalWorkflow>): Promise<ApprovalWorkflow | undefined>;
   deleteApprovalWorkflow(id: number): Promise<boolean>;
 
   // Workflow reviewer operations
-  getWorkflowReviewers(workflowId: number): Promise<WorkflowReviewer[]>;
-  createWorkflowReviewer(reviewer: InsertWorkflowReviewer): Promise<WorkflowReviewer>;
-  updateWorkflowReviewer(id: number, reviewer: Partial<InsertWorkflowReviewer>): Promise<WorkflowReviewer | undefined>;
+  getWorkflowReviewers(): Promise<WorkflowReviewer[]>;
+  getWorkflowReviewersByWorkflow(workflowId: number): Promise<WorkflowReviewer[]>;
+  createWorkflowReviewer(insertWorkflowReviewer: InsertWorkflowReviewer): Promise<WorkflowReviewer>;
+  updateWorkflowReviewer(id: number, updates: Partial<InsertWorkflowReviewer>): Promise<WorkflowReviewer | undefined>;
   deleteWorkflowReviewer(id: number): Promise<boolean>;
 
   // Workflow stakeholder operations
-  getWorkflowStakeholders(workflowId: number): Promise<WorkflowStakeholder[]>;
-  createWorkflowStakeholder(stakeholder: InsertWorkflowStakeholder): Promise<WorkflowStakeholder>;
+  getWorkflowStakeholders(): Promise<WorkflowStakeholder[]>;
+  getWorkflowStakeholdersByWorkflow(workflowId: number): Promise<WorkflowStakeholder[]>;
+  createWorkflowStakeholder(insertWorkflowStakeholder: InsertWorkflowStakeholder): Promise<WorkflowStakeholder>;
+  updateWorkflowStakeholder(id: number, updates: Partial<InsertWorkflowStakeholder>): Promise<WorkflowStakeholder | undefined>;
   deleteWorkflowStakeholder(id: number): Promise<boolean>;
 
   // Workflow comment operations
-  getWorkflowComments(workflowId: number): Promise<WorkflowComment[]>;
-  createWorkflowComment(comment: InsertWorkflowComment): Promise<WorkflowComment>;
+  getWorkflowComments(): Promise<WorkflowComment[]>;
+  getWorkflowCommentsByWorkflow(workflowId: number): Promise<WorkflowComment[]>;
+  createWorkflowComment(insertWorkflowComment: InsertWorkflowComment): Promise<WorkflowComment>;
+  updateWorkflowComment(id: number, updates: Partial<InsertWorkflowComment>): Promise<WorkflowComment | undefined>;
+  deleteWorkflowComment(id: number): Promise<boolean>;
 
   // Workflow history operations
-  getWorkflowHistory(workflowId: number): Promise<WorkflowHistory[]>;
-  createWorkflowHistory(history: InsertWorkflowHistory): Promise<WorkflowHistory>;
+  getWorkflowHistory(): Promise<WorkflowHistory[]>;
+  getWorkflowHistoryByWorkflow(workflowId: number): Promise<WorkflowHistory[]>;
+  createWorkflowHistory(insertWorkflowHistory: InsertWorkflowHistory): Promise<WorkflowHistory>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -104,37 +110,35 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByKeycloakId(keycloakId: string): Promise<User | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const [user] = await db.select().from(users).where(eq(users.keycloakId, keycloakId));
+    const [user] = await db.select().from(users).where(eq(users.keycloak_id, keycloakId));
     return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     if (!db) throw new Error("Database not initialized");
-    const [user] = await db
-      .insert(users)
-      .values({
-        ...insertUser,
-        lastLogin: null,
-        createdAt: new Date(),
-      })
-      .returning();
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
-  async updateUserProfile(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
     if (!db) throw new Error("Database not initialized");
     const [user] = await db
       .update(users)
-      .set(updates)
+      .set({ ...updates, updated_at: new Date() })
       .where(eq(users.id, id))
       .returning();
     return user;
   }
 
+  async getUsers(): Promise<User[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db.select().from(users).orderBy(asc(users.name));
+  }
+
   // Event operations
   async getEvents(): Promise<Event[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(events).orderBy(desc(events.createdAt));
+    return await db.select().from(events).orderBy(desc(events.start_date));
   }
 
   async getEvent(id: number): Promise<Event | undefined> {
@@ -143,64 +147,32 @@ export class DatabaseStorage implements IStorage {
     return event;
   }
 
-  async createEvent(event: InsertEvent): Promise<Event> {
+  async createEvent(insertEvent: InsertEvent): Promise<Event> {
     if (!db) throw new Error("Database not initialized");
-    
-    const [result] = await db
-      .insert(events)
-      .values({
-        ...event,
-        status: "planning",
-        goal: Array.isArray(event.goal) ? JSON.stringify(event.goal) : event.goal,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        description: null,
-        website: null,
-      })
-      .returning();
-
-    if (!result) {
-      throw new Error("Failed to create event");
-    }
-
-    return result;
+    const [event] = await db.insert(events).values(insertEvent).returning();
+    return event;
   }
 
-  async updateEvent(id: number, updateEvent: Partial<InsertEvent>): Promise<Event | undefined> {
+  async updateEvent(id: number, updates: Partial<InsertEvent>): Promise<Event | undefined> {
     if (!db) throw new Error("Database not initialized");
-    
-    const updateData = { ...updateEvent };
-    if (updateEvent.goal) {
-      updateData.goal = Array.isArray(updateEvent.goal) 
-        ? JSON.stringify(updateEvent.goal) 
-        : updateEvent.goal;
-    }
-    
     const [event] = await db
       .update(events)
-      .set({
-        ...updateData,
-        updatedAt: new Date(),
-      })
+      .set({ ...updates, updated_at: new Date() })
       .where(eq(events.id, id))
       .returning();
-    
     return event;
   }
 
   async deleteEvent(id: number): Promise<boolean> {
     if (!db) throw new Error("Database not initialized");
-    const [deletedEvent] = await db
-      .delete(events)
-      .where(eq(events.id, id))
-      .returning();
-    return !!deletedEvent;
+    const result = await db.delete(events).where(eq(events.id, id));
+    return result.rowCount! > 0;
   }
 
   // CFP submission operations
   async getCfpSubmissions(): Promise<CfpSubmission[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(cfpSubmissions).orderBy(desc(cfpSubmissions.submissionDate));
+    return await db.select().from(cfpSubmissions).orderBy(desc(cfpSubmissions.submission_date));
   }
 
   async getCfpSubmissionsByEvent(eventId: number): Promise<CfpSubmission[]> {
@@ -208,52 +180,42 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(cfpSubmissions)
-      .where(eq(cfpSubmissions.eventId, eventId))
-      .orderBy(desc(cfpSubmissions.submissionDate));
+      .where(eq(cfpSubmissions.event_id, eventId))
+      .orderBy(desc(cfpSubmissions.submission_date));
   }
 
   async getCfpSubmission(id: number): Promise<CfpSubmission | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const [submission] = await db.select().from(cfpSubmissions).where(eq(cfpSubmissions.id, id));
-    return submission;
+    const [cfpSubmission] = await db.select().from(cfpSubmissions).where(eq(cfpSubmissions.id, id));
+    return cfpSubmission;
   }
 
-  async createCfpSubmission(submission: InsertCfpSubmission): Promise<CfpSubmission> {
+  async createCfpSubmission(insertCfpSubmission: InsertCfpSubmission): Promise<CfpSubmission> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
-      .insert(cfpSubmissions)
-      .values({
-        ...submission,
-        status: submission.status || "draft",
-        submissionDate: submission.submissionDate || new Date().toISOString(),
-      })
-      .returning();
-    return result;
+    const [cfpSubmission] = await db.insert(cfpSubmissions).values(insertCfpSubmission).returning();
+    return cfpSubmission;
   }
 
-  async updateCfpSubmission(id: number, submission: Partial<InsertCfpSubmission>): Promise<CfpSubmission | undefined> {
+  async updateCfpSubmission(id: number, updates: Partial<InsertCfpSubmission>): Promise<CfpSubmission | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
+    const [cfpSubmission] = await db
       .update(cfpSubmissions)
-      .set(submission)
+      .set(updates)
       .where(eq(cfpSubmissions.id, id))
       .returning();
-    return result;
+    return cfpSubmission;
   }
 
   async deleteCfpSubmission(id: number): Promise<boolean> {
     if (!db) throw new Error("Database not initialized");
-    const [deleted] = await db
-      .delete(cfpSubmissions)
-      .where(eq(cfpSubmissions.id, id))
-      .returning();
-    return !!deleted;
+    const result = await db.delete(cfpSubmissions).where(eq(cfpSubmissions.id, id));
+    return result.rowCount! > 0;
   }
 
   // Attendee operations
   async getAttendees(): Promise<Attendee[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(attendees);
+    return await db.select().from(attendees).orderBy(asc(attendees.name));
   }
 
   async getAttendeesByEvent(eventId: number): Promise<Attendee[]> {
@@ -261,7 +223,8 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(attendees)
-      .where(eq(attendees.eventId, eventId));
+      .where(eq(attendees.event_id, eventId))
+      .orderBy(asc(attendees.name));
   }
 
   async getAttendee(id: number): Promise<Attendee | undefined> {
@@ -270,44 +233,32 @@ export class DatabaseStorage implements IStorage {
     return attendee;
   }
 
-  async createAttendee(attendee: InsertAttendee): Promise<Attendee> {
+  async createAttendee(insertAttendee: InsertAttendee): Promise<Attendee> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
-      .insert(attendees)
-      .values({
-        ...attendee,
-        email: attendee.email || null,
-        role: attendee.role || null,
-        notes: attendee.notes || null,
-        userId: attendee.userId || null,
-      })
-      .returning();
-    return result;
+    const [attendee] = await db.insert(attendees).values(insertAttendee).returning();
+    return attendee;
   }
 
-  async updateAttendee(id: number, attendee: Partial<InsertAttendee>): Promise<Attendee | undefined> {
+  async updateAttendee(id: number, updates: Partial<InsertAttendee>): Promise<Attendee | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
+    const [attendee] = await db
       .update(attendees)
-      .set(attendee)
+      .set(updates)
       .where(eq(attendees.id, id))
       .returning();
-    return result;
+    return attendee;
   }
 
   async deleteAttendee(id: number): Promise<boolean> {
     if (!db) throw new Error("Database not initialized");
-    const [deleted] = await db
-      .delete(attendees)
-      .where(eq(attendees.id, id))
-      .returning();
-    return !!deleted;
+    const result = await db.delete(attendees).where(eq(attendees.id, id));
+    return result.rowCount! > 0;
   }
 
   // Sponsorship operations
   async getSponsorships(): Promise<Sponsorship[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(sponsorships);
+    return await db.select().from(sponsorships).orderBy(desc(sponsorships.created_at));
   }
 
   async getSponsorshipsByEvent(eventId: number): Promise<Sponsorship[]> {
@@ -315,7 +266,8 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(sponsorships)
-      .where(eq(sponsorships.eventId, eventId));
+      .where(eq(sponsorships.event_id, eventId))
+      .orderBy(desc(sponsorships.created_at));
   }
 
   async getSponsorship(id: number): Promise<Sponsorship | undefined> {
@@ -324,53 +276,32 @@ export class DatabaseStorage implements IStorage {
     return sponsorship;
   }
 
-  async createSponsorship(sponsorship: InsertSponsorship): Promise<Sponsorship> {
+  async createSponsorship(insertSponsorship: InsertSponsorship): Promise<Sponsorship> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
-      .insert(sponsorships)
-      .values({
-        ...sponsorship,
-        amount: sponsorship.amount || null,
-        contactName: sponsorship.contactName || null,
-        contactEmail: sponsorship.contactEmail || null,
-        notes: sponsorship.notes || null,
-      })
-      .returning();
-    return result;
+    const [sponsorship] = await db.insert(sponsorships).values(insertSponsorship).returning();
+    return sponsorship;
   }
 
-  async updateSponsorship(id: number, sponsorship: Partial<InsertSponsorship>): Promise<Sponsorship | undefined> {
+  async updateSponsorship(id: number, updates: Partial<InsertSponsorship>): Promise<Sponsorship | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
+    const [sponsorship] = await db
       .update(sponsorships)
-      .set(sponsorship)
+      .set({ ...updates, updated_at: new Date() })
       .where(eq(sponsorships.id, id))
       .returning();
-    return result;
+    return sponsorship;
   }
 
   async deleteSponsorship(id: number): Promise<boolean> {
     if (!db) throw new Error("Database not initialized");
-    const [deleted] = await db
-      .delete(sponsorships)
-      .where(eq(sponsorships.id, id))
-      .returning();
-    return !!deleted;
+    const result = await db.delete(sponsorships).where(eq(sponsorships.id, id));
+    return result.rowCount! > 0;
   }
 
   // Asset operations
   async getAssets(): Promise<Asset[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(assets).orderBy(desc(assets.uploadedAt));
-  }
-
-  async getAssetsByEvent(eventId: number): Promise<Asset[]> {
-    if (!db) throw new Error("Database not initialized");
-    return await db
-      .select()
-      .from(assets)
-      .where(eq(assets.eventId, eventId))
-      .orderBy(desc(assets.uploadedAt));
+    return await db.select().from(assets).orderBy(desc(assets.uploaded_at));
   }
 
   async getAssetsByUser(userId: number): Promise<Asset[]> {
@@ -378,8 +309,8 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(assets)
-      .where(eq(assets.uploadedBy, userId))
-      .orderBy(desc(assets.uploadedAt));
+      .where(eq(assets.uploaded_by, userId))
+      .orderBy(desc(assets.uploaded_at));
   }
 
   async getAsset(id: number): Promise<Asset | undefined> {
@@ -388,53 +319,32 @@ export class DatabaseStorage implements IStorage {
     return asset;
   }
 
-  async createAsset(asset: InsertAsset): Promise<Asset> {
+  async createAsset(insertAsset: InsertAsset): Promise<Asset> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
-      .insert(assets)
-      .values({
-        ...asset,
-        description: asset.description || null,
-        eventId: asset.eventId || null,
-        uploadedByName: asset.uploadedByName || null,
-        cfpSubmissionId: asset.cfpSubmissionId || null,
-        uploadedAt: new Date(),
-      })
-      .returning();
-    return result;
+    const [asset] = await db.insert(assets).values(insertAsset).returning();
+    return asset;
   }
 
-  async updateAsset(id: number, asset: Partial<InsertAsset>): Promise<Asset | undefined> {
+  async updateAsset(id: number, updates: Partial<InsertAsset>): Promise<Asset | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
+    const [asset] = await db
       .update(assets)
-      .set(asset)
+      .set(updates)
       .where(eq(assets.id, id))
       .returning();
-    return result;
+    return asset;
   }
 
   async deleteAsset(id: number): Promise<boolean> {
     if (!db) throw new Error("Database not initialized");
-    const [deleted] = await db
-      .delete(assets)
-      .where(eq(assets.id, id))
-      .returning();
-    return !!deleted;
+    const result = await db.delete(assets).where(eq(assets.id, id));
+    return result.rowCount! > 0;
   }
 
   // Stakeholder operations
   async getStakeholders(): Promise<Stakeholder[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(stakeholders);
-  }
-
-  async getStakeholdersByRole(role: string): Promise<Stakeholder[]> {
-    if (!db) throw new Error("Database not initialized");
-    return await db
-      .select()
-      .from(stakeholders)
-      .where(eq(stakeholders.role, role));
+    return await db.select().from(stakeholders).orderBy(asc(stakeholders.name));
   }
 
   async getStakeholder(id: number): Promise<Stakeholder | undefined> {
@@ -443,48 +353,32 @@ export class DatabaseStorage implements IStorage {
     return stakeholder;
   }
 
-  async createStakeholder(stakeholder: InsertStakeholder): Promise<Stakeholder> {
+  async createStakeholder(insertStakeholder: InsertStakeholder): Promise<Stakeholder> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
-      .insert(stakeholders)
-      .values({
-        ...stakeholder,
-        userId: stakeholder.userId || null,
-        department: stakeholder.department || null,
-        notes: stakeholder.notes || null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-    return result;
+    const [stakeholder] = await db.insert(stakeholders).values(insertStakeholder).returning();
+    return stakeholder;
   }
 
-  async updateStakeholder(id: number, stakeholder: Partial<InsertStakeholder>): Promise<Stakeholder | undefined> {
+  async updateStakeholder(id: number, updates: Partial<InsertStakeholder>): Promise<Stakeholder | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
+    const [stakeholder] = await db
       .update(stakeholders)
-      .set({
-        ...stakeholder,
-        updatedAt: new Date(),
-      })
+      .set({ ...updates, updated_at: new Date() })
       .where(eq(stakeholders.id, id))
       .returning();
-    return result;
+    return stakeholder;
   }
 
   async deleteStakeholder(id: number): Promise<boolean> {
     if (!db) throw new Error("Database not initialized");
-    const [deleted] = await db
-      .delete(stakeholders)
-      .where(eq(stakeholders.id, id))
-      .returning();
-    return !!deleted;
+    const result = await db.delete(stakeholders).where(eq(stakeholders.id, id));
+    return result.rowCount! > 0;
   }
 
   // Approval workflow operations
   async getApprovalWorkflows(): Promise<ApprovalWorkflow[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(approvalWorkflows).orderBy(desc(approvalWorkflows.createdAt));
+    return await db.select().from(approvalWorkflows).orderBy(desc(approvalWorkflows.created_at));
   }
 
   async getApprovalWorkflow(id: number): Promise<ApprovalWorkflow | undefined> {
@@ -493,157 +387,156 @@ export class DatabaseStorage implements IStorage {
     return workflow;
   }
 
-  async createApprovalWorkflow(workflow: InsertApprovalWorkflow): Promise<ApprovalWorkflow> {
+  async createApprovalWorkflow(insertApprovalWorkflow: InsertApprovalWorkflow): Promise<ApprovalWorkflow> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
-      .insert(approvalWorkflows)
-      .values({
-        ...workflow,
-        status: "pending",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .returning();
-    return result;
+    const [workflow] = await db.insert(approvalWorkflows).values(insertApprovalWorkflow).returning();
+    return workflow;
   }
 
-  async updateApprovalWorkflow(id: number, workflow: Partial<InsertApprovalWorkflow>): Promise<ApprovalWorkflow | undefined> {
+  async updateApprovalWorkflow(id: number, updates: Partial<InsertApprovalWorkflow>): Promise<ApprovalWorkflow | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
+    const [workflow] = await db
       .update(approvalWorkflows)
-      .set({
-        ...workflow,
-        updatedAt: new Date(),
-      })
+      .set({ ...updates, updated_at: new Date() })
       .where(eq(approvalWorkflows.id, id))
       .returning();
-    return result;
+    return workflow;
   }
 
   async deleteApprovalWorkflow(id: number): Promise<boolean> {
     if (!db) throw new Error("Database not initialized");
-    const [deleted] = await db
-      .delete(approvalWorkflows)
-      .where(eq(approvalWorkflows.id, id))
-      .returning();
-    return !!deleted;
+    const result = await db.delete(approvalWorkflows).where(eq(approvalWorkflows.id, id));
+    return result.rowCount! > 0;
   }
 
   // Workflow reviewer operations
-  async getWorkflowReviewers(workflowId: number): Promise<WorkflowReviewer[]> {
+  async getWorkflowReviewers(): Promise<WorkflowReviewer[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db.select().from(workflowReviewers);
+  }
+
+  async getWorkflowReviewersByWorkflow(workflowId: number): Promise<WorkflowReviewer[]> {
     if (!db) throw new Error("Database not initialized");
     return await db
       .select()
       .from(workflowReviewers)
-      .where(eq(workflowReviewers.workflowId, workflowId));
+      .where(eq(workflowReviewers.workflow_id, workflowId));
   }
 
-  async createWorkflowReviewer(reviewer: InsertWorkflowReviewer): Promise<WorkflowReviewer> {
+  async createWorkflowReviewer(insertWorkflowReviewer: InsertWorkflowReviewer): Promise<WorkflowReviewer> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
-      .insert(workflowReviewers)
-      .values({
-        ...reviewer,
-        status: "pending",
-        isRequired: reviewer.isRequired ?? true,
-        reviewedAt: null,
-        comments: reviewer.comments || null,
-      })
-      .returning();
-    return result;
+    const [reviewer] = await db.insert(workflowReviewers).values(insertWorkflowReviewer).returning();
+    return reviewer;
   }
 
-  async updateWorkflowReviewer(id: number, reviewer: Partial<InsertWorkflowReviewer>): Promise<WorkflowReviewer | undefined> {
+  async updateWorkflowReviewer(id: number, updates: Partial<InsertWorkflowReviewer>): Promise<WorkflowReviewer | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
+    const [reviewer] = await db
       .update(workflowReviewers)
-      .set({
-        ...reviewer,
-        reviewedAt: new Date(),
-      })
+      .set(updates)
       .where(eq(workflowReviewers.id, id))
       .returning();
-    return result;
+    return reviewer;
   }
 
   async deleteWorkflowReviewer(id: number): Promise<boolean> {
     if (!db) throw new Error("Database not initialized");
-    const [deleted] = await db
-      .delete(workflowReviewers)
-      .where(eq(workflowReviewers.id, id))
-      .returning();
-    return !!deleted;
+    const result = await db.delete(workflowReviewers).where(eq(workflowReviewers.id, id));
+    return result.rowCount! > 0;
   }
 
   // Workflow stakeholder operations
-  async getWorkflowStakeholders(workflowId: number): Promise<WorkflowStakeholder[]> {
+  async getWorkflowStakeholders(): Promise<WorkflowStakeholder[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db.select().from(workflowStakeholders);
+  }
+
+  async getWorkflowStakeholdersByWorkflow(workflowId: number): Promise<WorkflowStakeholder[]> {
     if (!db) throw new Error("Database not initialized");
     return await db
       .select()
       .from(workflowStakeholders)
-      .where(eq(workflowStakeholders.workflowId, workflowId));
+      .where(eq(workflowStakeholders.workflow_id, workflowId));
   }
 
-  async createWorkflowStakeholder(stakeholder: InsertWorkflowStakeholder): Promise<WorkflowStakeholder> {
+  async createWorkflowStakeholder(insertWorkflowStakeholder: InsertWorkflowStakeholder): Promise<WorkflowStakeholder> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
-      .insert(workflowStakeholders)
-      .values(stakeholder)
+    const [stakeholder] = await db.insert(workflowStakeholders).values(insertWorkflowStakeholder).returning();
+    return stakeholder;
+  }
+
+  async updateWorkflowStakeholder(id: number, updates: Partial<InsertWorkflowStakeholder>): Promise<WorkflowStakeholder | undefined> {
+    if (!db) throw new Error("Database not initialized");
+    const [stakeholder] = await db
+      .update(workflowStakeholders)
+      .set(updates)
+      .where(eq(workflowStakeholders.id, id))
       .returning();
-    return result;
+    return stakeholder;
   }
 
   async deleteWorkflowStakeholder(id: number): Promise<boolean> {
     if (!db) throw new Error("Database not initialized");
-    const [deleted] = await db
-      .delete(workflowStakeholders)
-      .where(eq(workflowStakeholders.id, id))
-      .returning();
-    return !!deleted;
+    const result = await db.delete(workflowStakeholders).where(eq(workflowStakeholders.id, id));
+    return result.rowCount! > 0;
   }
 
   // Workflow comment operations
-  async getWorkflowComments(workflowId: number): Promise<WorkflowComment[]> {
+  async getWorkflowComments(): Promise<WorkflowComment[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db.select().from(workflowComments).orderBy(desc(workflowComments.created_at));
+  }
+
+  async getWorkflowCommentsByWorkflow(workflowId: number): Promise<WorkflowComment[]> {
     if (!db) throw new Error("Database not initialized");
     return await db
       .select()
       .from(workflowComments)
-      .where(eq(workflowComments.workflowId, workflowId))
-      .orderBy(asc(workflowComments.createdAt));
+      .where(eq(workflowComments.workflow_id, workflowId))
+      .orderBy(desc(workflowComments.created_at));
   }
 
-  async createWorkflowComment(comment: InsertWorkflowComment): Promise<WorkflowComment> {
+  async createWorkflowComment(insertWorkflowComment: InsertWorkflowComment): Promise<WorkflowComment> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
-      .insert(workflowComments)
-      .values({
-        ...comment,
-        createdAt: new Date(),
-      })
+    const [comment] = await db.insert(workflowComments).values(insertWorkflowComment).returning();
+    return comment;
+  }
+
+  async updateWorkflowComment(id: number, updates: Partial<InsertWorkflowComment>): Promise<WorkflowComment | undefined> {
+    if (!db) throw new Error("Database not initialized");
+    const [comment] = await db
+      .update(workflowComments)
+      .set(updates)
+      .where(eq(workflowComments.id, id))
       .returning();
-    return result;
+    return comment;
+  }
+
+  async deleteWorkflowComment(id: number): Promise<boolean> {
+    if (!db) throw new Error("Database not initialized");
+    const result = await db.delete(workflowComments).where(eq(workflowComments.id, id));
+    return result.rowCount! > 0;
   }
 
   // Workflow history operations
-  async getWorkflowHistory(workflowId: number): Promise<WorkflowHistory[]> {
+  async getWorkflowHistory(): Promise<WorkflowHistory[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db.select().from(workflowHistory).orderBy(desc(workflowHistory.created_at));
+  }
+
+  async getWorkflowHistoryByWorkflow(workflowId: number): Promise<WorkflowHistory[]> {
     if (!db) throw new Error("Database not initialized");
     return await db
       .select()
       .from(workflowHistory)
-      .where(eq(workflowHistory.workflowId, workflowId))
-      .orderBy(asc(workflowHistory.createdAt));
+      .where(eq(workflowHistory.workflow_id, workflowId))
+      .orderBy(desc(workflowHistory.created_at));
   }
 
-  async createWorkflowHistory(history: InsertWorkflowHistory): Promise<WorkflowHistory> {
+  async createWorkflowHistory(insertWorkflowHistory: InsertWorkflowHistory): Promise<WorkflowHistory> {
     if (!db) throw new Error("Database not initialized");
-    const [result] = await db
-      .insert(workflowHistory)
-      .values({
-        ...history,
-        createdAt: new Date(),
-      })
-      .returning();
-    return result;
+    const [history] = await db.insert(workflowHistory).values(insertWorkflowHistory).returning();
+    return history;
   }
 }
 
