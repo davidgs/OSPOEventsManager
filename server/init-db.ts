@@ -184,6 +184,16 @@ export async function initializeDatabase(): Promise<boolean> {
       console.log("Notes column already exists or other constraint issue");
     }
     
+    try {
+      await pool.query(`
+        ALTER TABLE events 
+        ADD COLUMN IF NOT EXISTS created_by_id INTEGER
+      `);
+      console.log("✅ Added created_by_id column to events table if missing");
+    } catch (error) {
+      console.log("Created_by_id column already exists or other constraint issue");
+    }
+    
     // Remove the defaults after adding the columns
     try {
       await pool.query(`
