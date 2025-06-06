@@ -159,8 +159,8 @@ const SponsorshipsPage: FC = () => {
     let comparison = 0;
     
     switch (sortField) {
-      case "level":
-        comparison = a.level.localeCompare(b.level);
+      case "tier":
+        comparison = a.tier.localeCompare(b.tier);
         break;
       case "amount":
         // Handle amount sorting (convert to number if possible)
@@ -171,9 +171,9 @@ const SponsorshipsPage: FC = () => {
       case "status":
         comparison = a.status.localeCompare(b.status);
         break;
-      case "contactName":
-        const nameA = a.contactName || "";
-        const nameB = b.contactName || "";
+      case "contact_name":
+        const nameA = a.contact_name || "";
+        const nameB = b.contact_name || "";
         comparison = nameA.localeCompare(nameB);
         break;
       default:
@@ -185,7 +185,7 @@ const SponsorshipsPage: FC = () => {
   
   // Get event name by ID
   const getEventName = (eventId: number) => {
-    const event = events.find((e: any) => e.id === eventId);
+    const event = (events as any[])?.find((e: any) => e.id === eventId);
     return event ? event.name : "Unknown Event";
   };
   
@@ -194,8 +194,8 @@ const SponsorshipsPage: FC = () => {
     .filter((sponsorship: any) => {
       let matches = true;
       
-      // Filter by level
-      if (levelFilter !== "all" && sponsorship.level !== levelFilter) {
+      // Filter by tier
+      if (levelFilter !== "all" && sponsorship.tier !== levelFilter) {
         matches = false;
       }
       
@@ -206,8 +206,8 @@ const SponsorshipsPage: FC = () => {
       
       // Filter by search term
       if (searchTerm && 
-          !sponsorship.level.toLowerCase().includes(searchTerm.toLowerCase()) && 
-          !(sponsorship.contactName && sponsorship.contactName.toLowerCase().includes(searchTerm.toLowerCase()))) {
+          !sponsorship.tier.toLowerCase().includes(searchTerm.toLowerCase()) && 
+          !(sponsorship.contact_name && sponsorship.contact_name.toLowerCase().includes(searchTerm.toLowerCase()))) {
         matches = false;
       }
       
@@ -510,15 +510,30 @@ const SponsorshipsPage: FC = () => {
                 />
               )}
               
-              {/* Level */}
+              {/* Sponsor Name */}
+              <FormField
+                control={form.control}
+                name="sponsor_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sponsor Name <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Microsoft, Google, IBM" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Tier */}
               <FormField
                 control={form.control}
                 name="tier"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Sponsorship Level <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>Sponsorship Tier <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Gold, Silver, Platinum" {...field} />
+                      <Input placeholder="e.g. Gold, Silver, Platinum" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -533,7 +548,7 @@ const SponsorshipsPage: FC = () => {
                   <FormItem>
                     <FormLabel>Amount</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. $5,000" {...field} />
+                      <Input placeholder="e.g. $5,000" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormDescription>
                       Optional: Sponsorship amount
@@ -575,7 +590,7 @@ const SponsorshipsPage: FC = () => {
                   <FormItem>
                     <FormLabel>Contact Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Contact person name" {...field} />
+                      <Input placeholder="Contact person name" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormDescription>
                       Optional: Name of contact person
@@ -593,7 +608,7 @@ const SponsorshipsPage: FC = () => {
                   <FormItem>
                     <FormLabel>Contact Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Contact email address" {...field} />
+                      <Input type="email" placeholder="Contact email address" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormDescription>
                       Optional: Email of contact person
@@ -614,6 +629,7 @@ const SponsorshipsPage: FC = () => {
                       <Textarea 
                         placeholder="Any additional notes about this sponsorship"
                         {...field} 
+                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormDescription>
