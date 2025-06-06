@@ -75,8 +75,8 @@ const CalendarView: FC<CalendarViewProps> = ({
   // Check if event occurs on a specific day
   const getEventsForDay = (day: Date) => {
     return events.filter(event => {
-      const eventStart = new Date(event.startDate);
-      const eventEnd = new Date(event.endDate);
+      const eventStart = new Date(event.start_date);
+      const eventEnd = new Date(event.end_date);
       
       // Check if day is within event date range
       return day >= eventStart && day <= eventEnd;
@@ -86,8 +86,8 @@ const CalendarView: FC<CalendarViewProps> = ({
   // Get CFP deadlines occurring on a specific day
   const getCfpDeadlinesForDay = (day: Date) => {
     return events.filter(event => {
-      if (!event.cfpDeadline) return false;
-      const cfpDeadline = new Date(event.cfpDeadline);
+      if (!event.cfp_deadline) return false;
+      const cfpDeadline = new Date(event.cfp_deadline);
       return isSameDay(day, cfpDeadline);
     });
   };
@@ -126,8 +126,8 @@ const CalendarView: FC<CalendarViewProps> = ({
   
   // Count events in current month
   const eventsInMonth = events.filter(event => {
-    const eventStart = new Date(event.startDate);
-    const eventEnd = new Date(event.endDate);
+    const eventStart = new Date(event.start_date);
+    const eventEnd = new Date(event.end_date);
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
     
@@ -160,15 +160,15 @@ const CalendarView: FC<CalendarViewProps> = ({
         <div className="flex items-center text-xs text-gray-500 mb-2">
           <Calendar className="h-3 w-3 text-gray-400 mr-1" />
           <span>
-            {format(new Date(event.startDate), "MMM d, yyyy")} - {format(new Date(event.endDate), "MMM d, yyyy")}
+            {format(new Date(event.start_date), "MMM d, yyyy")} - {format(new Date(event.end_date), "MMM d, yyyy")}
           </span>
         </div>
         
-        {event.cfpDeadline && (
+        {event.cfp_deadline && (
           <div className="flex items-center text-xs text-gray-500 mb-2">
             <Clock className="h-3 w-3 text-gray-400 mr-1" />
             <span>
-              CFP Deadline: {format(new Date(event.cfpDeadline), "MMM d, yyyy")}
+              CFP Deadline: {format(new Date(event.cfp_deadline), "MMM d, yyyy")}
             </span>
           </div>
         )}
@@ -193,7 +193,7 @@ const CalendarView: FC<CalendarViewProps> = ({
         </div>
         
         <div className="flex flex-wrap gap-1 mt-2">
-          {(typeof event.goals === 'string' ? JSON.parse(event.goals) : event.goals).map((goal: string, index: number) => {
+          {(typeof event.goal === 'string' ? JSON.parse(event.goal) : event.goal).map((goal: string, index: number) => {
             if (goal === "speaking") {
               return (
                 <Badge key={index} variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100 text-xs">
@@ -301,7 +301,7 @@ const CalendarView: FC<CalendarViewProps> = ({
                         <div 
                           className={cn(
                             "p-1 rounded text-xs mb-1 cursor-pointer",
-                            getCfpDeadlineColor(event.cfpDeadline!)
+                            getCfpDeadlineColor(event.cfp_deadline!)
                           )}
                           title={`CFP Deadline: ${event.name}`}
                         >
