@@ -75,6 +75,8 @@ services:
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
       SESSION_SECRET: ${SESSION_SECRET}
+    volumes:
+      - ./uploads:/app/public/uploads
     ports:
       - "5555:5555"
     depends_on:
