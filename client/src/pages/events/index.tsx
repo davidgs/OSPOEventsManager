@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import EventsList from "@/components/ui/events-list";
 import CalendarView from "@/components/ui/calendar-view";
-import AddEventModal from "@/components/ui/add-event-modal-working";
+import AddEventModal from "@/components/ui/add-event-modal-fixed";
 import EditEventModal from "@/components/ui/edit-event-modal";
 import DeleteEventDialog from "@/components/ui/delete-event-dialog";
 import { useToast } from "@/hooks/use-toast";

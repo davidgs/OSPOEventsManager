@@ -114,7 +114,7 @@ const AddEventModal: FC<AddEventModalProps> = ({
               {/* Start Date */}
               <FormField
                 control={form.control}
-                name="startDate"
+                name="start_date"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Start Date <span className="text-red-500">*</span></FormLabel>
@@ -154,7 +154,7 @@ const AddEventModal: FC<AddEventModalProps> = ({
               {/* End Date */}
               <FormField
                 control={form.control}
-                name="endDate"
+                name="end_date"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>End Date <span className="text-red-500">*</span></FormLabel>
