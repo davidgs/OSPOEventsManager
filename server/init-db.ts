@@ -51,6 +51,20 @@ export async function initializeDatabase(): Promise<boolean> {
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
+    
+    // Add missing columns to users table if they don't exist
+    try {
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS job_title TEXT`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS headshot TEXT`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences TEXT`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP`);
+      console.log("✅ Added missing columns to users table");
+    } catch (error) {
+      console.log("Users table columns already exist");
+    }
+    
     console.log("✅ Users table initialized");
 
     // Create events table with IF NOT EXISTS to preserve existing data

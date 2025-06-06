@@ -1691,7 +1691,7 @@ export class DatabaseStorage implements IStorage {
       .insert(assets)
       .values({
         ...insertAsset,
-        uploadedAt: new Date().toISOString()
+        uploadedAt: new Date()
       })
       .returning();
     return asset;

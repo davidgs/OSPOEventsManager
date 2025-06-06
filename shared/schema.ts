@@ -79,7 +79,7 @@ export type User = typeof users.$inferSelect;
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  website: text("website").notNull(),
+  website: text("website"),
   link: text("link").notNull(),
   description: text("description"),
   startDate: date("start_date").notNull(),
