@@ -1716,10 +1716,12 @@ export class DatabaseStorage implements IStorage {
 
   // Stakeholder methods
   async getStakeholders(): Promise<Stakeholder[]> {
+    if (!db) throw new Error("Database not initialized");
     return await db.select().from(stakeholders);
   }
 
   async getStakeholdersByRole(role: string): Promise<Stakeholder[]> {
+    if (!db) throw new Error("Database not initialized");
     return await db
       .select()
       .from(stakeholders)

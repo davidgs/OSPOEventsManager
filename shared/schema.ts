@@ -214,10 +214,10 @@ export type StakeholderRole = z.infer<typeof stakeholderRoleSchema>;
 // Stakeholder table
 export const stakeholders = pgTable("stakeholders", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
+  userId: integer("user_id"),
   name: text("name").notNull(),
   email: text("email").notNull(),
-  role: text("role").notNull().$type<StakeholderRole>(),
+  role: text("role").notNull(),
   department: text("department"),
   organization: text("organization").notNull(),
   notes: text("notes"),
