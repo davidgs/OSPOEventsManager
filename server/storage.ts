@@ -1445,16 +1445,18 @@ export class DatabaseStorage implements IStorage {
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
     console.log('Creating event with data:', insertEvent);
     
-    // Map form fields to actual database columns
+    // Map form fields to actual database columns - your DB has both 'website' and 'link', and both 'goals' and 'goal'
     const eventData = {
       name: insertEvent.name,
       website: insertEvent.link, // Form sends 'link', DB has 'website'
+      link: insertEvent.link, // DB also has 'link' column with NOT NULL constraint
       location: insertEvent.location,
       startDate: insertEvent.startDate,
       endDate: insertEvent.endDate,
       type: insertEvent.type,
       priority: insertEvent.priority,
       goals: insertEvent.goal, // Form sends 'goal', DB has 'goals' 
+      goal: insertEvent.goal, // DB also has 'goal' column
       cfpDeadline: insertEvent.cfpDeadline,
       notes: insertEvent.notes,
       status: "planning"
