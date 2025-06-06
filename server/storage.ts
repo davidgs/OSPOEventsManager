@@ -2183,10 +2183,15 @@ if (!useDatabase) {
   console.log('Database connection not available, falling back to MemStorage');
 }
 
-// Create storage instance 
-const memStorage = new MemStorage();
+// Create storage instance based on database availability
+let storage: IStorage;
 
-// For now, use MemStorage to avoid TypeScript issues while the DatabaseStorage is being completed
-export const storage = memStorage;
+if (useDatabase) {
+  storage = new DatabaseStorage();
+  console.log('Using DatabaseStorage for persistent data storage');
+} else {
+  storage = new MemStorage();
+  console.log('Using MemStorage (in-memory) for data storage - comprehensive sample data loaded');
+}
 
-console.log('Using MemStorage (in-memory) for data storage - comprehensive sample data loaded');
+export { storage };
