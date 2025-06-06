@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { useAuth } from '@/contexts/auth-context';
 import { LoginButton } from '@/components/auth/LoginButton';
 import { LogoutButton } from '@/components/auth/LogoutButton';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -68,6 +69,7 @@ export function Header() {
         </div>
         
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           {!initialized ? (
             <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
           ) : authenticated ? (
