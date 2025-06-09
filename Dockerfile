@@ -27,10 +27,11 @@ COPY package*.json ./
 RUN npm ci
 
 # Copy built assets from the builder stage
-COPY --from=client-builder /app/dist ./dist
 COPY --from=client-builder /app/server ./server
 COPY --from=client-builder /app/shared ./shared
 COPY --from=client-builder /app/public ./public
+# Copy built client assets to where static server expects them
+COPY --from=client-builder /app/dist ./server/public
 
 # Create uploads directory
 RUN mkdir -p public/uploads
