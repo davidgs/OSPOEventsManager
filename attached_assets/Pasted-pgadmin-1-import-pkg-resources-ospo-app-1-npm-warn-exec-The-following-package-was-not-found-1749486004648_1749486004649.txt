@@ -1,0 +1,29 @@
+pgadmin-1   |   import pkg_resources
+ospo-app-1  | npm warn exec The following package was not found and will be installed: tsx@4.19.4
+keycloak-1  | Updating the configuration and installing your custom providers, if any. Please wait.
+ospo-app-1  | 
+ospo-app-1  | node:internal/modules/run_main:123
+ospo-app-1  |     triggerUncaughtException(
+ospo-app-1  |     ^
+ospo-app-1  | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'vite' imported from /app/server/vite.ts
+ospo-app-1  |     at packageResolve (node:internal/modules/esm/resolve:873:9)
+ospo-app-1  |     at moduleResolve (node:internal/modules/esm/resolve:946:18)
+ospo-app-1  |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+ospo-app-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+ospo-app-1  |     at resolveBase (file:///home/nodejs/.npm/_npx/fd45a72a545557e9/node_modules/tsx/dist/esm/index.mjs?1749485926765:2:3212)
+ospo-app-1  |     at resolveDirectory (file:///home/nodejs/.npm/_npx/fd45a72a545557e9/node_modules/tsx/dist/esm/index.mjs?1749485926765:2:3584)
+ospo-app-1  |     at resolveTsPaths (file:///home/nodejs/.npm/_npx/fd45a72a545557e9/node_modules/tsx/dist/esm/index.mjs?1749485926765:2:4073)
+ospo-app-1  |     at resolve (file:///home/nodejs/.npm/_npx/fd45a72a545557e9/node_modules/tsx/dist/esm/index.mjs?1749485926765:2:4447)
+ospo-app-1  |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+ospo-app-1  |     at Hooks.resolve (node:internal/modules/esm/hooks:306:30) {
+ospo-app-1  |   code: 'ERR_MODULE_NOT_FOUND'
+ospo-app-1  | }
+ospo-app-1  | 
+ospo-app-1  | Node.js v20.19.2
+ospo-app-1  | npm notice
+ospo-app-1  | npm notice New major version of npm available! 10.8.2 -> 11.4.1
+ospo-app-1  | npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.4.1
+ospo-app-1  | npm notice To update run: npm install -g npm@11.4.1
+ospo-app-1  | npm notice
+ospo-app-1 exited with code 1
+keycloak-1  | 2025-06-09 16:18:50,931 INFO  [io.quarkus.deployment.QuarkusAugmentor] (main) Quarkus augmentation completed in 4577ms

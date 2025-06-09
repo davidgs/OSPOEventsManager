@@ -22,9 +22,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=5555
 
-# Copy package files and install all dependencies for tsx support
+# Copy package files and install all dependencies (including dev deps for tsx)
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 # Copy built assets from the builder stage
 COPY --from=client-builder /app/server ./server
