@@ -56,5 +56,5 @@ USER nodejs
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5555/api/health || exit 1
 
-# Start the application with tsx (which is now installed)
-CMD ["npx", "tsx", "server/index.ts"]
+# Start the application in production mode with tsx
+CMD ["sh", "-c", "NODE_ENV=production npx tsx server/index.ts"]
