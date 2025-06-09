@@ -105,19 +105,6 @@ export function initKeycloak(app: Express) {
 export function secureWithKeycloak(app: Express, keycloak: any) {
   if (!keycloak) {
     console.warn('Keycloak not initialized, API routes will not be protected');
-    // Add a middleware that warns about missing authentication but lets requests through
-    app.use('/api/*', (req, res, next) => {
-      // Skip OPTIONS requests (for CORS)
-      if (req.method === 'OPTIONS') {
-        return next();
-      }
-      
-      // Log a warning for non-public endpoints
-      if (!req.path.startsWith('/api/health') && !req.path.startsWith('/api/public')) {
-        console.warn(`Auth warning: Unprotected access to ${req.method} ${req.path}`);
-      }
-      next();
-    });
     return;
   }
 

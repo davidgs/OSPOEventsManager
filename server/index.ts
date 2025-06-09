@@ -10,10 +10,8 @@ import fileUpload from "express-fileupload";
 
 const app = express();
 
-// Explicitly set environment based on NODE_ENV
-if (process.env.NODE_ENV === 'production') {
-  app.set('env', 'production');
-}
+// Set Express environment based on NODE_ENV
+app.set('env', process.env.NODE_ENV || 'development');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -245,8 +243,8 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Use port 5555 as specified
-  const port = 5555;
+  // Use port from environment or default to 5555
+  const port = process.env.PORT || 5555;
   server.listen({
     port,
     host: "0.0.0.0",
