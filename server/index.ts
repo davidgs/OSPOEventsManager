@@ -9,6 +9,12 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import fileUpload from "express-fileupload";
 
 const app = express();
+
+// Explicitly set environment based on NODE_ENV
+if (process.env.NODE_ENV === 'production') {
+  app.set('env', 'production');
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -230,9 +236,12 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
+  console.log(`App environment: ${app.get("env")}, NODE_ENV: ${process.env.NODE_ENV}`);
   if (app.get("env") === "development") {
+    console.log("Setting up Vite development server");
     await setupVite(app, server);
   } else {
+    console.log("Setting up static file serving for production");
     serveStatic(app);
   }
 
