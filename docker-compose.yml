@@ -80,10 +80,8 @@ services:
     ports:
       - "5555:5555"
     depends_on:
-      postgres:
-        condition: service_healthy
-      keycloak:
-        condition: service_healthy
+      - postgres
+      - keycloak
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5555/api/health || exit 1"]
       interval: 30s
