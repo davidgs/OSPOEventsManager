@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # Production OSPO Application
+  ospo-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      PGUSER: ${PGUSER}
+      PGHOST: ${PGHOST}
+      PGPASSWORD: ${PGPASSWORD}
+      PGDATABASE: ${PGDATABASE}
+      PGPORT: ${PGPORT}
+      KEYCLOAK_URL: ${KEYCLOAK_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+    volumes:
+      - ./uploads:/app/public/uploads
+    ports:
+      - "5555:5555"
+    depends_on:
+      - postgres
+      - keycloak
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5555/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - ospo-network

@@ -217,11 +217,11 @@ app.use((req, res, next) => {
     }
   }
 
+  const server = await registerRoutes(app);
+
   // Always enable Keycloak authentication in production (no option to bypass)
   console.log("Securing routes with Keycloak authentication");
   secureWithKeycloak(app, keycloak);
-
-  const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
