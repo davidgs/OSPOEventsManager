@@ -12,6 +12,7 @@ COPY . .
 
 # Build only the client application (skip server bundling)
 RUN npx vite build
+RUN ls -la dist/
 
 # Production stage
 FROM node:20-alpine
@@ -27,10 +28,10 @@ COPY package*.json ./
 RUN npm ci
 
 # Copy built assets from the builder stage
-COPY --from=client-builder /app/dist ./server/public
 COPY --from=client-builder /app/server ./server
 COPY --from=client-builder /app/shared ./shared
 COPY --from=client-builder /app/public ./public
+COPY --from=client-builder /app/dist ./server/public
 
 # Create uploads directory
 RUN mkdir -p public/uploads
