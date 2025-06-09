@@ -101,10 +101,12 @@ services:
     ports:
       - "4576:80"
     depends_on:
-      ospo-app:
+      postgres:
         condition: service_healthy
       keycloak:
-        condition: service_started
+        condition: service_healthy
+      ospo-app:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
