@@ -202,12 +202,6 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // In Docker/production, wait for Keycloak to be ready
-  if (process.env.NODE_ENV === 'production' && process.env.KEYCLOAK_URL) {
-    console.log("Waiting for Keycloak to be ready...");
-    await new Promise(resolve => setTimeout(resolve, 10000)); // 10 second delay
-  }
-
   // Initialize the database tables if we're using the database
   if (process.env.KUBERNETES_SERVICE_HOST || process.env.DATABASE_URL) {
     try {
