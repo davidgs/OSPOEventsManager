@@ -27,7 +27,7 @@ COPY package*.json ./
 RUN npm ci
 
 # Copy built assets from the builder stage
-COPY --from=client-builder /app/dist ./dist
+COPY --from=client-builder /app/dist ./server/public
 COPY --from=client-builder /app/server ./server
 COPY --from=client-builder /app/shared ./shared
 COPY --from=client-builder /app/public ./public
