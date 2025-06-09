@@ -105,8 +105,26 @@ export function initKeycloak(app: Express) {
 export function secureWithKeycloak(app: Express, keycloak: any) {
   if (!keycloak) {
     console.warn('Keycloak not initialized, API routes will not be protected');
+    // Add a middleware that warns about missing authentication but lets requests through
+    app.use('/api/*', (req, res, next) => {
+      // Skip OPTIONS requests (for CORS)
+      if (req.method === 'OPTIONS') {
+        return next();
+      }
+      
+      // Log a warning for non-public endpoints
+      if (!req.path.startsWith('/api/health') && !req.path.startsWith('/api/public')) {
+        console.warn(`Auth warning: Unprotected access to ${req.method} ${req.path}`);
+      }
+      next();
+    });
     return;
   }
+
+  // Health check endpoints don't need auth
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', auth: keycloak ? 'enabled' : 'disabled' });
+  });
 
   // API routes that need authentication
   const protectedRoutes = [
@@ -125,18 +143,13 @@ export function secureWithKeycloak(app: Express, keycloak: any) {
     '/api/users/:id/headshot',
   ];
 
-  // Health check endpoints don't need auth
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', auth: keycloak ? 'enabled' : 'disabled' });
-  });
-
   // Secure API routes
   protectedRoutes.forEach(route => {
     try {
       app.use(route, keycloak.protect('realm:user'));
     } catch (err) {
       console.error(`Failed to protect route ${route}:`, err);
-      // Add a fallback middleware that logs access but lets requests through in development
+      // Add a fallback middleware that logs access but lets requests through
       app.use(route, (req, res, next) => {
         console.warn(`Auth bypass: ${req.method} ${req.path} would normally require authentication`);
         next();
