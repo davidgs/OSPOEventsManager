@@ -25,12 +25,9 @@ import { fromZodError } from "zod-validation-error";
 import fileUpload from "express-fileupload";
 import path from "path";
 import fs from "fs";
-import { initKeycloak, secureWithKeycloak } from "./keycloak-config";
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize and secure routes with Keycloak
-  const keycloak = initKeycloak(app);
-  secureWithKeycloak(app, keycloak);
 
   // Configure file upload middleware for specific routes only
   const fileUploadMiddleware = fileUpload({

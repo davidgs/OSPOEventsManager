@@ -1,0 +1,23 @@
+nginx-1     | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+nginx-1     | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+nginx-1     | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+nginx-1     | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+nginx-1     | 10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
+nginx-1     | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+nginx-1     | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+nginx-1     | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+nginx-1     | /docker-entrypoint.sh: Configuration complete; ready for start up
+nginx-1     | 192.168.65.1 - - [09/Jun/2025:15:07:27 +0000] "GET / HTTP/1.1" 204 0 "http://localhost:4576/events" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
+nginx-1     | 192.168.65.1 - - [09/Jun/2025:15:07:27 +0000] "GET /events HTTP/1.1" 200 1430 "http://localhost:4576/events" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
+nginx-1     | 192.168.65.1 - - [09/Jun/2025:15:07:28 +0000] "GET /@vite/client HTTP/1.1" 200 1430 "http://localhost:4576/events" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
+nginx-1     | 192.168.65.1 - - [09/Jun/2025:15:07:28 +0000] "GET /src/main.tsx?v=C6tORZLJtl2SXQHEG4fqX HTTP/1.1" 200 1430 "http://localhost:4576/events" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
+nginx-1     | 192.168.65.1 - - [09/Jun/2025:15:07:28 +0000] "GET /@react-refresh HTTP/1.1" 200 1430 "http://localhost:4576/events" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
+ospo-app-1  | Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+ospo-app-1  |   npx update-browserslist-db@latest
+ospo-app-1  |   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+nginx-1     | 192.168.65.1 - - [09/Jun/2025:15:07:34 +0000] "GET / HTTP/1.1" 200 1430 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
+nginx-1     | 192.168.65.1 - - [09/Jun/2025:15:07:34 +0000] "GET /@vite/client HTTP/1.1" 200 1430 "http://localhost:4576/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
+nginx-1     | 192.168.65.1 - - [09/Jun/2025:15:07:34 +0000] "GET /@react-refresh HTTP/1.1" 200 1430 "http://localhost:4576/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
+nginx-1     | 192.168.65.1 - - [09/Jun/2025:15:07:34 +0000] "GET /src/main.tsx?v=ThXjjz9tpJbZsIfbs8kJM HTTP/1.1" 200 1430 "http://localhost:4576/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
+Gracefully stopping... (press Ctrl+C again to force)
+dependency failed to start: container ospoeventsmanager-ospo-app-1 is unhealthy
