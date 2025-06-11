@@ -1,12 +1,22 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import fs from "fs";
 import { initKeycloak, secureWithKeycloak, keycloakUserMapper } from "./keycloak-config";
 import { initializeDatabase } from "./init-db";
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import fileUpload from "express-fileupload";
+
+// Production-safe logging function
+function log(message: string, source = "express") {
+  const formattedTime = new Date().toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit", 
+    second: "2-digit",
+    hour12: true,
+  });
+  console.log(`${formattedTime} [${source}] ${message}`);
+}
 
 const app = express();
 app.use(express.json());
@@ -227,13 +237,25 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Setup static file serving for production
   if (app.get("env") === "development") {
+    // Import Vite functions only in development
+    const { setupVite } = await import("./vite");
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    // Production static file serving
+    const staticPath = path.resolve(process.cwd(), "server", "public");
+    
+    if (!fs.existsSync(staticPath)) {
+      throw new Error(`Could not find static files directory: ${staticPath}`);
+    }
+    
+    app.use(express.static(staticPath));
+    
+    // Fallback to index.html for client-side routing
+    app.use("*", (_req, res) => {
+      res.sendFile(path.resolve(staticPath, "index.html"));
+    });
   }
 
   // Use port 5555 as specified
