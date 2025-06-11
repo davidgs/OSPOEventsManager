@@ -30,6 +30,8 @@ RUN npm ci --include=dev
 COPY --from=client-builder /app/server ./server
 COPY --from=client-builder /app/shared ./shared
 COPY --from=client-builder /app/public ./public
+COPY --from=client-builder /app/vite.config.ts ./vite.config.ts
+COPY --from=client-builder /app/tsconfig.json ./tsconfig.json
 # Copy built client assets to where static server expects them
 COPY --from=client-builder /app/dist ./server/public
 
