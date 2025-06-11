@@ -37,8 +37,8 @@ COPY --from=client-builder /app/public ./public
 COPY --from=client-builder /app/vite.config.ts ./vite.config.ts
 COPY --from=client-builder /app/tsconfig.json ./tsconfig.json
 # Copy built client assets to where static server expects them
-# The vite build outputs to dist/public, but we need files in server/public
-COPY --from=client-builder /app/dist/public/* ./server/public/
+# The vite build outputs to dist/public, but we need files directly in server/public
+COPY --from=client-builder /app/dist/public ./server/
 RUN echo "=== Production stage files after copy ===" && \
     ls -la /app/server/public/ && \
     echo "=== Checking for index.html ===" && \
