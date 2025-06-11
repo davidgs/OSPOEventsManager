@@ -9,10 +9,6 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import fileUpload from "express-fileupload";
 
 const app = express();
-
-// Set Express environment based on NODE_ENV
-app.set('env', process.env.NODE_ENV || 'development');
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -234,17 +230,14 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  console.log(`App environment: ${app.get("env")}, NODE_ENV: ${process.env.NODE_ENV}`);
   if (app.get("env") === "development") {
-    console.log("Setting up Vite development server");
     await setupVite(app, server);
   } else {
-    console.log("Setting up static file serving for production");
     serveStatic(app);
   }
 
-  // Use port from environment or default to 5555
-  const port = process.env.PORT || 5555;
+  // Use port 5555 as specified
+  const port = 5555;
   server.listen({
     port,
     host: "0.0.0.0",
