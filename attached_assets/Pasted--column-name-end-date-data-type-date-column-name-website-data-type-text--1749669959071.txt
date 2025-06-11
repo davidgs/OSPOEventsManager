@@ -1,0 +1,124 @@
+  { column_name: 'end_date', data_type: 'date' },
+
+  { column_name: 'website', data_type: 'text' },
+
+  { column_name: 'type', data_type: 'text' },
+
+  { column_name: 'goals', data_type: 'ARRAY' },
+
+  { column_name: 'status', data_type: 'text' },
+
+  {
+
+    column_name: 'created_at',
+
+    data_type: 'timestamp without time zone'
+
+  },
+
+  {
+
+    column_name: 'updated_at',
+
+    data_type: 'timestamp without time zone'
+
+  },
+
+  { column_name: 'link', data_type: 'text' },
+
+  { column_name: 'priority', data_type: 'text' },
+
+  { column_name: 'goal', data_type: 'ARRAY' },
+
+  { column_name: 'cfp_deadline', data_type: 'text' },
+
+  { column_name: 'notes', data_type: 'text' },
+
+  { column_name: 'created_by_id', data_type: 'integer' }
+
+]
+
+✅ Added missing columns to users table and fixed constraints
+
+✅ Users table initialized
+
+✅ Added link column to events table if missing
+
+✅ Added priority column to events table if missing
+
+✅ Added created_at column to events table if missing
+
+✅ Added updated_at column to events table if missing
+
+✅ Added goal column to events table if missing
+
+✅ Added cfp_deadline column to events table if missing
+
+✅ Added type column to events table if missing
+
+✅ Added status column to events table if missing
+
+✅ Added notes column to events table if missing
+
+✅ Added created_by_id column to events table if missing
+
+✅ Events table initialized
+
+✅ CFP submissions table initialized
+
+✅ Attendees table initialized
+
+✅ Sponsorships table initialized
+
+✅ Assets table initialized
+
+✅ Stakeholders table initialized
+
+✅ Approval workflows table initialized
+
+✅ Workflow reviewers table initialized
+
+✅ Workflow stakeholders table initialized
+
+✅ Workflow comments table initialized
+
+✅ Workflow history table initialized
+
+✅ Sessions table initialized
+
+✅ Database initialization completed successfully!
+
+Database tables initialized successfully
+
+Securing routes with Keycloak authentication
+
+Keycloak not initialized, API routes will not be protected
+
+/app/server/vite.ts:74
+
+    throw new Error(
+
+          ^
+
+
+
+Error: Could not find the build directory: /app/server/public, make sure to build the client first
+
+    at serveStatic (/app/server/vite.ts:74:11)
+
+    at <anonymous> (/app/server/index.ts:236:5)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+
+
+Node.js v20.19.1
+
+npm notice
+
+npm notice New major version of npm available! 10.8.2 -> 11.4.1
+
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.4.1⁠
+
+npm notice To update run: npm install -g npm@11.4.1
+
+npm notice
