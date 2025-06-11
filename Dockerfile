@@ -56,8 +56,6 @@ USER nodejs
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5555/api/health || exit 1
 
-# Build only the server for production
-RUN npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
-
-# Start the built application
-CMD ["npm", "run", "start"]
+# Start the application directly with tsx in production mode
+ENV NODE_ENV=production
+CMD ["npx", "tsx", "server/index.ts"]
