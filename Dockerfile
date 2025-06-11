@@ -13,8 +13,10 @@ COPY . .
 # Build only the client application (skip server bundling)
 RUN npx vite build && \
     echo "=== Build completed, checking output ===" && \
-    ls -la /app/dist/ && \
-    echo "=== Contents of dist/public ===" && \
+    ls -la /app/ && \
+    echo "=== Contents of dist if exists ===" && \
+    ls -la /app/dist/ || echo "dist directory not found" && \
+    echo "=== Contents of dist/public if exists ===" && \
     ls -la /app/dist/public/ || echo "dist/public directory not found"
 
 # Production stage
@@ -36,11 +38,20 @@ COPY --from=client-builder /app/shared ./shared
 COPY --from=client-builder /app/public ./public
 COPY --from=client-builder /app/vite.config.ts ./vite.config.ts
 COPY --from=client-builder /app/tsconfig.json ./tsconfig.json
+# Check what's available to copy first
+RUN echo "=== Before copy - checking builder stage ===" 
+COPY --from=client-builder /app/dist ./temp-dist || echo "Could not copy dist directory"
+RUN echo "=== Contents of temp-dist ===" && \
+    ls -la /app/temp-dist/ || echo "temp-dist not found" && \
+    echo "=== Contents of temp-dist/public ===" && \
+    ls -la /app/temp-dist/public/ || echo "temp-dist/public not found"
+
 # Copy built client assets to where static server expects them
-# The vite build outputs to dist/public, but we need files directly in server/public
-COPY --from=client-builder /app/dist/public ./server/
+COPY --from=client-builder /app/dist/public ./server/ || echo "Could not copy dist/public to server/"
 RUN echo "=== Production stage files after copy ===" && \
-    ls -la /app/server/public/ && \
+    ls -la /app/server/ && \
+    echo "=== Contents of server/public ===" && \
+    ls -la /app/server/public/ || echo "server/public not found" && \
     echo "=== Checking for index.html ===" && \
     ls -la /app/server/public/index.html || echo "index.html not found in server/public"
 
