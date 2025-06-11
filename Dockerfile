@@ -30,13 +30,17 @@ ENV PORT=5555
 COPY package*.json ./
 RUN npm ci --include=dev
 
-# Copy built application from the builder stage
-COPY --from=client-builder /app/dist ./dist
+# Copy application files from the builder stage
+COPY --from=client-builder /app/server ./server
 COPY --from=client-builder /app/shared ./shared
 COPY --from=client-builder /app/public ./public
+COPY --from=client-builder /app/dist ./dist
+COPY --from=client-builder /app/vite.config.ts ./vite.config.ts
+COPY --from=client-builder /app/tsconfig.json ./tsconfig.json
 
-# Create server directory and copy static assets where the Express server expects them
-RUN mkdir -p server/public && cp -r dist/public/* server/public/
+# Create server/public directory and copy static assets where the Express server expects them
+RUN mkdir -p server/public && \
+    if [ -d "dist/public" ]; then cp -r dist/public/* server/public/; fi
 
 # Create uploads directory
 RUN mkdir -p public/uploads
