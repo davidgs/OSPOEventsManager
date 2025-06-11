@@ -37,8 +37,8 @@ COPY --from=client-builder /app/public ./public
 COPY --from=client-builder /app/vite.config.ts ./vite.config.ts
 COPY --from=client-builder /app/tsconfig.json ./tsconfig.json
 # Copy built client assets directly from builder stage
-# The vite build outputs to server/public, so copy that entire directory
-COPY --from=client-builder /app/server/public ./server/public
+# The vite build outputs to dist/public, so copy that to server/public
+COPY --from=client-builder /app/dist/public ./server/public
 
 # Create uploads directory
 RUN mkdir -p public/uploads
