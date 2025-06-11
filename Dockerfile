@@ -10,12 +10,8 @@ RUN npm ci
 # Copy the rest of the application code
 COPY . .
 
-# Build only the client application (skip server bundling)
-RUN npx vite build && \
-    echo "=== Build completed, checking output ===" && \
-    find /app -name "index.html" -type f 2>/dev/null && \
-    echo "=== All directories with 'public' in name ===" && \
-    find /app -name "*public*" -type d 2>/dev/null
+# Build both client and server using package.json build script
+RUN npm run build
 
 # Production stage
 FROM node:20-alpine
@@ -30,15 +26,13 @@ ENV PORT=5555
 COPY package*.json ./
 RUN npm ci --include=dev
 
-# Copy built assets from the builder stage
-COPY --from=client-builder /app/server ./server
+# Copy built application from the builder stage
+COPY --from=client-builder /app/dist ./dist
 COPY --from=client-builder /app/shared ./shared
 COPY --from=client-builder /app/public ./public
-COPY --from=client-builder /app/vite.config.ts ./vite.config.ts
-COPY --from=client-builder /app/tsconfig.json ./tsconfig.json
-# Copy built client assets directly from builder stage
-# The vite build outputs to dist/public, so copy that to server/public
-COPY --from=client-builder /app/dist/public ./server/public
+
+# Create server directory and copy static assets where the Express server expects them
+RUN mkdir -p server/public && cp -r dist/public/* server/public/
 
 # Create uploads directory
 RUN mkdir -p public/uploads
@@ -63,6 +57,6 @@ USER nodejs
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5555/api/health || exit 1
 
-# Start the application directly with tsx in production mode
+# Start the built application
 ENV NODE_ENV=production
-CMD ["npx", "tsx", "server/index.ts"]
+CMD ["node", "dist/index.js"]
