@@ -11,7 +11,11 @@ RUN npm ci
 COPY . .
 
 # Build only the client application (skip server bundling)
-RUN npx vite build
+RUN npx vite build && \
+    echo "=== Build completed, checking output ===" && \
+    ls -la /app/dist/ && \
+    echo "=== Contents of dist/public ===" && \
+    ls -la /app/dist/public/ || echo "dist/public directory not found"
 
 # Production stage
 FROM node:20-alpine
@@ -33,7 +37,12 @@ COPY --from=client-builder /app/public ./public
 COPY --from=client-builder /app/vite.config.ts ./vite.config.ts
 COPY --from=client-builder /app/tsconfig.json ./tsconfig.json
 # Copy built client assets to where static server expects them
-COPY --from=client-builder /app/dist/public ./server/public
+# The vite build outputs to dist/public, but we need files in server/public
+COPY --from=client-builder /app/dist/public/* ./server/public/
+RUN echo "=== Production stage files after copy ===" && \
+    ls -la /app/server/public/ && \
+    echo "=== Checking for index.html ===" && \
+    ls -la /app/server/public/index.html || echo "index.html not found in server/public"
 
 # Create uploads directory
 RUN mkdir -p public/uploads
