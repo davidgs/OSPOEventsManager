@@ -12,7 +12,7 @@ import {
   insertWorkflowCommentSchema,
   insertWorkflowHistorySchema,
   approvalStatuses, approvalItemTypes, type ApprovalStatus, type ApprovalItemType
-} from "@shared/schema";
+} from "../shared/schema.js";
 
 // Use the updateUserPreferencesSchema as our profile update schema since it contains all the fields we need
 const updateUserProfileSchema = updateUserPreferencesSchema;

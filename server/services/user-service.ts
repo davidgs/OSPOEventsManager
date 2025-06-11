@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { eq } from "drizzle-orm";
-import { users, type InsertUser, type User } from "@shared/schema";
+import { users, type InsertUser, type User } from "../../shared/schema.js";
 
 export class UserService {
   /**

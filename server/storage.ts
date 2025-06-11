@@ -8,7 +8,7 @@ import {
   type InsertSponsorship, type InsertAsset, type InsertStakeholder, type InsertApprovalWorkflow,
   type InsertWorkflowReviewer, type InsertWorkflowStakeholder, type InsertWorkflowComment,
   type InsertWorkflowHistory
-} from "@shared/schema";
+} from "../shared/schema.js";
 import { db } from "./db";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
 

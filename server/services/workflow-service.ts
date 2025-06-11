@@ -17,7 +17,7 @@ import {
   type WorkflowHistory,
   type InsertWorkflowHistory,
   type ApprovalStatus
-} from "@shared/schema";
+} from "../../shared/schema.js";
 
 export class WorkflowService {
   /**
