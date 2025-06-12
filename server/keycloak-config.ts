@@ -11,7 +11,8 @@ import { pool } from './db';
  */
 export async function initKeycloak(app: Express) {
   // Dynamic import for Keycloak
-  const { default: Keycloak } = await import('keycloak-connect');
+  const keycloakModule = await import('keycloak-connect');
+  const Keycloak = keycloakModule.default || keycloakModule;
   // Create a session store based on database availability
   let sessionStore;
   
@@ -82,10 +83,21 @@ export async function initKeycloak(app: Express) {
     
     // Initialize Keycloak with PostgreSQL session store
     console.log('Initializing Keycloak instance...');
+    
+    // Check if Keycloak constructor is available
+    if (typeof Keycloak !== 'function') {
+      throw new Error('Keycloak constructor not found');
+    }
+    
     const keycloak = new Keycloak(
       { store: sessionStore }, 
       keycloakConfig
     );
+    
+    // Verify keycloak instance was created
+    if (!keycloak) {
+      throw new Error('Failed to create Keycloak instance');
+    }
     
     console.log('Registering Keycloak middleware...');
     // Register Keycloak middleware
