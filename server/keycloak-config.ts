@@ -4,15 +4,14 @@ import fs from 'fs';
 import expressSession from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import { pool } from './db';
-// Import Keycloak using dynamic import
-let Keycloak: any;
-
 /**
  * Initialize Keycloak authentication in the Express app
  * @param app Express application instance
  * @returns Keycloak instance
  */
-export function initKeycloak(app: Express) {
+export async function initKeycloak(app: Express) {
+  // Dynamic import for Keycloak
+  const { default: Keycloak } = await import('keycloak-connect');
   // Create a session store based on database availability
   let sessionStore;
   
