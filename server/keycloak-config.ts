@@ -4,10 +4,8 @@ import fs from 'fs';
 import expressSession from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import { pool } from './db';
-// Import as dynamic import
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const Keycloak = require('keycloak-connect');
+// Import Keycloak using dynamic import
+let Keycloak: any;
 
 /**
  * Initialize Keycloak authentication in the Express app
@@ -51,7 +49,14 @@ export function initKeycloak(app: Express) {
   try {
     // Load Keycloak configuration
     const keycloakConfigPath = path.join(process.cwd(), 'keycloak.json');
+    console.log(`Loading Keycloak config from: ${keycloakConfigPath}`);
+    
+    if (!fs.existsSync(keycloakConfigPath)) {
+      throw new Error(`Keycloak config file not found at: ${keycloakConfigPath}`);
+    }
+    
     const keycloakConfig = JSON.parse(fs.readFileSync(keycloakConfigPath, 'utf8'));
+    console.log(`Keycloak config loaded successfully:`, keycloakConfig);
     
     // Override auth-server-url based on environment
     if (process.env.KEYCLOAK_URL) {
@@ -77,17 +82,20 @@ export function initKeycloak(app: Express) {
     keycloakConfig["confidential-port"] = 0;
     
     // Initialize Keycloak with PostgreSQL session store
+    console.log('Initializing Keycloak instance...');
     const keycloak = new Keycloak(
       { store: sessionStore }, 
       keycloakConfig
     );
     
+    console.log('Registering Keycloak middleware...');
     // Register Keycloak middleware
     app.use(keycloak.middleware({
       logout: '/logout',
       admin: '/'
     }));
     
+    console.log('Keycloak initialization completed successfully');
     return keycloak;
   } catch (error) {
     console.error('Error initializing Keycloak:', error);
