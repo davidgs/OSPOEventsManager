@@ -230,6 +230,10 @@ app.use((req, res, next) => {
 
   // Always enable Keycloak authentication in production (no option to bypass)
   console.log("Securing routes with Keycloak authentication");
+  console.log(`Keycloak instance status: ${keycloak ? 'VALID' : 'NULL/UNDEFINED'}`);
+  if (keycloak) {
+    console.log(`Keycloak instance type: ${typeof keycloak}`);
+  }
   secureWithKeycloak(app, keycloak);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
