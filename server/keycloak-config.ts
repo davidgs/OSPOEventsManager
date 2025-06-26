@@ -10,22 +10,12 @@ import { pool } from './db';
  * @returns Keycloak instance
  */
 export async function initKeycloak(app: Express) {
-  // Import keycloak-connect using dynamic import
+  // Import keycloak-connect - it's a CommonJS module
   let Keycloak;
   try {
     const keycloakModule = await import('keycloak-connect');
-    // Handle both default and named exports
-    Keycloak = keycloakModule.default || keycloakModule;
-    
-    // If it's still not a constructor, try accessing the constructor property
-    if (typeof Keycloak !== 'function') {
-      Keycloak = keycloakModule.default?.default || keycloakModule.Keycloak || keycloakModule;
-    }
-    
-    if (typeof Keycloak !== 'function') {
-      console.error('Keycloak constructor not found in module');
-      return null;
-    }
+    // keycloak-connect exports the constructor directly
+    Keycloak = (keycloakModule as any).default || keycloakModule;
   } catch (error) {
     console.error('Failed to import keycloak-connect:', error);
     return null;
@@ -75,20 +65,19 @@ export async function initKeycloak(app: Express) {
     const keycloakConfig = JSON.parse(fs.readFileSync(keycloakConfigPath, 'utf8'));
     console.log(`Keycloak config loaded successfully:`, keycloakConfig);
     
-    // Override auth-server-url based on environment
-    if (process.env.KEYCLOAK_URL) {
-      console.log(`Using custom Keycloak URL: ${process.env.KEYCLOAK_URL}`);
-      keycloakConfig["auth-server-url"] = process.env.KEYCLOAK_URL;
+    // For Docker Compose, we need to handle two different URLs:
+    // 1. Server-to-server communication: http://keycloak:8080/auth/
+    // 2. Browser access: http://localhost:8080/auth/
+    
+    // The keycloak.json file already has localhost URL for browser access
+    // Server will use Docker service name for internal communication
+    if (process.env.NODE_ENV === 'development') {
+      // In development (Replit), keep the original URL
+      console.log(`Using development Keycloak URL: ${keycloakConfig["auth-server-url"]}`);
     } else {
-      // In Kubernetes, use simple service name which will be resolved by K8s DNS
-      const keycloakServiceName = process.env.KEYCLOAK_SERVICE_NAME || 'keycloak';
-      const keycloakServicePort = process.env.KEYCLOAK_SERVICE_PORT || '8080';
-      
-      // Format: http://service-name:port/auth/ to match KC_HTTP_RELATIVE_PATH in Keycloak
-      const keycloakUrl = `http://${keycloakServiceName}:${keycloakServicePort}/auth/`;
-      
-      console.log(`Using Kubernetes service URL for Keycloak: ${keycloakUrl}`);
-      keycloakConfig["auth-server-url"] = keycloakUrl;
+      // In Docker, the config file should have localhost for browser, 
+      // but we'll override for server-side token validation
+      console.log(`Using Docker Keycloak configuration for browser: ${keycloakConfig["auth-server-url"]}`);
     }
     
     // Additional configuration for reliability
