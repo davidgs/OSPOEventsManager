@@ -9,11 +9,27 @@ import { pool } from './db';
  * @param app Express application instance
  * @returns Keycloak instance
  */
-export function initKeycloak(app: Express) {
-  // Use dynamic require for CommonJS module in ES context
-  const { createRequire } = require('module');
-  const require = createRequire(import.meta.url);
-  const Keycloak = require('keycloak-connect');
+export async function initKeycloak(app: Express) {
+  // Import keycloak-connect using dynamic import
+  let Keycloak;
+  try {
+    const keycloakModule = await import('keycloak-connect');
+    // Handle both default and named exports
+    Keycloak = keycloakModule.default || keycloakModule;
+    
+    // If it's still not a constructor, try accessing the constructor property
+    if (typeof Keycloak !== 'function') {
+      Keycloak = keycloakModule.default?.default || keycloakModule.Keycloak || keycloakModule;
+    }
+    
+    if (typeof Keycloak !== 'function') {
+      console.error('Keycloak constructor not found in module');
+      return null;
+    }
+  } catch (error) {
+    console.error('Failed to import keycloak-connect:', error);
+    return null;
+  }
   // Create a session store based on database availability
   let sessionStore;
   

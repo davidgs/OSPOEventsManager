@@ -164,7 +164,7 @@ app.use((req, res, next) => {
   let keycloak;
   try {
     console.log("Initializing Keycloak authentication...");
-    keycloak = initKeycloak(app);
+    keycloak = await initKeycloak(app);
     
     // Apply Keycloak user mapping middleware
     app.use(async (req: any, res: any, next: any) => {
