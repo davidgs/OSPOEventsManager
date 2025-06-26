@@ -11,7 +11,7 @@ import fileUpload from "express-fileupload";
 function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
-    minute: "2-digit", 
+    minute: "2-digit",
     second: "2-digit",
     hour12: true,
   });
@@ -57,9 +57,9 @@ const proxyOptions = {
   pathRewrite: {},
   // Preserve the original host header to maintain port information
   headers: {
-    'X-Forwarded-Host': 'localhost:4576',
+    'X-Forwarded-Host': 'localhost:7654',
     'X-Forwarded-Proto': 'http',
-    'X-Forwarded-Port': '4576'
+    'X-Forwarded-Port': '7654'
   },
   // Handle redirects properly
   followRedirects: false,
@@ -165,7 +165,7 @@ app.use((req, res, next) => {
   try {
     console.log("Initializing Keycloak authentication...");
     keycloak = await initKeycloak(app);
-    
+
     // Apply Keycloak user mapping middleware
     app.use(async (req: any, res: any, next: any) => {
       // First apply the standard Keycloak user mapper
@@ -252,24 +252,24 @@ app.use((req, res, next) => {
   } else {
     // Production static file serving
     const staticPath = path.resolve(process.cwd(), "server", "public");
-    
+
     if (!fs.existsSync(staticPath)) {
       throw new Error(`Could not find static files directory: ${staticPath}`);
     }
-    
+
     app.use(express.static(staticPath));
-    
+
     // Fallback to index.html for client-side routing
     app.use("*", (_req, res) => {
       res.sendFile(path.resolve(staticPath, "index.html"));
     });
   }
 
-  // Use port 5555 as specified
-  const port = 5555;
+  // Use port 7654 as specified
+  const port = 7654;
   server.listen({
     port,
-    host: "0.0.0.0",
+    host: "localhost",
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
