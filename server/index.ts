@@ -257,10 +257,25 @@ app.use((req, res, next) => {
       throw new Error(`Could not find static files directory: ${staticPath}`);
     }
 
-    app.use(express.static(staticPath));
+    // Serve static files with proper MIME types
+    app.use(express.static(staticPath, {
+      setHeaders: (res, path) => {
+        if (path.endsWith('.js')) {
+          res.setHeader('Content-Type', 'application/javascript');
+        } else if (path.endsWith('.mjs')) {
+          res.setHeader('Content-Type', 'application/javascript');
+        } else if (path.endsWith('.css')) {
+          res.setHeader('Content-Type', 'text/css');
+        }
+      }
+    }));
 
-    // Fallback to index.html for client-side routing
-    app.use("*", (_req, res) => {
+    // Fallback to index.html for client-side routing (only for non-asset requests)
+    app.use("*", (req, res) => {
+      // Don't serve HTML for asset requests
+      if (req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+        return res.status(404).send('Asset not found');
+      }
       res.sendFile(path.resolve(staticPath, "index.html"));
     });
   }
