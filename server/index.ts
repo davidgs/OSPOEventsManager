@@ -226,30 +226,15 @@ app.use((req, res, next) => {
     }
   }
 
-  const server = await registerRoutes(app);
-
-  // Always enable Keycloak authentication in production (no option to bypass)
-  console.log("Securing routes with Keycloak authentication");
-  console.log(`Keycloak instance status: ${keycloak ? 'VALID' : 'NULL/UNDEFINED'}`);
-  if (keycloak) {
-    console.log(`Keycloak instance type: ${typeof keycloak}`);
-  }
-  secureWithKeycloak(app, keycloak);
-
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  // Setup static file serving for production
+  // Setup static file serving first to handle assets before routes
+  let server;
   if (app.get("env") === "development") {
     // Import Vite functions only in development
     const { setupVite } = await import("./vite");
+    server = await registerRoutes(app);
     await setupVite(app, server);
   } else {
+    server = await registerRoutes(app);
     // Production static file serving
     const staticPath = path.resolve(process.cwd(), "server", "public");
 
@@ -279,6 +264,22 @@ app.use((req, res, next) => {
       res.sendFile(path.resolve(staticPath, "index.html"));
     });
   }
+
+  // Always enable Keycloak authentication in production (no option to bypass)
+  console.log("Securing routes with Keycloak authentication");
+  console.log(`Keycloak instance status: ${keycloak ? 'VALID' : 'NULL/UNDEFINED'}`);
+  if (keycloak) {
+    console.log(`Keycloak instance type: ${typeof keycloak}`);
+  }
+  secureWithKeycloak(app, keycloak);
+
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+
+    res.status(status).json({ message });
+    throw err;
+  });
 
   // Use port from environment variable or default to 4576
   const port = parseInt(process.env.PORT || "4576", 10);
