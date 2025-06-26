@@ -9,10 +9,11 @@ import { pool } from './db';
  * @param app Express application instance
  * @returns Keycloak instance
  */
-export async function initKeycloak(app: Express) {
-  // Dynamic import for Keycloak
-  const keycloakModule = await import('keycloak-connect');
-  const Keycloak = keycloakModule.default || keycloakModule;
+export function initKeycloak(app: Express) {
+  // Use dynamic require for CommonJS module in ES context
+  const { createRequire } = require('module');
+  const require = createRequire(import.meta.url);
+  const Keycloak = require('keycloak-connect');
   // Create a session store based on database availability
   let sessionStore;
   
