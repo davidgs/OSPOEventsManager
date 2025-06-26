@@ -265,11 +265,11 @@ app.use((req, res, next) => {
     });
   }
 
-  // Use port 7654 as specified
-  const port = 7654;
+  // Use port from environment variable or default to 4576
+  const port = parseInt(process.env.PORT || "4576", 10);
   server.listen({
     port,
-    host: "localhost",
+    host: "0.0.0.0",
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
