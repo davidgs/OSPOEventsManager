@@ -16,13 +16,13 @@ export class UserService {
     }
 
     // Try to find the user first
-    const [existingUser] = await db.select().from(users).where(eq(users.keycloakId, keycloakId));
+    const [existingUser] = await db.select().from(users).where(eq(users.keycloak_id, keycloakId));
 
     if (existingUser) {
       // Update the last login time
       const [updatedUser] = await db
         .update(users)
-        .set({ lastLogin: new Date() })
+        .set({ last_login: new Date() })
         .where(eq(users.id, existingUser.id))
         .returning();
 
@@ -31,7 +31,7 @@ export class UserService {
 
     // Create a new user if one doesn't exist
     const insertData: InsertUser = {
-      keycloakId,
+      keycloak_id: keycloakId,
       username,
     };
 
@@ -52,7 +52,7 @@ export class UserService {
     if (!db) {
       throw new Error("Database connection is not available.");
     }
-    const [user] = await db.select().from(users).where(eq(users.keycloakId, keycloakId));
+    const [user] = await db.select().from(users).where(eq(users.keycloak_id, keycloakId));
     return user || undefined;
   }
 
@@ -70,7 +70,7 @@ export class UserService {
       .update(users)
       .set({
         preferences,
-        lastLogin: new Date()
+        last_login: new Date()
       })
       .where(eq(users.id, id))
       .returning();
