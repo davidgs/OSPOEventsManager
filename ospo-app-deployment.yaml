@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.36.0 (HEAD)
+  labels:
+    io.kompose.service: ospo-app
+  name: ospo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: ospo-app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.36.0 (HEAD)
+      labels:
+        io.kompose.service: ospo-app
+    spec:
+      containers:
+        - env:
+            - name: DATABASE_URL
+              value: postgres://ospo_user:ospo_password123@postgres:5432/ospo_events
+            - name: KEYCLOAK_CLIENT_ID
+              value: ospo-events-app
+            - name: KEYCLOAK_CLIENT_SECRET
+              value: ospo-events-client-secret-12345
+            - name: KEYCLOAK_REALM
+              value: ospo-events
+            - name: KEYCLOAK_URL
+              value: http://keycloak:8080/auth/
+            - name: NODE_ENV
+              value: production
+            - name: PGDATABASE
+              value: ospo_events
+            - name: PGHOST
+              value: postgres
+            - name: PGPASSWORD
+              value: ospo_password123
+            - name: PGPORT
+              value: "5432"
+            - name: PGUSER
+              value: ospo_user
+            - name: SESSION_SECRET
+              value: your-session-secret-change-this-in-production
+          image: ospo-app
+          livenessProbe:
+            exec:
+              command:
+                - curl -f http://localhost:4576/api/health || exit 1
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+          name: ospo-app
+          ports:
+            - containerPort: 4576
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /app/public/uploads
+              name: ospo-app-claim0
+      restartPolicy: Always
+      volumes:
+        - name: ospo-app-claim0
+          persistentVolumeClaim:
+            claimName: ospo-app-claim0

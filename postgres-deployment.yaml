@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.36.0 (HEAD)
+  labels:
+    io.kompose.service: postgres
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.36.0 (HEAD)
+      labels:
+        io.kompose.service: postgres
+    spec:
+      containers:
+        - env:
+            - name: POSTGRES_DB
+              value: ospo_events
+            - name: POSTGRES_PASSWORD
+              value: ospo_password123
+            - name: POSTGRES_USER
+              value: ospo_user
+          image: postgres:15
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready -U ospo_user -d ospo_events
+            failureThreshold: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          name: postgres
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-data
+            - mountPath: /docker-entrypoint-initdb.d/init-db.sql
+              name: postgres-cm1
+              subPath: init-db.sql
+      restartPolicy: Always
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data
+        - configMap:
+            items:
+              - key: init-db.sql
+                path: init-db.sql
+            name: postgres-cm1
+          name: postgres-cm1
