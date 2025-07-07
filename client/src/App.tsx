@@ -3,6 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { withAuthProtection } from "@/contexts/auth-context";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Header } from "@/components/layout/Header";
+import { ProtectedRoute } from "@/components/protected-route";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -17,9 +18,13 @@ import AssetsPage from "@/pages/assets/index";
 import StakeholdersPage from "@/pages/stakeholders/index";
 import ApprovalWorkflowsPage from "@/pages/approval-workflows/index";
 import SettingsPage from "@/pages/settings";
+import UnauthorizedPage from "@/pages/unauthorized";
 
 // Define our routes using the existing comprehensive pages
 function App() {
+  // Debug logging to see what route is being matched
+  console.log("App rendering, current location:", window.location.href);
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ospo-ui-theme">
       <TooltipProvider>
@@ -30,6 +35,10 @@ function App() {
               {/* Public routes */}
               <Route path="/" component={HomePage} />
               <Route path="/auth" component={AuthPage} />
+              <Route path="/login" component={AuthPage} />
+              <Route path="/unauthorized" component={UnauthorizedPage} />
+
+              {/* Protected routes */}
               <Route path="/dashboard" component={DashboardPage} />
               <Route path="/events" component={EventsPage} />
               <Route path="/events/:id" component={EventDetailsPage} />
@@ -38,10 +47,13 @@ function App() {
               <Route path="/sponsorships" component={SponsorshipsPage} />
               <Route path="/assets" component={AssetsPage} />
               <Route path="/stakeholders" component={StakeholdersPage} />
-              <Route path="/approval-workflows" component={ApprovalWorkflowsPage} />
+              <Route
+                path="/approval-workflows"
+                component={ApprovalWorkflowsPage}
+              />
               <Route path="/settings" component={SettingsPage} />
               <Route path="/profile" component={ProfilePage} />
-              
+
               {/* 404 page */}
               <Route component={NotFound} />
             </Switch>

@@ -8,9 +8,19 @@ interface EventsListProps {
   events: Event[];
   cfpCounts: Record<number, number>;
   attendeeCounts: Record<number, number>;
-  eventSpeakers: Record<number, Array<{id: number, name: string, submissions: Array<{title: string, status: string}>}>>;
-  eventAttendees: Record<number, Array<{id: number, name: string}>>;
-  eventTripReports?: Record<number, Array<{id: number, name: string, uploadedByName: string}>>;
+  eventSpeakers: Record<
+    number,
+    Array<{
+      id: number;
+      name: string;
+      submissions: Array<{ title: string; status: string }>;
+    }>
+  >;
+  eventAttendees: Record<number, Array<{ id: number; name: string }>>;
+  eventTripReports?: Record<
+    number,
+    Array<{ id: number; name: string; uploadedByName: string }>
+  >;
   onAddEvent: () => void;
   onEditEvent: (event: Event) => void;
   onDeleteEvent: (event: Event) => void;
@@ -47,11 +57,13 @@ const EventsList: FC<EventsListProps> = ({
       <Button
         onClick={onAddEvent}
         variant="outline"
-        className="h-full min-h-[250px] sm:min-h-[300px] relative block w-full rounded-lg border-2 border-dashed border-gray-300 p-4 sm:p-12 text-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        className="h-full min-h-[250px] sm:min-h-[300px] relative block w-full rounded-lg border-2 border-dashed border-border p-4 sm:p-12 text-center hover:border-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
       >
         <div className="flex flex-col items-center justify-center">
-          <PlusCircle className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mb-2" />
-          <span className="block text-sm font-medium text-gray-600">Add new event</span>
+          <PlusCircle className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-2" />
+          <span className="block text-sm font-medium text-muted-foreground">
+            Add new event
+          </span>
         </div>
       </Button>
     </div>

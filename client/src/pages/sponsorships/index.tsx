@@ -2,18 +2,18 @@ import { FC, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
-import { 
-  Plus, Search, DollarSign, AlertTriangle, 
+import {
+  Plus, Search, DollarSign, AlertTriangle,
   ArrowUpDown, Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -30,53 +30,53 @@ import { Badge } from "@/components/ui/badge";
 const SponsorshipsPage: FC = () => {
   const [searchParams] = useLocation();
   const { toast } = useToast();
-  
+
   // Extract eventId from search params if present
   const params = new URLSearchParams(searchParams);
   const eventIdParam = params.get("eventId");
   const eventId = eventIdParam ? parseInt(eventIdParam) : undefined;
-  
+
   // State for filters and search
   const [levelFilter, setLevelFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [sortField, setSortField] = useState<string>("level");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  
+
   // State for modal/dialog
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSponsorship, setSelectedSponsorship] = useState<any>(null);
-  
+
   // Fetch sponsorships
-  const { 
-    data: sponsorships = [], 
+  const {
+    data: sponsorships = [],
     isLoading: isLoadingSponsorships,
     isError: isErrorSponsorships,
   } = useQuery({
     queryKey: ['/api/sponsorships', eventId],
     queryFn: async ({ queryKey }) => {
-      const url = eventId 
-        ? `/api/sponsorships?eventId=${eventId}` 
+      const url = eventId
+        ? `/api/sponsorships?eventId=${eventId}`
         : '/api/sponsorships';
-      const res = await fetch(url, { credentials: 'include' });
+      const res = await apiRequest('GET', url);
       if (!res.ok) throw new Error('Failed to fetch sponsorships');
       return await res.json();
     },
   });
-  
+
   // Fetch events for dropdown
-  const { 
-    data: events = [], 
+  const {
+    data: events = [],
     isLoading: isLoadingEvents,
   } = useQuery({
     queryKey: ['/api/events'],
   });
-  
+
   // Extract unique tiers and statuses for filters
   const tiers = Array.from(new Set(sponsorships.map((sponsorship: any) => sponsorship.tier)));
   const statuses = Array.from(new Set(sponsorships.map((sponsorship: any) => sponsorship.status)));
-  
+
   // Add sponsorship mutation
   const { mutate: addSponsorship, isPending: isAddingSponsorship } = useMutation({
     mutationFn: async (data: z.infer<typeof insertSponsorshipSchema>) => {
@@ -98,7 +98,7 @@ const SponsorshipsPage: FC = () => {
       });
     },
   });
-  
+
   // Delete sponsorship mutation
   const { mutate: deleteSponsorship, isPending: isDeletingSponsorship } = useMutation({
     mutationFn: async (id: number) => {
@@ -120,7 +120,7 @@ const SponsorshipsPage: FC = () => {
       });
     },
   });
-  
+
   // Form for adding a new sponsorship
   const form = useForm<z.infer<typeof insertSponsorshipSchema>>({
     resolver: zodResolver(insertSponsorshipSchema),
@@ -135,29 +135,29 @@ const SponsorshipsPage: FC = () => {
       notes: "",
     },
   });
-  
+
   // Handle adding a new sponsorship
   const handleAddSponsorship = (data: z.infer<typeof insertSponsorshipSchema>) => {
     addSponsorship(data);
   };
-  
+
   // Handle deleting a sponsorship
   const handleDeleteSponsorship = () => {
     if (selectedSponsorship) {
       deleteSponsorship(selectedSponsorship.id);
     }
   };
-  
+
   // Handle opening delete dialog
   const openDeleteDialog = (sponsorship: any) => {
     setSelectedSponsorship(sponsorship);
     setIsDeleteDialogOpen(true);
   };
-  
+
   // Sort function for sponsorships
   const sortSponsorships = (a: any, b: any) => {
     let comparison = 0;
-    
+
     switch (sortField) {
       case "tier":
         comparison = a.tier.localeCompare(b.tier);
@@ -179,42 +179,42 @@ const SponsorshipsPage: FC = () => {
       default:
         comparison = 0;
     }
-    
+
     return sortDirection === "asc" ? comparison : -comparison;
   };
-  
+
   // Get event name by ID
   const getEventName = (eventId: number) => {
     const event = (events as any[])?.find((e: any) => e.id === eventId);
     return event ? event.name : "Unknown Event";
   };
-  
+
   // Filter and sort sponsorships
   const filteredSponsorships = sponsorships
     .filter((sponsorship: any) => {
       let matches = true;
-      
+
       // Filter by tier
       if (levelFilter !== "all" && sponsorship.tier !== levelFilter) {
         matches = false;
       }
-      
+
       // Filter by status
       if (statusFilter !== "all" && sponsorship.status !== statusFilter) {
         matches = false;
       }
-      
+
       // Filter by search term
-      if (searchTerm && 
-          !sponsorship.tier.toLowerCase().includes(searchTerm.toLowerCase()) && 
+      if (searchTerm &&
+          !sponsorship.tier.toLowerCase().includes(searchTerm.toLowerCase()) &&
           !(sponsorship.contact_name && sponsorship.contact_name.toLowerCase().includes(searchTerm.toLowerCase()))) {
         matches = false;
       }
-      
+
       return matches;
     })
     .sort(sortSponsorships);
-  
+
   // Toggle sort direction or change sort field
   const handleSort = (field: string) => {
     if (field === sortField) {
@@ -224,7 +224,7 @@ const SponsorshipsPage: FC = () => {
       setSortDirection("asc");
     }
   };
-  
+
   // Status badge style
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
@@ -238,10 +238,10 @@ const SponsorshipsPage: FC = () => {
         return <Badge variant="outline" className="bg-gray-100 text-gray-800">{status}</Badge>;
     }
   };
-  
+
   // Loading state
   const isLoading = isLoadingSponsorships || isLoadingEvents;
-  
+
   return (
     <div className="py-6">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
@@ -262,7 +262,7 @@ const SponsorshipsPage: FC = () => {
             </Button>
           </div>
         </div>
-        
+
         {/* Filters */}
         <div className="mb-6 bg-white shadow rounded-lg p-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
@@ -283,7 +283,7 @@ const SponsorshipsPage: FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-              
+
               <Select
                 value={statusFilter}
                 onValueChange={setStatusFilter}
@@ -313,7 +313,7 @@ const SponsorshipsPage: FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Content */}
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
@@ -338,8 +338,8 @@ const SponsorshipsPage: FC = () => {
               <DollarSign className="mx-auto h-12 w-12 text-gray-400" />
               <CardTitle className="mt-4 text-xl">No Sponsorships Found</CardTitle>
               <p className="mt-2 text-gray-500">
-                {searchTerm || levelFilter !== "all" || statusFilter !== "all" 
-                  ? "Try adjusting your search or filters to find what you're looking for." 
+                {searchTerm || levelFilter !== "all" || statusFilter !== "all"
+                  ? "Try adjusting your search or filters to find what you're looking for."
                   : "Get started by adding your first sponsorship."}
               </p>
               {!(searchTerm || levelFilter !== "all" || statusFilter !== "all") && (
@@ -356,8 +356,8 @@ const SponsorshipsPage: FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th 
-                      scope="col" 
+                    <th
+                      scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                       onClick={() => handleSort("level")}
                     >
@@ -368,8 +368,8 @@ const SponsorshipsPage: FC = () => {
                         )}
                       </div>
                     </th>
-                    <th 
-                      scope="col" 
+                    <th
+                      scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                       onClick={() => handleSort("amount")}
                     >
@@ -385,8 +385,8 @@ const SponsorshipsPage: FC = () => {
                         Event
                       </th>
                     )}
-                    <th 
-                      scope="col" 
+                    <th
+                      scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                       onClick={() => handleSort("status")}
                     >
@@ -397,8 +397,8 @@ const SponsorshipsPage: FC = () => {
                         )}
                       </div>
                     </th>
-                    <th 
-                      scope="col" 
+                    <th
+                      scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hidden md:table-cell"
                       onClick={() => handleSort("contactName")}
                     >
@@ -436,8 +436,8 @@ const SponsorshipsPage: FC = () => {
                           <div className="text-sm text-gray-900">
                             {sponsorship.contactName}
                             {sponsorship.contactEmail && (
-                              <a 
-                                href={`mailto:${sponsorship.contactEmail}`} 
+                              <a
+                                href={`mailto:${sponsorship.contactEmail}`}
                                 className="flex items-center text-xs text-blue-600 hover:text-blue-900 mt-1"
                               >
                                 <Mail className="h-3 w-3 mr-1" />
@@ -466,7 +466,7 @@ const SponsorshipsPage: FC = () => {
           </div>
         )}
       </div>
-      
+
       {/* Add Sponsorship Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="sm:max-w-md">
@@ -476,7 +476,7 @@ const SponsorshipsPage: FC = () => {
               Enter the details of the sponsorship you want to add.
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleAddSponsorship)} className="space-y-4">
               {/* Event Selection (if not pre-selected) */}
@@ -509,7 +509,7 @@ const SponsorshipsPage: FC = () => {
                   )}
                 />
               )}
-              
+
               {/* Sponsor Name */}
               <FormField
                 control={form.control}
@@ -524,7 +524,7 @@ const SponsorshipsPage: FC = () => {
                   </FormItem>
                 )}
               />
-              
+
               {/* Tier */}
               <FormField
                 control={form.control}
@@ -539,7 +539,7 @@ const SponsorshipsPage: FC = () => {
                   </FormItem>
                 )}
               />
-              
+
               {/* Amount */}
               <FormField
                 control={form.control}
@@ -557,7 +557,7 @@ const SponsorshipsPage: FC = () => {
                   </FormItem>
                 )}
               />
-              
+
               {/* Status */}
               <FormField
                 control={form.control}
@@ -581,7 +581,7 @@ const SponsorshipsPage: FC = () => {
                   </FormItem>
                 )}
               />
-              
+
               {/* Contact Name */}
               <FormField
                 control={form.control}
@@ -599,7 +599,7 @@ const SponsorshipsPage: FC = () => {
                   </FormItem>
                 )}
               />
-              
+
               {/* Contact Email */}
               <FormField
                 control={form.control}
@@ -617,7 +617,7 @@ const SponsorshipsPage: FC = () => {
                   </FormItem>
                 )}
               />
-              
+
               {/* Notes */}
               <FormField
                 control={form.control}
@@ -626,9 +626,9 @@ const SponsorshipsPage: FC = () => {
                   <FormItem>
                     <FormLabel>Notes</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder="Any additional notes about this sponsorship"
-                        {...field} 
+                        {...field}
                         value={field.value || ""}
                       />
                     </FormControl>
@@ -639,7 +639,7 @@ const SponsorshipsPage: FC = () => {
                   </FormItem>
                 )}
               />
-              
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
                   Cancel
@@ -652,7 +652,7 @@ const SponsorshipsPage: FC = () => {
           </Form>
         </DialogContent>
       </Dialog>
-      
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

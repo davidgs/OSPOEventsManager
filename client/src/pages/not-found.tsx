@@ -1,12 +1,9 @@
-import { Link } from 'wouter';
-import { Button } from '@/components/ui/button';
-import { Header } from '@/components/layout/Header';
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
-      
       <main className="flex-1 flex items-center justify-center">
         <div className="container flex flex-col items-center justify-center gap-4 text-center py-24">
           <h1 className="text-9xl font-bold text-primary">404</h1>

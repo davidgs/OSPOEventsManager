@@ -3,6 +3,10 @@ FROM node:20-alpine AS client-builder
 
 WORKDIR /app
 
+# Accept build arguments
+ARG VITE_KEYCLOAK_URL=/auth
+ENV VITE_KEYCLOAK_URL=$VITE_KEYCLOAK_URL
+
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm ci
@@ -13,9 +17,9 @@ COPY . .
 # Build only the client assets for production
 RUN timeout 300 npx vite build || echo "Vite build timed out, creating minimal static files"
 RUN if [ ! -d "dist/public" ]; then \
-      mkdir -p dist/public && \
-      echo '<!DOCTYPE html><html><head><title>OSPO Events</title></head><body><div id="root">Loading...</div></body></html>' > dist/public/index.html; \
-    fi
+  mkdir -p dist/public && \
+  echo '<!DOCTYPE html><html><head><title>OSPO Events</title></head><body><div id="root">Loading...</div></body></html>' > dist/public/index.html; \
+  fi
 
 # Production stage
 FROM node:20-alpine
@@ -37,18 +41,19 @@ COPY --from=client-builder /app/public ./public
 COPY --from=client-builder /app/dist ./dist
 COPY --from=client-builder /app/vite.config.ts ./vite.config.ts
 COPY --from=client-builder /app/tsconfig.json ./tsconfig.json
+COPY --from=client-builder /app/keycloak.json ./keycloak.json
 
 # Create server/public directory and copy static assets where the Express server expects them
 RUN mkdir -p server/public && \
-    if [ -d "dist/public" ]; then cp -r dist/public/* server/public/; fi
+  if [ -d "dist/public" ]; then cp -r dist/public/* server/public/; fi
 
 # Create uploads directory
 RUN mkdir -p public/uploads
 
 # Add a non-root user and change ownership
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 -G nodejs && \
-    chown -R nodejs:nodejs /app
+  adduser -S nodejs -u 1001 -G nodejs && \
+  chown -R nodejs:nodejs /app
 
 # Switch to non-root user
 USER nodejs
@@ -63,7 +68,7 @@ USER nodejs
 
 # Add health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:4576/api/health || exit 1
+  CMD curl -f http://localhost:4576/api/health || exit 1
 
 # Start the application with TSX in production mode
 ENV NODE_ENV=production

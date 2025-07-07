@@ -48,6 +48,7 @@
       "rootUrl": "",
       "baseUrl": "/",
       "redirectUris": [
+        "http://localhost/*",
         "http://localhost:80/*",
         "http://localhost:4576/*",
         "https://*.replit.dev/*",
@@ -61,7 +62,7 @@
         "https://*.replit.app"
       ],
       "protocol": "openid-connect",
-      "publicClient": false,
+      "publicClient": true,
       "frontchannelLogout": false,
       "fullScopeAllowed": true,
       "nodeReRegistrationTimeout": -1,

@@ -1,8 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { 
-  insertEventSchema, insertCfpSubmissionSchema, 
+import {
+  insertEventSchema, insertCfpSubmissionSchema,
   insertAttendeeSchema, insertSponsorshipSchema,
   updateUserPreferencesSchema, insertAssetSchema,
   assetTypes, insertStakeholderSchema,
@@ -32,7 +32,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file upload middleware for specific routes only
   const fileUploadMiddleware = fileUpload({
     limits: { fileSize: 10 * 1024 * 1024 },
-    abortOnLimit: true, 
+    abortOnLimit: true,
     createParentPath: true,
     useTempFiles: true,
     tempFileDir: '/tmp/',
@@ -51,37 +51,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // For now, a simple check that our storage layer is working
       await storage.getEvents();
-      
+
       res.json({
         status: "healthy",
         timestamp: new Date().toISOString(),
         service: "ospo-app",
-        version: process.env.APP_VERSION || "1.0.0"
+        version: process.env.APP_VERSION || "1.0.0",
+        database: "connected"
       });
     } catch (error) {
       console.error("Health check failed:", error);
       res.status(500).json({
         status: "unhealthy",
         timestamp: new Date().toISOString(),
+        database: "disconnected",
         error: "Service is not healthy"
-      });
-    }
-  });
-
-  // API Health check endpoint  
-  app.get("/api/health", async (req: Request, res: Response) => {
-    try {
-      await storage.getEvents();
-      res.json({
-        status: "healthy",
-        timestamp: new Date().toISOString(),
-        database: "connected"
-      });
-    } catch (error) {
-      res.status(500).json({
-        status: "unhealthy", 
-        timestamp: new Date().toISOString(),
-        database: "disconnected"
       });
     }
   });
@@ -92,12 +76,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('GET /api/events called');
       const events = await storage.getEvents();
       console.log(`Retrieved ${events.length} events`);
-      
+
       if (!events || events.length === 0) {
         console.log('No events found');
         return res.json([]);
       }
-      
+
       res.json(events);
     } catch (error) {
       console.error('Error in GET /api/events:', error);
@@ -126,17 +110,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/events", async (req: Request, res: Response) => {
     try {
       console.log('POST /api/events - Request body:', JSON.stringify(req.body, null, 2));
-      
+
       const eventData = insertEventSchema.safeParse(req.body);
-      
+
       if (!eventData.success) {
         console.error('Validation error:', eventData.error);
         const validationError = fromZodError(eventData.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       console.log('Parsed event data:', JSON.stringify(eventData.data, null, 2));
-      
+
       const event = await storage.createEvent(eventData.data);
       console.log('Created event:', JSON.stringify(event, null, 2));
       res.status(201).json(event);
@@ -156,24 +140,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Log the request body for debugging
       console.log('PUT /api/events/:id - Request body:', req.body);
-      
+
       const eventData = insertEventSchema.partial().safeParse(req.body);
-      
+
       if (!eventData.success) {
         // Log validation errors
         console.error('Validation error:', eventData.error);
         const validationError = fromZodError(eventData.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       // Log the parsed data
       console.log('Parsed event data:', eventData.data);
-      
+
       const event = await storage.updateEvent(id, eventData.data);
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
       }
-      
+
       res.json(event);
     } catch (error) {
       console.error('Error updating event:', error);
@@ -192,7 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!success) {
         return res.status(404).json({ message: "Event not found" });
       }
-      
+
       res.status(200).json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete event" });
@@ -203,14 +187,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cfp-submissions", async (req: Request, res: Response) => {
     try {
       const eventId = req.query.eventId ? parseInt(req.query.eventId as string) : undefined;
-      
+
       let submissions;
       if (eventId) {
         submissions = await storage.getCfpSubmissionsByEvent(eventId);
       } else {
         submissions = await storage.getCfpSubmissions();
       }
-      
+
       res.json(submissions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch CFP submissions" });
@@ -238,12 +222,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/cfp-submissions", async (req: Request, res: Response) => {
     try {
       const submissionData = insertCfpSubmissionSchema.safeParse(req.body);
-      
+
       if (!submissionData.success) {
         const validationError = fromZodError(submissionData.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       const submission = await storage.createCfpSubmission(submissionData.data);
       res.status(201).json(submission);
     } catch (error) {
@@ -259,17 +243,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const submissionData = insertCfpSubmissionSchema.partial().safeParse(req.body);
-      
+
       if (!submissionData.success) {
         const validationError = fromZodError(submissionData.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       const submission = await storage.updateCfpSubmission(id, submissionData.data);
       if (!submission) {
         return res.status(404).json({ message: "Submission not found" });
       }
-      
+
       res.json(submission);
     } catch (error) {
       res.status(500).json({ message: "Failed to update CFP submission" });
@@ -287,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!success) {
         return res.status(404).json({ message: "Submission not found" });
       }
-      
+
       res.status(200).json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete CFP submission" });
@@ -298,14 +282,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/attendees", async (req: Request, res: Response) => {
     try {
       const eventId = req.query.eventId ? parseInt(req.query.eventId as string) : undefined;
-      
+
       let attendees;
       if (eventId) {
         attendees = await storage.getAttendeesByEvent(eventId);
       } else {
         attendees = await storage.getAttendees();
       }
-      
+
       res.json(attendees);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch attendees" });
@@ -333,12 +317,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/attendees", async (req: Request, res: Response) => {
     try {
       const attendeeData = insertAttendeeSchema.safeParse(req.body);
-      
+
       if (!attendeeData.success) {
         const validationError = fromZodError(attendeeData.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       const attendee = await storage.createAttendee(attendeeData.data);
       res.status(201).json(attendee);
     } catch (error) {
@@ -354,17 +338,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const attendeeData = insertAttendeeSchema.partial().safeParse(req.body);
-      
+
       if (!attendeeData.success) {
         const validationError = fromZodError(attendeeData.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       const attendee = await storage.updateAttendee(id, attendeeData.data);
       if (!attendee) {
         return res.status(404).json({ message: "Attendee not found" });
       }
-      
+
       res.json(attendee);
     } catch (error) {
       res.status(500).json({ message: "Failed to update attendee" });
@@ -382,7 +366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!success) {
         return res.status(404).json({ message: "Attendee not found" });
       }
-      
+
       res.status(200).json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete attendee" });
@@ -394,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("GET /api/sponsorships called");
       const eventId = req.query.eventId ? parseInt(req.query.eventId as string) : undefined;
-      
+
       let sponsorships;
       if (eventId) {
         console.log(`Fetching sponsorships for event ID: ${eventId}`);
@@ -403,7 +387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Fetching all sponsorships");
         sponsorships = await storage.getSponsorships();
       }
-      
+
       console.log(`Retrieved ${sponsorships.length} sponsorships`);
       res.json(sponsorships);
     } catch (error) {
@@ -433,12 +417,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/sponsorships", async (req: Request, res: Response) => {
     try {
       const sponsorshipData = insertSponsorshipSchema.safeParse(req.body);
-      
+
       if (!sponsorshipData.success) {
         const validationError = fromZodError(sponsorshipData.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       const sponsorship = await storage.createSponsorship(sponsorshipData.data);
       res.status(201).json(sponsorship);
     } catch (error) {
@@ -454,17 +438,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const sponsorshipData = insertSponsorshipSchema.partial().safeParse(req.body);
-      
+
       if (!sponsorshipData.success) {
         const validationError = fromZodError(sponsorshipData.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       const sponsorship = await storage.updateSponsorship(id, sponsorshipData.data);
       if (!sponsorship) {
         return res.status(404).json({ message: "Sponsorship not found" });
       }
-      
+
       res.json(sponsorship);
     } catch (error) {
       res.status(500).json({ message: "Failed to update sponsorship" });
@@ -482,7 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!success) {
         return res.status(404).json({ message: "Sponsorship not found" });
       }
-      
+
       res.status(200).json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete sponsorship" });
@@ -505,12 +489,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch users" });
     }
   });
-  
+
   app.get("/api/users/:id", async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
       let user;
-      
+
       // Check if ID is numeric (database ID) or UUID (Keycloak ID)
       if (/^[0-9]+$/.test(id)) {
         user = await storage.getUser(parseInt(id));
@@ -518,7 +502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // UUID - Keycloak user
         user = await storage.getUserByKeycloakId(id);
       }
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -536,14 +520,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = req.params.id;
 
       const profileData = updateUserProfileSchema.safeParse(req.body);
-      
+
       if (!profileData.success) {
         const validationError = fromZodError(profileData.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       let user;
-      
+
       // Handle both numeric IDs and Keycloak UUIDs
       if (/^[0-9]+$/.test(id)) {
         user = await storage.updateUserProfile(parseInt(id), profileData.data);
@@ -568,11 +552,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user = newUser;
         }
       }
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // Don't return the password if it exists
       const { password, ...userWithoutPassword } = user as any;
       res.json(userWithoutPassword);
@@ -587,7 +571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Headshot upload request for user ID:", id);
       console.log("Request files:", req.files);
       console.log("Request body:", req.body);
-      
+
       if (!id) {
         console.log("No user ID provided");
         return res.status(400).json({ message: "Invalid user ID" });
@@ -617,18 +601,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // The name of the input field is "headshot"
       const headshotFile = req.files.headshot as fileUpload.UploadedFile;
-      
+
       if (!headshotFile) {
         console.log("No headshot file found in request");
         return res.status(400).json({ message: "No headshot file was uploaded" });
       }
-      
+
       console.log("Headshot file details:", {
         name: headshotFile.name,
         size: headshotFile.size,
         mimetype: headshotFile.mimetype
       });
-      
+
       // Validate file size (already capped by middleware but double-check)
       if (headshotFile.size > 10 * 1024 * 1024) {
         console.log("File size too large:", headshotFile.size);
@@ -639,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileExt = path.extname(headshotFile.name).toLowerCase();
       const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
       console.log("File extension:", fileExt);
-      
+
       if (!validExtensions.includes(fileExt)) {
         console.log("Invalid file extension:", fileExt);
         return res.status(400).json({ message: "Invalid file type. Only JPG, PNG, and GIF are allowed" });
@@ -654,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update user profile with the headshot path
       const headshotUrl = `/uploads/${fileName}`;
-      
+
       // Create an asset record for the uploaded file
       const assetData = {
         name: headshotFile.name,
@@ -672,7 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Failed to create asset record:", assetError);
         // Continue with headshot update even if asset creation fails
       }
-      
+
       // For UUID users (Keycloak), try to update their profile in the database
       let updatedUser;
       if (/^[0-9]+$/.test(id)) {
@@ -706,8 +690,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Don't return the password if it exists
       const { password, ...userWithoutPassword } = updatedUser as any;
-      res.json({ 
-        message: "Headshot uploaded successfully", 
+      res.json({
+        message: "Headshot uploaded successfully",
         user: userWithoutPassword,
         headshotUrl: headshotUrl
       });
@@ -725,7 +709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
       const type = req.query.type as string;
       const unlinkedEventId = req.query.unlinked ? parseInt(req.query.unlinked as string) : undefined;
-      
+
       let assets;
       if (unlinkedEventId) {
         // Get all assets that are not linked to the specified event
@@ -744,7 +728,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         assets = await storage.getAssets();
       }
-      
+
       // For backward compatibility, ensure all assets have uploadedByName
       const enhancedAssets = await Promise.all(assets.map(async (asset) => {
         const user = await storage.getUser(asset.uploaded_by);
@@ -753,7 +737,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           uploadedByName: user ? user.name : 'Unknown User'
         };
       }));
-      
+
       res.json(enhancedAssets);
     } catch (error) {
       console.error("Error fetching assets:", error);
@@ -804,8 +788,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate asset type
       if (!assetTypes.includes(type as any)) {
-        return res.status(400).json({ 
-          message: `Invalid asset type. Must be one of: ${assetTypes.join(', ')}` 
+        return res.status(400).json({
+          message: `Invalid asset type. Must be one of: ${assetTypes.join(', ')}`
         });
       }
 
@@ -830,14 +814,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const asset = await storage.createAsset(assetData);
-      
+
       // Add user information to the response
       const user = await storage.getUser(asset.uploaded_by);
       const enhancedAsset = {
         ...asset,
         uploadedByName: user ? user.name : 'Unknown User'
       };
-      
+
       res.status(201).json(enhancedAsset);
     } catch (error) {
       console.error("Error creating asset:", error);
@@ -853,26 +837,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { name, description, eventId, cfpSubmissionId } = req.body;
-      
+
       // Only allow updating certain fields
       const updateData: any = {};
       if (name) updateData.name = name;
       if (description !== undefined) updateData.description = description;
       if (eventId !== undefined) updateData.eventId = eventId ? parseInt(eventId as string) : null;
       if (cfpSubmissionId !== undefined) updateData.cfpSubmissionId = cfpSubmissionId ? parseInt(cfpSubmissionId as string) : null;
-      
+
       const asset = await storage.updateAsset(id, updateData);
       if (!asset) {
         return res.status(404).json({ message: "Asset not found" });
       }
-      
+
       // Add user information to response
       const user = await storage.getUser(asset.uploaded_by);
       const enhancedAsset = {
         ...asset,
         uploadedByName: user ? user.name : 'Unknown User'
       };
-      
+
       res.json(enhancedAsset);
     } catch (error) {
       console.error("Error updating asset:", error);
@@ -904,7 +888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!success) {
         return res.status(404).json({ message: "Failed to delete asset" });
       }
-      
+
       res.status(200).json({ success: true });
     } catch (error) {
       console.error("Error deleting asset:", error);
@@ -913,7 +897,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Stakeholders API =====
-  
+
   app.get("/api/stakeholders", async (req: Request, res: Response) => {
     try {
       const stakeholders = await storage.getStakeholders();
@@ -923,7 +907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch stakeholders" });
     }
   });
-  
+
   app.get("/api/stakeholders/role/:role", async (req: Request, res: Response) => {
     try {
       const role = req.params.role;
@@ -934,32 +918,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch stakeholders by role" });
     }
   });
-  
+
   app.get("/api/stakeholders/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const stakeholder = await storage.getStakeholder(id);
-      
+
       if (!stakeholder) {
         return res.status(404).json({ message: "Stakeholder not found" });
       }
-      
+
       res.json(stakeholder);
     } catch (err) {
       console.error(`Error fetching stakeholder ${req.params.id}:`, err);
       res.status(500).json({ message: "Failed to fetch stakeholder" });
     }
   });
-  
+
   app.post("/api/stakeholders", async (req: Request, res: Response) => {
     try {
       const parseResult = insertStakeholderSchema.safeParse(req.body);
-      
+
       if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       const stakeholder = await storage.createStakeholder(parseResult.data);
       res.status(201).json(stakeholder);
     } catch (err) {
@@ -967,57 +951,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to create stakeholder" });
     }
   });
-  
+
   app.put("/api/stakeholders/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const parseResult = insertStakeholderSchema.partial().safeParse(req.body);
-      
+
       if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       const stakeholder = await storage.updateStakeholder(id, parseResult.data);
-      
+
       if (!stakeholder) {
         return res.status(404).json({ message: "Stakeholder not found" });
       }
-      
+
       res.json(stakeholder);
     } catch (err) {
       console.error(`Error updating stakeholder ${req.params.id}:`, err);
       res.status(500).json({ message: "Failed to update stakeholder" });
     }
   });
-  
+
   app.delete("/api/stakeholders/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteStakeholder(id);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Stakeholder not found" });
       }
-      
+
       res.status(204).end();
     } catch (err) {
       console.error(`Error deleting stakeholder ${req.params.id}:`, err);
       res.status(500).json({ message: "Failed to delete stakeholder" });
     }
   });
-  
+
   // ===== Approval Workflows API =====
-  
+
   app.get("/api/approval-workflows", async (req: Request, res: Response) => {
     try {
       const status = req.query.status as ApprovalStatus | undefined;
       const itemType = req.query.itemType as ApprovalItemType | undefined;
       const itemId = req.query.itemId ? parseInt(req.query.itemId as string) : undefined;
       const requesterId = req.query.requesterId ? parseInt(req.query.requesterId as string) : undefined;
-      
+
       let workflows;
-      
+
       if (status) {
         workflows = await storage.getApprovalWorkflowsByStatus(status);
       } else if (itemType && itemId) {
@@ -1029,35 +1013,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         workflows = await storage.getApprovalWorkflows();
       }
-      
+
       res.json(workflows);
     } catch (err) {
       console.error("Error fetching approval workflows:", err);
       res.status(500).json({ message: "Failed to fetch approval workflows" });
     }
   });
-  
+
   app.get("/api/approval-workflows/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       console.log(`Fetching workflow with ID: ${id}`);
       const workflow = await storage.getApprovalWorkflow(id);
-      
+
       if (!workflow) {
         console.log(`Workflow not found with ID: ${id}`);
         return res.status(404).json({ message: "Approval workflow not found" });
       }
-      
+
       console.log(`Found workflow:`, workflow);
-      
+
       // Get related data
       const reviewers = await storage.getWorkflowReviewersByWorkflow(id);
       const stakeholders = await storage.getWorkflowStakeholdersByWorkflow(id);
       const comments = await storage.getWorkflowCommentsByWorkflow(id);
       const history = await storage.getWorkflowHistoryByWorkflow(id);
-      
+
       console.log(`Related data: reviewers=${reviewers.length || 0}, stakeholders=${stakeholders.length || 0}, comments=${comments.length || 0}, history=${history.length || 0}`);
-      
+
       // Return workflow with related data
       const fullWorkflow = {
         ...workflow,
@@ -1066,7 +1050,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         comments: comments || [],
         history: history || []
       };
-      
+
       console.log(`Returning full workflow data`);
       res.json(fullWorkflow);
     } catch (err) {
@@ -1074,23 +1058,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch approval workflow" });
     }
   });
-  
+
   app.post("/api/approval-workflows", async (req: Request, res: Response) => {
     try {
       console.log("Creating workflow:", req.body);
-      
+
       // Add validation for the new item types
       console.log("Request body itemType:", req.body.itemType);
       console.log("Valid item types:", approvalItemTypes);
-      
+
       const isValidItemType = approvalItemTypes.includes(req.body.itemType);
       if (!isValidItemType) {
         console.error(`Invalid itemType: "${req.body.itemType}"`);
-        return res.status(400).json({ 
-          message: `Invalid itemType. Allowed values: ${approvalItemTypes.join(', ')}` 
+        return res.status(400).json({
+          message: `Invalid itemType. Allowed values: ${approvalItemTypes.join(', ')}`
         });
       }
-      
+
       // Log all request body fields for debugging
       console.log("Request body before validation:", {
         title: req.body.title,
@@ -1103,19 +1087,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         reviewerIds: req.body.reviewerIds,
         stakeholderIds: req.body.stakeholderIds
       });
-      
+
       const parseResult = insertApprovalWorkflowSchema.safeParse(req.body);
-      
+
       if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
         console.error("Validation error details:", parseResult.error.errors);
         console.error("Validation error message:", validationError.message);
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: validationError.message,
-          details: parseResult.error.errors 
+          details: parseResult.error.errors
         });
       }
-      
+
       const workflow = await storage.createApprovalWorkflow(parseResult.data);
       res.status(201).json(workflow);
     } catch (err) {
@@ -1123,82 +1107,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to create approval workflow" });
     }
   });
-  
+
   app.put("/api/approval-workflows/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const parseResult = insertApprovalWorkflowSchema.partial().safeParse(req.body);
-      
+
       if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       const workflow = await storage.updateApprovalWorkflow(id, parseResult.data);
-      
+
       if (!workflow) {
         return res.status(404).json({ message: "Approval workflow not found" });
       }
-      
+
       res.json(workflow);
     } catch (err) {
       console.error(`Error updating approval workflow ${req.params.id}:`, err);
       res.status(500).json({ message: "Failed to update approval workflow" });
     }
   });
-  
+
   app.put("/api/approval-workflows/:id/status", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const { status, userId } = req.body;
-      
+
       // Validate inputs
       if (!status || !userId) {
         return res.status(400).json({ message: "Status and userId are required" });
       }
-      
+
       if (!approvalStatuses.includes(status)) {
         return res.status(400).json({ message: "Invalid status value" });
       }
-      
+
       const workflow = await storage.updateApprovalWorkflowStatus(id, status);
-      
+
       if (!workflow) {
         return res.status(404).json({ message: "Approval workflow not found" });
       }
-      
+
       res.json(workflow);
     } catch (err) {
       console.error(`Error updating approval workflow status ${req.params.id}:`, err);
       res.status(500).json({ message: "Failed to update approval workflow status" });
     }
   });
-  
+
   app.delete("/api/approval-workflows/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const success = await storage.deleteApprovalWorkflow(id);
-      
+
       if (!success) {
         return res.status(404).json({ message: "Approval workflow not found" });
       }
-      
+
       res.status(204).end();
     } catch (err) {
       console.error(`Error deleting approval workflow ${req.params.id}:`, err);
       res.status(500).json({ message: "Failed to delete approval workflow" });
     }
   });
-  
+
   // ===== Workflow Reviewers API =====
-  
+
   app.get("/api/workflow-reviewers", async (req: Request, res: Response) => {
     try {
       const workflowId = req.query.workflowId ? parseInt(req.query.workflowId as string) : undefined;
       const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
-      
+
       let reviewers;
-      
+
       if (workflowId) {
         reviewers = await storage.getWorkflowReviewersByWorkflow(workflowId);
       } else if (userId) {
@@ -1206,23 +1190,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         return res.status(400).json({ message: "Either workflowId or userId is required" });
       }
-      
+
       res.json(reviewers);
     } catch (err) {
       console.error("Error fetching workflow reviewers:", err);
       res.status(500).json({ message: "Failed to fetch workflow reviewers" });
     }
   });
-  
+
   app.post("/api/workflow-reviewers", async (req: Request, res: Response) => {
     try {
       const parseResult = insertWorkflowReviewerSchema.safeParse(req.body);
-      
+
       if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       const reviewer = await storage.createWorkflowReviewer(parseResult.data);
       res.status(201).json(reviewer);
     } catch (err) {
@@ -1230,44 +1214,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to create workflow reviewer" });
     }
   });
-  
+
   app.put("/api/workflow-reviewers/:id/status", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const { status, comments } = req.body;
-      
+
       // Validate inputs
       if (!status) {
         return res.status(400).json({ message: "Status is required" });
       }
-      
+
       if (!approvalStatuses.includes(status)) {
         return res.status(400).json({ message: "Invalid status value" });
       }
-      
+
       const reviewer = await storage.updateWorkflowReviewerStatus(id, status);
-      
+
       if (!reviewer) {
         return res.status(404).json({ message: "Workflow reviewer not found" });
       }
-      
+
       res.json(reviewer);
     } catch (err) {
       console.error(`Error updating workflow reviewer status ${req.params.id}:`, err);
       res.status(500).json({ message: "Failed to update workflow reviewer status" });
     }
   });
-  
+
   // ===== Workflow Comments API =====
-  
+
   app.get("/api/workflow-comments", async (req: Request, res: Response) => {
     try {
       const workflowId = req.query.workflowId ? parseInt(req.query.workflowId as string) : undefined;
-      
+
       if (!workflowId) {
         return res.status(400).json({ message: "workflowId is required" });
       }
-      
+
       const comments = await storage.getWorkflowCommentsByWorkflow(workflowId);
       res.json(comments);
     } catch (err) {
@@ -1275,16 +1259,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch workflow comments" });
     }
   });
-  
+
   app.post("/api/workflow-comments", async (req: Request, res: Response) => {
     try {
       const parseResult = insertWorkflowCommentSchema.safeParse(req.body);
-      
+
       if (!parseResult.success) {
         const validationError = fromZodError(parseResult.error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       const comment = await storage.createWorkflowComment(parseResult.data);
       res.status(201).json(comment);
     } catch (err) {
@@ -1292,9 +1276,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to create workflow comment" });
     }
   });
-  
+
   // ===== Workflow History API =====
-  
+
   app.get("/api/workflow-history/:workflowId", async (req: Request, res: Response) => {
     try {
       const workflowId = parseInt(req.params.workflowId);

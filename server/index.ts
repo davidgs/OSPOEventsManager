@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import path from "path";
 import fs from "fs";
-import { initKeycloak, secureWithKeycloak, keycloakUserMapper } from "./keycloak-config";
+import { initKeycloak, getAuthMiddleware, keycloakUserMapper } from "./keycloak-config";
 import { initializeDatabase } from "./init-db";
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import fileUpload from "express-fileupload";
@@ -226,7 +226,35 @@ app.use((req, res, next) => {
     }
   }
 
-  // Setup static file serving first to handle assets before routes
+  // Apply Keycloak route protection middleware BEFORE registering routes
+  console.log("Securing routes with Keycloak authentication");
+  console.log(`Keycloak instance status: ${keycloak ? 'VALID' : 'NULL/UNDEFINED'}`);
+  if (keycloak) {
+    console.log(`Keycloak instance type: ${typeof keycloak}`);
+
+    // Protect API routes (except health check) with Bearer token support
+    const authMiddleware = getAuthMiddleware(keycloak);
+    app.use('/api', (req, res, next) => {
+      // Allow health check without authentication
+      if (req.path === '/health') {
+        return next();
+      }
+
+      // All other API routes require authentication (Bearer token or session)
+      authMiddleware(req, res, next);
+    });
+  } else {
+    console.warn('Keycloak not initialized, API routes will not be protected');
+    // Add warning middleware for unprotected routes
+    app.use('/api', (req, res, next) => {
+      if (req.path !== '/health') {
+        console.warn(`Auth warning: Unprotected access to ${req.method} /api${req.path}`);
+      }
+      next();
+    });
+  }
+
+  // Register API routes AFTER applying protection middleware
   let server;
   if (app.get("env") === "development") {
     // Import Vite functions only in development
@@ -234,8 +262,10 @@ app.use((req, res, next) => {
     server = await registerRoutes(app);
     await setupVite(app, server);
   } else {
+    // Register API routes
     server = await registerRoutes(app);
-    // Production static file serving
+
+    // Production static file serving - register AFTER API routes
     const staticPath = path.resolve(process.cwd(), "server", "public");
 
     if (!fs.existsSync(staticPath)) {
@@ -255,23 +285,15 @@ app.use((req, res, next) => {
       }
     }));
 
-    // Fallback to index.html for client-side routing (only for non-asset requests)
+    // Fallback to index.html for client-side routing (only for non-API and non-asset requests)
     app.use("*", (req, res) => {
-      // Don't serve HTML for asset requests
-      if (req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
-        return res.status(404).send('Asset not found');
+      // Don't serve HTML for API requests or asset requests
+      if (req.originalUrl.startsWith('/api/') || req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+        return res.status(404).send('Not found');
       }
       res.sendFile(path.resolve(staticPath, "index.html"));
     });
   }
-
-  // Always enable Keycloak authentication in production (no option to bypass)
-  console.log("Securing routes with Keycloak authentication");
-  console.log(`Keycloak instance status: ${keycloak ? 'VALID' : 'NULL/UNDEFINED'}`);
-  if (keycloak) {
-    console.log(`Keycloak instance type: ${typeof keycloak}`);
-  }
-  secureWithKeycloak(app, keycloak);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

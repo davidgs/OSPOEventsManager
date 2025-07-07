@@ -65,7 +65,33 @@
     @apply border-border;
   }
 
+  html {
+    /* Prevent flash of unstyled content */
+    color-scheme: light dark;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
+  }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    /* Ensure smooth transitions */
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+
+  /* Fix for any potential FOUC (Flash of Unstyled Content) */
+  .no-flash {
+    visibility: hidden;
+  }
+
+  .no-flash.loaded {
+    visibility: visible;
   }
 }
