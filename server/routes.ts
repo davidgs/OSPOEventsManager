@@ -40,6 +40,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
 
+  // Version information endpoint (publicly accessible)
+  app.get("/api/version", async (_req: Request, res: Response) => {
+    console.log("API Version endpoint hit!");
+    try {
+      // Read package.json to get version info
+      const packagePath = path.join(process.cwd(), 'package.json');
+      const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+
+      res.json({
+        name: packageData.name,
+        version: packageData.version,
+        description: packageData.description,
+        timestamp: new Date().toISOString(),
+        buildDate: process.env.BUILD_DATE || new Date().toISOString(),
+        environment: process.env.NODE_ENV || "development"
+      });
+    } catch (error) {
+      console.error("Version check failed:", error);
+      res.status(500).json({
+        error: "Failed to retrieve version information"
+      });
+    }
+  });
+
   // Health check endpoint for Kubernetes
   app.get("/api/health", async (_req: Request, res: Response) => {
     try {
@@ -56,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "healthy",
         timestamp: new Date().toISOString(),
         service: "ospo-app",
-        version: process.env.APP_VERSION || "1.0.0",
+        version: process.env.APP_VERSION || "1.1.0",
         database: "connected"
       });
     } catch (error) {

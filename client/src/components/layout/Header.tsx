@@ -6,6 +6,7 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useQuery } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,8 @@ import {
   FolderOpen,
   UsersIcon,
   Workflow,
+  MessageCircle,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +60,16 @@ export function Header() {
   const { initialized, authenticated, user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Fetch version information
+  const { data: versionInfo } = useQuery({
+    queryKey: ["/api/version"],
+    queryFn: async () => {
+      const response = await fetch("/api/version");
+      if (!response.ok) throw new Error("Failed to fetch version");
+      return response.json();
+    },
+  });
+
   // Debug auth state
   console.log("Header auth state:", {
     initialized,
@@ -73,6 +86,22 @@ export function Header() {
     setIsMobileMenuOpen(false);
   };
 
+  // Function to open feedback email
+  const openFeedbackEmail = () => {
+    const subject = encodeURIComponent("OSPO Events Manager Feedback");
+    const body = encodeURIComponent(
+      `Hi David,\n\nI have feedback about the OSPO Events Manager application:\n\n[Please share your feedback here]\n\n---\nVersion: ${
+        versionInfo?.version || "Unknown"
+      }\nEnvironment: ${versionInfo?.environment || "Unknown"}\nURL: ${
+        window.location.href
+      }\nUser: ${
+        user?.email || "Anonymous"
+      }\nTimestamp: ${new Date().toISOString()}`
+    );
+    const mailtoUrl = `mailto:davidgs@redhat.com?subject=${subject}&body=${body}`;
+    window.open(mailtoUrl, "_blank");
+  };
+
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -86,6 +115,12 @@ export function Header() {
             <span className="hidden xs:inline">OSPO Events</span>
             <span className="xs:hidden">OSPO</span>
           </Link>
+          {/* Version badge - hidden on mobile */}
+          {versionInfo && (
+            <span className="hidden sm:inline-flex items-center px-2 py-1 text-xs font-medium bg-muted text-muted-foreground rounded-full">
+              v{versionInfo.version}
+            </span>
+          )}
         </div>
 
         {/* Desktop Navigation */}
@@ -105,6 +140,18 @@ export function Header() {
 
         {/* Right side controls */}
         <div className="flex items-center gap-2 sm:gap-4">
+          {/* Feedback button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={openFeedbackEmail}
+            className="hidden sm:flex items-center gap-2"
+            title="Send feedback to David Simmons"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden md:inline">Feedback</span>
+          </Button>
+
           {/* Theme toggle - hidden on very small screens */}
           <div className="hidden xs:block">
             <ThemeToggle />
@@ -184,6 +231,14 @@ export function Header() {
                     <span>Settings</span>
                   </Link>
                 </DropdownMenuItem>
+                {/* Feedback in user menu for mobile */}
+                <DropdownMenuItem
+                  className="sm:hidden"
+                  onClick={openFeedbackEmail}
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  <span>Send Feedback</span>
+                </DropdownMenuItem>
                 {/* Theme toggle in mobile user menu */}
                 <DropdownMenuItem className="xs:hidden" asChild>
                   <div className="flex cursor-pointer items-center px-2 py-1.5">
@@ -192,6 +247,24 @@ export function Header() {
                     <ThemeToggle />
                   </div>
                 </DropdownMenuItem>
+                {/* Version info in user menu */}
+                {versionInfo && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      disabled
+                      className="text-xs text-muted-foreground"
+                    >
+                      <Info className="mr-2 h-3 w-3" />
+                      <div className="flex flex-col">
+                        <span>Version {versionInfo.version}</span>
+                        <span className="text-xs">
+                          {versionInfo.environment}
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="cursor-pointer"
@@ -226,6 +299,17 @@ export function Header() {
                   </Link>
                 );
               })}
+              {/* Mobile-only feedback link */}
+              <button
+                onClick={() => {
+                  openFeedbackEmail();
+                  closeMobileMenu();
+                }}
+                className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground text-left"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Send Feedback
+              </button>
             </div>
           </nav>
         </div>

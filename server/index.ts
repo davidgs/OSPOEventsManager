@@ -159,6 +159,33 @@ app.use((req, res, next) => {
   next();
 });
 
+// Add public endpoints BEFORE authentication middleware
+// Version endpoint - publicly accessible (outside /api to avoid auth middleware)
+app.get("/version", async (_req: Request, res: Response) => {
+  console.log("Version endpoint hit!");
+  try {
+    const packagePath = path.join(process.cwd(), 'package.json');
+    const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+
+    console.log("Returning version data:", packageData.version);
+    res.json({
+      name: packageData.name,
+      version: packageData.version,
+      description: packageData.description,
+      timestamp: new Date().toISOString(),
+      buildDate: process.env.BUILD_DATE || new Date().toISOString(),
+      environment: process.env.NODE_ENV || "development"
+    });
+  } catch (error) {
+    console.error("Version check failed:", error);
+    res.status(500).json({
+      error: "Failed to retrieve version information"
+    });
+  }
+});
+
+
+
 (async () => {
   // Initialize Keycloak first
   let keycloak;
@@ -226,17 +253,17 @@ app.use((req, res, next) => {
     }
   }
 
-  // Apply Keycloak route protection middleware BEFORE registering routes
+  // Apply Keycloak route protection middleware BEFORE registering other routes
   console.log("Securing routes with Keycloak authentication");
   console.log(`Keycloak instance status: ${keycloak ? 'VALID' : 'NULL/UNDEFINED'}`);
   if (keycloak) {
     console.log(`Keycloak instance type: ${typeof keycloak}`);
 
-    // Protect API routes (except health check) with Bearer token support
+    // Protect API routes (except health check and version) with Bearer token support
     const authMiddleware = getAuthMiddleware(keycloak);
     app.use('/api', (req, res, next) => {
-      // Allow health check without authentication
-      if (req.path === '/health') {
+      // Allow health check and version endpoints without authentication
+      if (req.path === '/health' || req.path === '/version') {
         return next();
       }
 
@@ -247,7 +274,7 @@ app.use((req, res, next) => {
     console.warn('Keycloak not initialized, API routes will not be protected');
     // Add warning middleware for unprotected routes
     app.use('/api', (req, res, next) => {
-      if (req.path !== '/health') {
+      if (req.path !== '/health' && req.path !== '/version') {
         console.warn(`Auth warning: Unprotected access to ${req.method} /api${req.path}`);
       }
       next();
@@ -287,8 +314,8 @@ app.use((req, res, next) => {
 
     // Fallback to index.html for client-side routing (only for non-API and non-asset requests)
     app.use("*", (req, res) => {
-      // Don't serve HTML for API requests or asset requests
-      if (req.originalUrl.startsWith('/api/') || req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+      // Don't serve HTML for API requests, version endpoint, or asset requests
+      if (req.originalUrl.startsWith('/api/') || req.originalUrl === '/version' || req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
         return res.status(404).send('Not found');
       }
       res.sendFile(path.resolve(staticPath, "index.html"));
