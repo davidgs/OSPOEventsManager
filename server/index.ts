@@ -184,55 +184,12 @@ app.get("/version", async (_req: Request, res: Response) => {
   }
 });
 
-
-
 (async () => {
   // Initialize Keycloak first
   let keycloak;
   try {
     console.log("Initializing Keycloak authentication...");
     keycloak = await initKeycloak(app);
-
-    // Apply Keycloak user mapping middleware
-    app.use(async (req: any, res: any, next: any) => {
-      // First apply the standard Keycloak user mapper
-      keycloakUserMapper(req, res, async () => {
-        try {
-          // If we have a user from Keycloak and it's not in our database yet, create it
-          if (req.user && req.user.id) {
-            const keycloakId = req.user.id;
-            const username = req.user.username;
-
-            // Check if the user exists in our database
-            const dbUser = await storage.getUserByKeycloakId(keycloakId);
-
-            if (!dbUser) {
-              console.log(`Creating new user record for Keycloak user: ${username} (${keycloakId})`);
-
-              // Create a new user record in our database
-              const newUser = await storage.createUser({
-                keycloak_id: keycloakId,
-                username,
-                name: req.user.name || null,
-                email: req.user.email || null
-              });
-
-              if (newUser) {
-                console.log(`Successfully created user record with ID: ${newUser.id}`);
-                req.user.dbId = newUser.id;
-              }
-            } else {
-              console.log(`Found existing user record for Keycloak user: ${username}`);
-              req.user.dbId = dbUser.id;
-            }
-          }
-          next();
-        } catch (error) {
-          console.error("Error handling Keycloak user:", error);
-          next();
-        }
-      });
-    });
   } catch (error) {
     console.error("Failed to initialize Keycloak:", error);
     keycloak = null;
@@ -337,6 +294,15 @@ app.get("/version", async (_req: Request, res: Response) => {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    try {
+      const packagePath = path.join(process.cwd(), 'package.json');
+      const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+      log(`serving on port ${port}`);
+      log(`version: ${packageData.version}`);
+      log(`environment: ${process.env.NODE_ENV || 'development'}`);
+    } catch (error) {
+      log(`serving on port ${port}`);
+      log(`version: unknown (error reading package.json)`);
+    }
   });
 })();

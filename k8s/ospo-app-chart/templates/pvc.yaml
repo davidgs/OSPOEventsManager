@@ -1,0 +1,18 @@
+{{- if and .Values.sharedVolume.enabled .Values.sharedVolume.persistentVolumeClaim.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.sharedVolume.persistentVolumeClaim.name }}
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - {{ .Values.sharedVolume.persistentVolumeClaim.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.sharedVolume.persistentVolumeClaim.size }}
+  {{- if .Values.sharedVolume.persistentVolumeClaim.storageClass }}
+  storageClassName: {{ .Values.sharedVolume.persistentVolumeClaim.storageClass }}
+  {{- end }}
+{{- end }}

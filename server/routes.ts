@@ -76,11 +76,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For now, a simple check that our storage layer is working
       await storage.getEvents();
 
+      // Read package.json for version info
+      const packagePath = path.join(process.cwd(), 'package.json');
+      const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+
       res.json({
         status: "healthy",
         timestamp: new Date().toISOString(),
         service: "ospo-app",
-        version: process.env.APP_VERSION || "1.1.0",
+        version: packageData.version,
         database: "connected"
       });
     } catch (error) {
@@ -517,25 +521,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/:id", async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
+      console.log(`[GET /api/users/:id] Received request for user ID: ${id}`);
       let user;
 
       // Check if ID is numeric (database ID) or UUID (Keycloak ID)
       if (/^[0-9]+$/.test(id)) {
+        console.log(`[GET /api/users/:id] Detected numeric ID, fetching user by ID: ${id}`);
         user = await storage.getUser(parseInt(id));
       } else {
         // UUID - Keycloak user
+        console.log(`[GET /api/users/:id] Detected UUID, fetching user by Keycloak ID: ${id}`);
         user = await storage.getUserByKeycloakId(id);
       }
 
+      console.log(`[GET /api/users/:id] Query result:`, user);
+
       if (!user) {
+        console.log(`[GET /api/users/:id] User not found for ID: ${id}`);
         return res.status(404).json({ message: "User not found" });
       }
 
       // Don't return the password if it exists
       const { password, ...userWithoutPassword } = user as any;
+      console.log(`[GET /api/users/:id] Returning user data (without password):`, userWithoutPassword);
       res.json(userWithoutPassword);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch user" });
+      console.error(`[GET /api/users/:id] Error fetching user ${req.params.id}:`, error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: "Failed to fetch user", error: errorMessage });
     }
   });
 
@@ -585,6 +598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password, ...userWithoutPassword } = user as any;
       res.json(userWithoutPassword);
     } catch (error) {
+      console.error("Error updating user profile:", error);
       res.status(500).json({ message: "Failed to update user profile" });
     }
   });

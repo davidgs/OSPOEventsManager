@@ -3,6 +3,25 @@
 
 replicaCount: 1
 
+# OpenShift-specific configuration
+openshift:
+  enabled: true
+  routes:
+    enabled: true
+    host: ""  # Will be auto-generated if empty
+    tls:
+      enabled: true
+      termination: edge
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+    supplementalGroups: [1001]
+    seccompProfile:
+      type: RuntimeDefault
+  imageRegistry: "image-registry.openshift-image-registry.svc:5000"
+
 # Image configuration for app container
 app:
   image:
@@ -11,22 +30,32 @@ app:
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
-    port: 5000
+    port: 4576
   resources:
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 1000m
+      memory: 1Gi
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 200m
+      memory: 512Mi
   env:
     NODE_ENV: production
-    PORT: "5000"
+    PORT: "4576"
     SESSION_SECRET: "ospo-session-secret-123"
     SESSION_STORE_TYPE: "memory"
     VITE_SERVE_CLIENT: "true"
     KEYCLOAK_CLIENT_ID: "ospo-events-app"
     KEYCLOAK_CLIENT_SECRET: "client-secret-123"
+  # Security context for OpenShift
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
 
 # PostgreSQL configuration
 postgresql:
@@ -42,8 +71,27 @@ postgresql:
   service:
     port: 5432
   persistence:
-    enabled: false
-    size: 1Gi
+    enabled: true
+    size: 2Gi
+    storageClass: ""  # Use default storage class
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+  # Security context for OpenShift
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 26
+    runAsGroup: 26
+    fsGroup: 26
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
 
 # Keycloak configuration
 keycloak:
@@ -61,19 +109,29 @@ keycloak:
   resources:
     limits:
       cpu: 1000m
-      memory: 1Gi
+      memory: 2Gi
     requests:
       cpu: 500m
-      memory: 512Mi
+      memory: 1Gi
+  # Security context for OpenShift
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
 
 # MinIO configuration
 minio:
   enabled: true
   image:
-    repository: bitnami/minio
-    tag: 2024.5.10
+    repository: quay.io/minio/minio
+    tag: RELEASE.2024-05-10T01-41-38Z
     pullPolicy: IfNotPresent
-
   auth:
     rootUser: minioadmin
     rootPassword: minioadmin
@@ -85,28 +143,88 @@ minio:
     consolePort: 9001
   resources:
     limits:
-      cpu: 250m
-      memory: 512Mi
+      cpu: 500m
+      memory: 1Gi
     requests:
       cpu: 100m
       memory: 256Mi
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: ""  # Use default storage class
+  # Security context for OpenShift
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
 
-# LoadBalancer configuration
+# Service Account configuration
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# LoadBalancer configuration (for non-OpenShift environments)
 loadBalancer:
   enabled: false
   port: 7777
-  
-# NodePort configuration
+
+# NodePort configuration (for non-OpenShift environments)
 nodePort:
   enabled: false
   port: 32123
-  
 
+# Ingress configuration (for non-OpenShift environments)
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
 
 # Shared volume configuration
 sharedVolume:
   enabled: true
   persistentVolumeClaim:
-    enabled: false
+    enabled: true
     name: ospo-uploads-pvc
     size: 1Gi
+    storageClass: ""  # Use default storage class
+    accessMode: ReadWriteOnce
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+# Horizontal Pod Autoscaler
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Network Policies
+networkPolicy:
+  enabled: false
+  ingress: []
+  egress: []
+
+# Monitoring
+monitoring:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s

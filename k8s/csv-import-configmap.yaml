@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csv-import-data
+  namespace: prod-rh-events-org
+data:
+  events.csv: |
+    Event Name,Event start date,Event end date,CFP deadline,Location,Priority,Event source,CAs to attend,Notes
+    PyData London,"Fri, Jun 6","Sun, Jun 8",,London,,,,
+    AgentCon Sao Paulo,"Sat, Jun 7","Sat, Jun 7",,Sao Paolo,,,,
+    Vivatech Paris,"Wed, Jun 11","Sat, Jun 14",,Paris,,,,
+    AgentCon Milan,"Tue, Jun 17","Tue, Jun 17",,Milan,,,,
+    AIWorld London,"Wed, Jun 18","Thu, Jun 19",,London,,,,
+    AgentCon Copenhagen,"Thu, Jun 19","Thu, Jun 19",,Copenhagen,,,,
+    OpenSouthCode Malaga,"Fri, Jun 20","Sat, Jun 21",,Málaga,,,,Grafana and Canonical are sponsors
+    AgentCon Perth,"Fri, Jun 20","Fri, Jun 20",,Perth,,,,
+    AgentCon Casablanca,"Sat, Jun 21","Sat, Jun 21",,Casablanca,,,,
+    AgentCon Dubai,"Sat, Jun 21","Sat, Jun 21",,Dubai,,,,
+    OSS NA,"Mon, Jun 23","Wed, Jun 25",,Denver,Essential,,Roman Zhukov Wesley Chun,RH booth
+    LFAID mini-summit (co-located w/OSS NA),"Thu, Jun 26","Thu, Jun 26",,Denver,High,,Wesley Chun,
+    OSSF mini-summit (co-located w/OSS NA),"Thu, Jun 26","Thu, Jun 26",,Denver,High,,Roman Zhukov,
+    MLCon Munich,"Mon, Jun 23","Fri, Jun 27",,Munich,,,,
+    AgentCon Berlin,"Tue, Jun 24","Tue, Jun 24",,Berlin,,,,
+    AgentCon San Francisco,"Tue, Jun 24","Tue, Jun 24",,San Francisco,,,,
+    AgentCon Kansas City,"Wed, Jun 25","Wed, Jun 25",,Kansas City,,,,
+    AgentCon Chennai,"Thu, Jun 26","Thu, Jun 26",,Chennai,,,,
+    AgentCon Ciudad de Mexico,"Thu, Jun 26","Thu, Jun 26",,Ciudad de México,,,,
+    AgentCon Frisco Texas,"Fri, Jun 27","Fri, Jun 27",,Frisco,,,,
+    AgentCon Manchester,"Fri, Jun 27","Fri, Jun 27",,Manchester,,,,
+    AgentCon Mumbai,"Sat, Jun 28","Sat, Jun 28",,Mumbai,,,,
+    AgentCon Soltau,"Mon, Jun 30","Mon, Jun 30",,Soltau,,,,
+    AI for Good Global Summit,"Tue, Jul 8","Fri, Jul 11","Tue, Apr 15",Geneva,Nice to have,OSPO AI team,,
+    WeAreDevelopers World Congress,"Wed, Jul 9","Fri, Jul 11",,Berlin,,,,
+    Cloud Native Summit Munich,"Mon, Jul 21","Tue, Jul 22",,Munich,,,,Good future target for Kubeflow topics
+    Big Sky Dev Con,"Sat, Aug 2","Sat, Aug 2","Thu, May 1",Bozeman,,AI BU - TMM,,TMM team is sponsoring
+    AI_Dev EU,"Thu, Aug 28","Fri, Aug 29","Mon, Apr 14",Amsterdam,Essential,OSPO AI team,,Carol submitted to CFP
+    The AI Conference,"Wed, Sep 17","Thu, Sep 18","Fri, Apr 25",San Francisco,Essential,OSPO AI team,Steven Pousty,Wesley submitted to CFP
+    MeshCloud Con Frankfurt,"Thu, Sep 18","Thu, Sep 18",,Frankfurt am Main,,,,
+    DevConf.US,"Fri, Sep 19","Sat, Sep 20","Mon, May 5",Boston,Essential,OSPO AI team,Wesley Chun,
+    AI & Big Data Expo,"Wed, Sep 24","Thu, Sep 25",,Amsterdam,,,,
+    All Things Open,"Sun, Oct 12","Tue, Oct 14",,Raleigh,Essential,OSPO AI team,Steven Pousty,Steve has CFP in but still no word
+    Codemotion,"Tue, Oct 14","Wed, Oct 15",,Milan,,AI BU - TMM,,TMM team is sponsoring
+    PyTorch Conference,"Wed, Oct 22","Thu, Oct 23","Sun, Jun 1",San Francisco,Essential,OSPO AI team,Steven Pousty Wesley Chun Pete Cheslock,
+    ECAI,"Sat, Oct 25","Thu, Oct 30",,Bologna,,,,Sponsored by EurAI & Italy's AI Association
+    Open Data Science Conference West,"Tue, Oct 28","Thu, Oct 30","Fri, Aug 1",San Francisco,Medium,OSPO AI team,Wesley Chun,Steve will be giving a workshop (90% certain) and maybe another talk
+    Ray Summit,"Mon, Nov 3","Wed, Nov 5",,San Francisco,Essential,OSPO AI team,,Does anyone have a CFP in or are we going to go and work a booth for Marketing?
+    FOSS4G NA,"Mon, Nov 3","Wed, Nov 5","Thu, Jul 31",Reston,High,OSPO AI team,Steven Pousty,I plan to CFP and co-present with IBM research
+    KubeCon NA,"Mon, Nov 10","Thu, Nov 13","Tue, May 27",Atlanta,Essential,OSPO AI team,,
+    AI Day Finland,"Thu, Nov 13","Thu, Nov 13",,Espoo,High,OSPO AI team,Carol Chen,Carol will submit CFP when it's open
+    PyCon Ireland,"Sat, Nov 15","Sun, Nov 16",,Dublin,,,,
+    Big Data Conference Europe,"Tue, Nov 18","Fri, Nov 21",,Vilnius,,,,
+    MLCon Berlin,"Mon, Nov 24","Fri, Nov 28",,Berlin,,,,
+    NeurIPS,"Tue, Dec 2","Fri, Dec 5",,San Diego,Essential,,Steven Pousty,
+    FOSDEM 2026,"Sat, Jan 31","Sun, Feb 1",,Brussels,Essential,OSPO AI team,Carol Chen,There will likely be an AI devroom
+    CfgMgmtCamp 2026,"Mon, Feb 2","Wed, Feb 4",,Ghent,Medium,OSPO AI team,Carol Chen,"Carol is a co-organizer, and AI topics are starting to gain traction"
+    KubeCon EU 2026,"Mon, Mar 23","Thu, Mar 26",,Amsterdam,Essential,OSPO AI team,Dominik Kawka,

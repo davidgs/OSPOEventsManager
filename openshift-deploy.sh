@@ -18,7 +18,7 @@ if ! oc whoami &> /dev/null; then
 fi
 
 # Create a new project
-PROJECT_NAME="ospo-events-manager"
+PROJECT_NAME="prod-rh-events-org"
 echo "📦 Creating OpenShift project: $PROJECT_NAME"
 oc new-project $PROJECT_NAME || oc project $PROJECT_NAME
 

@@ -1,0 +1,87 @@
+{{- if and .Values.openshift.enabled .Values.openshift.routes.enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "ospo-app.fullname" . }}
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: application
+  annotations:
+    description: "Route for OSPO Events Application"
+    haproxy.router.openshift.io/timeout: "30s"
+spec:
+  {{- if .Values.openshift.routes.host }}
+  host: {{ .Values.openshift.routes.host }}
+  {{- end }}
+  {{- if .Values.openshift.routes.tls.enabled }}
+  tls:
+    termination: {{ .Values.openshift.routes.tls.termination }}
+    insecureEdgeTerminationPolicy: Redirect
+  {{- end }}
+  to:
+    kind: Service
+    name: {{ include "ospo-app.fullname" . }}
+    weight: 100
+  port:
+    targetPort: http
+  wildcardPolicy: None
+---
+{{- if .Values.keycloak.enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "ospo-app.fullname" . }}-keycloak
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak
+  annotations:
+    description: "Route for Keycloak Authentication"
+    haproxy.router.openshift.io/timeout: "60s"
+spec:
+  {{- if .Values.openshift.routes.host }}
+  host: keycloak-{{ .Values.openshift.routes.host }}
+  {{- end }}
+  path: /auth
+  {{- if .Values.openshift.routes.tls.enabled }}
+  tls:
+    termination: {{ .Values.openshift.routes.tls.termination }}
+    insecureEdgeTerminationPolicy: Redirect
+  {{- end }}
+  to:
+    kind: Service
+    name: keycloak
+    weight: 100
+  port:
+    targetPort: http
+  wildcardPolicy: None
+{{- end }}
+---
+{{- if .Values.minio.enabled }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "ospo-app.fullname" . }}-minio
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: minio
+  annotations:
+    description: "Route for MinIO Console"
+    haproxy.router.openshift.io/timeout: "30s"
+spec:
+  {{- if .Values.openshift.routes.host }}
+  host: minio-{{ .Values.openshift.routes.host }}
+  {{- end }}
+  {{- if .Values.openshift.routes.tls.enabled }}
+  tls:
+    termination: {{ .Values.openshift.routes.tls.termination }}
+    insecureEdgeTerminationPolicy: Redirect
+  {{- end }}
+  to:
+    kind: Service
+    name: minio
+    weight: 100
+  port:
+    targetPort: console
+  wildcardPolicy: None
+{{- end }}
+{{- end }}

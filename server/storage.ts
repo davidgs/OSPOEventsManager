@@ -1,7 +1,7 @@
-import { 
+import {
   users, events, cfpSubmissions, attendees, sponsorships, assets, stakeholders,
   approvalWorkflows, workflowReviewers, workflowStakeholders, workflowComments, workflowHistory,
-  type User, type Event, type CfpSubmission, type Attendee, type Sponsorship, type Asset, 
+  type User, type Event, type CfpSubmission, type Attendee, type Sponsorship, type Asset,
   type Stakeholder, type ApprovalWorkflow, type WorkflowReviewer, type WorkflowStakeholder,
   type WorkflowComment, type WorkflowHistory,
   type InsertUser, type InsertEvent, type InsertCfpSubmission, type InsertAttendee,
@@ -122,7 +122,9 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByKeycloakId(keycloakId: string): Promise<User | undefined> {
     if (!db) throw new Error("Database not initialized");
+    console.log(`[getUserByKeycloakId] Querying for user with Keycloak ID: ${keycloakId}`);
     const [user] = await db.select().from(users).where(eq(users.keycloak_id, keycloakId));
+    console.log(`[getUserByKeycloakId] Query result:`, user);
     return user;
   }
 
@@ -403,8 +405,8 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not initialized");
     // Use raw SQL to avoid schema issues
     const result = await db.execute(sql`
-      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at 
-      FROM stakeholders 
+      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at
+      FROM stakeholders
       ORDER BY name ASC
     `);
     return result.rows as Stakeholder[];
@@ -413,8 +415,8 @@ export class DatabaseStorage implements IStorage {
   async getStakeholder(id: number): Promise<Stakeholder | undefined> {
     if (!db) throw new Error("Database not initialized");
     const result = await db.execute(sql`
-      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at 
-      FROM stakeholders 
+      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at
+      FROM stakeholders
       WHERE id = ${id}
     `);
     return result.rows[0] as Stakeholder | undefined;
@@ -424,8 +426,8 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not initialized");
     const result = await db.execute(sql`
       INSERT INTO stakeholders (user_id, name, email, role, department, organization, notes)
-      VALUES (${insertStakeholder.user_id}, ${insertStakeholder.name}, ${insertStakeholder.email}, 
-              ${insertStakeholder.role}, ${insertStakeholder.department}, ${insertStakeholder.organization}, 
+      VALUES (${insertStakeholder.user_id}, ${insertStakeholder.name}, ${insertStakeholder.email},
+              ${insertStakeholder.role}, ${insertStakeholder.department}, ${insertStakeholder.organization},
               ${insertStakeholder.notes})
       RETURNING id, user_id, name, email, role, department, organization, notes, created_at, updated_at
     `);
@@ -436,7 +438,7 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not initialized");
     const setParts = [];
     const values = [];
-    
+
     if (updates.user_id !== undefined) { setParts.push('user_id = $' + (values.length + 1)); values.push(updates.user_id); }
     if (updates.name !== undefined) { setParts.push('name = $' + (values.length + 1)); values.push(updates.name); }
     if (updates.email !== undefined) { setParts.push('email = $' + (values.length + 1)); values.push(updates.email); }
@@ -444,12 +446,12 @@ export class DatabaseStorage implements IStorage {
     if (updates.department !== undefined) { setParts.push('department = $' + (values.length + 1)); values.push(updates.department); }
     if (updates.organization !== undefined) { setParts.push('organization = $' + (values.length + 1)); values.push(updates.organization); }
     if (updates.notes !== undefined) { setParts.push('notes = $' + (values.length + 1)); values.push(updates.notes); }
-    
+
     setParts.push('updated_at = NOW()');
     values.push(id);
-    
+
     const result = await db.execute(sql`
-      UPDATE stakeholders 
+      UPDATE stakeholders
       SET ${sql.raw(setParts.join(', '))}
       WHERE id = $${values.length}
       RETURNING id, user_id, name, email, role, department, organization, notes, created_at, updated_at
@@ -466,8 +468,8 @@ export class DatabaseStorage implements IStorage {
   async getStakeholdersByRole(role: string): Promise<Stakeholder[]> {
     if (!db) throw new Error("Database not initialized");
     const result = await db.execute(sql`
-      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at 
-      FROM stakeholders 
+      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at
+      FROM stakeholders
       WHERE role = ${role}
       ORDER BY name ASC
     `);

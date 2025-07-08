@@ -4,7 +4,7 @@ FROM node:20-alpine AS client-builder
 WORKDIR /app
 
 # Accept build arguments
-ARG VITE_KEYCLOAK_URL=/auth
+ARG VITE_KEYCLOAK_URL=https://ospo-events-ospo-app-keycloak-prod-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com/auth
 ENV VITE_KEYCLOAK_URL=$VITE_KEYCLOAK_URL
 
 # Copy package files and install dependencies
@@ -37,6 +37,7 @@ RUN npm ci --include=dev
 # Copy application files from the builder stage
 COPY --from=client-builder /app/server ./server
 COPY --from=client-builder /app/shared ./shared
+COPY --from=client-builder /app/scripts ./scripts
 COPY --from=client-builder /app/public ./public
 COPY --from=client-builder /app/dist ./dist
 COPY --from=client-builder /app/vite.config.ts ./vite.config.ts
@@ -47,13 +48,14 @@ COPY --from=client-builder /app/keycloak.json ./keycloak.json
 RUN mkdir -p server/public && \
   if [ -d "dist/public" ]; then cp -r dist/public/* server/public/; fi
 
-# Create uploads directory
-RUN mkdir -p public/uploads
-
-# Add a non-root user and change ownership
+# Add a non-root user first
 RUN addgroup -g 1001 -S nodejs && \
-  adduser -S nodejs -u 1001 -G nodejs && \
-  chown -R nodejs:nodejs /app
+  adduser -S nodejs -u 1001 -G nodejs
+
+# Create uploads directory with proper permissions and ownership
+RUN mkdir -p public/uploads && \
+  chown -R nodejs:nodejs /app && \
+  chmod -R 775 /app/public/uploads
 
 # Switch to non-root user
 USER nodejs

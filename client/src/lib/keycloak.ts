@@ -162,8 +162,8 @@ export const login = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     console.log('Initiating login process...');
 
-    // Use explicit localhost redirect to match client config
-    const redirectUri = 'http://localhost:4576';
+    // Use current window location as redirect URI
+    const redirectUri = window.location.origin;
     console.log('Using redirect URI:', redirectUri);
 
     try {

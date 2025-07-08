@@ -9,7 +9,9 @@ import { pool } from './db';
 async function validateBearerToken(token: string, keycloakConfig: any): Promise<any> {
   try {
     // Use userinfo endpoint for public clients instead of token introspection
-    const userinfoUrl = `${keycloakConfig['auth-server-url']}realms/${keycloakConfig.realm}/protocol/openid-connect/userinfo`;
+    // Ensure proper URL construction by removing trailing slash and adding one
+    const baseUrl = keycloakConfig['auth-server-url'].replace(/\/+$/, '');
+    const userinfoUrl = `${baseUrl}/realms/${keycloakConfig.realm}/protocol/openid-connect/userinfo`;
 
     console.log('[VALIDATE_BEARER_TOKEN] Using userinfo endpoint:', userinfoUrl);
     console.log('[VALIDATE_BEARER_TOKEN] Token length:', token.length);
@@ -149,8 +151,9 @@ export async function initKeycloak(app: Express) {
     // We'll rely on Bearer token authentication in the API routes instead
     console.log('Using Bearer token authentication only for API routes');
 
-    // Store config for Bearer token validation
+    // Store both configs - external for token validation, internal for server communication
     (keycloak as any)._serverKeycloakConfig = serverKeycloakConfig;
+    (keycloak as any)._externalKeycloakConfig = keycloakConfig;
 
     console.log('Keycloak initialization completed successfully');
     return keycloak;
@@ -184,17 +187,57 @@ export function getAuthMiddleware(keycloak: any) {
         const token = authHeader.substring(7);
         console.log('Attempting Bearer token validation...');
 
-        const tokenInfo = await validateBearerToken(token, (keycloak as any)._serverKeycloakConfig);
+        const tokenInfo = await validateBearerToken(token, (keycloak as any)._externalKeycloakConfig);
         if (tokenInfo) {
           console.log('Bearer token validated successfully');
-          // Add user info to request
-          (req as any).user = {
+
+          // Create user info object from token
+          const userInfo = {
             id: tokenInfo.sub,
             username: tokenInfo.preferred_username,
             email: tokenInfo.email,
             name: tokenInfo.name || tokenInfo.preferred_username,
             roles: tokenInfo.realm_access?.roles || []
           };
+
+          // Add user info to request
+          (req as any).user = userInfo;
+
+          // Import storage here to avoid circular dependency
+          const { storage } = await import('./storage');
+
+          // Handle user creation/mapping for Bearer token authenticated users
+          try {
+            const keycloakId = userInfo.id;
+            const username = userInfo.username;
+
+            // Check if the user exists in our database
+            const dbUser = await storage.getUserByKeycloakId(keycloakId);
+
+            if (!dbUser) {
+              console.log(`Creating new user record for Keycloak user: ${username} (${keycloakId})`);
+
+              // Create a new user record in our database
+              const newUser = await storage.createUser({
+                keycloak_id: keycloakId,
+                username,
+                name: userInfo.name || null,
+                email: userInfo.email || null
+              });
+
+              if (newUser) {
+                console.log(`Successfully created user record with ID: ${newUser.id}`);
+                (req as any).user.dbId = newUser.id;
+              }
+            } else {
+              console.log(`Found existing user record for Keycloak user: ${username}`);
+              (req as any).user.dbId = dbUser.id;
+            }
+          } catch (error) {
+            console.error("Error handling Bearer token user creation:", error);
+            // Continue without database user ID - the API can still function
+          }
+
           return next();
         } else {
           console.log('Bearer token validation failed');

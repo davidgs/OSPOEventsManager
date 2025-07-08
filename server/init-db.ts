@@ -7,26 +7,26 @@ import { Pool } from 'pg';
  */
 export async function initializeDatabase(): Promise<boolean> {
   console.log("Initializing database tables (if they don't exist)...");
-  
+
   // If there is no pool, we can't initialize the database
   if (!pool) {
     console.error("Database connection pool not available for initialization");
     return false;
   }
-  
+
   // Test the connection
   try {
     await pool.query('SELECT NOW()');
     console.log("✅ Database connection test successful");
-    
+
     // Check what columns exist in events table
     const result = await pool.query(`
-      SELECT column_name, data_type 
-      FROM information_schema.columns 
-      WHERE table_name = 'events' 
+      SELECT column_name, data_type
+      FROM information_schema.columns
+      WHERE table_name = 'events'
       ORDER BY ordinal_position;
     `);
-    
+
     console.log("Current events table columns:", result.rows);
   } catch (error) {
     console.error("❌ Database connection test failed:", error);
@@ -48,11 +48,12 @@ export async function initializeDatabase(): Promise<boolean> {
         role TEXT,
         preferences TEXT,
         last_login TIMESTAMP,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
-    
-    // Add missing columns to users table if they don't exist and fix constraints
+
+        // Add missing columns to users table if they don't exist and fix constraints
     try {
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT`);
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS job_title TEXT`);
@@ -60,16 +61,17 @@ export async function initializeDatabase(): Promise<boolean> {
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT`);
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS preferences TEXT`);
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP`);
-      
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()`);
+
       // Remove NOT NULL constraints from optional columns
       await pool.query(`ALTER TABLE users ALTER COLUMN email DROP NOT NULL`);
       await pool.query(`ALTER TABLE users ALTER COLUMN name DROP NOT NULL`);
-      
+
       console.log("✅ Added missing columns to users table and fixed constraints");
     } catch (error) {
       console.log("Users table columns already exist or constraints already correct");
     }
-    
+
     console.log("✅ Users table initialized");
 
     // Create events table with IF NOT EXISTS to preserve existing data
@@ -92,121 +94,121 @@ export async function initializeDatabase(): Promise<boolean> {
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
-    
+
     // Add missing columns if they don't exist
     try {
       await pool.query(`
-        ALTER TABLE events 
+        ALTER TABLE events
         ADD COLUMN IF NOT EXISTS link TEXT NOT NULL DEFAULT 'https://example.com'
       `);
       console.log("✅ Added link column to events table if missing");
     } catch (error) {
       console.log("Link column already exists or other constraint issue");
     }
-    
+
     try {
       await pool.query(`
-        ALTER TABLE events 
+        ALTER TABLE events
         ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'medium'
       `);
       console.log("✅ Added priority column to events table if missing");
     } catch (error) {
       console.log("Priority column already exists or other constraint issue");
     }
-    
+
     try {
       await pool.query(`
-        ALTER TABLE events 
+        ALTER TABLE events
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()
       `);
       console.log("✅ Added created_at column to events table if missing");
     } catch (error) {
       console.log("Created_at column already exists or other constraint issue");
     }
-    
+
     try {
       await pool.query(`
-        ALTER TABLE events 
+        ALTER TABLE events
         ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       `);
       console.log("✅ Added updated_at column to events table if missing");
     } catch (error) {
       console.log("Updated_at column already exists or other constraint issue");
     }
-    
+
     try {
       await pool.query(`
-        ALTER TABLE events 
+        ALTER TABLE events
         ADD COLUMN IF NOT EXISTS goal TEXT[] NOT NULL DEFAULT '{attending}'
       `);
       console.log("✅ Added goal column to events table if missing");
     } catch (error) {
       console.log("Goal column already exists or other constraint issue");
     }
-    
+
     try {
       await pool.query(`
-        ALTER TABLE events 
+        ALTER TABLE events
         ADD COLUMN IF NOT EXISTS cfp_deadline TEXT
       `);
       console.log("✅ Added cfp_deadline column to events table if missing");
     } catch (error) {
       console.log("cfp_deadline column already exists or other constraint issue");
     }
-    
+
     try {
       await pool.query(`
-        ALTER TABLE events 
+        ALTER TABLE events
         ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'conference'
       `);
       console.log("✅ Added type column to events table if missing");
     } catch (error) {
       console.log("Type column already exists or other constraint issue");
     }
-    
+
     try {
       await pool.query(`
-        ALTER TABLE events 
+        ALTER TABLE events
         ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'planning'
       `);
       console.log("✅ Added status column to events table if missing");
     } catch (error) {
       console.log("Status column already exists or other constraint issue");
     }
-    
+
     try {
       await pool.query(`
-        ALTER TABLE events 
+        ALTER TABLE events
         ADD COLUMN IF NOT EXISTS notes TEXT
       `);
       console.log("✅ Added notes column to events table if missing");
     } catch (error) {
       console.log("Notes column already exists or other constraint issue");
     }
-    
+
     try {
       await pool.query(`
-        ALTER TABLE events 
+        ALTER TABLE events
         ADD COLUMN IF NOT EXISTS created_by_id INTEGER
       `);
       console.log("✅ Added created_by_id column to events table if missing");
     } catch (error) {
       console.log("Created_by_id column already exists or other constraint issue");
     }
-    
+
     // Remove the defaults after adding the columns
     try {
       await pool.query(`
-        ALTER TABLE events 
+        ALTER TABLE events
         ALTER COLUMN link DROP DEFAULT,
         ALTER COLUMN priority DROP DEFAULT
       `);
     } catch (error) {
       // Ignore if columns don't have defaults
     }
-    
+
     console.log("✅ Events table initialized");
-    
+
     // Create CFP submissions table with IF NOT EXISTS to preserve existing data
     await pool.query(`
       CREATE TABLE IF NOT EXISTS cfp_submissions (
@@ -253,30 +255,30 @@ export async function initializeDatabase(): Promise<boolean> {
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
-    
+
     // Add missing columns to existing sponsorships table if they don't exist
     try {
       await pool.query(`
-        ALTER TABLE sponsorships 
+        ALTER TABLE sponsorships
         ADD COLUMN IF NOT EXISTS sponsor_name TEXT,
         ADD COLUMN IF NOT EXISTS tier TEXT,
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW(),
         ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()
       `);
-      
+
       // Update any existing records to have default values
       await pool.query(`
-        UPDATE sponsorships 
+        UPDATE sponsorships
         SET sponsor_name = COALESCE(sponsor_name, 'Unknown Sponsor'),
-            tier = COALESCE(tier, level, 'Standard'),
+            tier = COALESCE(tier, 'Standard'),
             created_at = COALESCE(created_at, NOW()),
             updated_at = COALESCE(updated_at, NOW())
         WHERE sponsor_name IS NULL OR tier IS NULL OR created_at IS NULL OR updated_at IS NULL
       `);
-      
+
       // Make sponsor_name and tier NOT NULL after setting defaults
       await pool.query(`
-        ALTER TABLE sponsorships 
+        ALTER TABLE sponsorships
         ALTER COLUMN sponsor_name SET NOT NULL,
         ALTER COLUMN tier SET NOT NULL
       `);
@@ -395,7 +397,7 @@ export async function initializeDatabase(): Promise<boolean> {
       )
     `);
     console.log("✅ Workflow history table initialized");
-    
+
     // Create sessions table for authentication
     await pool.query(`
       CREATE TABLE IF NOT EXISTS sessions (
@@ -404,7 +406,7 @@ export async function initializeDatabase(): Promise<boolean> {
         expire TIMESTAMP(6) NOT NULL
       )
     `);
-    
+
     // Add index on expire for faster session cleanup
     await pool.query(`
       CREATE INDEX IF NOT EXISTS IDX_session_expire ON sessions (expire)
