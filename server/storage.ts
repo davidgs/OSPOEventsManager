@@ -1,14 +1,16 @@
 import {
   users, events, cfpSubmissions, attendees, sponsorships, assets, stakeholders,
-  approvalWorkflows, workflowReviewers, workflowStakeholders, workflowComments, workflowHistory,
-  type User, type Event, type CfpSubmission, type Attendee, type Sponsorship, type Asset,
+  approvalWorkflows, workflowReviewers, workflowStakeholders, workflowComments, workflowHistory
+} from "../shared/database-schema.js";
+import {
+  type User, type Event, type CFPSubmission, type Attendee, type Sponsorship, type Asset,
   type Stakeholder, type ApprovalWorkflow, type WorkflowReviewer, type WorkflowStakeholder,
   type WorkflowComment, type WorkflowHistory,
-  type InsertUser, type InsertEvent, type InsertCfpSubmission, type InsertAttendee,
+  type InsertUser, type InsertEvent, type InsertCFPSubmission, type InsertAttendee,
   type InsertSponsorship, type InsertAsset, type InsertStakeholder, type InsertApprovalWorkflow,
   type InsertWorkflowReviewer, type InsertWorkflowStakeholder, type InsertWorkflowComment,
   type InsertWorkflowHistory
-} from "../shared/schema.js";
+} from "../shared/database-types.js";
 import { db } from "./db";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
 
@@ -29,11 +31,11 @@ export interface IStorage {
   deleteEvent(id: number): Promise<boolean>;
 
   // CFP submission operations
-  getCfpSubmissions(): Promise<CfpSubmission[]>;
-  getCfpSubmissionsByEvent(eventId: number): Promise<CfpSubmission[]>;
-  getCfpSubmission(id: number): Promise<CfpSubmission | undefined>;
-  createCfpSubmission(insertCfpSubmission: InsertCfpSubmission): Promise<CfpSubmission>;
-  updateCfpSubmission(id: number, updates: Partial<InsertCfpSubmission>): Promise<CfpSubmission | undefined>;
+  getCfpSubmissions(): Promise<CFPSubmission[]>;
+  getCfpSubmissionsByEvent(eventId: number): Promise<CFPSubmission[]>;
+  getCfpSubmission(id: number): Promise<CFPSubmission | undefined>;
+  createCfpSubmission(insertCfpSubmission: InsertCFPSubmission): Promise<CFPSubmission>;
+  updateCfpSubmission(id: number, updates: Partial<InsertCFPSubmission>): Promise<CFPSubmission | undefined>;
   deleteCfpSubmission(id: number): Promise<boolean>;
 
   // Attendee operations
@@ -194,12 +196,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // CFP submission operations
-  async getCfpSubmissions(): Promise<CfpSubmission[]> {
+  async getCfpSubmissions(): Promise<CFPSubmission[]> {
     if (!db) throw new Error("Database not initialized");
     return await db.select().from(cfpSubmissions).orderBy(desc(cfpSubmissions.submission_date));
   }
 
-  async getCfpSubmissionsByEvent(eventId: number): Promise<CfpSubmission[]> {
+  async getCfpSubmissionsByEvent(eventId: number): Promise<CFPSubmission[]> {
     if (!db) throw new Error("Database not initialized");
     return await db
       .select()
@@ -208,19 +210,19 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(cfpSubmissions.submission_date));
   }
 
-  async getCfpSubmission(id: number): Promise<CfpSubmission | undefined> {
+  async getCfpSubmission(id: number): Promise<CFPSubmission | undefined> {
     if (!db) throw new Error("Database not initialized");
     const [cfpSubmission] = await db.select().from(cfpSubmissions).where(eq(cfpSubmissions.id, id));
     return cfpSubmission;
   }
 
-  async createCfpSubmission(insertCfpSubmission: InsertCfpSubmission): Promise<CfpSubmission> {
+  async createCfpSubmission(insertCfpSubmission: InsertCFPSubmission): Promise<CFPSubmission> {
     if (!db) throw new Error("Database not initialized");
     const [cfpSubmission] = await db.insert(cfpSubmissions).values([insertCfpSubmission]).returning();
     return cfpSubmission;
   }
 
-  async updateCfpSubmission(id: number, updates: Partial<InsertCfpSubmission>): Promise<CfpSubmission | undefined> {
+  async updateCfpSubmission(id: number, updates: Partial<InsertCFPSubmission>): Promise<CFPSubmission | undefined> {
     if (!db) throw new Error("Database not initialized");
     const [cfpSubmission] = await db
       .update(cfpSubmissions)

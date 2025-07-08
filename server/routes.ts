@@ -2,9 +2,9 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
-  insertEventSchema, insertCfpSubmissionSchema,
+  insertEventSchema, insertCFPSubmissionSchema,
   insertAttendeeSchema, insertSponsorshipSchema,
-  updateUserPreferencesSchema, insertAssetSchema,
+  updateUserProfileSchema, insertAssetSchema,
   assetTypes, insertStakeholderSchema,
   insertApprovalWorkflowSchema,
   insertWorkflowReviewerSchema,
@@ -12,10 +12,7 @@ import {
   insertWorkflowCommentSchema,
   insertWorkflowHistorySchema,
   approvalStatuses, approvalItemTypes, type ApprovalStatus, type ApprovalItemType
-} from "../shared/schema.js";
-
-// Use the updateUserPreferencesSchema as our profile update schema since it contains all the fields we need
-const updateUserProfileSchema = updateUserPreferencesSchema;
+} from "../shared/database-types.js";
 
 // Import our new services
 import { UserService } from "./services/user-service";
