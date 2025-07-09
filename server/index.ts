@@ -6,6 +6,9 @@ import { initKeycloak, getAuthMiddleware, keycloakUserMapper } from "./keycloak-
 import { initializeDatabase } from "./init-db";
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import fileUpload from "express-fileupload";
+import session from "express-session";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 // Production-safe logging function
 function log(message: string, source = "express") {
@@ -19,8 +22,60 @@ function log(message: string, source = "express") {
 }
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://ospo-events-ospo-app-keycloak-prod-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'self'", "https://ospo-events-ospo-app-keycloak-prod-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: {
+    error: "Too many requests from this IP, please try again later.",
+    retryAfter: 900
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true, // Prevent XSS attacks
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'strict' // CSRF protection
+  },
+  name: 'ospo.sid' // Custom session name
+}));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
@@ -228,13 +283,22 @@ app.get("/version", async (_req: Request, res: Response) => {
       authMiddleware(req, res, next);
     });
   } else {
-    console.warn('Keycloak not initialized, API routes will not be protected');
-    // Add warning middleware for unprotected routes
+    console.error('CRITICAL SECURITY WARNING: Keycloak not initialized, implementing emergency security measures');
+
+    // SECURITY: When Keycloak is not available, implement strict fallback security
     app.use('/api', (req, res, next) => {
-      if (req.path !== '/health' && req.path !== '/version') {
-        console.warn(`Auth warning: Unprotected access to ${req.method} /api${req.path}`);
+      // Allow health check and version endpoints without authentication
+      if (req.path === '/health' || req.path === '/version') {
+        return next();
       }
-      next();
+
+      // SECURITY: Block all other API access when authentication is unavailable
+      console.error(`SECURITY BLOCK: Rejecting unauthenticated access to ${req.method} /api${req.path}`);
+      res.status(503).json({
+        error: "Authentication service unavailable",
+        message: "API access is temporarily restricted due to authentication service issues. Please try again later.",
+        timestamp: new Date().toISOString()
+      });
     });
   }
 

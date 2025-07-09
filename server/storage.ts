@@ -438,27 +438,17 @@ export class DatabaseStorage implements IStorage {
 
   async updateStakeholder(id: number, updates: Partial<InsertStakeholder>): Promise<Stakeholder | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const setParts = [];
-    const values = [];
 
-    if (updates.user_id !== undefined) { setParts.push('user_id = $' + (values.length + 1)); values.push(updates.user_id); }
-    if (updates.name !== undefined) { setParts.push('name = $' + (values.length + 1)); values.push(updates.name); }
-    if (updates.email !== undefined) { setParts.push('email = $' + (values.length + 1)); values.push(updates.email); }
-    if (updates.role !== undefined) { setParts.push('role = $' + (values.length + 1)); values.push(updates.role); }
-    if (updates.department !== undefined) { setParts.push('department = $' + (values.length + 1)); values.push(updates.department); }
-    if (updates.organization !== undefined) { setParts.push('organization = $' + (values.length + 1)); values.push(updates.organization); }
-    if (updates.notes !== undefined) { setParts.push('notes = $' + (values.length + 1)); values.push(updates.notes); }
+    // Use Drizzle's type-safe update method instead of raw SQL
+    const updateData: any = { ...updates, updated_at: new Date() };
 
-    setParts.push('updated_at = NOW()');
-    values.push(id);
+    const [stakeholder] = await db
+      .update(stakeholders)
+      .set(updateData)
+      .where(eq(stakeholders.id, id))
+      .returning();
 
-    const result = await db.execute(sql`
-      UPDATE stakeholders
-      SET ${sql.raw(setParts.join(', '))}
-      WHERE id = $${values.length}
-      RETURNING id, user_id, name, email, role, department, organization, notes, created_at, updated_at
-    `);
-    return result.rows[0] as Stakeholder | undefined;
+    return stakeholder;
   }
 
   async deleteStakeholder(id: number): Promise<boolean> {

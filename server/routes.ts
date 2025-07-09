@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
@@ -14,28 +14,324 @@ import {
   approvalStatuses, approvalItemTypes, type ApprovalStatus, type ApprovalItemType
 } from "../shared/database-types.js";
 
-// Import our new services
-import { UserService } from "./services/user-service";
-import { WorkflowService } from "./services/workflow-service";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import fileUpload from "express-fileupload";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 
+// Authorization utilities
+interface AuthorizedUser {
+  id: number;
+  keycloak_id: string;
+  role: string;
+  name: string;
+  email: string;
+}
+
+function hasPermission(user: AuthorizedUser, resource: string, action: string): boolean {
+  // Admin users have full access
+  if (user.role === 'admin' || user.role === 'Administrator') {
+    return true;
+  }
+
+  // Community Manager permissions
+  if (user.role === 'Community Manager') {
+    return ['events', 'assets', 'cfp-submissions', 'attendees', 'sponsorships'].includes(resource);
+  }
+
+  // Regular users can only access their own resources
+  if (user.role === 'User' || user.role === 'user') {
+    return resource === 'profile' || (resource === 'assets' && action === 'read');
+  }
+
+  return false;
+}
+
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  next();
+}
+
+function requirePermission(resource: string, action: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as AuthorizedUser;
+
+    if (!user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    if (!hasPermission(user, resource, action)) {
+      return res.status(403).json({
+        error: "Insufficient permissions",
+        message: `You don't have permission to ${action} ${resource}`
+      });
+    }
+
+    next();
+  };
+}
+
+function requireOwnership(getResourceOwnerId: (req: Request) => Promise<number | null>) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as AuthorizedUser;
+
+    if (!user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    // Admin users can access any resource
+    if (user.role === 'admin' || user.role === 'Administrator') {
+      return next();
+    }
+
+    try {
+      const resourceOwnerId = await getResourceOwnerId(req);
+
+      if (resourceOwnerId === null) {
+        return res.status(404).json({ error: "Resource not found" });
+      }
+
+      if (resourceOwnerId !== user.id) {
+        return res.status(403).json({
+          error: "Access denied",
+          message: "You can only access your own resources"
+        });
+      }
+
+      next();
+    } catch (error) {
+      console.error("Error checking resource ownership:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  };
+}
+
+// Input validation and sanitization utilities
+function sanitizeString(input: string, maxLength: number = 1000): string {
+  if (typeof input !== 'string') return '';
+
+  return input
+    .trim()
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
+    .replace(/[<>]/g, (char) => char === '<' ? '&lt;' : '&gt;') // Basic HTML escaping
+    .substring(0, maxLength);
+}
+
+function sanitizeEmail(email: string): string {
+  if (typeof email !== 'string') return '';
+
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const cleanEmail = email.trim().toLowerCase();
+
+  return emailRegex.test(cleanEmail) ? cleanEmail : '';
+}
+
+function sanitizeUrl(url: string): string {
+  if (typeof url !== 'string') return '';
+
+  try {
+    const urlObj = new URL(url);
+    // Only allow http and https protocols
+    if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+      return '';
+    }
+    return urlObj.toString();
+  } catch {
+    return '';
+  }
+}
+
+function validateAndSanitizeId(id: string): number | null {
+  const parsed = parseInt(id, 10);
+  if (isNaN(parsed) || parsed <= 0) {
+    return null;
+  }
+  return parsed;
+}
+
+function sanitizeSearchQuery(query: string): string {
+  if (typeof query !== 'string') return '';
+
+  return query
+    .trim()
+    .replace(/[<>'"]/g, '') // Remove potential XSS characters
+    .replace(/[;-]/g, '') // Remove SQL injection patterns
+    .substring(0, 100); // Limit search query length
+}
+
+// Rate limiting utilities
+const requestCounts = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 100;
+
+function checkRateLimit(clientId: string): boolean {
+  const now = Date.now();
+  const clientData = requestCounts.get(clientId);
+
+  if (!clientData || now > clientData.resetTime) {
+    requestCounts.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+
+  if (clientData.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+
+  clientData.count++;
+  return true;
+}
+
+function getRateLimitMiddleware() {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const clientId = req.ip || req.socket.remoteAddress || 'unknown';
+
+    if (!checkRateLimit(clientId)) {
+      return res.status(429).json({
+        error: "Rate limit exceeded",
+        message: "Too many requests. Please try again later.",
+        retryAfter: Math.ceil(RATE_LIMIT_WINDOW / 1000)
+      });
+    }
+
+    next();
+  };
+}
+
+// Secure file upload utilities
+const ALLOWED_MIME_TYPES = {
+  image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+  document: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  spreadsheet: ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+  presentation: ['application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+  text: ['text/plain', 'text/csv'],
+  archive: ['application/zip', 'application/x-zip-compressed']
+};
+
+const ALLOWED_EXTENSIONS = {
+  image: ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
+  document: ['.pdf', '.doc', '.docx'],
+  spreadsheet: ['.xls', '.xlsx'],
+  presentation: ['.ppt', '.pptx'],
+  text: ['.txt', '.csv'],
+  archive: ['.zip']
+};
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILENAME_LENGTH = 255;
+
+function sanitizeFilename(filename: string): string {
+  // Remove or replace dangerous characters
+  return filename
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')
+    .replace(/^\.+/, '')
+    .replace(/\.+$/, '')
+    .substring(0, MAX_FILENAME_LENGTH);
+}
+
+function validateFileType(file: fileUpload.UploadedFile, allowedTypes: string[]): boolean {
+  const fileExt = path.extname(file.name).toLowerCase();
+  const mimeType = file.mimetype.toLowerCase();
+
+  // Check both extension and MIME type
+  const validExtensions = allowedTypes.flatMap(type => ALLOWED_EXTENSIONS[type as keyof typeof ALLOWED_EXTENSIONS] || []);
+  const validMimeTypes = allowedTypes.flatMap(type => ALLOWED_MIME_TYPES[type as keyof typeof ALLOWED_MIME_TYPES] || []);
+
+  return validExtensions.includes(fileExt) && validMimeTypes.includes(mimeType);
+}
+
+function generateSecureFilename(originalName: string, userId: string | number): string {
+  const ext = path.extname(originalName).toLowerCase();
+  const sanitizedName = sanitizeFilename(path.basename(originalName, ext));
+  const timestamp = Date.now();
+  const randomBytes = crypto.randomBytes(8).toString('hex');
+
+  return `${userId}_${timestamp}_${randomBytes}_${sanitizedName}${ext}`;
+}
+
+function validateUploadPath(filePath: string, uploadsDir: string): boolean {
+  // Resolve paths to prevent directory traversal
+  const resolvedUploadDir = path.resolve(uploadsDir);
+  const resolvedFilePath = path.resolve(filePath);
+
+  // Ensure the file path is within the uploads directory
+  return resolvedFilePath.startsWith(resolvedUploadDir);
+}
+
+// Secure error handling utilities
+function createSecureError(message: string, statusCode: number = 500, details?: any) {
+  const error = new Error(message);
+  (error as any).statusCode = statusCode;
+
+  // Only include details in development
+  if (process.env.NODE_ENV === 'development' && details) {
+    (error as any).details = details;
+  }
+
+  return error;
+}
+
+function handleSecureError(error: any, req: Request, res: Response) {
+  const statusCode = error.statusCode || 500;
+  const message = error.message || "Internal server error";
+
+  // Log the full error for debugging
+  console.error(`Error in ${req.method} ${req.path}:`, error);
+
+  // Send sanitized error response
+  const response: any = {
+    error: message,
+    timestamp: new Date().toISOString(),
+    path: req.path
+  };
+
+  // Only include stack trace in development
+  if (process.env.NODE_ENV === 'development') {
+    response.stack = error.stack;
+    response.details = error.details;
+  }
+
+  res.status(statusCode).json(response);
+}
+
+// Validation error handler
+function handleValidationError(error: any, req: Request, res: Response) {
+  console.error(`Validation error in ${req.method} ${req.path}:`, error);
+
+  res.status(400).json({
+    error: "Validation failed",
+    message: error.message || "Invalid input data",
+    timestamp: new Date().toISOString(),
+    path: req.path
+  });
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
   // Configure file upload middleware for specific routes only
   const fileUploadMiddleware = fileUpload({
-    limits: { fileSize: 10 * 1024 * 1024 },
+    limits: { fileSize: MAX_FILE_SIZE },
     abortOnLimit: true,
     createParentPath: true,
     useTempFiles: true,
     tempFileDir: '/tmp/',
-    debug: false
+    debug: false,
+    // Additional security options
+    safeFileNames: true,
+    preserveExtension: true,
+    // Prevent malicious file names
+    defCharset: 'utf8',
+    defParamCharset: 'utf8'
   });
   const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+
+  // Ensure uploads directory exists and is secure
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true, mode: 0o755 });
+  }
 
   // Version information endpoint (publicly accessible)
   app.get("/api/version", async (_req: Request, res: Response) => {
@@ -618,8 +914,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = req.params.id;
       console.log("Headshot upload request for user ID:", id);
-      console.log("Request files:", req.files);
-      console.log("Request body:", req.body);
 
       if (!id) {
         console.log("No user ID provided");
@@ -662,25 +956,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mimetype: headshotFile.mimetype
       });
 
-      // Validate file size (already capped by middleware but double-check)
-      if (headshotFile.size > 10 * 1024 * 1024) {
+      // SECURITY: Validate file size
+      if (headshotFile.size > MAX_FILE_SIZE) {
         console.log("File size too large:", headshotFile.size);
         return res.status(400).json({ message: "Headshot file size exceeds the 10MB limit" });
       }
 
-      // Validate file type
-      const fileExt = path.extname(headshotFile.name).toLowerCase();
-      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
-      console.log("File extension:", fileExt);
-
-      if (!validExtensions.includes(fileExt)) {
-        console.log("Invalid file extension:", fileExt);
-        return res.status(400).json({ message: "Invalid file type. Only JPG, PNG, and GIF are allowed" });
+      // SECURITY: Validate file type using comprehensive checks
+      if (!validateFileType(headshotFile, ['image'])) {
+        console.log("Invalid file type:", headshotFile.mimetype, path.extname(headshotFile.name));
+        return res.status(400).json({ message: "Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed" });
       }
 
-      // Create a unique filename
-      const fileName = `user_${id}_${Date.now()}${fileExt}`;
+      // SECURITY: Generate secure filename
+      const fileName = generateSecureFilename(headshotFile.name, id);
       const uploadPath = path.join(uploadsDir, fileName);
+
+      // SECURITY: Validate upload path to prevent directory traversal
+      if (!validateUploadPath(uploadPath, uploadsDir)) {
+        console.log("Invalid upload path detected:", uploadPath);
+        return res.status(400).json({ message: "Invalid file path" });
+      }
 
       // Move the file
       await headshotFile.mv(uploadPath);
@@ -690,7 +986,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create an asset record for the uploaded file
       const assetData = {
-        name: headshotFile.name,
+        name: sanitizeFilename(headshotFile.name),
         type: 'headshot' as const,
         file_path: `/uploads/${fileName}`,
         file_size: headshotFile.size,
@@ -842,24 +1138,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Generate a unique filename
-      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-      const filePath = path.join('public', 'uploads', fileName);
+      // SECURITY: Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        return res.status(400).json({ message: "File size exceeds the 10MB limit" });
+      }
+
+      // SECURITY: Determine allowed file types based on asset type
+      let allowedTypes: string[] = [];
+      switch (type) {
+        case 'image':
+        case 'logo':
+        case 'headshot':
+          allowedTypes = ['image'];
+          break;
+        case 'document':
+        case 'contract':
+        case 'invoice':
+          allowedTypes = ['document', 'text'];
+          break;
+        case 'presentation':
+          allowedTypes = ['presentation'];
+          break;
+        case 'spreadsheet':
+          allowedTypes = ['spreadsheet'];
+          break;
+        case 'archive':
+          allowedTypes = ['archive'];
+          break;
+        default:
+          allowedTypes = ['document', 'image', 'text'];
+      }
+
+      // SECURITY: Validate file type
+      if (!validateFileType(file, allowedTypes)) {
+        const validExtensions = allowedTypes.flatMap(t => ALLOWED_EXTENSIONS[t as keyof typeof ALLOWED_EXTENSIONS] || []);
+        return res.status(400).json({
+          message: `Invalid file type for ${type}. Allowed extensions: ${validExtensions.join(', ')}`
+        });
+      }
+
+      // SECURITY: Generate secure filename
+      const fileName = generateSecureFilename(file.name, uploadedBy);
+      const filePath = path.join(uploadsDir, fileName);
       const publicPath = `/uploads/${fileName}`;
 
+      // SECURITY: Validate upload path
+      if (!validateUploadPath(filePath, uploadsDir)) {
+        return res.status(400).json({ message: "Invalid file path" });
+      }
+
       // Move the file to uploads directory
-      await file.mv(path.join(process.cwd(), filePath));
+      await file.mv(filePath);
 
       // Create asset record
       const assetData = {
-        name,
+        name: sanitizeFilename(name),
         type: type as any,
         file_path: publicPath,
         file_size: file.size,
         mime_type: file.mimetype,
         uploaded_by: parseInt(uploadedBy as string),
         event_id: eventId ? parseInt(eventId as string) : null,
-        cfp_submission_id: cfpSubmissionId ? parseInt(cfpSubmissionId as string) : null
+        cfp_submission_id: cfpSubmissionId ? parseInt(cfpSubmissionId as string) : null,
+        description: description ? sanitizeFilename(description) : null
       };
 
       const asset = await storage.createAsset(assetData);
