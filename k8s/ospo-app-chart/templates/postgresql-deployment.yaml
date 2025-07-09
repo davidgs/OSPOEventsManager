@@ -20,10 +20,19 @@ spec:
         {{- include "ospo-app.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: database
     spec:
+      {{- if .Values.openshift.enabled }}
+      securityContext:
+        {{- toYaml .Values.postgresql.securityContext | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ospo-app.serviceAccountName" . }}
       containers:
         - name: postgres
           image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
           imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+          {{- if .Values.openshift.enabled }}
+          securityContext:
+            {{- toYaml .Values.postgresql.securityContext | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: 5432
               name: postgres
@@ -34,9 +43,29 @@ spec:
               value: {{ .Values.postgresql.auth.password }}
             - name: POSTGRES_DB
               value: {{ .Values.postgresql.auth.database }}
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
           resources:
             {{- toYaml .Values.postgresql.resources | nindent 12 }}
       volumes:
@@ -76,6 +105,9 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  {{- if .Values.postgresql.persistence.storageClass }}
+  storageClassName: {{ .Values.postgresql.persistence.storageClass }}
+  {{- end }}
   resources:
     requests:
       storage: {{ .Values.postgresql.persistence.size }}

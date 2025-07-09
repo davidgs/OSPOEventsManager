@@ -1,90 +1,119 @@
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import * as schema from "../shared/schema.js";
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import * as schema from '../shared/database-schema.js';
 
-// Configure database connection for Kubernetes or Replit
-const getDatabaseConfig = () => {
+// Type-safe database configuration
+interface DatabaseConfig {
+  host: string;
+  port: number;
+  database: string;
+  user: string;
+  password: string;
+  ssl?: boolean;
+}
+
+// Get database configuration based on environment
+const getDatabaseConfig = (): DatabaseConfig => {
   const isKubernetes = process.env.KUBERNETES_SERVICE_HOST;
-
   const isDockerCompose = process.env.COMPOSE_PROJECT_NAME || process.env.DOCKER_COMPOSE;
-  
+
   if (isKubernetes || isDockerCompose) {
     const deploymentType = isDockerCompose ? "DOCKER COMPOSE" : "KUBERNETES";
     console.log(`${deploymentType} DEPLOYMENT: Connecting to PostgreSQL service`);
-    
-    // Use environment variables or sensible defaults
-    const host = process.env.PGHOST || "postgres";
-    const port = parseInt(process.env.PGPORT || "5432", 10);
-    const database = process.env.PGDATABASE || "ospo_events";
-    const user = process.env.PGUSER || "ospo_user";
-    const password = process.env.PGPASSWORD || "postgres_password";
-
-    console.log(`Host: ${host}`);
-    console.log(`Port: ${port}`);
-    console.log(`Database: ${database}`);
-    console.log(`User: ${user}`);
 
     return {
-      host,
-      port,
-      database,
-      user,
-      password
+      host: process.env.PGHOST || "postgres",
+      port: parseInt(process.env.PGPORT || "5432", 10),
+      database: process.env.PGDATABASE || "ospo_events",
+      user: process.env.PGUSER || "ospo_user",
+      password: process.env.PGPASSWORD || "postgres_password",
+      ssl: false
     };
-  } else if (process.env.DATABASE_URL) {
-    // Use provided DATABASE_URL (e.g. for Replit PostgreSQL)
-    console.log("Using provided DATABASE_URL from environment");
-    return {
-      connectionString: process.env.DATABASE_URL
-    };
-  } else {
-    console.log("No database configuration found, using in-memory storage");
-    return null;
+  }
+
+  // Local development configuration
+  console.log("LOCAL DEVELOPMENT: Connecting to local PostgreSQL");
+  return {
+    host: process.env.PGHOST || "localhost",
+    port: parseInt(process.env.PGPORT || "5432", 10),
+    database: process.env.PGDATABASE || "ospo_events",
+    user: process.env.PGUSER || "ospo_user",
+    password: process.env.PGPASSWORD || "postgres_password",
+    ssl: false
+  };
+};
+
+// Create connection pool with proper configuration
+const config = getDatabaseConfig();
+export const pool = new Pool(config);
+
+// Initialize Drizzle ORM with typed schema
+export const db = drizzle(pool, { schema });
+
+// Test database connection
+export const testConnection = async (): Promise<void> => {
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    console.log('✅ Database connection successful');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    throw error;
   }
 };
 
-const dbConfig = getDatabaseConfig();
-
-// Set up the database connection if available
-export let pool: Pool | null = null;
-export let db: ReturnType<typeof drizzle> | null = null;
-
-if (dbConfig) {
+// Close database connection
+export const closeConnection = async (): Promise<void> => {
   try {
-    console.log("Creating PostgreSQL connection pool with config:", {
-      ...dbConfig,
-      password: dbConfig.password ? "********" : undefined // Mask the password in logs
-    });
-    
-    // Set more aggressive connection retry behavior
-    pool = new Pool({
-      ...dbConfig,
-      connectionTimeoutMillis: 10000, // 10 second timeout
-      max: 20, // Maximum 20 clients
-      idleTimeoutMillis: 30000, // 30 second idle timeout
-      allowExitOnIdle: false, // Don't exit on idle
-    });
-    
-    // Setup connection event handlers
-    pool.on('error', (err) => {
-      console.error('Unexpected PostgreSQL pool error:', err);
-      // Don't crash on connection errors
-    });
-    
-    // Initialize drizzle ORM
-    db = drizzle(pool, { schema });
-    console.log("PostgreSQL connection pool and Drizzle ORM initialized");
-    
-    // Test the connection
-    console.log("Testing PostgreSQL connection...");
-    pool.query('SELECT 1')
-      .then(() => console.log("✅ PostgreSQL connection successful"))
-      .catch(err => console.error("❌ PostgreSQL connection test failed:", err));
-      
-  } catch (err) {
-    console.error("Failed to create PostgreSQL connection pool:", err);
-    pool = null;
-    db = null;
-    console.log("Application will run without database persistence until the database becomes available");
+    await pool.end();
+    console.log('✅ Database connection closed');
+  } catch (error) {
+    console.error('❌ Error closing database connection:', error);
   }
-}
+};
+
+// Export schema for use in other modules
+export { schema };
+
+// Export individual tables for convenience
+export const {
+  users,
+  events,
+  cfpSubmissions,
+  attendees,
+  sponsorships,
+  assets,
+  stakeholders,
+  approvalWorkflows,
+  workflowReviewers,
+  workflowStakeholders,
+  workflowComments,
+  workflowHistory
+} = schema;
+
+// Health check for database
+export const healthCheck = async (): Promise<{ status: string; timestamp: string }> => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT NOW() as timestamp');
+    client.release();
+
+    return {
+      status: 'healthy',
+      timestamp: result.rows[0].timestamp
+    };
+  } catch (error) {
+    console.error('Database health check failed:', error);
+    return {
+      status: 'unhealthy',
+      timestamp: new Date().toISOString()
+    };
+  }
+};
+
+// Initialize database connection on module load
+testConnection().catch(console.error);
+
+console.log('📊 Database initialized with strongly typed schema');

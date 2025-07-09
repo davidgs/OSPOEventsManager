@@ -2,10 +2,13 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import path from "path";
 import fs from "fs";
-import { initKeycloak, secureWithKeycloak, keycloakUserMapper } from "./keycloak-config";
+import { initKeycloak, getAuthMiddleware, keycloakUserMapper } from "./keycloak-config";
 import { initializeDatabase } from "./init-db";
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import fileUpload from "express-fileupload";
+import session from "express-session";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 // Production-safe logging function
 function log(message: string, source = "express") {
@@ -19,8 +22,60 @@ function log(message: string, source = "express") {
 }
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://ospo-events-ospo-app-keycloak-prod-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'self'", "https://ospo-events-ospo-app-keycloak-prod-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: {
+    error: "Too many requests from this IP, please try again later.",
+    retryAfter: 900
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true, // Prevent XSS attacks
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'strict' // CSRF protection
+  },
+  name: 'ospo.sid' // Custom session name
+}));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
@@ -159,53 +214,37 @@ app.use((req, res, next) => {
   next();
 });
 
+// Add public endpoints BEFORE authentication middleware
+// Version endpoint - publicly accessible (outside /api to avoid auth middleware)
+app.get("/version", async (_req: Request, res: Response) => {
+  console.log("Version endpoint hit!");
+  try {
+    const packagePath = path.join(process.cwd(), 'package.json');
+    const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+
+    console.log("Returning version data:", packageData.version);
+    res.json({
+      name: packageData.name,
+      version: packageData.version,
+      description: packageData.description,
+      timestamp: new Date().toISOString(),
+      buildDate: process.env.BUILD_DATE || new Date().toISOString(),
+      environment: process.env.NODE_ENV || "development"
+    });
+  } catch (error) {
+    console.error("Version check failed:", error);
+    res.status(500).json({
+      error: "Failed to retrieve version information"
+    });
+  }
+});
+
 (async () => {
   // Initialize Keycloak first
   let keycloak;
   try {
     console.log("Initializing Keycloak authentication...");
     keycloak = await initKeycloak(app);
-
-    // Apply Keycloak user mapping middleware
-    app.use(async (req: any, res: any, next: any) => {
-      // First apply the standard Keycloak user mapper
-      keycloakUserMapper(req, res, async () => {
-        try {
-          // If we have a user from Keycloak and it's not in our database yet, create it
-          if (req.user && req.user.id) {
-            const keycloakId = req.user.id;
-            const username = req.user.username;
-
-            // Check if the user exists in our database
-            const dbUser = await storage.getUserByKeycloakId(keycloakId);
-
-            if (!dbUser) {
-              console.log(`Creating new user record for Keycloak user: ${username} (${keycloakId})`);
-
-              // Create a new user record in our database
-              const newUser = await storage.createUser({
-                keycloak_id: keycloakId,
-                username,
-                name: req.user.name || null,
-                email: req.user.email || null
-              });
-
-              if (newUser) {
-                console.log(`Successfully created user record with ID: ${newUser.id}`);
-                req.user.dbId = newUser.id;
-              }
-            } else {
-              console.log(`Found existing user record for Keycloak user: ${username}`);
-              req.user.dbId = dbUser.id;
-            }
-          }
-          next();
-        } catch (error) {
-          console.error("Error handling Keycloak user:", error);
-          next();
-        }
-      });
-    });
   } catch (error) {
     console.error("Failed to initialize Keycloak:", error);
     keycloak = null;
@@ -226,7 +265,44 @@ app.use((req, res, next) => {
     }
   }
 
-  // Setup static file serving first to handle assets before routes
+  // Apply Keycloak route protection middleware BEFORE registering other routes
+  console.log("Securing routes with Keycloak authentication");
+  console.log(`Keycloak instance status: ${keycloak ? 'VALID' : 'NULL/UNDEFINED'}`);
+  if (keycloak) {
+    console.log(`Keycloak instance type: ${typeof keycloak}`);
+
+    // Protect API routes (except health check and version) with Bearer token support
+    const authMiddleware = getAuthMiddleware(keycloak);
+    app.use('/api', (req, res, next) => {
+      // Allow health check and version endpoints without authentication
+      if (req.path === '/health' || req.path === '/version') {
+        return next();
+      }
+
+      // All other API routes require authentication (Bearer token or session)
+      authMiddleware(req, res, next);
+    });
+  } else {
+    console.error('CRITICAL SECURITY WARNING: Keycloak not initialized, implementing emergency security measures');
+
+    // SECURITY: When Keycloak is not available, implement strict fallback security
+    app.use('/api', (req, res, next) => {
+      // Allow health check and version endpoints without authentication
+      if (req.path === '/health' || req.path === '/version') {
+        return next();
+      }
+
+      // SECURITY: Block all other API access when authentication is unavailable
+      console.error(`SECURITY BLOCK: Rejecting unauthenticated access to ${req.method} /api${req.path}`);
+      res.status(503).json({
+        error: "Authentication service unavailable",
+        message: "API access is temporarily restricted due to authentication service issues. Please try again later.",
+        timestamp: new Date().toISOString()
+      });
+    });
+  }
+
+  // Register API routes AFTER applying protection middleware
   let server;
   if (app.get("env") === "development") {
     // Import Vite functions only in development
@@ -234,8 +310,10 @@ app.use((req, res, next) => {
     server = await registerRoutes(app);
     await setupVite(app, server);
   } else {
+    // Register API routes
     server = await registerRoutes(app);
-    // Production static file serving
+
+    // Production static file serving - register AFTER API routes
     const staticPath = path.resolve(process.cwd(), "server", "public");
 
     if (!fs.existsSync(staticPath)) {
@@ -255,23 +333,15 @@ app.use((req, res, next) => {
       }
     }));
 
-    // Fallback to index.html for client-side routing (only for non-asset requests)
+    // Fallback to index.html for client-side routing (only for non-API and non-asset requests)
     app.use("*", (req, res) => {
-      // Don't serve HTML for asset requests
-      if (req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
-        return res.status(404).send('Asset not found');
+      // Don't serve HTML for API requests, version endpoint, or asset requests
+      if (req.originalUrl.startsWith('/api/') || req.originalUrl === '/version' || req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+        return res.status(404).send('Not found');
       }
       res.sendFile(path.resolve(staticPath, "index.html"));
     });
   }
-
-  // Always enable Keycloak authentication in production (no option to bypass)
-  console.log("Securing routes with Keycloak authentication");
-  console.log(`Keycloak instance status: ${keycloak ? 'VALID' : 'NULL/UNDEFINED'}`);
-  if (keycloak) {
-    console.log(`Keycloak instance type: ${typeof keycloak}`);
-  }
-  secureWithKeycloak(app, keycloak);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -288,6 +358,15 @@ app.use((req, res, next) => {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    try {
+      const packagePath = path.join(process.cwd(), 'package.json');
+      const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+      log(`serving on port ${port}`);
+      log(`version: ${packageData.version}`);
+      log(`environment: ${process.env.NODE_ENV || 'development'}`);
+    } catch (error) {
+      log(`serving on port ${port}`);
+      log(`version: unknown (error reading package.json)`);
+    }
   });
 })();

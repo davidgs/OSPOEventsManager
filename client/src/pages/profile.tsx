@@ -3,13 +3,32 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/auth-context";
@@ -32,7 +51,7 @@ const roleOptions = [
   "Software Engineer",
   "Product Manager",
   "Marketing Manager",
-  "Other"
+  "Other",
 ];
 
 export default function ProfilePage() {
@@ -57,7 +76,7 @@ export default function ProfilePage() {
       }
     },
     enabled: !!user?.id,
-    retry: false
+    retry: false,
   });
 
   const form = useForm<ProfileFormData>({
@@ -79,7 +98,7 @@ export default function ProfilePage() {
         name: user.name || user.firstName || user.username || "",
         email: user.email || "",
         bio: profileData.bio || "",
-        jobTitle: profileData.jobTitle || "",
+        jobTitle: profileData.job_title || "", // Server returns snake_case
         role: profileData.role || "",
       });
     }
@@ -87,7 +106,17 @@ export default function ProfilePage() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      const res = await apiRequest("PUT", `/api/users/${user?.id}/profile`, data);
+      // Transform camelCase to snake_case for backend
+      const transformedData = {
+        ...data,
+        job_title: data.jobTitle,
+        jobTitle: undefined, // Remove the camelCase version
+      };
+      const res = await apiRequest(
+        "PUT",
+        `/api/users/${user?.id}/profile`,
+        transformedData
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -110,8 +139,12 @@ export default function ProfilePage() {
   const headshotMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
-      formData.append('headshot', file);
-      const res = await apiRequest("POST", `/api/users/${user?.id}/headshot`, formData);
+      formData.append("headshot", file);
+      const res = await apiRequest(
+        "POST",
+        `/api/users/${user?.id}/headshot`,
+        formData
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -161,7 +194,9 @@ export default function ProfilePage() {
         <Card>
           <CardContent className="p-8 text-center">
             <h2 className="text-lg font-medium mb-2">Profile not found</h2>
-            <p className="text-muted-foreground">Please log in to view your profile information.</p>
+            <p className="text-muted-foreground">
+              Please log in to view your profile information.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -170,12 +205,14 @@ export default function ProfilePage() {
 
   // Combine Keycloak data with server data for display
   const profileData = serverUserData || {};
-  
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Profile</h1>
-        <p className="text-muted-foreground">Manage your account information and preferences</p>
+        <p className="text-muted-foreground">
+          Manage your account information and preferences
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -188,16 +225,16 @@ export default function ProfilePage() {
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage 
-                    src={profileData.headshot || ""} 
-                    alt={user.name || user.firstName || user.username || 'User'} 
+                  <AvatarImage
+                    src={profileData.headshot || ""}
+                    alt={user.name || user.firstName || user.username || "User"}
                   />
                   <AvatarFallback className="text-lg">
-                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    {user.name ? user.name.charAt(0).toUpperCase() : "U"}
                   </AvatarFallback>
                 </Avatar>
-                <label 
-                  htmlFor="headshot-upload" 
+                <label
+                  htmlFor="headshot-upload"
                   className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
                 >
                   <Camera className="h-4 w-4" />
@@ -212,7 +249,9 @@ export default function ProfilePage() {
                 </label>
               </div>
               {uploadingImage && (
-                <div className="text-sm text-muted-foreground">Uploading...</div>
+                <div className="text-sm text-muted-foreground">
+                  Uploading...
+                </div>
               )}
             </div>
           </CardContent>
@@ -240,7 +279,10 @@ export default function ProfilePage() {
           <CardContent>
             {isEditing ? (
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4"
+                >
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -292,7 +334,10 @@ export default function ProfilePage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>ROLE</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select a role" />
@@ -327,14 +372,11 @@ export default function ProfilePage() {
                   />
 
                   <div className="flex space-x-2 pt-4">
-                    <Button 
-                      type="submit" 
-                      disabled={updateMutation.isPending}
-                    >
+                    <Button type="submit" disabled={updateMutation.isPending}>
                       {updateMutation.isPending ? "Saving..." : "Save Changes"}
                     </Button>
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       variant="outline"
                       onClick={() => setIsEditing(false)}
                     >
@@ -347,29 +389,48 @@ export default function ProfilePage() {
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">NAME</label>
-                    <p className="text-sm">{user.name || user.firstName || user.username || "Not set"}</p>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      NAME
+                    </label>
+                    <p className="text-sm">
+                      {user.name ||
+                        user.firstName ||
+                        user.username ||
+                        "Not set"}
+                    </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">JOB TITLE</label>
-                    <p className="text-sm">{profileData.jobTitle || "Not set"}</p>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      JOB TITLE
+                    </label>
+                    <p className="text-sm">
+                      {profileData.job_title || "Not set"}
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">EMAIL</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      EMAIL
+                    </label>
                     <p className="text-sm">{user.email || "Not set"}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">ROLE</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      ROLE
+                    </label>
                     <p className="text-sm">{profileData.role || "Not set"}</p>
                   </div>
                 </div>
-                
+
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">BIO</label>
-                  <p className="text-sm whitespace-pre-wrap">{profileData.bio || "No bio provided"}</p>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    BIO
+                  </label>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {profileData.bio || "No bio provided"}
+                  </p>
                 </div>
               </div>
             )}
@@ -380,21 +441,33 @@ export default function ProfilePage() {
         <Card className="md:col-span-3">
           <CardHeader>
             <CardTitle className="text-lg">Account Information</CardTitle>
-            <CardDescription>View your account details and login information</CardDescription>
+            <CardDescription>
+              View your account details and login information
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">USER ID</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  USER ID
+                </label>
                 <p className="text-sm font-mono">{user.id}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">USERNAME</label>
+                <label className="text-sm font-medium text-muted-foreground">
+                  USERNAME
+                </label>
                 <p className="text-sm">{user.username || "Not set"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">MEMBER SINCE</label>
-                <p className="text-sm">{profileData.createdAt ? new Date(profileData.createdAt).toLocaleDateString() : "Unknown"}</p>
+                <label className="text-sm font-medium text-muted-foreground">
+                  MEMBER SINCE
+                </label>
+                <p className="text-sm">
+                  {profileData.createdAt
+                    ? new Date(profileData.createdAt).toLocaleDateString()
+                    : "Unknown"}
+                </p>
               </div>
             </div>
           </CardContent>

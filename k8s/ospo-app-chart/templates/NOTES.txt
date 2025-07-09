@@ -1,8 +1,66 @@
 Thank you for installing {{ .Chart.Name }}!
 
-Your release is named {{ .Release.Name }}.
+Your release is named {{ .Release.Name }} in project {{ .Release.Namespace }}.
 
-To get the application URL:
+{{- if .Values.openshift.enabled }}
+=== OpenShift Deployment ===
+
+{{- if .Values.openshift.routes.enabled }}
+To access the OSPO Events Manager application:
+{{- if .Values.openshift.routes.host }}
+  Application URL: https://{{ .Values.openshift.routes.host }}
+{{- else }}
+  Get the application URL:
+  oc get route {{ include "ospo-app.fullname" . }} -o jsonpath='{.spec.host}'
+
+  Then visit: https://$(oc get route {{ include "ospo-app.fullname" . }} -o jsonpath='{.spec.host}')
+{{- end }}
+
+{{- if .Values.keycloak.enabled }}
+To access Keycloak admin console:
+{{- if .Values.openshift.routes.host }}
+  Keycloak URL: https://keycloak-{{ .Values.openshift.routes.host }}/auth
+{{- else }}
+  Get the Keycloak URL:
+  oc get route {{ include "ospo-app.fullname" . }}-keycloak -o jsonpath='{.spec.host}'
+
+  Then visit: https://$(oc get route {{ include "ospo-app.fullname" . }}-keycloak -o jsonpath='{.spec.host}')/auth
+{{- end }}
+  Admin credentials: {{ .Values.keycloak.admin.username }} / {{ .Values.keycloak.admin.password }}
+{{- end }}
+
+{{- if .Values.minio.enabled }}
+To access MinIO console:
+{{- if .Values.openshift.routes.host }}
+  MinIO URL: https://minio-{{ .Values.openshift.routes.host }}
+{{- else }}
+  Get the MinIO URL:
+  oc get route {{ include "ospo-app.fullname" . }}-minio -o jsonpath='{.spec.host}'
+
+  Then visit: https://$(oc get route {{ include "ospo-app.fullname" . }}-minio -o jsonpath='{.spec.host}')
+{{- end }}
+  Credentials: {{ .Values.minio.auth.rootUser }} / {{ .Values.minio.auth.rootPassword }}
+{{- end }}
+
+Check deployment status:
+  oc get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+  oc get routes -l app.kubernetes.io/instance={{ .Release.Name }}
+  oc get pvc -l app.kubernetes.io/instance={{ .Release.Name }}
+
+View logs:
+  oc logs -l app.kubernetes.io/component=application --tail=100
+  oc logs -l app.kubernetes.io/component=auth --tail=100
+  oc logs -l app.kubernetes.io/component=database --tail=100
+
+{{- else }}
+To access the application using port-forward:
+  kubectl port-forward svc/{{ include "ospo-app.fullname" . }} {{ .Values.app.service.port }}:{{ .Values.app.service.port }}
+  Then visit: http://localhost:{{ .Values.app.service.port }}
+{{- end }}
+
+{{- else }}
+=== Kubernetes Deployment ===
+
 {{- if .Values.loadBalancer.enabled }}
   The application should be available at: http://localhost:{{ .Values.loadBalancer.port }}
 {{- else }}
@@ -23,22 +81,30 @@ To access MinIO console:
   Then visit: http://localhost:{{ .Values.minio.service.consolePort }}
   Credentials: {{ .Values.minio.auth.rootUser }} / {{ .Values.minio.auth.rootPassword }}
 {{- end }}
+{{- end }}
 
-For more information and configuration options, please refer to the README.md file.
+=== Troubleshooting ===
 
-IMPORTANT CLEANUP NOTES:
-------------------------
-To properly uninstall this application and all its components, use the following command:
+If pods are not starting:
+1. Check events: oc get events --sort-by=.metadata.creationTimestamp
+2. Check pod status: oc describe pod -l app.kubernetes.io/instance={{ .Release.Name }}
+3. Check logs: oc logs -l app.kubernetes.io/instance={{ .Release.Name }} --previous
 
+If the application is not accessible:
+1. Verify routes: oc get routes
+2. Check services: oc get svc
+3. Test internal connectivity: oc exec -it deployment/{{ include "ospo-app.fullname" . }} -- curl -I http://localhost:{{ .Values.app.service.port }}/api/health
+
+For database issues:
+1. Check PostgreSQL: oc exec -it deployment/postgres -- psql -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -c "SELECT version();"
+2. Check connectivity: oc exec -it deployment/{{ include "ospo-app.fullname" . }} -- pg_isready -h postgres -p {{ .Values.postgresql.service.port }}
+
+=== Cleanup ===
+
+To properly uninstall this application:
   helm uninstall {{ .Release.Name }}
 
-If you encounter issues where resources are not being properly removed:
+If you encounter issues with cleanup:
+  oc delete all,pvc,configmap,secret -l app.kubernetes.io/instance={{ .Release.Name }}
 
-1. You can force delete any remaining resources with:
-   kubectl delete deployment,service,job,pod,configmap,secret -l app.kubernetes.io/instance={{ .Release.Name }}
-
-2. To verify all resources are removed:
-   kubectl get all,job,cm,secret -l app.kubernetes.io/part-of={{ .Release.Name }}
-
-3. For persistent resources (like PVCs), you may need to manually delete them:
-   kubectl delete pvc -l app.kubernetes.io/instance={{ .Release.Name }}
+For more information, visit the project documentation.

@@ -1,56 +1,58 @@
 import { FC } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Calendar, 
-  FileText, 
-  Users, 
-  DollarSign, 
-  TrendingUp, 
+import {
+  Calendar,
+  FileText,
+  Users,
+  DollarSign,
+  TrendingUp,
   Clock,
   CheckCircle,
   AlertCircle,
-  Plus
+  Plus,
 } from "lucide-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
+import { ProtectedRoute } from "@/components/protected-route";
 
-const DashboardPage: FC = () => {
+const DashboardPageContent: FC = () => {
   // Fetch all data for dashboard
   const { data: events = [] } = useQuery({
-    queryKey: ['/api/events'],
+    queryKey: ["/api/events"],
     queryFn: async () => {
-      const response = await fetch('/api/events');
-      if (!response.ok) throw new Error('Failed to load events');
+      const response = await apiRequest("GET", "/api/events");
+      if (!response.ok) throw new Error("Failed to load events");
       return response.json();
     },
   });
 
   const { data: cfpSubmissions = [] } = useQuery({
-    queryKey: ['/api/cfp-submissions'],
+    queryKey: ["/api/cfp-submissions"],
     queryFn: async () => {
-      const response = await fetch('/api/cfp-submissions');
-      if (!response.ok) throw new Error('Failed to load CFP submissions');
+      const response = await apiRequest("GET", "/api/cfp-submissions");
+      if (!response.ok) throw new Error("Failed to load CFP submissions");
       return response.json();
     },
   });
 
   const { data: attendees = [] } = useQuery({
-    queryKey: ['/api/attendees'],
+    queryKey: ["/api/attendees"],
     queryFn: async () => {
-      const response = await fetch('/api/attendees');
-      if (!response.ok) throw new Error('Failed to load attendees');
+      const response = await apiRequest("GET", "/api/attendees");
+      if (!response.ok) throw new Error("Failed to load attendees");
       return response.json();
     },
   });
 
   const { data: sponsorships = [] } = useQuery({
-    queryKey: ['/api/sponsorships'],
+    queryKey: ["/api/sponsorships"],
     queryFn: async () => {
-      const response = await fetch('/api/sponsorships');
-      if (!response.ok) throw new Error('Failed to load sponsorships');
+      const response = await apiRequest("GET", "/api/sponsorships");
+      if (!response.ok) throw new Error("Failed to load sponsorships");
       return response.json();
     },
   });
@@ -58,11 +60,17 @@ const DashboardPage: FC = () => {
   // Calculate statistics
   const stats = {
     totalEvents: events.length,
-    upcomingEvents: events.filter((e: any) => new Date(e.start_date) > new Date()).length,
+    upcomingEvents: events.filter(
+      (e: any) => new Date(e.start_date) > new Date()
+    ).length,
     totalCfpSubmissions: cfpSubmissions.length,
-    acceptedSubmissions: cfpSubmissions.filter((s: any) => s.status === 'accepted').length,
+    acceptedSubmissions: cfpSubmissions.filter(
+      (s: any) => s.status === "accepted"
+    ).length,
     totalAttendees: attendees.length,
-    confirmedSponsorships: sponsorships.filter((s: any) => s.status === 'confirmed').length,
+    confirmedSponsorships: sponsorships.filter(
+      (s: any) => s.status === "confirmed"
+    ).length,
   };
 
   // Get upcoming events (next 30 days)
@@ -70,16 +78,25 @@ const DashboardPage: FC = () => {
     .filter((e: any) => {
       const eventDate = new Date(e.start_date);
       const now = new Date();
-      const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysFromNow = new Date(
+        now.getTime() + 30 * 24 * 60 * 60 * 1000
+      );
       return eventDate >= now && eventDate <= thirtyDaysFromNow;
     })
-    .sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+    .sort(
+      (a: any, b: any) =>
+        new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+    )
     .slice(0, 5);
 
   // Get recent CFP submissions
   const recentSubmissions = cfpSubmissions
     .filter((s: any) => s.submissionDate)
-    .sort((a: any, b: any) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime())
+    .sort(
+      (a: any, b: any) =>
+        new Date(b.submissionDate).getTime() -
+        new Date(a.submissionDate).getTime()
+    )
     .slice(0, 5);
 
   // Get CFP deadlines approaching (next 14 days)
@@ -88,10 +105,15 @@ const DashboardPage: FC = () => {
       if (!e.cfp_deadline) return false;
       const deadline = new Date(e.cfp_deadline);
       const now = new Date();
-      const fourteenDaysFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+      const fourteenDaysFromNow = new Date(
+        now.getTime() + 14 * 24 * 60 * 60 * 1000
+      );
       return deadline >= now && deadline <= fourteenDaysFromNow;
     })
-    .sort((a: any, b: any) => new Date(a.cfp_deadline).getTime() - new Date(b.cfp_deadline).getTime());
+    .sort(
+      (a: any, b: any) =>
+        new Date(a.cfp_deadline).getTime() - new Date(b.cfp_deadline).getTime()
+    );
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -124,11 +146,15 @@ const DashboardPage: FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CFP Submissions</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              CFP Submissions
+            </CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalCfpSubmissions}</div>
+            <div className="text-2xl font-bold">
+              {stats.totalCfpSubmissions}
+            </div>
             <p className="text-xs text-muted-foreground">
               {stats.acceptedSubmissions} accepted
             </p>
@@ -137,14 +163,14 @@ const DashboardPage: FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Attendees</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Attendees
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalAttendees}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all events
-            </p>
+            <p className="text-xs text-muted-foreground">Across all events</p>
           </CardContent>
         </Card>
 
@@ -154,7 +180,9 @@ const DashboardPage: FC = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.confirmedSponsorships}</div>
+            <div className="text-2xl font-bold">
+              {stats.confirmedSponsorships}
+            </div>
             <p className="text-xs text-muted-foreground">
               Confirmed partnerships
             </p>
@@ -175,7 +203,10 @@ const DashboardPage: FC = () => {
             {upcomingEvents.length > 0 ? (
               <div className="space-y-3">
                 {upcomingEvents.map((event: any) => (
-                  <div key={event.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={event.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
                     <div>
                       <h4 className="font-medium">{event.name}</h4>
                       <p className="text-sm text-gray-600">{event.location}</p>
@@ -183,18 +214,24 @@ const DashboardPage: FC = () => {
                         {format(new Date(event.start_date), "MMM d, yyyy")}
                       </p>
                     </div>
-                    <Badge className={
-                      event.priority === 'high' ? 'bg-red-100 text-red-800' :
-                      event.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }>
+                    <Badge
+                      className={
+                        event.priority === "high"
+                          ? "bg-red-100 text-red-800"
+                          : event.priority === "medium"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-green-100 text-green-800"
+                      }
+                    >
                       {event.priority}
                     </Badge>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">No upcoming events</p>
+              <p className="text-gray-500 text-center py-4">
+                No upcoming events
+              </p>
             )}
           </CardContent>
         </Card>
@@ -211,11 +248,15 @@ const DashboardPage: FC = () => {
             {approachingDeadlines.length > 0 ? (
               <div className="space-y-3">
                 {approachingDeadlines.map((event: any) => (
-                  <div key={event.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={event.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
                     <div>
                       <h4 className="font-medium">{event.name}</h4>
                       <p className="text-sm text-gray-600">
-                        Deadline: {format(new Date(event.cfp_deadline), "MMM d, yyyy")}
+                        Deadline:{" "}
+                        {format(new Date(event.cfp_deadline), "MMM d, yyyy")}
                       </p>
                     </div>
                     <Clock className="h-4 w-4 text-orange-500" />
@@ -223,7 +264,9 @@ const DashboardPage: FC = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">No approaching deadlines</p>
+              <p className="text-gray-500 text-center py-4">
+                No approaching deadlines
+              </p>
             )}
           </CardContent>
         </Card>
@@ -240,27 +283,42 @@ const DashboardPage: FC = () => {
             {recentSubmissions.length > 0 ? (
               <div className="space-y-3">
                 {recentSubmissions.map((submission: any) => (
-                  <div key={submission.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={submission.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
                     <div>
                       <h4 className="font-medium">{submission.title}</h4>
-                      <p className="text-sm text-gray-600">by {submission.submitterName}</p>
+                      <p className="text-sm text-gray-600">
+                        by {submission.submitterName}
+                      </p>
                       <p className="text-xs text-gray-500">
-                        {format(new Date(submission.submissionDate), "MMM d, yyyy")}
+                        {format(
+                          new Date(submission.submissionDate),
+                          "MMM d, yyyy"
+                        )}
                       </p>
                     </div>
-                    <Badge className={
-                      submission.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                      submission.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                      submission.status === 'submitted' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }>
+                    <Badge
+                      className={
+                        submission.status === "accepted"
+                          ? "bg-green-100 text-green-800"
+                          : submission.status === "rejected"
+                          ? "bg-red-100 text-red-800"
+                          : submission.status === "submitted"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-gray-100 text-gray-800"
+                      }
+                    >
                       {submission.status}
                     </Badge>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">No recent submissions</p>
+              <p className="text-gray-500 text-center py-4">
+                No recent submissions
+              </p>
             )}
           </CardContent>
         </Card>
@@ -304,6 +362,14 @@ const DashboardPage: FC = () => {
         </Card>
       </div>
     </div>
+  );
+};
+
+const DashboardPage = () => {
+  return (
+    <ProtectedRoute>
+      <DashboardPageContent />
+    </ProtectedRoute>
   );
 };
 
