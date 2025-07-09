@@ -246,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/cfp-submissions", async (req: Request, res: Response) => {
     try {
-      const submissionData = insertCfpSubmissionSchema.safeParse(req.body);
+      const submissionData = insertCFPSubmissionSchema.safeParse(req.body);
 
       if (!submissionData.success) {
         const validationError = fromZodError(submissionData.error);
@@ -267,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid submission ID" });
       }
 
-      const submissionData = insertCfpSubmissionSchema.partial().safeParse(req.body);
+      const submissionData = insertCFPSubmissionSchema.partial().safeParse(req.body);
 
       if (!submissionData.success) {
         const validationError = fromZodError(submissionData.error);
@@ -552,25 +552,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/users/:id/profile", async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
+      console.log(`[PUT /api/users/${id}/profile] Request body:`, req.body);
 
       const profileData = updateUserProfileSchema.safeParse(req.body);
 
       if (!profileData.success) {
+        console.error(`[PUT /api/users/${id}/profile] Validation failed:`, profileData.error);
         const validationError = fromZodError(profileData.error);
         return res.status(400).json({ message: validationError.message });
       }
+
+      console.log(`[PUT /api/users/${id}/profile] Validated data:`, profileData.data);
 
       let user;
 
       // Handle both numeric IDs and Keycloak UUIDs
       if (/^[0-9]+$/.test(id)) {
+        console.log(`[PUT /api/users/${id}/profile] Numeric ID detected, updating user ${id}`);
         user = await storage.updateUserProfile(parseInt(id), profileData.data);
       } else {
+        console.log(`[PUT /api/users/${id}/profile] UUID detected, looking up Keycloak user`);
         // For Keycloak users, find the database user first
         const existingUser = await storage.getUserByKeycloakId(id);
+        console.log(`[PUT /api/users/${id}/profile] Existing user found:`, existingUser);
+
         if (existingUser) {
+          console.log(`[PUT /api/users/${id}/profile] Updating existing user ID ${existingUser.id}`);
           user = await storage.updateUserProfile(existingUser.id, profileData.data);
         } else {
+          console.log(`[PUT /api/users/${id}/profile] Creating new user for Keycloak ID ${id}`);
           // Create a new user record for this Keycloak user
           const newUser = await storage.createUser({
             keycloak_id: id,
@@ -587,15 +597,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      console.log(`[PUT /api/users/${id}/profile] Final user result:`, user);
+
       if (!user) {
+        console.error(`[PUT /api/users/${id}/profile] User not found after update`);
         return res.status(404).json({ message: "User not found" });
       }
 
       // Don't return the password if it exists
       const { password, ...userWithoutPassword } = user as any;
+      console.log(`[PUT /api/users/${id}/profile] Returning user data:`, userWithoutPassword);
       res.json(userWithoutPassword);
     } catch (error) {
-      console.error("Error updating user profile:", error);
+      console.error(`[PUT /api/users/:id/profile] Error updating user profile:`, error);
       res.status(500).json({ message: "Failed to update user profile" });
     }
   });
