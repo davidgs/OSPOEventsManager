@@ -1,6 +1,6 @@
 {
   "name": "ospo-events-manager",
-  "version": "1.2.0",
+  "version": "1.2.1-profile-debug",
   "description": "OSPO Events Management System - A comprehensive platform for managing events, CFP submissions, attendees, and workflows",
   "type": "module",
   "license": "MIT",
