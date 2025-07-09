@@ -2,91 +2,121 @@ import { FC, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
-import { 
-  Plus, Search, Calendar, FileText, AlertTriangle,
-  Check, X, Clock, ArrowUpDown 
+import {
+  Plus,
+  Search,
+  Calendar,
+  FileText,
+  AlertTriangle,
+  Check,
+  X,
+  Clock,
+  ArrowUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertCfpSubmissionSchema, cfpStatuses } from "@shared/schema";
+import { insertCFPSubmissionSchema, cfpStatuses } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 
-const formSchema = insertCfpSubmissionSchema.extend({
+const formSchema = insertCFPSubmissionSchema.extend({
   submissionDate: z.date().optional(),
 });
 
 const CfpSubmissionsPage: FC = () => {
   const [searchParams] = useLocation();
   const { toast } = useToast();
-  
+
   // Extract eventId from search params if present
   const params = new URLSearchParams(searchParams);
   const eventIdParam = params.get("eventId");
   const eventId = eventIdParam ? parseInt(eventIdParam) : undefined;
-  
+
   // State for filters and search
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [sortField, setSortField] = useState<string>("title");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  
+
   // State for modal/dialog
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
-  
+
   // Fetch CFP submissions
-  const { 
-    data: cfpSubmissions = [], 
+  const {
+    data: cfpSubmissions = [],
     isLoading: isLoadingSubmissions,
     isError: isErrorSubmissions,
   } = useQuery({
-    queryKey: ['/api/cfp-submissions', eventId],
+    queryKey: ["/api/cfp-submissions", eventId],
     queryFn: async ({ queryKey }) => {
-      const url = eventId 
-        ? `/api/cfp-submissions?eventId=${eventId}` 
-        : '/api/cfp-submissions';
-      const res = await fetch(url, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch CFP submissions');
+      const url = eventId
+        ? `/api/cfp-submissions?eventId=${eventId}`
+        : "/api/cfp-submissions";
+      const res = await apiRequest("GET", url);
+      if (!res.ok) throw new Error("Failed to fetch CFP submissions");
       return await res.json();
     },
   });
-  
+
   // Fetch events for dropdown
-  const { 
-    data: events = [], 
-    isLoading: isLoadingEvents,
-  } = useQuery({
-    queryKey: ['/api/events'],
+  const { data: events = [], isLoading: isLoadingEvents } = useQuery({
+    queryKey: ["/api/events"],
   });
-  
+
   // Add submission mutation
   const { mutate: addSubmission, isPending: isAddingSubmission } = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
       const formattedData = {
         ...data,
-        submissionDate: data.submissionDate ? format(data.submissionDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+        submissionDate: data.submissionDate
+          ? format(data.submissionDate, "yyyy-MM-dd")
+          : format(new Date(), "yyyy-MM-dd"),
       };
-      return await apiRequest('POST', '/api/cfp-submissions', formattedData);
+      return await apiRequest("POST", "/api/cfp-submissions", formattedData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cfp-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cfp-submissions"] });
       setIsAddModalOpen(false);
       toast({
         title: "CFP Submission Added",
@@ -101,50 +131,54 @@ const CfpSubmissionsPage: FC = () => {
       });
     },
   });
-  
+
   // Delete submission mutation
-  const { mutate: deleteSubmission, isPending: isDeletingSubmission } = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest('DELETE', `/api/cfp-submissions/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cfp-submissions'] });
-      setIsDeleteDialogOpen(false);
-      toast({
-        title: "CFP Submission Deleted",
-        description: "The CFP submission has been deleted successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete CFP submission",
-        variant: "destructive",
-      });
-    },
-  });
-  
+  const { mutate: deleteSubmission, isPending: isDeletingSubmission } =
+    useMutation({
+      mutationFn: async (id: number) => {
+        await apiRequest("DELETE", `/api/cfp-submissions/${id}`);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/cfp-submissions"] });
+        setIsDeleteDialogOpen(false);
+        toast({
+          title: "CFP Submission Deleted",
+          description: "The CFP submission has been deleted successfully.",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to delete CFP submission",
+          variant: "destructive",
+        });
+      },
+    });
+
   // Update submission status mutation
-  const { mutate: updateSubmissionStatus, isPending: isUpdatingStatus } = useMutation({
-    mutationFn: async ({ id, status }: { id: number, status: string }) => {
-      return await apiRequest('PUT', `/api/cfp-submissions/${id}`, { status });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cfp-submissions'] });
-      toast({
-        title: "Status Updated",
-        description: "The CFP submission status has been updated.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update status",
-        variant: "destructive",
-      });
-    },
-  });
-  
+  const { mutate: updateSubmissionStatus, isPending: isUpdatingStatus } =
+    useMutation({
+      mutationFn: async ({ id, status }: { id: number; status: string }) => {
+        return await apiRequest("PUT", `/api/cfp-submissions/${id}`, {
+          status,
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/cfp-submissions"] });
+        toast({
+          title: "Status Updated",
+          description: "The CFP submission status has been updated.",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to update status",
+          variant: "destructive",
+        });
+      },
+    });
+
   // Form for adding a new submission
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -157,34 +191,34 @@ const CfpSubmissionsPage: FC = () => {
       notes: "",
     },
   });
-  
+
   // Handle adding a new submission
   const handleAddSubmission = (data: z.infer<typeof formSchema>) => {
     addSubmission(data);
   };
-  
+
   // Handle deleting a submission
   const handleDeleteSubmission = () => {
     if (selectedSubmission) {
       deleteSubmission(selectedSubmission.id);
     }
   };
-  
+
   // Handle updating submission status
   const handleStatusChange = (id: number, newStatus: string) => {
     updateSubmissionStatus({ id, status: newStatus });
   };
-  
+
   // Handle opening delete dialog
   const openDeleteDialog = (submission: any) => {
     setSelectedSubmission(submission);
     setIsDeleteDialogOpen(true);
   };
-  
+
   // Sort function for submissions
   const sortSubmissions = (a: any, b: any) => {
     let comparison = 0;
-    
+
     switch (sortField) {
       case "title":
         comparison = a.title.localeCompare(b.title);
@@ -193,8 +227,12 @@ const CfpSubmissionsPage: FC = () => {
         comparison = a.submitterName.localeCompare(b.submitterName);
         break;
       case "submissionDate":
-        const dateA = a.submissionDate ? new Date(a.submissionDate).getTime() : 0;
-        const dateB = b.submissionDate ? new Date(b.submissionDate).getTime() : 0;
+        const dateA = a.submissionDate
+          ? new Date(a.submissionDate).getTime()
+          : 0;
+        const dateB = b.submissionDate
+          ? new Date(b.submissionDate).getTime()
+          : 0;
         comparison = dateA - dateB;
         break;
       case "status":
@@ -203,36 +241,41 @@ const CfpSubmissionsPage: FC = () => {
       default:
         comparison = 0;
     }
-    
+
     return sortDirection === "asc" ? comparison : -comparison;
   };
-  
+
   // Get event name by ID
   const getEventName = (eventId: number) => {
     const event = events.find((e: any) => e.id === eventId);
     return event ? event.name : "Unknown Event";
   };
-  
+
   // Filter and sort submissions
   const filteredSubmissions = cfpSubmissions
     .filter((submission: any) => {
       let matches = true;
-      
+
       // Filter by status
       if (statusFilter !== "all" && submission.status !== statusFilter) {
         matches = false;
       }
-      
+
       // Filter by search term
-      if (searchTerm && !submission.title.toLowerCase().includes(searchTerm.toLowerCase()) && 
-          !submission.submitterName.toLowerCase().includes(searchTerm.toLowerCase())) {
+      if (
+        searchTerm &&
+        !submission.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !submission.submitterName
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      ) {
         matches = false;
       }
-      
+
       return matches;
     })
     .sort(sortSubmissions);
-  
+
   // Toggle sort direction or change sort field
   const handleSort = (field: string) => {
     if (field === sortField) {
@@ -242,7 +285,7 @@ const CfpSubmissionsPage: FC = () => {
       setSortDirection("asc");
     }
   };
-  
+
   // Status badge style
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -284,20 +327,23 @@ const CfpSubmissionsPage: FC = () => {
         );
     }
   };
-  
+
   // Loading state
   const isLoading = isLoadingSubmissions || isLoadingEvents;
-  
+
   return (
     <div className="py-6">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
         {/* Header */}
         <div className="md:flex md:items-center md:justify-between pb-6">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate">CFP Submissions</h2>
+            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate">
+              CFP Submissions
+            </h2>
             {eventId && !isLoadingEvents && (
               <p className="mt-1 text-sm text-gray-500">
-                Showing submissions for event: <span className="font-medium">{getEventName(eventId)}</span>
+                Showing submissions for event:{" "}
+                <span className="font-medium">{getEventName(eventId)}</span>
               </p>
             )}
           </div>
@@ -308,15 +354,12 @@ const CfpSubmissionsPage: FC = () => {
             </Button>
           </div>
         </div>
-        
+
         {/* Filters */}
         <div className="mb-6 bg-white shadow rounded-lg p-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <div className="flex space-x-3">
-              <Select
-                value={statusFilter}
-                onValueChange={setStatusFilter}
-              >
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-[180px]">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
@@ -342,7 +385,7 @@ const CfpSubmissionsPage: FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Content */}
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
@@ -355,8 +398,17 @@ const CfpSubmissionsPage: FC = () => {
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
               <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
-              <p className="mt-4 text-red-500">Failed to load CFP submissions. Please try again.</p>
-              <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/cfp-submissions'] })} className="mt-4">
+              <p className="mt-4 text-red-500">
+                Failed to load CFP submissions. Please try again.
+              </p>
+              <Button
+                onClick={() =>
+                  queryClient.invalidateQueries({
+                    queryKey: ["/api/cfp-submissions"],
+                  })
+                }
+                className="mt-4"
+              >
                 Retry
               </Button>
             </div>
@@ -365,14 +417,19 @@ const CfpSubmissionsPage: FC = () => {
           <Card>
             <CardContent className="text-center p-12">
               <FileText className="mx-auto h-12 w-12 text-gray-400" />
-              <CardTitle className="mt-4 text-xl">No CFP Submissions Found</CardTitle>
+              <CardTitle className="mt-4 text-xl">
+                No CFP Submissions Found
+              </CardTitle>
               <p className="mt-2 text-gray-500">
-                {searchTerm || statusFilter !== "all" 
-                  ? "Try adjusting your search or filters to find what you're looking for." 
+                {searchTerm || statusFilter !== "all"
+                  ? "Try adjusting your search or filters to find what you're looking for."
                   : "Get started by adding your first CFP submission."}
               </p>
               {!(searchTerm || statusFilter !== "all") && (
-                <Button onClick={() => setIsAddModalOpen(true)} className="mt-6">
+                <Button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="mt-6"
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Add Submission
                 </Button>
@@ -385,8 +442,8 @@ const CfpSubmissionsPage: FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th 
-                      scope="col" 
+                    <th
+                      scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                       onClick={() => handleSort("title")}
                     >
@@ -398,12 +455,15 @@ const CfpSubmissionsPage: FC = () => {
                       </div>
                     </th>
                     {!eventId && (
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Event
                       </th>
                     )}
-                    <th 
-                      scope="col" 
+                    <th
+                      scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                       onClick={() => handleSort("submitterName")}
                     >
@@ -414,8 +474,8 @@ const CfpSubmissionsPage: FC = () => {
                         )}
                       </div>
                     </th>
-                    <th 
-                      scope="col" 
+                    <th
+                      scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hidden md:table-cell"
                       onClick={() => handleSort("submissionDate")}
                     >
@@ -426,8 +486,8 @@ const CfpSubmissionsPage: FC = () => {
                         )}
                       </div>
                     </th>
-                    <th 
-                      scope="col" 
+                    <th
+                      scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                       onClick={() => handleSort("status")}
                     >
@@ -438,7 +498,10 @@ const CfpSubmissionsPage: FC = () => {
                         )}
                       </div>
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Actions
                     </th>
                   </tr>
@@ -447,25 +510,38 @@ const CfpSubmissionsPage: FC = () => {
                   {filteredSubmissions.map((submission: any) => (
                     <tr key={submission.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{submission.title}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {submission.title}
+                        </div>
                       </td>
                       {!eventId && (
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{getEventName(submission.eventId)}</div>
+                          <div className="text-sm text-gray-500">
+                            {getEventName(submission.eventId)}
+                          </div>
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{submission.submitterName}</div>
+                        <div className="text-sm text-gray-500">
+                          {submission.submitterName}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
                         <div className="text-sm text-gray-500">
-                          {submission.submissionDate ? format(new Date(submission.submissionDate), "MMM d, yyyy") : "-"}
+                          {submission.submissionDate
+                            ? format(
+                                new Date(submission.submissionDate),
+                                "MMM d, yyyy"
+                              )
+                            : "-"}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Select
                           value={submission.status}
-                          onValueChange={(value) => handleStatusChange(submission.id, value)}
+                          onValueChange={(value) =>
+                            handleStatusChange(submission.id, value)
+                          }
                           disabled={isUpdatingStatus}
                         >
                           <SelectTrigger className="w-[130px] h-8">
@@ -499,7 +575,7 @@ const CfpSubmissionsPage: FC = () => {
           </div>
         )}
       </div>
-      
+
       {/* Add Submission Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="sm:max-w-2xl">
@@ -509,9 +585,12 @@ const CfpSubmissionsPage: FC = () => {
               Enter the details of the CFP submission you want to add.
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleAddSubmission)} className="space-y-6">
+            <form
+              onSubmit={form.handleSubmit(handleAddSubmission)}
+              className="space-y-6"
+            >
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {/* Event Selection (if not pre-selected) */}
                 {!eventId && (
@@ -520,9 +599,13 @@ const CfpSubmissionsPage: FC = () => {
                     name="eventId"
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
-                        <FormLabel>Event <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>
+                          Event <span className="text-red-500">*</span>
+                        </FormLabel>
                         <Select
-                          onValueChange={(value) => field.onChange(parseInt(value))}
+                          onValueChange={(value) =>
+                            field.onChange(parseInt(value))
+                          }
                           defaultValue={field.value?.toString()}
                         >
                           <FormControl>
@@ -532,7 +615,10 @@ const CfpSubmissionsPage: FC = () => {
                           </FormControl>
                           <SelectContent>
                             {events.map((event: any) => (
-                              <SelectItem key={event.id} value={event.id.toString()}>
+                              <SelectItem
+                                key={event.id}
+                                value={event.id.toString()}
+                              >
                                 {event.name}
                               </SelectItem>
                             ))}
@@ -543,14 +629,16 @@ const CfpSubmissionsPage: FC = () => {
                     )}
                   />
                 )}
-                
+
                 {/* Title */}
                 <FormField
                   control={form.control}
                   name="title"
                   render={({ field }) => (
                     <FormItem className="sm:col-span-2">
-                      <FormLabel>Title <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>
+                        Title <span className="text-red-500">*</span>
+                      </FormLabel>
                       <FormControl>
                         <Input placeholder="Enter talk title" {...field} />
                       </FormControl>
@@ -558,33 +646,37 @@ const CfpSubmissionsPage: FC = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 {/* Abstract */}
                 <FormField
                   control={form.control}
                   name="abstract"
                   render={({ field }) => (
                     <FormItem className="sm:col-span-2">
-                      <FormLabel>Abstract <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>
+                        Abstract <span className="text-red-500">*</span>
+                      </FormLabel>
                       <FormControl>
-                        <Textarea 
+                        <Textarea
                           placeholder="Enter talk abstract"
                           className="min-h-[150px]"
-                          {...field} 
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 {/* Submitter Name */}
                 <FormField
                   control={form.control}
                   name="submitterName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Submitter Name <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>
+                        Submitter Name <span className="text-red-500">*</span>
+                      </FormLabel>
                       <FormControl>
                         <Input placeholder="Enter submitter name" {...field} />
                       </FormControl>
@@ -592,15 +684,20 @@ const CfpSubmissionsPage: FC = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 {/* Status */}
                 <FormField
                   control={form.control}
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status <span className="text-red-500">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormLabel>
+                        Status <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
@@ -618,7 +715,7 @@ const CfpSubmissionsPage: FC = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 {/* Notes */}
                 <FormField
                   control={form.control}
@@ -627,9 +724,9 @@ const CfpSubmissionsPage: FC = () => {
                     <FormItem className="sm:col-span-2">
                       <FormLabel>Notes</FormLabel>
                       <FormControl>
-                        <Textarea 
+                        <Textarea
                           placeholder="Any additional notes about this submission"
-                          {...field} 
+                          {...field}
                         />
                       </FormControl>
                       <FormDescription>
@@ -640,9 +737,13 @@ const CfpSubmissionsPage: FC = () => {
                   )}
                 />
               </div>
-              
+
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddModalOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isAddingSubmission}>
@@ -653,18 +754,26 @@ const CfpSubmissionsPage: FC = () => {
           </Form>
         </DialogContent>
       </Dialog>
-      
+
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this submission?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Are you sure you want to delete this submission?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the CFP submission "{selectedSubmission?.title}". This action cannot be undone.
+              This will permanently delete the CFP submission "
+              {selectedSubmission?.title}". This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletingSubmission}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeletingSubmission}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();

@@ -1,14 +1,16 @@
-import { 
+import {
   users, events, cfpSubmissions, attendees, sponsorships, assets, stakeholders,
-  approvalWorkflows, workflowReviewers, workflowStakeholders, workflowComments, workflowHistory,
-  type User, type Event, type CfpSubmission, type Attendee, type Sponsorship, type Asset, 
+  approvalWorkflows, workflowReviewers, workflowStakeholders, workflowComments, workflowHistory
+} from "../shared/database-schema.js";
+import {
+  type User, type Event, type CFPSubmission, type Attendee, type Sponsorship, type Asset,
   type Stakeholder, type ApprovalWorkflow, type WorkflowReviewer, type WorkflowStakeholder,
   type WorkflowComment, type WorkflowHistory,
-  type InsertUser, type InsertEvent, type InsertCfpSubmission, type InsertAttendee,
+  type InsertUser, type InsertEvent, type InsertCFPSubmission, type InsertAttendee,
   type InsertSponsorship, type InsertAsset, type InsertStakeholder, type InsertApprovalWorkflow,
   type InsertWorkflowReviewer, type InsertWorkflowStakeholder, type InsertWorkflowComment,
   type InsertWorkflowHistory
-} from "../shared/schema.js";
+} from "../shared/database-types.js";
 import { db } from "./db";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
 
@@ -29,11 +31,11 @@ export interface IStorage {
   deleteEvent(id: number): Promise<boolean>;
 
   // CFP submission operations
-  getCfpSubmissions(): Promise<CfpSubmission[]>;
-  getCfpSubmissionsByEvent(eventId: number): Promise<CfpSubmission[]>;
-  getCfpSubmission(id: number): Promise<CfpSubmission | undefined>;
-  createCfpSubmission(insertCfpSubmission: InsertCfpSubmission): Promise<CfpSubmission>;
-  updateCfpSubmission(id: number, updates: Partial<InsertCfpSubmission>): Promise<CfpSubmission | undefined>;
+  getCfpSubmissions(): Promise<CFPSubmission[]>;
+  getCfpSubmissionsByEvent(eventId: number): Promise<CFPSubmission[]>;
+  getCfpSubmission(id: number): Promise<CFPSubmission | undefined>;
+  createCfpSubmission(insertCfpSubmission: InsertCFPSubmission): Promise<CFPSubmission>;
+  updateCfpSubmission(id: number, updates: Partial<InsertCFPSubmission>): Promise<CFPSubmission | undefined>;
   deleteCfpSubmission(id: number): Promise<boolean>;
 
   // Attendee operations
@@ -122,7 +124,9 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByKeycloakId(keycloakId: string): Promise<User | undefined> {
     if (!db) throw new Error("Database not initialized");
+    console.log(`[getUserByKeycloakId] Querying for user with Keycloak ID: ${keycloakId}`);
     const [user] = await db.select().from(users).where(eq(users.keycloak_id, keycloakId));
+    console.log(`[getUserByKeycloakId] Query result:`, user);
     return user;
   }
 
@@ -192,12 +196,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // CFP submission operations
-  async getCfpSubmissions(): Promise<CfpSubmission[]> {
+  async getCfpSubmissions(): Promise<CFPSubmission[]> {
     if (!db) throw new Error("Database not initialized");
     return await db.select().from(cfpSubmissions).orderBy(desc(cfpSubmissions.submission_date));
   }
 
-  async getCfpSubmissionsByEvent(eventId: number): Promise<CfpSubmission[]> {
+  async getCfpSubmissionsByEvent(eventId: number): Promise<CFPSubmission[]> {
     if (!db) throw new Error("Database not initialized");
     return await db
       .select()
@@ -206,19 +210,19 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(cfpSubmissions.submission_date));
   }
 
-  async getCfpSubmission(id: number): Promise<CfpSubmission | undefined> {
+  async getCfpSubmission(id: number): Promise<CFPSubmission | undefined> {
     if (!db) throw new Error("Database not initialized");
     const [cfpSubmission] = await db.select().from(cfpSubmissions).where(eq(cfpSubmissions.id, id));
     return cfpSubmission;
   }
 
-  async createCfpSubmission(insertCfpSubmission: InsertCfpSubmission): Promise<CfpSubmission> {
+  async createCfpSubmission(insertCfpSubmission: InsertCFPSubmission): Promise<CFPSubmission> {
     if (!db) throw new Error("Database not initialized");
     const [cfpSubmission] = await db.insert(cfpSubmissions).values([insertCfpSubmission]).returning();
     return cfpSubmission;
   }
 
-  async updateCfpSubmission(id: number, updates: Partial<InsertCfpSubmission>): Promise<CfpSubmission | undefined> {
+  async updateCfpSubmission(id: number, updates: Partial<InsertCFPSubmission>): Promise<CFPSubmission | undefined> {
     if (!db) throw new Error("Database not initialized");
     const [cfpSubmission] = await db
       .update(cfpSubmissions)
@@ -403,8 +407,8 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not initialized");
     // Use raw SQL to avoid schema issues
     const result = await db.execute(sql`
-      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at 
-      FROM stakeholders 
+      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at
+      FROM stakeholders
       ORDER BY name ASC
     `);
     return result.rows as Stakeholder[];
@@ -413,8 +417,8 @@ export class DatabaseStorage implements IStorage {
   async getStakeholder(id: number): Promise<Stakeholder | undefined> {
     if (!db) throw new Error("Database not initialized");
     const result = await db.execute(sql`
-      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at 
-      FROM stakeholders 
+      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at
+      FROM stakeholders
       WHERE id = ${id}
     `);
     return result.rows[0] as Stakeholder | undefined;
@@ -424,8 +428,8 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not initialized");
     const result = await db.execute(sql`
       INSERT INTO stakeholders (user_id, name, email, role, department, organization, notes)
-      VALUES (${insertStakeholder.user_id}, ${insertStakeholder.name}, ${insertStakeholder.email}, 
-              ${insertStakeholder.role}, ${insertStakeholder.department}, ${insertStakeholder.organization}, 
+      VALUES (${insertStakeholder.user_id}, ${insertStakeholder.name}, ${insertStakeholder.email},
+              ${insertStakeholder.role}, ${insertStakeholder.department}, ${insertStakeholder.organization},
               ${insertStakeholder.notes})
       RETURNING id, user_id, name, email, role, department, organization, notes, created_at, updated_at
     `);
@@ -434,27 +438,17 @@ export class DatabaseStorage implements IStorage {
 
   async updateStakeholder(id: number, updates: Partial<InsertStakeholder>): Promise<Stakeholder | undefined> {
     if (!db) throw new Error("Database not initialized");
-    const setParts = [];
-    const values = [];
-    
-    if (updates.user_id !== undefined) { setParts.push('user_id = $' + (values.length + 1)); values.push(updates.user_id); }
-    if (updates.name !== undefined) { setParts.push('name = $' + (values.length + 1)); values.push(updates.name); }
-    if (updates.email !== undefined) { setParts.push('email = $' + (values.length + 1)); values.push(updates.email); }
-    if (updates.role !== undefined) { setParts.push('role = $' + (values.length + 1)); values.push(updates.role); }
-    if (updates.department !== undefined) { setParts.push('department = $' + (values.length + 1)); values.push(updates.department); }
-    if (updates.organization !== undefined) { setParts.push('organization = $' + (values.length + 1)); values.push(updates.organization); }
-    if (updates.notes !== undefined) { setParts.push('notes = $' + (values.length + 1)); values.push(updates.notes); }
-    
-    setParts.push('updated_at = NOW()');
-    values.push(id);
-    
-    const result = await db.execute(sql`
-      UPDATE stakeholders 
-      SET ${sql.raw(setParts.join(', '))}
-      WHERE id = $${values.length}
-      RETURNING id, user_id, name, email, role, department, organization, notes, created_at, updated_at
-    `);
-    return result.rows[0] as Stakeholder | undefined;
+
+    // Use Drizzle's type-safe update method instead of raw SQL
+    const updateData: any = { ...updates, updated_at: new Date() };
+
+    const [stakeholder] = await db
+      .update(stakeholders)
+      .set(updateData)
+      .where(eq(stakeholders.id, id))
+      .returning();
+
+    return stakeholder;
   }
 
   async deleteStakeholder(id: number): Promise<boolean> {
@@ -466,8 +460,8 @@ export class DatabaseStorage implements IStorage {
   async getStakeholdersByRole(role: string): Promise<Stakeholder[]> {
     if (!db) throw new Error("Database not initialized");
     const result = await db.execute(sql`
-      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at 
-      FROM stakeholders 
+      SELECT id, user_id, name, email, role, department, organization, notes, created_at, updated_at
+      FROM stakeholders
       WHERE role = ${role}
       ORDER BY name ASC
     `);

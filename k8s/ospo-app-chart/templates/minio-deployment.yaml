@@ -20,32 +20,68 @@ spec:
         {{- include "ospo-app.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: storage
     spec:
+      {{- if .Values.openshift.enabled }}
+      securityContext:
+        {{- toYaml .Values.minio.securityContext | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ospo-app.serviceAccountName" . }}
       containers:
         - name: minio
           image: "{{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}"
           imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
+          {{- if .Values.openshift.enabled }}
+          securityContext:
+            {{- toYaml .Values.minio.securityContext | nindent 12 }}
+          {{- end }}
+          command:
+            - /usr/bin/docker-entrypoint.sh
+          args:
+            - minio
+            - server
+            - /data
+            - --console-address
+            - ":9001"
+          ports:
+            - name: api
+              containerPort: 9000
+              protocol: TCP
+            - name: console
+              containerPort: 9001
+              protocol: TCP
           env:
             - name: MINIO_ROOT_USER
               value: {{ .Values.minio.auth.rootUser }}
             - name: MINIO_ROOT_PASSWORD
               value: {{ .Values.minio.auth.rootPassword }}
-            - name: MINIO_DEFAULT_BUCKETS
-              value: "uploads:download"
-          ports:
-            - name: api
-              containerPort: {{ .Values.minio.service.apiPort }}
-              protocol: TCP
-            - name: console
-              containerPort: {{ .Values.minio.service.consolePort }}
-              protocol: TCP
+            - name: MINIO_BROWSER_REDIRECT_URL
+              value: "http://localhost:9001"
           volumeMounts:
-            - name: minio-data
+            - name: data
               mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: api
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: api
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
           resources:
             {{- toYaml .Values.minio.resources | nindent 12 }}
       volumes:
-        - name: minio-data
+        - name: data
+          {{- if .Values.minio.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: minio-pvc
+          {{- else }}
           emptyDir: {}
+          {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -67,5 +103,23 @@ spec:
   selector:
     {{- include "ospo-app.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: storage
-
+{{- if .Values.minio.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  labels:
+    {{- include "ospo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.minio.persistence.storageClass }}
+  storageClassName: {{ .Values.minio.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.minio.persistence.size }}
+{{- end }}
 {{- end }}

@@ -1,9 +1,49 @@
-import { Express } from 'express';
+import { Express, Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import expressSession from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import { pool } from './db';
+
+// Add Bearer token validation function for public clients
+async function validateBearerToken(token: string, keycloakConfig: any): Promise<any> {
+  try {
+    // Use userinfo endpoint for public clients instead of token introspection
+    // Ensure proper URL construction by removing trailing slash and adding one
+    const baseUrl = keycloakConfig['auth-server-url'].replace(/\/+$/, '');
+    const userinfoUrl = `${baseUrl}/realms/${keycloakConfig.realm}/protocol/openid-connect/userinfo`;
+
+    console.log('[VALIDATE_BEARER_TOKEN] Using userinfo endpoint:', userinfoUrl);
+    console.log('[VALIDATE_BEARER_TOKEN] Token length:', token.length);
+
+    const response = await fetch(userinfoUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('[VALIDATE_BEARER_TOKEN] Response status:', response.status);
+    console.log('[VALIDATE_BEARER_TOKEN] Response headers:', Object.fromEntries(response.headers.entries()));
+
+    if (!response.ok) {
+      const responseText = await response.text();
+      console.error('[VALIDATE_BEARER_TOKEN] Response not ok:', response.status, responseText);
+      throw new Error(`Token validation failed: ${response.status} - ${responseText}`);
+    }
+
+    const result = await response.json() as any;
+    console.log('[VALIDATE_BEARER_TOKEN] Userinfo result:', result);
+
+    // Add active flag to match expected format
+    return result ? { ...result, active: true } : null;
+  } catch (error) {
+    console.error('[VALIDATE_BEARER_TOKEN] Bearer token validation error:', error);
+    return null;
+  }
+}
+
 /**
  * Initialize Keycloak authentication in the Express app
  * @param app Express application instance
@@ -22,7 +62,7 @@ export async function initKeycloak(app: Express) {
   }
   // Create a session store based on database availability
   let sessionStore;
-  
+
   if (pool) {
     // Use PostgreSQL if available (with type assertion)
     const PgStore = connectPgSimple(expressSession);
@@ -57,61 +97,64 @@ export async function initKeycloak(app: Express) {
     // Load Keycloak configuration
     const keycloakConfigPath = path.join(process.cwd(), 'keycloak.json');
     console.log(`Loading Keycloak config from: ${keycloakConfigPath}`);
-    
+
     if (!fs.existsSync(keycloakConfigPath)) {
       throw new Error(`Keycloak config file not found at: ${keycloakConfigPath}`);
     }
-    
+
     const keycloakConfig = JSON.parse(fs.readFileSync(keycloakConfigPath, 'utf8'));
     console.log(`Keycloak config loaded successfully:`, keycloakConfig);
-    
-    // For Docker Compose, we need to handle two different URLs:
-    // 1. Server-to-server communication: http://keycloak:8080/auth/
-    // 2. Browser access: http://localhost:8080/auth/
-    
-    // The keycloak.json file already has localhost URL for browser access
-    // Server will use Docker service name for internal communication
-    if (process.env.NODE_ENV === 'development') {
-      // In development (Replit), keep the original URL
-      console.log(`Using development Keycloak URL: ${keycloakConfig["auth-server-url"]}`);
-    } else {
-      // In Docker, the config file should have localhost for browser, 
-      // but we'll override for server-side token validation
-      console.log(`Using Docker Keycloak configuration for browser: ${keycloakConfig["auth-server-url"]}`);
-    }
-    
+
+    // Override the auth-server-url for server-side communication
+    // The server needs to use the internal Docker network URL
+    const serverKeycloakConfig = { ...keycloakConfig };
+
+    // Determine the internal Keycloak URL based on environment
+    const keycloakServiceName = process.env.KEYCLOAK_SERVICE_NAME || 'keycloak';
+    const keycloakServicePort = process.env.KEYCLOAK_SERVICE_PORT || '8080';
+    const internalKeycloakUrl = `http://${keycloakServiceName}:${keycloakServicePort}/auth/`;
+
+    // Use internal URL for server-to-server communication
+    serverKeycloakConfig["auth-server-url"] = internalKeycloakUrl;
+
+    console.log(`Using external Keycloak URL for browsers: ${keycloakConfig["auth-server-url"]}`);
+    console.log(`Using internal Keycloak URL for server: ${serverKeycloakConfig["auth-server-url"]}`);
+
     // Additional configuration for reliability
-    keycloakConfig["enable-cors"] = true;
-    keycloakConfig["ssl-required"] = "none";
-    keycloakConfig["verify-token-audience"] = false;
-    keycloakConfig["use-resource-role-mappings"] = true;
-    keycloakConfig["confidential-port"] = 0;
-    
+    serverKeycloakConfig["enable-cors"] = true;
+    serverKeycloakConfig["ssl-required"] = "none";
+    serverKeycloakConfig["verify-token-audience"] = false;
+    serverKeycloakConfig["use-resource-role-mappings"] = true;
+    serverKeycloakConfig["confidential-port"] = 0;
+    serverKeycloakConfig["bearer-only"] = true; // Enable Bearer token support
+
     // Initialize Keycloak with PostgreSQL session store
     console.log('Initializing Keycloak instance...');
-    
+
     // Check if Keycloak constructor is available
     if (typeof Keycloak !== 'function') {
       throw new Error('Keycloak constructor not found');
     }
-    
+
     const keycloak = new Keycloak(
-      { store: sessionStore }, 
-      keycloakConfig
+      { store: sessionStore },
+      serverKeycloakConfig
     );
-    
+
     // Verify keycloak instance was created
     if (!keycloak) {
       throw new Error('Failed to create Keycloak instance');
     }
-    
-    console.log('Registering Keycloak middleware...');
-    // Register Keycloak middleware
-    app.use(keycloak.middleware({
-      logout: '/logout',
-      admin: '/'
-    }));
-    
+
+        console.log('Skipping Keycloak middleware registration due to compatibility issues...');
+    // Temporarily disable Keycloak middleware to allow application to start
+    // We'll rely on Bearer token authentication in the API routes instead
+    console.log('Using Bearer token authentication only for API routes');
+
+    // Store both configs - external for token validation, internal for server communication
+    (keycloak as any)._serverKeycloakConfig = serverKeycloakConfig;
+    (keycloak as any)._externalKeycloakConfig = keycloakConfig;
+
     console.log('Keycloak initialization completed successfully');
     return keycloak;
   } catch (error) {
@@ -123,67 +166,93 @@ export async function initKeycloak(app: Express) {
 }
 
 /**
- * Secure API routes with Keycloak authentication
- * @param app Express application instance
+ * Get authentication middleware for protecting routes
  * @param keycloak Keycloak instance
+ * @returns middleware function or passthrough
  */
-export function secureWithKeycloak(app: Express, keycloak: any) {
+export function getAuthMiddleware(keycloak: any) {
   if (!keycloak) {
-    console.warn('Keycloak not initialized, API routes will not be protected');
-    // Add a middleware that warns about missing authentication but lets requests through
-    app.use('/api/*', (req, res, next) => {
-      // Skip OPTIONS requests (for CORS)
-      if (req.method === 'OPTIONS') {
-        return next();
-      }
-      
-      // Log a warning for non-public endpoints
-      if (!req.path.startsWith('/api/health') && !req.path.startsWith('/api/public')) {
-        console.warn(`Auth warning: Unprotected access to ${req.method} ${req.path}`);
-      }
+    return (req: any, res: any, next: any) => {
+      console.warn(`Auth warning: Unprotected access to ${req.method} ${req.path}`);
       next();
-    });
-    return;
+    };
   }
 
-  // Health check endpoints don't need auth
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', auth: keycloak ? 'enabled' : 'disabled' });
-  });
-
-  // API routes that need authentication
-  const protectedRoutes = [
-    '/api/events',
-    '/api/events/:id',
-    '/api/cfp-submissions',
-    '/api/cfp-submissions/:id',
-    '/api/attendees',
-    '/api/attendees/:id',
-    '/api/sponsorships',
-    '/api/sponsorships/:id',
-    '/api/assets',
-    '/api/assets/:id',
-    '/api/users/:id',
-    '/api/users/:id/profile',
-    '/api/users/:id/headshot',
-  ];
-
-  // Secure API routes
-  protectedRoutes.forEach(route => {
+  // Custom middleware that handles Bearer token authentication only
+  return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      app.use(route, keycloak.protect('realm:user'));
-    } catch (err) {
-      console.error(`Failed to protect route ${route}:`, err);
-      // Add a fallback middleware that logs access but lets requests through
-      app.use(route, (req, res, next) => {
-        console.warn(`Auth bypass: ${req.method} ${req.path} would normally require authentication`);
-        next();
-      });
-    }
-  });
+      // Check for Bearer token
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        console.log('Attempting Bearer token validation...');
 
-  // Admin-only routes
-  // app.use('/api/admin/*', keycloak.protect('realm:admin'));
+        const tokenInfo = await validateBearerToken(token, (keycloak as any)._externalKeycloakConfig);
+        if (tokenInfo) {
+          console.log('Bearer token validated successfully');
+
+          // Create user info object from token
+          const userInfo = {
+            id: tokenInfo.sub,
+            username: tokenInfo.preferred_username,
+            email: tokenInfo.email,
+            name: tokenInfo.name || tokenInfo.preferred_username,
+            roles: tokenInfo.realm_access?.roles || []
+          };
+
+          // Add user info to request
+          (req as any).user = userInfo;
+
+          // Import storage here to avoid circular dependency
+          const { storage } = await import('./storage');
+
+          // Handle user creation/mapping for Bearer token authenticated users
+          try {
+            const keycloakId = userInfo.id;
+            const username = userInfo.username;
+
+            // Check if the user exists in our database
+            const dbUser = await storage.getUserByKeycloakId(keycloakId);
+
+            if (!dbUser) {
+              console.log(`Creating new user record for Keycloak user: ${username} (${keycloakId})`);
+
+              // Create a new user record in our database
+              const newUser = await storage.createUser({
+                keycloak_id: keycloakId,
+                username,
+                name: userInfo.name || null,
+                email: userInfo.email || null
+              });
+
+              if (newUser) {
+                console.log(`Successfully created user record with ID: ${newUser.id}`);
+                (req as any).user.dbId = newUser.id;
+              }
+            } else {
+              console.log(`Found existing user record for Keycloak user: ${username}`);
+              (req as any).user.dbId = dbUser.id;
+            }
+          } catch (error) {
+            console.error("Error handling Bearer token user creation:", error);
+            // Continue without database user ID - the API can still function
+          }
+
+          return next();
+        } else {
+          console.log('Bearer token validation failed');
+          return res.status(401).json({ error: 'Invalid Bearer token' });
+        }
+      }
+
+      // No Bearer token found - reject the request
+      console.log('No Bearer token found, authentication required');
+      return res.status(401).json({ error: 'Authentication required - Bearer token missing' });
+    } catch (error) {
+      console.error('Authentication middleware error:', error);
+      res.status(500).json({ error: 'Authentication error' });
+    }
+  };
 }
 
 /**
@@ -196,7 +265,7 @@ export function keycloakUserMapper(req: any, res: any, next: any) {
   try {
     if (req.kauth && req.kauth.grant) {
       const tokenContent = req.kauth.grant.access_token.content;
-      
+
       // Extract user info from Keycloak token
       req.user = {
         id: tokenContent.sub,
@@ -209,6 +278,6 @@ export function keycloakUserMapper(req: any, res: any, next: any) {
   } catch (error) {
     console.error('Error in keycloakUserMapper:', error);
   }
-  
+
   next();
 }

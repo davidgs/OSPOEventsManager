@@ -60,13 +60,12 @@ data:
           "webOrigins": [
             "*"
           ],
-          "publicClient": false,
+          "publicClient": true,
           "protocol": "openid-connect",
           "directAccessGrantsEnabled": true,
           "serviceAccountsEnabled": false,
           "implicitFlowEnabled": false,
-          "standardFlowEnabled": true,
-          "secret": "client-secret-123"
+          "standardFlowEnabled": true
         }
       ],
       "roles": {

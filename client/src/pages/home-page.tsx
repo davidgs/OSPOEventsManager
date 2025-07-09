@@ -1,17 +1,29 @@
-import { useAuth } from '@/contexts/auth-context';
-import { Header } from '@/components/layout/Header';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link } from 'wouter';
-import { Calendar, Users, FileText, Award } from 'lucide-react';
+import { useAuth } from "@/contexts/auth-context";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Link } from "wouter";
+import { Calendar, Users, FileText, Award } from "lucide-react";
 
 export default function HomePage() {
-  const { authenticated, user } = useAuth();
+  const { authenticated, user, initialized } = useAuth();
+
+  // Debug logging to understand authentication state mismatch
+  console.log("HomePage auth state:", {
+    authenticated,
+    initialized,
+    user: user ? { id: user.id, username: user.username } : null,
+    timestamp: new Date().toISOString(),
+  });
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
-      
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-background to-muted">
           <div className="container px-4 md:px-6">
@@ -21,7 +33,8 @@ export default function HomePage() {
                   OSPO Event Management System
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Track and manage your open source program office events, submissions, and collaborations.
+                  Track and manage your open source program office events,
+                  submissions, and collaborations.
                 </p>
               </div>
               {!authenticated ? (
@@ -55,13 +68,18 @@ export default function HomePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Manage all your events in one place with powerful filtering and calendar views.</p>
+                  <p>
+                    Manage all your events in one place with powerful filtering
+                    and calendar views.
+                  </p>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">Learn More</Button>
+                  <Button variant="outline" className="w-full">
+                    Learn More
+                  </Button>
                 </CardFooter>
               </Card>
-              
+
               <Card>
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl flex items-center gap-2">
@@ -73,31 +91,39 @@ export default function HomePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Keep track of all your CFP submissions, their statuses, and deadlines in one central location.</p>
+                  <p>
+                    Keep track of all your CFP submissions, their statuses, and
+                    deadlines in one central location.
+                  </p>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">Learn More</Button>
+                  <Button variant="outline" className="w-full">
+                    Learn More
+                  </Button>
                 </CardFooter>
               </Card>
-              
+
               <Card>
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl flex items-center gap-2">
                     <Users className="h-5 w-5" />
                     Attendee Management
                   </CardTitle>
-                  <CardDescription>
-                    Manage event participants
-                  </CardDescription>
+                  <CardDescription>Manage event participants</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Track attendees, speakers, and their roles in various events to facilitate better collaboration.</p>
+                  <p>
+                    Track attendees, speakers, and their roles in various events
+                    to facilitate better collaboration.
+                  </p>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">Learn More</Button>
+                  <Button variant="outline" className="w-full">
+                    Learn More
+                  </Button>
                 </CardFooter>
               </Card>
-              
+
               <Card>
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl flex items-center gap-2">
@@ -109,17 +135,22 @@ export default function HomePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Manage event sponsorships, track budget allocations, and monitor sponsorship benefits.</p>
+                  <p>
+                    Manage event sponsorships, track budget allocations, and
+                    monitor sponsorship benefits.
+                  </p>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">Learn More</Button>
+                  <Button variant="outline" className="w-full">
+                    Learn More
+                  </Button>
                 </CardFooter>
               </Card>
             </div>
           </div>
         </section>
       </main>
-      
+
       <footer className="border-t py-6 md:py-0">
         <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
           <p className="text-center text-sm text-muted-foreground md:text-left">

@@ -3,13 +3,34 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SkeletonCard } from "@/components/ui/skeleton-card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, UserCog, MailIcon, Building, Users2 } from "lucide-react";
 import { stakeholderRoles } from "@/lib/constants";
@@ -26,31 +47,36 @@ export default function StakeholdersPage() {
     role: "",
     organization: "",
     department: "",
-    notes: ""
+    notes: "",
   });
 
   // Fetch all stakeholders
-  const { data: stakeholders, isLoading, error } = useQuery({
-    queryKey: ['/api/stakeholders'],
-    enabled: activeTab === "all"
+  const {
+    data: stakeholders,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["/api/stakeholders"],
+    enabled: activeTab === "all",
   });
 
   // Fetch stakeholders by role
   const { data: filteredStakeholders } = useQuery({
-    queryKey: ['/api/stakeholders/role', activeTab],
-    enabled: activeTab !== "all"
+    queryKey: [`/api/stakeholders/role/${activeTab}`],
+    enabled: activeTab !== "all",
   });
 
   // Create a new stakeholder
   const createStakeholderMutation = useMutation({
-    mutationFn: (stakeholder: any) => apiRequest('/api/stakeholders', {
-      method: 'POST',
-      data: stakeholder
-    }),
+    mutationFn: (stakeholder: any) =>
+      apiRequest("/api/stakeholders", {
+        method: "POST",
+        data: stakeholder,
+      }),
     onSuccess: () => {
       toast({
         title: "Stakeholder added",
-        description: "The stakeholder has been successfully added."
+        description: "The stakeholder has been successfully added.",
       });
       setIsAddDialogOpen(false);
       setNewStakeholder({
@@ -59,46 +85,55 @@ export default function StakeholdersPage() {
         role: "",
         organization: "",
         department: "",
-        notes: ""
+        notes: "",
       });
       // Invalidate the stakeholder queries
-      queryClient.invalidateQueries({ queryKey: ['/api/stakeholders'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stakeholders"] });
       if (activeTab !== "all") {
-        queryClient.invalidateQueries({ queryKey: ['/api/stakeholders/role', activeTab] });
+        queryClient.invalidateQueries({
+          queryKey: [`/api/stakeholders/role/${activeTab}`],
+        });
       }
     },
     onError: (error) => {
       toast({
         title: "Error",
         description: `Failed to add stakeholder: ${error.message}`,
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const handleAddStakeholder = () => {
     // Validate required fields
-    if (!newStakeholder.name || !newStakeholder.email || !newStakeholder.role || !newStakeholder.organization) {
+    if (
+      !newStakeholder.name ||
+      !newStakeholder.email ||
+      !newStakeholder.role ||
+      !newStakeholder.organization
+    ) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-    
+
     createStakeholderMutation.mutate(newStakeholder);
   };
 
   // Handle input changes for new stakeholder
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setNewStakeholder(prev => ({ ...prev, [name]: value }));
+    setNewStakeholder((prev) => ({ ...prev, [name]: value }));
   };
 
   // Handle select changes for new stakeholder
   const handleSelectChange = (name: string, value: string) => {
-    setNewStakeholder(prev => ({ ...prev, [name]: value }));
+    setNewStakeholder((prev) => ({ ...prev, [name]: value }));
   };
 
   // Determine which data to display based on the active tab
@@ -106,15 +141,17 @@ export default function StakeholdersPage() {
 
   const renderStakeholderCards = () => {
     if (isLoading) {
-      return Array(6).fill(0).map((_, i) => (
-        <SkeletonCard key={i} />
-      ));
+      return Array(6)
+        .fill(0)
+        .map((_, i) => <SkeletonCard key={i} />);
     }
 
     if (error) {
       return (
         <div className="col-span-full text-center p-8">
-          <p className="text-red-500">Error loading stakeholders: {(error as Error).message}</p>
+          <p className="text-red-500">
+            Error loading stakeholders: {(error as Error).message}
+          </p>
         </div>
       );
     }
@@ -167,7 +204,8 @@ export default function StakeholdersPage() {
         <div>
           <h1 className="text-3xl font-bold">Stakeholders</h1>
           <p className="text-muted-foreground mt-1">
-            Manage organization stakeholders involved in event approval processes.
+            Manage organization stakeholders involved in event approval
+            processes.
           </p>
         </div>
         <div>
@@ -182,27 +220,32 @@ export default function StakeholdersPage() {
               <DialogHeader>
                 <DialogTitle>Add New Stakeholder</DialogTitle>
                 <DialogDescription>
-                  Add a new stakeholder who will be involved in approval workflows.
+                  Add a new stakeholder who will be involved in approval
+                  workflows.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
-                    <Input 
-                      id="name" 
-                      name="name" 
+                    <Label htmlFor="name">
+                      Name <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
                       placeholder="Full name"
                       value={newStakeholder.name}
                       onChange={handleInputChange}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                    <Input 
-                      id="email" 
-                      name="email" 
-                      type="email" 
+                    <Label htmlFor="email">
+                      Email <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
                       placeholder="Email address"
                       value={newStakeholder.email}
                       onChange={handleInputChange}
@@ -212,26 +255,34 @@ export default function StakeholdersPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="role">Role <span className="text-red-500">*</span></Label>
-                    <Select 
-                      onValueChange={(value) => handleSelectChange("role", value)} 
+                    <Label htmlFor="role">
+                      Role <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      onValueChange={(value) =>
+                        handleSelectChange("role", value)
+                      }
                       value={newStakeholder.role}
                     >
                       <SelectTrigger id="role">
                         <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
                       <SelectContent>
-                        {stakeholderRoles.map(role => (
-                          <SelectItem key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</SelectItem>
+                        {stakeholderRoles.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {role.charAt(0).toUpperCase() + role.slice(1)}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="organization">Organization <span className="text-red-500">*</span></Label>
-                    <Input 
-                      id="organization" 
-                      name="organization" 
+                    <Label htmlFor="organization">
+                      Organization <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="organization"
+                      name="organization"
                       placeholder="Company or organization"
                       value={newStakeholder.organization}
                       onChange={handleInputChange}
@@ -241,9 +292,9 @@ export default function StakeholdersPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="department">Department</Label>
-                  <Input 
-                    id="department" 
-                    name="department" 
+                  <Input
+                    id="department"
+                    name="department"
                     placeholder="Department or team (optional)"
                     value={newStakeholder.department || ""}
                     onChange={handleInputChange}
@@ -252,9 +303,9 @@ export default function StakeholdersPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="notes">Notes</Label>
-                  <Input 
-                    id="notes" 
-                    name="notes" 
+                  <Input
+                    id="notes"
+                    name="notes"
                     placeholder="Additional information (optional)"
                     value={newStakeholder.notes || ""}
                     onChange={handleInputChange}
@@ -262,18 +313,20 @@ export default function StakeholdersPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setIsAddDialogOpen(false)}
                   disabled={createStakeholderMutation.isPending}
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   onClick={handleAddStakeholder}
                   disabled={createStakeholderMutation.isPending}
                 >
-                  {createStakeholderMutation.isPending ? "Adding..." : "Add Stakeholder"}
+                  {createStakeholderMutation.isPending
+                    ? "Adding..."
+                    : "Add Stakeholder"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -287,7 +340,7 @@ export default function StakeholdersPage() {
             <UserCog className="h-4 w-4" />
             <span>All Stakeholders</span>
           </TabsTrigger>
-          {stakeholderRoles.map(role => (
+          {stakeholderRoles.map((role) => (
             <TabsTrigger key={role} value={role} className="capitalize">
               {role}
             </TabsTrigger>
