@@ -87,7 +87,13 @@ export default function ProfilePage() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
-      const res = await apiRequest("PUT", `/api/users/${user?.id}/profile`, data);
+      // Transform camelCase to snake_case for backend
+      const transformedData = {
+        ...data,
+        job_title: data.jobTitle,
+        jobTitle: undefined, // Remove the camelCase version
+      };
+      const res = await apiRequest("PUT", `/api/users/${user?.id}/profile`, transformedData);
       return res.json();
     },
     onSuccess: () => {
@@ -170,7 +176,7 @@ export default function ProfilePage() {
 
   // Combine Keycloak data with server data for display
   const profileData = serverUserData || {};
-  
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="mb-6">
@@ -188,16 +194,16 @@ export default function ProfilePage() {
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage 
-                    src={profileData.headshot || ""} 
-                    alt={user.name || user.firstName || user.username || 'User'} 
+                  <AvatarImage
+                    src={profileData.headshot || ""}
+                    alt={user.name || user.firstName || user.username || 'User'}
                   />
                   <AvatarFallback className="text-lg">
                     {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <label 
-                  htmlFor="headshot-upload" 
+                <label
+                  htmlFor="headshot-upload"
                   className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
                 >
                   <Camera className="h-4 w-4" />
@@ -327,14 +333,14 @@ export default function ProfilePage() {
                   />
 
                   <div className="flex space-x-2 pt-4">
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={updateMutation.isPending}
                     >
                       {updateMutation.isPending ? "Saving..." : "Save Changes"}
                     </Button>
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       variant="outline"
                       onClick={() => setIsEditing(false)}
                     >
@@ -355,7 +361,7 @@ export default function ProfilePage() {
                     <p className="text-sm">{profileData.jobTitle || "Not set"}</p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">EMAIL</label>
@@ -366,7 +372,7 @@ export default function ProfilePage() {
                     <p className="text-sm">{profileData.role || "Not set"}</p>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">BIO</label>
                   <p className="text-sm whitespace-pre-wrap">{profileData.bio || "No bio provided"}</p>

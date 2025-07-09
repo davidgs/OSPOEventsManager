@@ -115,13 +115,18 @@ export const stakeholders = pgTable("stakeholders", {
 // Approval workflows table
 export const approvalWorkflows = pgTable("approval_workflows", {
   id: serial("id").primaryKey(),
-  event_id: integer("event_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
   item_type: text("item_type").notNull(),
   item_id: integer("item_id").notNull(),
+  priority: text("priority"),
   status: text("status").notNull().default("pending"),
-  created_by: integer("created_by").notNull(),
+  due_date: date("due_date"),
+  estimated_costs: text("estimated_costs"),
+  requester_id: integer("requester_id").references(() => users.id),
   created_at: timestamp("created_at").notNull().defaultNow(),
   updated_at: timestamp("updated_at").notNull().defaultNow(),
+  metadata: jsonb("metadata").default("{}"),
 });
 
 // Workflow reviewers table
