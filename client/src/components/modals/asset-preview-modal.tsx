@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { PrfViewer } from "@/components/ui/prf-viewer";
+import { PRFViewer } from "@/components/ui/prf-viewer";
 import { PdfViewer } from "@/components/ui/pdf-viewer";
 import {
   Download,
@@ -69,7 +69,7 @@ export function AssetPreviewModal({
   }, [asset]);
 
   const downloadAsset = () => {
-    window.open(asset.file_path, '_blank');
+    window.open(asset.file_path, "_blank");
   };
 
   // Update asset mutation
@@ -115,7 +115,10 @@ export function AssetPreviewModal({
   if (!asset) return null;
 
   const isPrfFile = (mimeType: string, fileName: string) => {
-    return mimeType === 'application/octet-stream' && fileName.toLowerCase().endsWith('.prf');
+    return (
+      mimeType === "application/octet-stream" &&
+      fileName.toLowerCase().endsWith(".prf")
+    );
   };
 
   const getFileIcon = (mimeType: string) => {
@@ -129,9 +132,15 @@ export function AssetPreviewModal({
     } else if (type === "application") {
       if (subType?.includes("pdf")) {
         return <FileText className="h-6 w-6" />;
-      } else if (subType?.includes("powerpoint") || subType?.includes("presentation")) {
+      } else if (
+        subType?.includes("powerpoint") ||
+        subType?.includes("presentation")
+      ) {
         return <FileText className="h-6 w-6" />;
-      } else if (subType?.includes("excel") || subType?.includes("spreadsheet")) {
+      } else if (
+        subType?.includes("excel") ||
+        subType?.includes("spreadsheet")
+      ) {
         return <FileSpreadsheet className="h-6 w-6" />;
       } else if (subType?.includes("zip") || subType?.includes("archive")) {
         return <FileArchive className="h-6 w-6" />;
@@ -159,7 +168,9 @@ export function AssetPreviewModal({
               <div>
                 <DialogTitle className="text-lg">{asset.name}</DialogTitle>
                 <DialogDescription className="text-sm">
-                  {formatBytes(asset.file_size)} • {asset.mime_type.split('/')[1].toUpperCase()} • Uploaded {formatDate(asset.uploaded_at)}
+                  {formatBytes(asset.file_size)} •{" "}
+                  {asset.mime_type.split("/")[1].toUpperCase()} • Uploaded{" "}
+                  {formatDate(asset.uploaded_at)}
                 </DialogDescription>
               </div>
             </div>
@@ -202,7 +213,7 @@ export function AssetPreviewModal({
               <div>
                 <Label>Type</Label>
                 <Badge variant="secondary" className="mt-1">
-                  {asset.type.replace('_', ' ').toUpperCase()}
+                  {asset.type.replace("_", " ").toUpperCase()}
                 </Badge>
               </div>
             </div>
@@ -244,7 +255,7 @@ export function AssetPreviewModal({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Preview</h3>
-              {asset.mime_type.startsWith('image/') && (
+              {asset.mime_type.startsWith("image/") && (
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"
@@ -274,22 +285,24 @@ export function AssetPreviewModal({
 
             <Card>
               <CardContent className="p-4">
-                {asset.mime_type.startsWith('image/') ? (
+                {asset.mime_type.startsWith("image/") ? (
                   <div className="relative">
                     <img
                       ref={imageRef}
                       className="w-full h-auto max-h-[500px] object-contain"
                       style={{
-                        transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-                        transformOrigin: 'center'
+                        transform: `scale(${
+                          zoom / 100
+                        }) rotate(${rotation}deg)`,
+                        transformOrigin: "center",
                       }}
                       src={asset.file_path}
                       alt={asset.name}
                     />
                   </div>
                 ) : isPrfFile(asset.mime_type, asset.name) ? (
-                  <PrfViewer filePath={asset.file_path} />
-                ) : asset.mime_type === 'application/pdf' ? (
+                  <PRFViewer filePath={asset.file_path} />
+                ) : asset.mime_type === "application/pdf" ? (
                   <PdfViewer filePath={asset.file_path} />
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
