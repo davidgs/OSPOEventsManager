@@ -60,27 +60,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SimpleFileUploader } from "@/components/forms/simple-file-uploader";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { AssetPreviewModal } from "@/components/modals/asset-preview-modal";
-
-// Asset type definition
-export type Asset = {
-  id: number;
-  name: string;
-  type:
-    | "abstract"
-    | "bio"
-    | "headshot"
-    | "trip_report"
-    | "presentation"
-    | "other";
-  filePath: string;
-  fileSize: number;
-  mimeType: string;
-  uploadedBy: number;
-  uploadedAt: string;
-  eventId: number | null;
-  cfpSubmissionId: number | null;
-  description: string | null;
-};
+import { type Asset } from "@shared/schema";
 
 export default function AssetsPage() {
   const { toast } = useToast();
@@ -149,7 +129,7 @@ export default function AssetsPage() {
 
   // Helper function to download an asset
   const downloadAsset = (asset: Asset) => {
-    window.open(asset.filePath, "_blank");
+    window.open(asset.file_path, "_blank");
   };
 
   // Open asset preview modal
@@ -266,9 +246,9 @@ export default function AssetsPage() {
                     </CardTitle>
                   </div>
                   <CardDescription className="text-xs mt-1">
-                    {formatBytes(asset.fileSize)} •{" "}
-                    {asset.mimeType
-                      ? asset.mimeType.split("/")[1]?.toUpperCase() || "FILE"
+                    {formatBytes(asset.file_size)} •{" "}
+                    {asset.mime_type
+                      ? asset.mime_type.split("/")[1]?.toUpperCase() || "FILE"
                       : "FILE"}
                   </CardDescription>
                 </div>
@@ -322,13 +302,13 @@ export default function AssetsPage() {
             <div className="px-4 pb-2">
               <div className="bg-muted/20 border border-border rounded-md p-1">
                 <div className="max-h-[75px] h-[75px]">
-                  {asset.mimeType && asset.mimeType.startsWith("image/") ? (
+                  {asset.mime_type && asset.mime_type.startsWith("image/") ? (
                     <AspectRatio
                       ratio={4 / 3}
                       className="bg-muted rounded-md overflow-hidden h-[75px]"
                     >
                       <img
-                        src={asset.filePath}
+                        src={asset.file_path}
                         alt={asset.name}
                         className="object-contain w-full h-full"
                       />
@@ -339,10 +319,10 @@ export default function AssetsPage() {
                       className="bg-muted/30 rounded-md flex items-center justify-center h-[75px]"
                     >
                       <div className="text-center">
-                        {getFileIcon(asset.mimeType)}
+                        {getFileIcon(asset.mime_type)}
                         <p className="text-[10px] text-muted-foreground mt-1">
-                          {asset.mimeType
-                            ? asset.mimeType.split("/")[1]?.toUpperCase() ||
+                          {asset.mime_type
+                            ? asset.mime_type.split("/")[1]?.toUpperCase() ||
                               "FILE"
                             : "FILE"}
                         </p>
@@ -369,7 +349,7 @@ export default function AssetsPage() {
               <div className="flex items-center mt-3 text-xs">
                 <User className="h-4 w-4 mr-1.5 text-muted-foreground" />
                 <span className="text-muted-foreground">
-                  Owner: {getAssetOwnerName(asset.uploadedBy)}
+                  Owner: {getAssetOwnerName(asset.uploaded_by)}
                 </span>
               </div>
             </CardContent>
@@ -380,7 +360,7 @@ export default function AssetsPage() {
                   {asset.type.replace("_", " ")}
                 </span>
               </div>
-              <div>Uploaded {formatDate(asset.uploadedAt)}</div>
+              <div>Uploaded {formatDate(asset.uploaded_at)}</div>
             </CardFooter>
           </Card>
         ))}

@@ -33,13 +33,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-// Extend the Event type to handle both goal and goals fields for backward compatibility
-interface Event extends SchemaEvent {
-  goals?: string | string[];
-}
-
 interface EventCardProps {
-  event: Event;
+  event: SchemaEvent;
   cfpCount: number;
   attendeeCount: number;
   speakers: Array<{
@@ -49,8 +44,8 @@ interface EventCardProps {
   }>;
   attendees: Array<{ id: number; name: string }>;
   tripReports?: Array<{ id: number; name: string; uploadedByName: string }>;
-  onEdit: (event: Event) => void;
-  onDelete: (event: Event) => void;
+  onEdit: (event: SchemaEvent) => void;
+  onDelete: (event: SchemaEvent) => void;
 }
 
 const EventCard: FC<EventCardProps> = ({
