@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { PRFViewer } from "@/components/ui/prf-viewer";
-import { PdfViewer } from "@/components/ui/pdf-viewer";
+import { PDFViewer } from "@/components/ui/pdf-viewer";
 import {
   Download,
   ZoomIn,
@@ -301,9 +301,17 @@ export function AssetPreviewModal({
                     />
                   </div>
                 ) : isPrfFile(asset.mime_type, asset.name) ? (
-                  <PRFViewer filePath={asset.file_path} />
+                  <PRFViewer
+                    filePath={asset.file_path}
+                    scale={zoom / 100}
+                    rotation={rotation}
+                  />
                 ) : asset.mime_type === "application/pdf" ? (
-                  <PdfViewer filePath={asset.file_path} />
+                  <PDFViewer
+                    filePath={asset.file_path}
+                    scale={zoom / 100}
+                    rotation={rotation}
+                  />
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     {getFileIcon(asset.mime_type)}
