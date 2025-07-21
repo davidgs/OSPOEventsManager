@@ -1,8 +1,8 @@
 {
-  "realm": "{{KEYCLOAK_REALM}}",
-  "auth-server-url": "{{KEYCLOAK_URL}}/auth",
+  "realm": "ospo-events",
+  "auth-server-url": "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com/auth",
   "ssl-required": "external",
-  "resource": "{{KEYCLOAK_CLIENT_ID}}",
+  "resource": "ospo-events-app",
   "public-client": true,
   "confidential-port": 0,
   "verify-token-audience": false,

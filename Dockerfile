@@ -4,7 +4,7 @@ FROM node:20-alpine AS client-builder
 WORKDIR /app
 
 # Accept build arguments
-ARG VITE_KEYCLOAK_URL=https://ospo-events-ospo-app-keycloak-prod-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com/auth
+ARG VITE_KEYCLOAK_URL=https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com/auth
 ENV VITE_KEYCLOAK_URL=$VITE_KEYCLOAK_URL
 
 # Copy package files and install dependencies
