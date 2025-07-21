@@ -112,7 +112,7 @@ export async function initKeycloak(app: Express) {
     // Determine the internal Keycloak URL based on environment
     const keycloakServiceName = process.env.KEYCLOAK_SERVICE_NAME || 'keycloak';
     const keycloakServicePort = process.env.KEYCLOAK_SERVICE_PORT || '8080';
-    const internalKeycloakUrl = `http://${keycloakServiceName}:${keycloakServicePort}/auth/`;
+    const internalKeycloakUrl = `http://${keycloakServiceName}:${keycloakServicePort}/`;
 
     // Use internal URL for server-to-server communication
     serverKeycloakConfig["auth-server-url"] = internalKeycloakUrl;

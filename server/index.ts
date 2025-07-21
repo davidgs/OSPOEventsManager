@@ -28,14 +28,14 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://ospo-events-ospo-app-keycloak-prod-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com"],
-      fontSrc: ["'self'"],
+      connectSrc: ["'self'", "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
-      frameSrc: ["'self'", "https://ospo-events-ospo-app-keycloak-prod-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com"],
+      frameSrc: ["'self'", "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com"],
     },
   },
   crossOriginEmbedderPolicy: false,
@@ -78,7 +78,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Create uploads directory if it doesn't exist
-const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+// Use environment variable or default to public/uploads for backward compatibility
+const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
   console.log(`Created uploads directory: ${uploadsDir}`);
@@ -103,13 +104,17 @@ console.log(`Setting up Keycloak proxy to internal URL: ${keycloakInternalUrl}`)
 
 // Basic proxy configuration
 // We need to match the KC_HTTP_RELATIVE_PATH setting in the Keycloak container
-// If Keycloak is at '/', we need to rewrite '/auth' to '/'
-// If Keycloak is at '/auth', we need to keep the path as is
+// Since Keycloak is configured with KC_HTTP_RELATIVE_PATH = "/auth", it expects
+// requests to come with the /auth prefix. However, our proxy is forwarding
+// /auth requests to http://keycloak:8080/auth, which would create /auth/auth
+// So we need to strip the /auth prefix before forwarding to Keycloak
 const proxyOptions = {
   target: keycloakInternalUrl,
   changeOrigin: true,
   // Don't rewrite the path since we're using KC_HTTP_RELATIVE_PATH = "/auth" in Keycloak
-  pathRewrite: {},
+  pathRewrite: {
+    '^/auth': ''
+  },
   // Preserve the original host header to maintain port information
   headers: {
     'X-Forwarded-Host': 'localhost:7654',
@@ -174,15 +179,19 @@ app.use('/auth', (req, res, next) => {
       }
       return;
     }
+
+    // If we get here, the proxy was successful
     next();
   });
 });
 
+console.log('Keycloak proxy middleware enabled to match production configuration');
+
 // Import storage for user creation
 import { storage } from './storage';
 
-// Serve static files from the public directory
-app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(uploadsDir));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -274,8 +283,8 @@ app.get("/version", async (_req: Request, res: Response) => {
     // Protect API routes (except health check and version) with Bearer token support
     const authMiddleware = getAuthMiddleware(keycloak);
     app.use('/api', (req, res, next) => {
-      // Allow health check and version endpoints without authentication
-      if (req.path === '/health' || req.path === '/version') {
+      // Allow health check, version, and fix endpoints without authentication
+      if (req.path === '/health' || req.path === '/version' || req.path === '/fix-david-asset') {
         return next();
       }
 

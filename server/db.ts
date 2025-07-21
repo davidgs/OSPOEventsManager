@@ -22,6 +22,22 @@ const getDatabaseConfig = (): DatabaseConfig => {
     const deploymentType = isDockerCompose ? "DOCKER COMPOSE" : "KUBERNETES";
     console.log(`${deploymentType} DEPLOYMENT: Connecting to PostgreSQL service`);
 
+    // If DATABASE_URL is provided, use it directly
+    if (process.env.DATABASE_URL) {
+      console.log(`Using DATABASE_URL: ${process.env.DATABASE_URL.replace(/:[^:]*@/, ':***@')}`);
+      // Parse DATABASE_URL to extract components
+      const url = new URL(process.env.DATABASE_URL);
+      return {
+        host: url.hostname,
+        port: parseInt(url.port || "5432", 10),
+        database: url.pathname.slice(1), // Remove leading slash
+        user: url.username,
+        password: url.password,
+        ssl: false
+      };
+    }
+
+    // Fallback to individual environment variables
     return {
       host: process.env.PGHOST || "postgres",
       port: parseInt(process.env.PGPORT || "5432", 10),
@@ -34,6 +50,22 @@ const getDatabaseConfig = (): DatabaseConfig => {
 
   // Local development configuration
   console.log("LOCAL DEVELOPMENT: Connecting to local PostgreSQL");
+
+  // If DATABASE_URL is provided, use it directly
+  if (process.env.DATABASE_URL) {
+    console.log(`Using DATABASE_URL: ${process.env.DATABASE_URL.replace(/:[^:]*@/, ':***@')}`);
+    const url = new URL(process.env.DATABASE_URL);
+    return {
+      host: url.hostname,
+      port: parseInt(url.port || "5432", 10),
+      database: url.pathname.slice(1), // Remove leading slash
+      user: url.username,
+      password: url.password,
+      ssl: false
+    };
+  }
+
+  // Fallback to individual environment variables
   return {
     host: process.env.PGHOST || "localhost",
     port: parseInt(process.env.PGPORT || "5432", 10),
