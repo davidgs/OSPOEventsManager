@@ -239,15 +239,6 @@ spec:
 EOF
 
     wait_for_deployment postgres
-
-    print_status "📦 Initializing Keycloak database..."
-    sleep 5  # Give PostgreSQL a moment to be fully ready
-
-    # Create Keycloak database and user
-    oc exec deployment/postgres -- psql -U ${POSTGRES_USER} -d postgres -c "CREATE USER ${KEYCLOAK_DB_USER} WITH PASSWORD '${KEYCLOAK_DB_PASSWORD}';" 2>/dev/null || true
-    oc exec deployment/postgres -- psql -U ${POSTGRES_USER} -d postgres -c "CREATE DATABASE ${KEYCLOAK_DB_NAME} OWNER ${KEYCLOAK_DB_USER};" 2>/dev/null || true
-
-    print_success "PostgreSQL and Keycloak database initialized"
 }
 
 # Function to create Minio deployment
@@ -450,7 +441,9 @@ spec:
       - name: keycloak
         image: quay.io/keycloak/keycloak:23.0.6
         args:
-        - start-dev
+        - start
+        - --optimized
+        - --http-enabled=true
         - --http-port=8080
         - --hostname-strict=false
         - --hostname-strict-https=false
@@ -490,21 +483,21 @@ spec:
             memory: "${KEYCLOAK_MEMORY_LIMIT}"
         livenessProbe:
           httpGet:
-            path: /auth
+            path: /auth/health/live
             port: 8080
           initialDelaySeconds: 120
           periodSeconds: 30
           timeoutSeconds: 10
         readinessProbe:
           httpGet:
-            path: /auth
+            path: /auth/health/ready
             port: 8080
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 5
         startupProbe:
           httpGet:
-            path: /auth
+            path: /auth/health/ready
             port: 8080
           initialDelaySeconds: 60
           periodSeconds: 10
