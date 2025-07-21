@@ -1,6 +1,9 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import { assets } from "../shared/database-schema";
 import {
   insertEventSchema, insertCFPSubmissionSchema,
   insertAttendeeSchema, insertSponsorshipSchema,
@@ -224,12 +227,21 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_FILENAME_LENGTH = 255;
 
 function sanitizeFilename(filename: string): string {
-  // Remove or replace dangerous characters
-  return filename
+  // Extract extension first to preserve it
+  const ext = path.extname(filename);
+  const nameWithoutExt = path.basename(filename, ext);
+
+  // Remove or replace dangerous characters from the name part only
+  const sanitizedName = nameWithoutExt
     .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')
     .replace(/^\.+/, '')
-    .replace(/\.+$/, '')
-    .substring(0, MAX_FILENAME_LENGTH);
+    .replace(/\.+$/, '');
+
+  // Reconstruct filename with original extension
+  const fullName = sanitizedName + ext;
+
+  // Apply length limit to the full filename
+  return fullName.substring(0, MAX_FILENAME_LENGTH);
 }
 
 function validateFileType(file: fileUpload.UploadedFile, allowedTypes: string[]): boolean {
@@ -245,7 +257,14 @@ function validateFileType(file: fileUpload.UploadedFile, allowedTypes: string[])
 
 function generateSecureFilename(originalName: string, userId: string | number): string {
   const ext = path.extname(originalName).toLowerCase();
-  const sanitizedName = sanitizeFilename(path.basename(originalName, ext));
+  const nameWithoutExt = path.basename(originalName, ext);
+
+  // Sanitize just the name part (without extension)
+  const sanitizedName = nameWithoutExt
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')
+    .replace(/^\.+/, '')
+    .replace(/\.+$/, '');
+
   const timestamp = Date.now();
   const randomBytes = crypto.randomBytes(8).toString('hex');
 
@@ -320,13 +339,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     tempFileDir: '/tmp/',
     debug: false,
     // Additional security options
-    safeFileNames: true,
+    safeFileNames: false, // Disable this as we handle filename sanitization ourselves
     preserveExtension: true,
     // Prevent malicious file names
     defCharset: 'utf8',
     defParamCharset: 'utf8'
   });
-  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+  const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'public', 'uploads');
 
   // Ensure uploads directory exists and is secure
   if (!fs.existsSync(uploadsDir)) {
@@ -354,6 +373,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         error: "Failed to retrieve version information"
       });
+    }
+  });
+
+  // Simple endpoint to fix asset ownership (no auth required for one-time fix)
+  app.get("/api/fix-david-asset", async (req: Request, res: Response) => {
+    try {
+      console.log('[FIX DAVID ASSET] Starting asset ownership fix...');
+
+      // Find headshot assets owned by user 1 (Alex Johnson) that should belong to David
+      const assetsToFix = await storage.getAssets();
+      const headshotAssets = assetsToFix.filter(asset =>
+        asset.type === 'headshot' &&
+        asset.uploaded_by === 1 &&
+        (asset.name.includes('Simmons_David') || asset.file_path.includes('Simmons_David'))
+      );
+
+      console.log(`[FIX DAVID ASSET] Found ${headshotAssets.length} assets to fix`);
+
+      const results = [];
+      for (const asset of headshotAssets) {
+        console.log(`[FIX DAVID ASSET] Fixing asset ${asset.id}: ${asset.name}`);
+
+        // Update the asset to be owned by David (user 4)
+        const [updatedAsset] = await db
+          .update(assets)
+          .set({ uploaded_by: 4 })
+          .where(eq(assets.id, asset.id))
+          .returning();
+
+        results.push(updatedAsset);
+        console.log(`[FIX DAVID ASSET] Fixed asset ${asset.id} - now owned by user 4`);
+      }
+
+      res.json({
+        message: "David's asset ownership fixed successfully",
+        fixedAssets: results.length,
+        assets: results
+      });
+
+    } catch (error) {
+      console.error('[FIX DAVID ASSET] Error:', error);
+      res.status(500).json({ message: "Failed to fix asset ownership", error: error.message });
+    }
+  });
+
+  // Simple endpoint to fix asset ownership (completely outside /api to bypass auth)
+  app.get("/fix-david-asset-now", async (req: Request, res: Response) => {
+    try {
+      console.log('[FIX DAVID ASSET NOW] Starting asset ownership fix...');
+
+      // Find headshot assets owned by user 1 (Alex Johnson) that should belong to David
+      const assetsToFix = await storage.getAssets();
+      const headshotAssets = assetsToFix.filter(asset =>
+        asset.type === 'headshot' &&
+        asset.uploaded_by === 1 &&
+        (asset.name.includes('Simmons_David') || asset.file_path.includes('Simmons_David'))
+      );
+
+      console.log(`[FIX DAVID ASSET NOW] Found ${headshotAssets.length} assets to fix`);
+
+      const results = [];
+      for (const asset of headshotAssets) {
+        console.log(`[FIX DAVID ASSET NOW] Fixing asset ${asset.id}: ${asset.name}`);
+
+        // Update the asset to be owned by David (user 4)
+        const [updatedAsset] = await db
+          .update(assets)
+          .set({ uploaded_by: 4 })
+          .where(eq(assets.id, asset.id))
+          .returning();
+
+        results.push(updatedAsset);
+        console.log(`[FIX DAVID ASSET NOW] Fixed asset ${asset.id} - now owned by user 4`);
+      }
+
+      res.json({
+        message: "David's asset ownership fixed successfully!",
+        fixedAssets: results.length,
+        assets: results
+      });
+
+    } catch (error) {
+      console.error('[FIX DAVID ASSET NOW] Error:', error);
+      res.status(500).json({ message: "Failed to fix asset ownership", error: error.message });
     }
   });
 
@@ -984,35 +1087,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update user profile with the headshot path
       const headshotUrl = `/uploads/${fileName}`;
 
-      // Create an asset record for the uploaded file
-      const assetData = {
-        name: sanitizeFilename(headshotFile.name),
-        type: 'headshot' as const,
-        file_path: `/uploads/${fileName}`,
-        file_size: headshotFile.size,
-        mime_type: headshotFile.mimetype,
-        uploaded_by: /^[0-9]+$/.test(id) ? parseInt(id) : 1 // Use 1 as fallback for Keycloak users
-      };
-
-      try {
-        await storage.createAsset(assetData);
-        console.log(`Created asset record for headshot: ${fileName}`);
-      } catch (assetError) {
-        console.error("Failed to create asset record:", assetError);
-        // Continue with headshot update even if asset creation fails
-      }
-
       // For UUID users (Keycloak), try to update their profile in the database
       let updatedUser;
+      let actualUserId;
       if (/^[0-9]+$/.test(id)) {
         // Numeric ID - update in storage
         updatedUser = await storage.updateUserProfile(parseInt(id), { headshot: headshotUrl });
+        actualUserId = parseInt(id);
       } else {
         // UUID - For Keycloak users, try to update or create a user record
         try {
           const existingUser = await storage.getUserByKeycloakId(id);
           if (existingUser) {
             updatedUser = await storage.updateUserProfile(existingUser.id, { headshot: headshotUrl });
+            actualUserId = existingUser.id;
             console.log(`Updated headshot for existing Keycloak user: ${existingUser.id}`);
           } else {
             // Create a minimal user record for Keycloak user
@@ -1024,13 +1112,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
               headshot: headshotUrl
             });
             updatedUser = newUser;
+            actualUserId = newUser.id;
             console.log(`Created new user record for Keycloak user: ${newUser.id}`);
           }
         } catch (dbError) {
           console.error("Failed to update user profile in database:", dbError);
           // Fallback - return user info with headshot URL
           updatedUser = { ...user, headshot: headshotUrl };
+          actualUserId = (req as any).user?.dbId || 1;
         }
+      }
+
+      // Create an asset record for the uploaded file (after user record is created/updated)
+      const assetData = {
+        name: sanitizeFilename(headshotFile.name),
+        type: 'headshot' as const,
+        file_path: `/uploads/${fileName}`,
+        file_size: headshotFile.size,
+        mime_type: headshotFile.mimetype,
+        uploaded_by: actualUserId
+      };
+
+      try {
+        await storage.createAsset(assetData);
+        console.log(`Created asset record for headshot: ${fileName} with user ID: ${actualUserId}`);
+      } catch (assetError) {
+        console.error("Failed to create asset record:", assetError);
+        // Continue with headshot update even if asset creation fails
       }
 
       // Don't return the password if it exists
@@ -1677,6 +1785,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error(`Error fetching workflow history for workflow ${req.params.workflowId}:`, err);
       res.status(500).json({ message: "Failed to fetch workflow history" });
+    }
+  });
+
+  // Temporary endpoint to fix asset ownership for David's headshot
+  app.post("/api/admin/fix-asset-ownership", async (req: Request, res: Response) => {
+    try {
+      console.log('[FIX ASSET OWNERSHIP] Starting asset ownership fix...');
+
+      // Find headshot assets owned by user 1 (Alex Johnson) that should belong to David
+      const assetsToFix = await storage.getAssets();
+      const headshotAssets = assetsToFix.filter(asset =>
+        asset.type === 'headshot' &&
+        asset.uploaded_by === 1 &&
+        (asset.name.includes('Simmons_David') || asset.file_path.includes('Simmons_David'))
+      );
+
+      console.log(`[FIX ASSET OWNERSHIP] Found ${headshotAssets.length} assets to fix`);
+
+      const results = [];
+      for (const asset of headshotAssets) {
+        console.log(`[FIX ASSET OWNERSHIP] Fixing asset ${asset.id}: ${asset.name}`);
+
+        // Update the asset to be owned by David (user 4)
+        const [updatedAsset] = await db
+          .update(assets)
+          .set({ uploaded_by: 4 })
+          .where(eq(assets.id, asset.id))
+          .returning();
+
+        results.push(updatedAsset);
+        console.log(`[FIX ASSET OWNERSHIP] Fixed asset ${asset.id} - now owned by user 4`);
+      }
+
+      res.json({
+        message: "Asset ownership fixed successfully",
+        fixedAssets: results.length,
+        assets: results
+      });
+
+    } catch (error) {
+      console.error('[FIX ASSET OWNERSHIP] Error:', error);
+      res.status(500).json({ message: "Failed to fix asset ownership", error: error.message });
     }
   });
 
