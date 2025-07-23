@@ -105,16 +105,19 @@ export function CSVImportModal({
   onOpenChange,
   onImportComplete,
 }: CSVImportModalProps) {
+  const [step, setStep] = useState<
+    "upload" | "mapping" | "preview" | "import" | "results"
+  >("upload");
   const [csvData, setCsvData] = useState<CSVData | null>(null);
   const [columnMappings, setColumnMappings] = useState<ColumnMapping[]>([]);
   const [defaultValues, setDefaultValues] = useState<Record<string, string>>(
     {}
   );
+  const [deduplicationMode, setDeduplicationMode] = useState<
+    "skip" | "update" | "import"
+  >("skip");
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState<any>(null);
-  const [step, setStep] = useState<
-    "upload" | "mapping" | "preview" | "results"
-  >("upload");
   const { toast } = useToast();
 
   const parseCSV = useCallback((content: string): CSVData => {
@@ -276,6 +279,7 @@ export function CSVImportModal({
         csvData: csvData.rows,
         columnMapping: mappingConfig,
         defaultValues: defaultValues,
+        deduplicationMode: deduplicationMode,
       });
 
       if (!response.ok) {
@@ -288,27 +292,34 @@ export function CSVImportModal({
       let title = "Import completed";
       let description = `Successfully imported ${result.imported} events.`;
 
+      if (result.updated > 0) {
+        description += ` ${result.updated} events were updated.`;
+      }
+
       if (result.skipped > 0) {
         description += ` ${result.skipped} events were skipped.`;
       }
 
+      // Add duplicate information
+      if (result.duplicates && result.duplicates.length > 0) {
+        description += ` Found ${result.duplicates.length} duplicates.`;
+      }
+
       // If there are errors, show them in the description
       if (result.errors && result.errors.length > 0) {
-        const errorSummary = result.errors.slice(0, 3).join("\n");
+        const errorSummary = result.errors.slice(0, 2).join("\n");
         const remainingErrors =
-          result.errors.length > 3
-            ? `\n... and ${result.errors.length - 3} more`
+          result.errors.length > 2
+            ? `\n... and ${result.errors.length - 2} more`
             : "";
-        description += `\n\nDetails:\n${errorSummary}${remainingErrors}`;
+        description += `\n\nErrors:\n${errorSummary}${remainingErrors}`;
       }
 
       toast({
         title,
         description,
         variant:
-          result.skipped > 0 || (result.errors && result.errors.length > 0)
-            ? "default"
-            : "default",
+          result.errors && result.errors.length > 0 ? "destructive" : "default",
       });
 
       // Store results and show results step
@@ -331,11 +342,13 @@ export function CSVImportModal({
   };
 
   const resetState = () => {
+    setStep("upload");
     setCsvData(null);
     setColumnMappings([]);
     setDefaultValues({});
+    setDeduplicationMode("skip");
+    setIsImporting(false);
     setImportResults(null);
-    setStep("upload");
   };
 
   const renderUploadStep = () => (
@@ -543,26 +556,93 @@ export function CSVImportModal({
   const renderPreviewStep = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium">Preview Import</h3>
+        <h3 className="text-lg font-semibold">Import Preview</h3>
         <p className="text-sm text-muted-foreground">
-          Review the data that will be imported. Showing first 5 rows.
+          Review the mapped data and configure deduplication options before
+          importing.
         </p>
       </div>
 
-      <div className="rounded-lg border">
-        <ScrollArea className="h-64">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                {mappedColumns.map((mapping) => (
+      {/* Deduplication Options */}
+      <div className="space-y-4">
+        <h4 className="text-md font-medium">Duplicate Handling</h4>
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2">
+            <input
+              type="radio"
+              id="skip"
+              name="deduplication"
+              value="skip"
+              checked={deduplicationMode === "skip"}
+              onChange={(e) =>
+                setDeduplicationMode(
+                  e.target.value as "skip" | "update" | "import"
+                )
+              }
+              className="w-4 h-4"
+            />
+            <label htmlFor="skip" className="text-sm cursor-pointer">
+              <span className="font-medium">Skip duplicates</span> - Don't
+              import events that already exist
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="radio"
+              id="update"
+              name="deduplication"
+              value="update"
+              checked={deduplicationMode === "update"}
+              onChange={(e) =>
+                setDeduplicationMode(
+                  e.target.value as "skip" | "update" | "import"
+                )
+              }
+              className="w-4 h-4"
+            />
+            <label htmlFor="update" className="text-sm cursor-pointer">
+              <span className="font-medium">Update existing</span> - Update
+              existing events with new data
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="radio"
+              id="import"
+              name="deduplication"
+              value="import"
+              checked={deduplicationMode === "import"}
+              onChange={(e) =>
+                setDeduplicationMode(
+                  e.target.value as "skip" | "update" | "import"
+                )
+              }
+              className="w-4 h-4"
+            />
+            <label htmlFor="import" className="text-sm cursor-pointer">
+              <span className="font-medium">Import anyway</span> - Create new
+              events even if duplicates exist
+            </label>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Duplicates are detected by matching event name and dates. Similar
+          names (80%+ match) with same dates are also considered duplicates.
+        </p>
+      </div>
+
+      {/* Data Preview Table */}
+      <div className="border rounded-lg overflow-hidden">
+        <div className="max-h-96 overflow-auto">
+          <table className="w-full border-collapse">
+            <thead className="bg-muted sticky top-0">
+              <tr>
+                {columnMappings.map((mapping) => (
                   <th
                     key={mapping.dbColumn}
-                    className="p-2 text-left font-medium"
+                    className="p-2 text-left text-sm font-medium border-r"
                   >
-                    {
-                      DB_COLUMNS.find((col) => col.key === mapping.dbColumn)
-                        ?.label
-                    }
+                    {mapping.dbColumn}
                   </th>
                 ))}
               </tr>
@@ -570,7 +650,7 @@ export function CSVImportModal({
             <tbody>
               {csvData?.rows.slice(0, 5).map((row, rowIndex) => (
                 <tr key={rowIndex} className="border-b">
-                  {mappedColumns.map((mapping) => {
+                  {columnMappings.map((mapping) => {
                     return (
                       <td key={mapping.dbColumn} className="p-2">
                         {row[mapping.csvColumn] || ""}
@@ -581,7 +661,12 @@ export function CSVImportModal({
               ))}
             </tbody>
           </table>
-        </ScrollArea>
+        </div>
+        {csvData && csvData.rows.length > 5 && (
+          <div className="p-2 text-sm text-muted-foreground bg-muted">
+            Showing first 5 rows of {csvData.rows.length} total
+          </div>
+        )}
       </div>
 
       <div className="flex justify-between">
@@ -715,7 +800,95 @@ export function CSVImportModal({
             {step === "upload" && renderUploadStep()}
             {step === "mapping" && renderMappingStep()}
             {step === "preview" && renderPreviewStep()}
-            {step === "results" && renderResultsStep()}
+            {step === "results" && importResults && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Import Results</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your CSV import has been completed.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {importResults.imported}
+                    </div>
+                    <div className="text-sm text-green-600 dark:text-green-400">
+                      Events Imported
+                    </div>
+                  </div>
+
+                  {importResults.updated > 0 && (
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {importResults.updated}
+                      </div>
+                      <div className="text-sm text-blue-600 dark:text-blue-400">
+                        Events Updated
+                      </div>
+                    </div>
+                  )}
+
+                  {importResults.skipped > 0 && (
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                        {importResults.skipped}
+                      </div>
+                      <div className="text-sm text-yellow-600 dark:text-yellow-400">
+                        Events Skipped
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Duplicate Information */}
+                {importResults.duplicates &&
+                  importResults.duplicates.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="text-md font-medium">Duplicates Found</h4>
+                      <div className="max-h-40 overflow-auto space-y-1">
+                        {importResults.duplicates.map(
+                          (duplicate: string, index: number) => (
+                            <div
+                              key={index}
+                              className="text-sm text-muted-foreground bg-muted p-2 rounded"
+                            >
+                              {duplicate}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Error Information */}
+                {importResults.errors && importResults.errors.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-md font-medium text-red-600 dark:text-red-400">
+                      Errors ({importResults.errors.length})
+                    </h4>
+                    <div className="max-h-40 overflow-auto space-y-1">
+                      {importResults.errors
+                        .slice(0, 10)
+                        .map((error: string, index: number) => (
+                          <div
+                            key={index}
+                            className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded"
+                          >
+                            {error}
+                          </div>
+                        ))}
+                      {importResults.errors.length > 10 && (
+                        <div className="text-sm text-muted-foreground">
+                          ... and {importResults.errors.length - 10} more errors
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
