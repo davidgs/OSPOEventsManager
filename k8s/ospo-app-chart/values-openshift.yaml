@@ -17,36 +17,6 @@ openshift:
     runAsGroup: null
     fsGroup: null
 
-# Otterize Security (Intent-based Access Control)
-otterize:
-  enabled: false  # Temporarily disabled to ensure clean deployment
-  credentials:
-    clientId: "cli_2qzdt2865q"
-    clientSecret: "838e61fc0fa3c3af9b6686232ef9f0fdaf42890e5afdce1ec34d7381a8823223"
-  config:
-    mode: "defaultShadow"  # Options: defaultShadow, defaultDeny, defaultAllow
-    certificateProvider: "otterize-cloud"
-  intents:
-    # Define network intents for OSPO components
-    # Temporarily disabled - will be enabled after Otterize CRDs are confirmed
-    enabled: false
-    policies:
-      - name: "ospo-app-to-postgres"
-        from: "ospo-app"
-        to: "postgres"
-        ports: [5432]
-      - name: "ospo-app-to-keycloak"
-        from: "ospo-app"
-        to: "keycloak"
-        ports: [8080]
-      - name: "ospo-app-to-minio"
-        from: "ospo-app"
-        to: "minio"
-        ports: [9000]
-      - name: "keycloak-to-postgres"
-        from: "keycloak"
-        to: "postgres"
-        ports: [5432]
 
 # Application configuration
 app:
