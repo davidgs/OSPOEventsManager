@@ -32,7 +32,7 @@ interface CSVImportModalProps {
 
 interface CSVData {
   headers: string[];
-  rows: string[][];
+  rows: Record<string, string>[];
 }
 
 interface ColumnMapping {
@@ -71,7 +71,12 @@ const DB_COLUMNS = [
     options: eventGoals,
   },
   { key: "cfp_deadline", label: "CFP Deadline", required: false, type: "date" },
-  { key: "early_bird_deadline", label: "Early Bird Registration Deadline", required: false, type: "date" },
+  {
+    key: "early_bird_deadline",
+    label: "Early Bird Registration Deadline",
+    required: false,
+    type: "date",
+  },
   {
     key: "status",
     label: "Status",
@@ -152,7 +157,17 @@ export function CSVImportModal({
     };
 
     const headers = parseCsvLine(lines[0]);
-    const rows = lines.slice(1).map((line) => parseCsvLine(line));
+    const rawRows = lines.slice(1).map((line) => parseCsvLine(line));
+
+    // Convert rows from arrays to objects using headers as keys
+    const rows = rawRows.map((row) => {
+      const rowObject: Record<string, string> = {};
+      headers.forEach((header, index) => {
+        // Use the header as the key and the corresponding row value
+        rowObject[header] = row[index] || "";
+      });
+      return rowObject;
+    });
 
     return { headers, rows };
   }, []);
