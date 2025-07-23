@@ -17,7 +17,6 @@ openshift:
     runAsGroup: null
     fsGroup: null
 
-
 # Application configuration
 app:
   baseUrl: "https://ospo-events-ospo-app-prod-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com"
