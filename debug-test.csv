@@ -1,0 +1,3 @@
+name,location,start_date,end_date,priority,type,goal
+"Debug Test Event","Virtual","2025-03-01","2025-03-01","medium","conference","networking"
+"Another Test","Boston","2025-04-15","2025-04-16","high","meetup","learning"

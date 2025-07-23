@@ -611,22 +611,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/events/import-csv", async (req: Request, res: Response) => {
     try {
       console.log("=== CSV IMPORT STARTED ===");
+      console.log("Request body keys:", Object.keys(req.body));
       console.log("Request body:", JSON.stringify(req.body, null, 2));
 
       const { csvData, columnMapping, defaultValues } = req.body;
 
       if (!csvData || !Array.isArray(csvData)) {
         console.log("ERROR: Invalid CSV data provided");
+        console.log("csvData type:", typeof csvData);
+        console.log("csvData value:", csvData);
         return res.status(400).json({ message: "Invalid CSV data provided" });
       }
 
       if (!columnMapping || typeof columnMapping !== 'object') {
         console.log("ERROR: Column mapping is required");
+        console.log("columnMapping type:", typeof columnMapping);
+        console.log("columnMapping value:", columnMapping);
         return res.status(400).json({ message: "Column mapping is required" });
       }
 
       console.log(`Processing CSV import with ${csvData.length} rows`);
+      console.log("Sample CSV row (first row):", JSON.stringify(csvData[0], null, 2));
       console.log("Column mapping:", JSON.stringify(columnMapping, null, 2));
+      console.log("Column mapping keys:", Object.keys(columnMapping));
+      console.log("Column mapping values:", Object.values(columnMapping));
       console.log("Default values:", JSON.stringify(defaultValues, null, 2));
 
       const results = {
@@ -638,39 +646,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Process each CSV row
       for (let i = 0; i < csvData.length; i++) {
         const row = csvData[i];
-        console.log(`Processing row ${i + 1}:`, JSON.stringify(row, null, 2));
+        console.log(`\n--- Processing row ${i + 1} ---`);
+        console.log(`Raw CSV row ${i + 1}:`, JSON.stringify(row, null, 2));
+        console.log(`CSV row ${i + 1} keys:`, Object.keys(row));
 
         try {
           // Map CSV columns to event data
           const eventData: any = { ...defaultValues };
+          console.log(`Initial event data for row ${i + 1}:`, JSON.stringify(eventData, null, 2));
 
           for (const [csvColumn, dbColumn] of Object.entries(columnMapping)) {
+            console.log(`Mapping: "${csvColumn}" -> "${dbColumn}"`);
+            console.log(`CSV row has "${csvColumn}": ${csvColumn in row}`);
+            console.log(`CSV row["${csvColumn}"] value:`, row[csvColumn]);
+
             if (dbColumn && row[csvColumn] !== undefined && row[csvColumn] !== '') {
               let value = row[csvColumn];
+              console.log(`Mapping value "${value}" from "${csvColumn}" to "${dbColumn}"`);
 
               // Handle special field types
               if (dbColumn === 'goal' && typeof value === 'string') {
                 // Split comma-separated goals into array
                 eventData[dbColumn] = value.split(',').map(g => g.trim()).filter(g => g);
+                console.log(`Converted goals string to array:`, eventData[dbColumn]);
               } else if (dbColumn.includes('date') && value) {
                 // Ensure dates are properly formatted
                 const date = new Date(value);
                 if (!isNaN(date.getTime())) {
                   eventData[dbColumn] = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+                  console.log(`Converted date "${value}" to "${eventData[dbColumn]}"`);
                 } else {
                   eventData[dbColumn] = null;
+                  console.log(`Invalid date "${value}", set to null`);
                 }
               } else {
                 eventData[dbColumn] = value;
+                console.log(`Direct assignment: ${dbColumn} = "${value}"`);
               }
+            } else {
+              console.log(`Skipping mapping for "${csvColumn}" -> "${dbColumn}" (empty or undefined)`);
             }
           }
 
           console.log(`Mapped event data for row ${i + 1}:`, JSON.stringify(eventData, null, 2));
+          console.log(`Event data "name" field:`, eventData.name);
+          console.log(`Event data "name" type:`, typeof eventData.name);
 
           // Validate required fields
           if (!eventData.name) {
-            console.log(`Row ${i + 1}: Missing event name`);
+            console.log(`Row ${i + 1}: Missing event name - eventData.name is:`, eventData.name);
             results.errors.push(`Row ${i + 1}: Event name is required`);
             results.skipped++;
             continue;
@@ -710,6 +734,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!validatedData.success) {
             const errors = validatedData.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
             console.log(`Row ${i + 1}: Validation failed:`, errors);
+            console.log(`Validation error details:`, validatedData.error.errors);
             results.errors.push(`Row ${i + 1}: ${errors}`);
             results.skipped++;
             continue;
@@ -724,6 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         } catch (error) {
           console.error(`Error importing row ${i + 1}:`, error);
+          console.error(`Error stack for row ${i + 1}:`, error instanceof Error ? error.stack : 'No stack trace');
           results.errors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
           results.skipped++;
         }
