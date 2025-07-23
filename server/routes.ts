@@ -607,6 +607,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CSV Import endpoint for events
+  app.post("/api/events/import-csv", async (req: Request, res: Response) => {
+    try {
+      const { csvData, columnMapping, defaultValues } = req.body;
+
+      if (!csvData || !Array.isArray(csvData)) {
+        return res.status(400).json({ message: "Invalid CSV data provided" });
+      }
+
+      if (!columnMapping || typeof columnMapping !== 'object') {
+        return res.status(400).json({ message: "Column mapping is required" });
+      }
+
+      console.log(`Processing CSV import with ${csvData.length} rows`);
+
+      const results = {
+        imported: 0,
+        skipped: 0,
+        errors: [] as string[]
+      };
+
+      // Process each CSV row
+      for (let i = 0; i < csvData.length; i++) {
+        const row = csvData[i];
+
+        try {
+          // Map CSV columns to event data
+          const eventData: any = { ...defaultValues };
+
+          for (const [csvColumn, dbColumn] of Object.entries(columnMapping)) {
+            if (dbColumn && row[csvColumn] !== undefined && row[csvColumn] !== '') {
+              let value = row[csvColumn];
+
+              // Handle special field types
+              if (dbColumn === 'goal' && typeof value === 'string') {
+                // Split comma-separated goals into array
+                eventData[dbColumn] = value.split(',').map(g => g.trim()).filter(g => g);
+              } else if (dbColumn.includes('date') && value) {
+                // Ensure dates are properly formatted
+                const date = new Date(value);
+                if (!isNaN(date.getTime())) {
+                  eventData[dbColumn] = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+                } else {
+                  eventData[dbColumn] = null;
+                }
+              } else {
+                eventData[dbColumn] = value;
+              }
+            }
+          }
+
+          // Validate required fields
+          if (!eventData.name) {
+            results.errors.push(`Row ${i + 1}: Event name is required`);
+            results.skipped++;
+            continue;
+          }
+
+          // Set defaults for required fields if not provided
+          if (!eventData.link) {
+            eventData.link = `https://example.com/events/${eventData.name.toLowerCase().replace(/\s+/g, '-')}`;
+          }
+          if (!eventData.start_date) {
+            eventData.start_date = new Date().toISOString().split('T')[0];
+          }
+          if (!eventData.end_date) {
+            eventData.end_date = eventData.start_date;
+          }
+          if (!eventData.location) {
+            eventData.location = 'TBD';
+          }
+          if (!eventData.priority) {
+            eventData.priority = 'medium';
+          }
+          if (!eventData.type) {
+            eventData.type = 'conference';
+          }
+          if (!eventData.goal || !Array.isArray(eventData.goal) || eventData.goal.length === 0) {
+            eventData.goal = ['networking'];
+          }
+          if (!eventData.status) {
+            eventData.status = 'planning';
+          }
+
+          // Validate with schema
+          const validatedData = insertEventSchema.safeParse(eventData);
+
+          if (!validatedData.success) {
+            const errors = validatedData.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            results.errors.push(`Row ${i + 1}: ${errors}`);
+            results.skipped++;
+            continue;
+          }
+
+          // Create the event
+          await storage.createEvent(validatedData.data);
+          results.imported++;
+
+        } catch (error) {
+          console.error(`Error importing row ${i + 1}:`, error);
+          results.errors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          results.skipped++;
+        }
+      }
+
+      console.log(`CSV import completed: ${results.imported} imported, ${results.skipped} skipped`);
+
+      res.json(results);
+    } catch (error) {
+      console.error('CSV import error:', error);
+      res.status(500).json({ message: "Failed to import CSV data" });
+    }
+  });
+
   // CFP Submissions API routes
   app.get("/api/cfp-submissions", async (req: Request, res: Response) => {
     try {

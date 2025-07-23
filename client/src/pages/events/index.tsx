@@ -24,6 +24,7 @@ import CalendarView from "@/components/ui/calendar-view";
 import AddEventModal from "@/components/ui/add-event-modal-fixed";
 import EditEventModal from "@/components/ui/edit-event-modal";
 import DeleteEventDialog from "@/components/ui/delete-event-dialog";
+import { CSVImportModal } from "@/components/ui/csv-import-modal";
 import { useToast } from "@/hooks/use-toast";
 import { ProtectedRoute } from "@/components/protected-route";
 import { z } from "zod";
@@ -47,6 +48,7 @@ const EventsPageContent: FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   // Fetch events
@@ -306,6 +308,7 @@ const EventsPageContent: FC = () => {
 
   // Event handlers for modals
   const openAddModal = () => setIsAddModalOpen(true);
+  const openImportModal = () => setIsImportModalOpen(true);
 
   const openEditModal = (event: Event) => {
     setSelectedEvent(event);
@@ -315,6 +318,15 @@ const EventsPageContent: FC = () => {
   const openDeleteDialog = (event: Event) => {
     setSelectedEvent(event);
     setIsDeleteDialogOpen(true);
+  };
+
+  // Handle import completion
+  const handleImportComplete = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+    toast({
+      title: "Import Complete",
+      description: "Events have been imported successfully.",
+    });
   };
 
   // Filter events based on user selections
@@ -363,6 +375,7 @@ const EventsPageContent: FC = () => {
           <div className="flex mt-2 sm:mt-0 sm:ml-4 space-x-2 sm:space-x-3">
             <Button
               variant="outline"
+              onClick={openImportModal}
               className="text-xs sm:text-sm px-2 py-1 h-8 sm:h-auto"
             >
               <Upload className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
@@ -571,6 +584,12 @@ const EventsPageContent: FC = () => {
         onConfirm={handleDeleteEvent}
         event={selectedEvent}
         isDeleting={isDeletingEvent}
+      />
+
+      <CSVImportModal
+        open={isImportModalOpen}
+        onOpenChange={setIsImportModalOpen}
+        onImportComplete={handleImportComplete}
       />
     </div>
   );
