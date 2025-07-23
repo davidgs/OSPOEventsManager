@@ -610,17 +610,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CSV Import endpoint for events
   app.post("/api/events/import-csv", async (req: Request, res: Response) => {
     try {
+      console.log("=== CSV IMPORT STARTED ===");
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
+
       const { csvData, columnMapping, defaultValues } = req.body;
 
       if (!csvData || !Array.isArray(csvData)) {
+        console.log("ERROR: Invalid CSV data provided");
         return res.status(400).json({ message: "Invalid CSV data provided" });
       }
 
       if (!columnMapping || typeof columnMapping !== 'object') {
+        console.log("ERROR: Column mapping is required");
         return res.status(400).json({ message: "Column mapping is required" });
       }
 
       console.log(`Processing CSV import with ${csvData.length} rows`);
+      console.log("Column mapping:", JSON.stringify(columnMapping, null, 2));
+      console.log("Default values:", JSON.stringify(defaultValues, null, 2));
 
       const results = {
         imported: 0,
@@ -631,6 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Process each CSV row
       for (let i = 0; i < csvData.length; i++) {
         const row = csvData[i];
+        console.log(`Processing row ${i + 1}:`, JSON.stringify(row, null, 2));
 
         try {
           // Map CSV columns to event data
@@ -658,8 +666,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
+          console.log(`Mapped event data for row ${i + 1}:`, JSON.stringify(eventData, null, 2));
+
           // Validate required fields
           if (!eventData.name) {
+            console.log(`Row ${i + 1}: Missing event name`);
             results.errors.push(`Row ${i + 1}: Event name is required`);
             results.skipped++;
             continue;
@@ -691,18 +702,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eventData.status = 'planning';
           }
 
+          console.log(`Final event data for row ${i + 1}:`, JSON.stringify(eventData, null, 2));
+
           // Validate with schema
           const validatedData = insertEventSchema.safeParse(eventData);
 
           if (!validatedData.success) {
             const errors = validatedData.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            console.log(`Row ${i + 1}: Validation failed:`, errors);
             results.errors.push(`Row ${i + 1}: ${errors}`);
             results.skipped++;
             continue;
           }
 
+          console.log(`Row ${i + 1}: Validation passed, creating event...`);
+
           // Create the event
-          await storage.createEvent(validatedData.data);
+          const createdEvent = await storage.createEvent(validatedData.data);
+          console.log(`Row ${i + 1}: Event created successfully:`, JSON.stringify(createdEvent, null, 2));
           results.imported++;
 
         } catch (error) {
@@ -713,10 +730,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`CSV import completed: ${results.imported} imported, ${results.skipped} skipped`);
+      console.log("Final results:", JSON.stringify(results, null, 2));
+      console.log("=== CSV IMPORT COMPLETED ===");
 
       res.json(results);
     } catch (error) {
       console.error('CSV import error:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       res.status(500).json({ message: "Failed to import CSV data" });
     }
   });
