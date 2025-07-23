@@ -614,7 +614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Request body keys:", Object.keys(req.body));
       console.log("Request body:", JSON.stringify(req.body, null, 2));
 
-      const { csvData, columnMapping, defaultValues } = req.body;
+      const { csvData, columnMapping, defaultValues, deduplicationMode = 'skip' } = req.body;
 
       if (!csvData || !Array.isArray(csvData)) {
         console.log("ERROR: Invalid CSV data provided");
@@ -636,12 +636,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Column mapping keys:", Object.keys(columnMapping));
       console.log("Column mapping values:", Object.values(columnMapping));
       console.log("Default values:", JSON.stringify(defaultValues, null, 2));
+      console.log("Deduplication mode:", deduplicationMode);
 
       const results = {
         imported: 0,
         skipped: 0,
-        errors: [] as string[]
+        updated: 0,
+        errors: [] as string[],
+        duplicates: [] as string[]
       };
+
+      // Get existing events for deduplication
+      console.log("Fetching existing events for deduplication...");
+      const existingEvents = await storage.getEvents();
+      console.log(`Found ${existingEvents.length} existing events in database`);
 
       // Process each CSV row
       for (let i = 0; i < csvData.length; i++) {
@@ -728,6 +736,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           console.log(`Final event data for row ${i + 1}:`, JSON.stringify(eventData, null, 2));
 
+          // Check for duplicates
+          console.log(`Checking for duplicates for row ${i + 1}...`);
+          const duplicateEvent = existingEvents.find(existing => {
+            // Primary match: exact name and date match
+            const nameMatch = existing.name.toLowerCase().trim() === eventData.name.toLowerCase().trim();
+            const dateMatch = existing.start_date === eventData.start_date && existing.end_date === eventData.end_date;
+
+            if (nameMatch && dateMatch) {
+              console.log(`Found exact duplicate: "${existing.name}" (${existing.start_date} - ${existing.end_date})`);
+              return true;
+            }
+
+            // Fuzzy match: similar name (>=80% similarity) and same dates
+            const similarity = calculateStringSimilarity(existing.name.toLowerCase(), eventData.name.toLowerCase());
+            if (similarity >= 0.8 && dateMatch) {
+              console.log(`Found fuzzy duplicate: "${existing.name}" vs "${eventData.name}" (${similarity * 100}% similar)`);
+              return true;
+            }
+
+            return false;
+          });
+
+          if (duplicateEvent) {
+            console.log(`Row ${i + 1}: Duplicate detected - ${duplicateEvent.name}`);
+            results.duplicates.push(`Row ${i + 1}: "${eventData.name}" matches existing event "${duplicateEvent.name}"`);
+
+            switch (deduplicationMode) {
+              case 'skip':
+                console.log(`Row ${i + 1}: Skipping duplicate (skip mode)`);
+                results.skipped++;
+                continue;
+
+              case 'update':
+                console.log(`Row ${i + 1}: Updating existing event (update mode)`);
+                const validatedUpdateData = insertEventSchema.partial().safeParse(eventData);
+
+                if (!validatedUpdateData.success) {
+                  const errors = validatedUpdateData.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+                  console.log(`Row ${i + 1}: Update validation failed:`, errors);
+                  results.errors.push(`Row ${i + 1}: ${errors}`);
+                  results.skipped++;
+                  continue;
+                }
+
+                await storage.updateEvent(duplicateEvent.id, validatedUpdateData.data);
+                console.log(`Row ${i + 1}: Updated existing event ID ${duplicateEvent.id}`);
+                results.updated++;
+                continue;
+
+              case 'import':
+                console.log(`Row ${i + 1}: Importing anyway (import mode)`);
+                // Continue with normal import process
+                break;
+
+              default:
+                results.skipped++;
+                continue;
+            }
+          }
+
           // Validate with schema
           const validatedData = insertEventSchema.safeParse(eventData);
 
@@ -755,7 +823,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      console.log(`CSV import completed: ${results.imported} imported, ${results.skipped} skipped`);
+      console.log(`CSV import completed: ${results.imported} imported, ${results.updated} updated, ${results.skipped} skipped`);
       console.log("Final results:", JSON.stringify(results, null, 2));
       console.log("=== CSV IMPORT COMPLETED ===");
 
@@ -766,6 +834,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to import CSV data" });
     }
   });
+
+  // Helper function for string similarity (Levenshtein distance)
+  function calculateStringSimilarity(str1: string, str2: string): number {
+    const len1 = str1.length;
+    const len2 = str2.length;
+
+    if (len1 === 0) return len2 === 0 ? 1 : 0;
+    if (len2 === 0) return 0;
+
+    const matrix = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(null));
+
+    for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+    for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+
+    for (let i = 1; i <= len1; i++) {
+      for (let j = 1; j <= len2; j++) {
+        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + cost
+        );
+      }
+    }
+
+    const maxLen = Math.max(len1, len2);
+    return (maxLen - matrix[len1][len2]) / maxLen;
+  }
 
   // CFP Submissions API routes
   app.get("/api/cfp-submissions", async (req: Request, res: Response) => {
