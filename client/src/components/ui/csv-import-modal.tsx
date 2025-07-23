@@ -571,10 +571,9 @@ export function CSVImportModal({
               {csvData?.rows.slice(0, 5).map((row, rowIndex) => (
                 <tr key={rowIndex} className="border-b">
                   {mappedColumns.map((mapping) => {
-                    const csvIndex = csvData.headers.indexOf(mapping.csvColumn);
                     return (
                       <td key={mapping.dbColumn} className="p-2">
-                        {row[csvIndex] || ""}
+                        {row[mapping.csvColumn] || ""}
                       </td>
                     );
                   })}
