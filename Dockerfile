@@ -55,9 +55,11 @@ RUN addgroup -g 1001 -S nodejs && \
 # Create uploads directory with proper permissions and ownership AFTER all files are copied
 RUN mkdir -p public/uploads && \
   mkdir -p server/public/uploads && \
-  chown -R nodejs:nodejs /app && \
+  chown -R nodejs:root /app && \
   chmod -R 775 /app/public && \
   chmod -R 775 /app/server/public && \
+  chmod -R g+rws /app/public/uploads && \
+  chmod -R g+rws /app/server/public/uploads && \
   ls -la /app/public/ && \
   ls -la /app/server/public/
 
