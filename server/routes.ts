@@ -866,6 +866,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 results.updated++;
                 continue;
 
+              case 'merge':
+                console.log(`Row ${i + 1}: Smart merging with existing event (merge mode)`);
+                const mergedData = smartMergeEventData(duplicateEvent, eventData);
+                const validatedMergeData = insertEventSchema.partial().safeParse(mergedData);
+
+                if (!validatedMergeData.success) {
+                  const errors = validatedMergeData.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+                  console.log(`Row ${i + 1}: Merge validation failed:`, errors);
+                  results.errors.push(`Row ${i + 1}: ${errors}`);
+                  results.skipped++;
+                  continue;
+                }
+
+                await storage.updateEvent(duplicateEvent.id, validatedMergeData.data);
+                console.log(`Row ${i + 1}: Smart merged existing event ID ${duplicateEvent.id}`);
+                results.updated++;
+                continue;
+
               case 'import':
                 console.log(`Row ${i + 1}: Importing anyway (import mode)`);
                 // Continue with normal import process
