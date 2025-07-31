@@ -1,7 +1,7 @@
 import { FC, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Event } from "@shared/schema";
+import { Event, Attendee, CFPSubmission, Asset } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -68,39 +68,45 @@ const EventsPageContent: FC = () => {
   });
 
   // Fetch CFP counts
-  const { data: cfpSubmissions = [], isLoading: isLoadingCfp } = useQuery({
+  const { data: cfpSubmissions = [], isLoading: isLoadingCfp } = useQuery<
+    CFPSubmission[]
+  >({
     queryKey: ["/api/cfp-submissions"],
   });
 
   // Fetch attendee counts
-  const { data: attendees = [], isLoading: isLoadingAttendees } = useQuery({
+  const { data: attendees = [], isLoading: isLoadingAttendees } = useQuery<
+    Attendee[]
+  >({
     queryKey: ["/api/attendees"],
   });
 
   // Fetch trip reports (assets of type trip_report)
-  const { data: tripReports = [], isLoading: isLoadingTripReports } = useQuery({
+  const { data: tripReports = [], isLoading: isLoadingTripReports } = useQuery<
+    Asset[]
+  >({
     queryKey: ["/api/assets"],
   });
 
   // Calculate counts and organize data for each event
-  const cfpCounts = (cfpSubmissions as any[]).reduce(
-    (acc: Record<number, number>, cfp: any) => {
-      acc[cfp.eventId] = (acc[cfp.eventId] || 0) + 1;
+  const cfpCounts = cfpSubmissions.reduce(
+    (acc: Record<number, number>, cfp: CFPSubmission) => {
+      acc[cfp.event_id] = (acc[cfp.event_id] || 0) + 1;
       return acc;
     },
     {}
   );
 
-  const attendeeCounts = (attendees as any[]).reduce(
-    (acc: Record<number, number>, attendee: any) => {
-      acc[attendee.eventId] = (acc[attendee.eventId] || 0) + 1;
+  const attendeeCounts = attendees.reduce(
+    (acc: Record<number, number>, attendee: Attendee) => {
+      acc[attendee.event_id] = (acc[attendee.event_id] || 0) + 1;
       return acc;
     },
     {}
   );
 
   // Organize speakers and their submissions by event
-  const eventSpeakers = (cfpSubmissions as any[]).reduce(
+  const eventSpeakers = cfpSubmissions.reduce(
     (
       acc: Record<
         number,
@@ -110,29 +116,29 @@ const EventsPageContent: FC = () => {
           submissions: Array<{ title: string; status: string }>;
         }>
       >,
-      cfp: any
+      cfp: CFPSubmission
     ) => {
-      if (!acc[cfp.eventId]) {
-        acc[cfp.eventId] = [];
+      if (!acc[cfp.event_id]) {
+        acc[cfp.event_id] = [];
       }
 
       // Find if this speaker already exists in our array
-      const existingIndex = acc[cfp.eventId].findIndex(
+      const existingIndex = acc[cfp.event_id].findIndex(
         (speaker) =>
-          speaker.id === cfp.submitterId && speaker.name === cfp.submitterName
+          speaker.id === cfp.submitter_id && speaker.name === cfp.submitter_name
       );
 
       // If speaker already exists, add this submission to their submissions array
       if (existingIndex !== -1) {
-        acc[cfp.eventId][existingIndex].submissions.push({
+        acc[cfp.event_id][existingIndex].submissions.push({
           title: cfp.title,
           status: cfp.status,
         });
       } else {
         // Add a new speaker with their first submission
-        acc[cfp.eventId].push({
-          id: cfp.submitterId || 0,
-          name: cfp.submitterName,
+        acc[cfp.event_id].push({
+          id: cfp.submitter_id || 0,
+          name: cfp.submitter_name,
           submissions: [
             {
               title: cfp.title,
@@ -152,24 +158,24 @@ const EventsPageContent: FC = () => {
   console.log("Event Speakers:", eventSpeakers);
 
   // Organize attendees by event
-  const eventAttendees = (attendees as any[]).reduce(
+  const eventAttendees = attendees.reduce(
     (
       acc: Record<number, Array<{ id: number; name: string }>>,
-      attendee: any
+      attendee: Attendee
     ) => {
-      if (!acc[attendee.eventId]) {
-        acc[attendee.eventId] = [];
+      if (!acc[attendee.event_id]) {
+        acc[attendee.event_id] = [];
       }
 
       // Add the attendee if they don't already exist in the array
-      const existingIndex = acc[attendee.eventId].findIndex(
+      const existingIndex = acc[attendee.event_id].findIndex(
         (a) =>
-          a.id === (attendee.userId || attendee.id) && a.name === attendee.name
+          a.id === (attendee.user_id || attendee.id) && a.name === attendee.name
       );
 
       if (existingIndex === -1) {
-        acc[attendee.eventId].push({
-          id: attendee.userId || attendee.id || 0,
+        acc[attendee.event_id].push({
+          id: attendee.user_id || attendee.id || 0,
           name: attendee.name,
         });
       }
@@ -180,9 +186,9 @@ const EventsPageContent: FC = () => {
   );
 
   // Organize trip reports by event
-  const eventTripReports = (tripReports as any[])
+  const eventTripReports = tripReports
     .filter(
-      (asset: any) => asset.type === "trip_report" && asset.eventId !== null
+      (asset: Asset) => asset.type === "trip_report" && asset.event_id !== null
     )
     .reduce(
       (
@@ -190,9 +196,9 @@ const EventsPageContent: FC = () => {
           number,
           Array<{ id: number; name: string; uploadedByName: string }>
         >,
-        asset: any
+        asset: Asset
       ) => {
-        const eventId = asset.eventId!;
+        const eventId = asset.event_id!;
         if (!acc[eventId]) {
           acc[eventId] = [];
         }
@@ -200,7 +206,7 @@ const EventsPageContent: FC = () => {
         acc[eventId].push({
           id: asset.id,
           name: asset.name,
-          uploadedByName: asset.uploadedByName || "Unknown",
+          uploadedByName: asset.uploaded_by_name || "Unknown",
         });
 
         return acc;

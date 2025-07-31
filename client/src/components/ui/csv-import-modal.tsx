@@ -71,6 +71,7 @@ const DB_COLUMNS = [
     options: eventGoals,
   },
   { key: "cfp_deadline", label: "CFP Deadline", required: false, type: "date" },
+  { key: "cfp_link", label: "CFP Link", required: false, type: "url" },
   {
     key: "early_bird_deadline",
     label: "Early Bird Registration Deadline",
@@ -114,7 +115,7 @@ export function CSVImportModal({
     {}
   );
   const [deduplicationMode, setDeduplicationMode] = useState<
-    "skip" | "update" | "import"
+    "skip" | "update" | "merge" | "import"
   >("skip");
   const [isImporting, setIsImporting] = useState(false);
   const [importResults, setImportResults] = useState<any>(null);
@@ -576,7 +577,7 @@ export function CSVImportModal({
               checked={deduplicationMode === "skip"}
               onChange={(e) =>
                 setDeduplicationMode(
-                  e.target.value as "skip" | "update" | "import"
+                  e.target.value as "skip" | "update" | "merge" | "import"
                 )
               }
               className="w-4 h-4"
@@ -595,7 +596,7 @@ export function CSVImportModal({
               checked={deduplicationMode === "update"}
               onChange={(e) =>
                 setDeduplicationMode(
-                  e.target.value as "skip" | "update" | "import"
+                  e.target.value as "skip" | "update" | "merge" | "import"
                 )
               }
               className="w-4 h-4"
@@ -608,13 +609,33 @@ export function CSVImportModal({
           <div className="flex items-center space-x-2">
             <input
               type="radio"
+              id="merge"
+              name="deduplication"
+              value="merge"
+              checked={deduplicationMode === "merge"}
+              onChange={(e) =>
+                setDeduplicationMode(
+                  e.target.value as "skip" | "update" | "merge" | "import"
+                )
+              }
+              className="w-4 h-4"
+            />
+            <label htmlFor="merge" className="text-sm cursor-pointer">
+              <span className="font-medium">Smart merge</span> - Intelligently
+              merge new data with existing events, preserving valuable
+              information
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="radio"
               id="import"
               name="deduplication"
               value="import"
               checked={deduplicationMode === "import"}
               onChange={(e) =>
                 setDeduplicationMode(
-                  e.target.value as "skip" | "update" | "import"
+                  e.target.value as "skip" | "update" | "merge" | "import"
                 )
               }
               className="w-4 h-4"
@@ -628,6 +649,8 @@ export function CSVImportModal({
         <p className="text-xs text-muted-foreground">
           Duplicates are detected by matching event name and dates. Similar
           names (80%+ match) with same dates are also considered duplicates.
+          Smart merge preserves existing values when import data is empty and
+          only updates fields with meaningful changes.
         </p>
       </div>
 

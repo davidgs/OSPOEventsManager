@@ -328,6 +328,87 @@ function handleValidationError(error: any, req: Request, res: Response) {
   });
 }
 
+// Smart merge utility for event data
+function smartMergeEventData(existingEvent: any, newEventData: any): any {
+  const merged: any = {};
+
+  // Define fields that should never be overwritten with empty values
+  const preserveFields = ['name', 'link', 'start_date', 'end_date', 'location', 'priority', 'type', 'status'];
+
+  // Define optional fields that can be empty
+  const optionalFields = ['cfp_deadline', 'cfp_link', 'notes', 'created_by_id'];
+
+  // Helper function to check if a value is empty or null
+  const isEmpty = (value: any): boolean => {
+    if (value === null || value === undefined || value === '') return true;
+    if (Array.isArray(value) && value.length === 0) return true;
+    return false;
+  };
+
+  // Helper function to merge arrays with unique values
+  const mergeArrays = (existing: any[], incoming: any[]): any[] => {
+    if (!Array.isArray(existing)) existing = [];
+    if (!Array.isArray(incoming)) return existing;
+
+    const combined = [...existing];
+    incoming.forEach(item => {
+      if (!combined.includes(item)) {
+        combined.push(item);
+      }
+    });
+    return combined;
+  };
+
+  // Process each field in the new data
+  for (const [key, newValue] of Object.entries(newEventData)) {
+    const existingValue = existingEvent[key];
+
+    if (key === 'goal' && Array.isArray(newValue)) {
+      // Special handling for goal array - merge unique values
+      merged[key] = mergeArrays(existingValue, newValue);
+    } else if (preserveFields.includes(key)) {
+      // For required fields: prefer new value if it exists, otherwise keep existing
+      if (!isEmpty(newValue)) {
+        merged[key] = newValue;
+      } else if (!isEmpty(existingValue)) {
+        merged[key] = existingValue;
+      } else {
+        merged[key] = newValue; // Both empty, use new (may trigger validation error)
+      }
+    } else if (optionalFields.includes(key)) {
+      // For optional fields: use new value if not empty, otherwise keep existing
+      if (!isEmpty(newValue)) {
+        merged[key] = newValue;
+      } else if (!isEmpty(existingValue)) {
+        merged[key] = existingValue;
+      }
+      // If both are empty, don't include the field (undefined)
+    } else {
+      // For other fields, prefer new value if it exists
+      if (!isEmpty(newValue)) {
+        merged[key] = newValue;
+      } else if (!isEmpty(existingValue)) {
+        merged[key] = existingValue;
+      }
+    }
+  }
+
+  // Ensure we don't lose any existing fields that weren't in the new data
+  for (const [key, existingValue] of Object.entries(existingEvent)) {
+    if (!(key in merged) && !isEmpty(existingValue) && key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
+      merged[key] = existingValue;
+    }
+  }
+
+  console.log('Smart merge result:', {
+    existing: existingEvent.name,
+    merged: Object.keys(merged),
+    changes: Object.entries(merged).filter(([key, value]) => existingEvent[key] !== value).map(([key, value]) => `${key}: ${existingEvent[key]} -> ${value}`)
+  });
+
+  return merged;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
 
   // Configure file upload middleware for specific routes only
@@ -785,6 +866,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 results.updated++;
                 continue;
 
+              case 'merge':
+                console.log(`Row ${i + 1}: Smart merging with existing event (merge mode)`);
+                const mergedData = smartMergeEventData(duplicateEvent, eventData);
+                const validatedMergeData = insertEventSchema.partial().safeParse(mergedData);
+
+                if (!validatedMergeData.success) {
+                  const errors = validatedMergeData.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+                  console.log(`Row ${i + 1}: Merge validation failed:`, errors);
+                  results.errors.push(`Row ${i + 1}: ${errors}`);
+                  results.skipped++;
+                  continue;
+                }
+
+                await storage.updateEvent(duplicateEvent.id, validatedMergeData.data);
+                console.log(`Row ${i + 1}: Smart merged existing event ID ${duplicateEvent.id}`);
+                results.updated++;
+                continue;
+
               case 'import':
                 console.log(`Row ${i + 1}: Importing anyway (import mode)`);
                 // Continue with normal import process
@@ -961,18 +1060,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Attendees API routes
   app.get("/api/attendees", async (req: Request, res: Response) => {
     try {
+      console.log("GET /api/attendees - Starting request");
       const eventId = req.query.eventId ? parseInt(req.query.eventId as string) : undefined;
+      console.log("GET /api/attendees - eventId:", eventId);
 
       let attendees;
       if (eventId) {
+        console.log("GET /api/attendees - Fetching attendees for eventId:", eventId);
         attendees = await storage.getAttendeesByEvent(eventId);
       } else {
+        console.log("GET /api/attendees - Fetching all attendees");
         attendees = await storage.getAttendees();
       }
 
+      console.log("GET /api/attendees - Successfully fetched", attendees.length, "attendees");
       res.json(attendees);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch attendees" });
+      console.error("GET /api/attendees - Error:", error);
+      console.error("GET /api/attendees - Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+      res.status(500).json({
+        message: "Failed to fetch attendees",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -996,17 +1105,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/attendees", async (req: Request, res: Response) => {
     try {
+      console.log("POST /api/attendees - Starting request");
+      console.log("POST /api/attendees - Request body:", JSON.stringify(req.body, null, 2));
+
       const attendeeData = insertAttendeeSchema.safeParse(req.body);
 
       if (!attendeeData.success) {
+        console.error("POST /api/attendees - Validation failed:", attendeeData.error);
         const validationError = fromZodError(attendeeData.error);
         return res.status(400).json({ message: validationError.message });
       }
 
+      console.log("POST /api/attendees - Validation passed, creating attendee with data:", JSON.stringify(attendeeData.data, null, 2));
       const attendee = await storage.createAttendee(attendeeData.data);
+      console.log("POST /api/attendees - Successfully created attendee:", JSON.stringify(attendee, null, 2));
       res.status(201).json(attendee);
     } catch (error) {
-      res.status(500).json({ message: "Failed to create attendee" });
+      console.error("POST /api/attendees - Error:", error);
+      console.error("POST /api/attendees - Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+      res.status(500).json({
+        message: "Failed to create attendee",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

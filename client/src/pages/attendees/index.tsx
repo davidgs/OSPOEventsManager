@@ -151,7 +151,7 @@ const AttendeesPage: FC = () => {
   const form = useForm<z.infer<typeof insertAttendeeSchema>>({
     resolver: zodResolver(insertAttendeeSchema),
     defaultValues: {
-      eventId: eventId || undefined,
+      event_id: eventId || undefined,
       name: "",
       email: "",
       role: "",
@@ -442,7 +442,7 @@ const AttendeesPage: FC = () => {
                       {!eventId && (
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500">
-                            {getEventName(attendee.eventId)}
+                            {getEventName(attendee.event_id)}
                           </div>
                         </td>
                       )}
@@ -501,7 +501,7 @@ const AttendeesPage: FC = () => {
               {!eventId && (
                 <FormField
                   control={form.control}
-                  name="eventId"
+                  name="event_id"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
