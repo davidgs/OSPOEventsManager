@@ -328,6 +328,87 @@ function handleValidationError(error: any, req: Request, res: Response) {
   });
 }
 
+// Smart merge utility for event data
+function smartMergeEventData(existingEvent: any, newEventData: any): any {
+  const merged: any = {};
+
+  // Define fields that should never be overwritten with empty values
+  const preserveFields = ['name', 'link', 'start_date', 'end_date', 'location', 'priority', 'type', 'status'];
+
+  // Define optional fields that can be empty
+  const optionalFields = ['cfp_deadline', 'cfp_link', 'notes', 'created_by_id'];
+
+  // Helper function to check if a value is empty or null
+  const isEmpty = (value: any): boolean => {
+    if (value === null || value === undefined || value === '') return true;
+    if (Array.isArray(value) && value.length === 0) return true;
+    return false;
+  };
+
+  // Helper function to merge arrays with unique values
+  const mergeArrays = (existing: any[], incoming: any[]): any[] => {
+    if (!Array.isArray(existing)) existing = [];
+    if (!Array.isArray(incoming)) return existing;
+
+    const combined = [...existing];
+    incoming.forEach(item => {
+      if (!combined.includes(item)) {
+        combined.push(item);
+      }
+    });
+    return combined;
+  };
+
+  // Process each field in the new data
+  for (const [key, newValue] of Object.entries(newEventData)) {
+    const existingValue = existingEvent[key];
+
+    if (key === 'goal' && Array.isArray(newValue)) {
+      // Special handling for goal array - merge unique values
+      merged[key] = mergeArrays(existingValue, newValue);
+    } else if (preserveFields.includes(key)) {
+      // For required fields: prefer new value if it exists, otherwise keep existing
+      if (!isEmpty(newValue)) {
+        merged[key] = newValue;
+      } else if (!isEmpty(existingValue)) {
+        merged[key] = existingValue;
+      } else {
+        merged[key] = newValue; // Both empty, use new (may trigger validation error)
+      }
+    } else if (optionalFields.includes(key)) {
+      // For optional fields: use new value if not empty, otherwise keep existing
+      if (!isEmpty(newValue)) {
+        merged[key] = newValue;
+      } else if (!isEmpty(existingValue)) {
+        merged[key] = existingValue;
+      }
+      // If both are empty, don't include the field (undefined)
+    } else {
+      // For other fields, prefer new value if it exists
+      if (!isEmpty(newValue)) {
+        merged[key] = newValue;
+      } else if (!isEmpty(existingValue)) {
+        merged[key] = existingValue;
+      }
+    }
+  }
+
+  // Ensure we don't lose any existing fields that weren't in the new data
+  for (const [key, existingValue] of Object.entries(existingEvent)) {
+    if (!(key in merged) && !isEmpty(existingValue) && key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
+      merged[key] = existingValue;
+    }
+  }
+
+  console.log('Smart merge result:', {
+    existing: existingEvent.name,
+    merged: Object.keys(merged),
+    changes: Object.entries(merged).filter(([key, value]) => existingEvent[key] !== value).map(([key, value]) => `${key}: ${existingEvent[key]} -> ${value}`)
+  });
+
+  return merged;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
 
   // Configure file upload middleware for specific routes only
@@ -607,6 +688,280 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CSV Import endpoint for events
+  app.post("/api/events/import-csv", async (req: Request, res: Response) => {
+    try {
+      console.log("=== CSV IMPORT STARTED ===");
+      console.log("Request body keys:", Object.keys(req.body));
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
+
+      const { csvData, columnMapping, defaultValues, deduplicationMode = 'skip' } = req.body;
+
+      if (!csvData || !Array.isArray(csvData)) {
+        console.log("ERROR: Invalid CSV data provided");
+        console.log("csvData type:", typeof csvData);
+        console.log("csvData value:", csvData);
+        return res.status(400).json({ message: "Invalid CSV data provided" });
+      }
+
+      if (!columnMapping || typeof columnMapping !== 'object') {
+        console.log("ERROR: Column mapping is required");
+        console.log("columnMapping type:", typeof columnMapping);
+        console.log("columnMapping value:", columnMapping);
+        return res.status(400).json({ message: "Column mapping is required" });
+      }
+
+      console.log(`Processing CSV import with ${csvData.length} rows`);
+      console.log("Sample CSV row (first row):", JSON.stringify(csvData[0], null, 2));
+      console.log("Column mapping:", JSON.stringify(columnMapping, null, 2));
+      console.log("Column mapping keys:", Object.keys(columnMapping));
+      console.log("Column mapping values:", Object.values(columnMapping));
+      console.log("Default values:", JSON.stringify(defaultValues, null, 2));
+      console.log("Deduplication mode:", deduplicationMode);
+
+      const results = {
+        imported: 0,
+        skipped: 0,
+        updated: 0,
+        errors: [] as string[],
+        duplicates: [] as string[]
+      };
+
+      // Get existing events for deduplication
+      console.log("Fetching existing events for deduplication...");
+      const existingEvents = await storage.getEvents();
+      console.log(`Found ${existingEvents.length} existing events in database`);
+
+      // Process each CSV row
+      for (let i = 0; i < csvData.length; i++) {
+        const row = csvData[i];
+        console.log(`\n--- Processing row ${i + 1} ---`);
+        console.log(`Raw CSV row ${i + 1}:`, JSON.stringify(row, null, 2));
+        console.log(`CSV row ${i + 1} keys:`, Object.keys(row));
+
+        try {
+          // Map CSV columns to event data
+          const eventData: any = { ...defaultValues };
+          console.log(`Initial event data for row ${i + 1}:`, JSON.stringify(eventData, null, 2));
+
+          for (const [csvColumn, dbColumn] of Object.entries(columnMapping)) {
+            console.log(`Mapping: "${csvColumn}" -> "${dbColumn}"`);
+            console.log(`CSV row has "${csvColumn}": ${csvColumn in row}`);
+            console.log(`CSV row["${csvColumn}"] value:`, row[csvColumn]);
+
+            if (dbColumn && row[csvColumn] !== undefined && row[csvColumn] !== '') {
+              let value = row[csvColumn];
+              console.log(`Mapping value "${value}" from "${csvColumn}" to "${dbColumn}"`);
+
+              // Handle special field types
+              if (dbColumn === 'goal' && typeof value === 'string') {
+                // Split comma-separated goals into array
+                eventData[dbColumn] = value.split(',').map(g => g.trim()).filter(g => g);
+                console.log(`Converted goals string to array:`, eventData[dbColumn]);
+              } else if (dbColumn.includes('date') && value) {
+                // Ensure dates are properly formatted
+                const date = new Date(value);
+                if (!isNaN(date.getTime())) {
+                  eventData[dbColumn] = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+                  console.log(`Converted date "${value}" to "${eventData[dbColumn]}"`);
+                } else {
+                  eventData[dbColumn] = null;
+                  console.log(`Invalid date "${value}", set to null`);
+                }
+              } else {
+                eventData[dbColumn] = value;
+                console.log(`Direct assignment: ${dbColumn} = "${value}"`);
+              }
+            } else {
+              console.log(`Skipping mapping for "${csvColumn}" -> "${dbColumn}" (empty or undefined)`);
+            }
+          }
+
+          console.log(`Mapped event data for row ${i + 1}:`, JSON.stringify(eventData, null, 2));
+          console.log(`Event data "name" field:`, eventData.name);
+          console.log(`Event data "name" type:`, typeof eventData.name);
+
+          // Validate required fields
+          if (!eventData.name) {
+            console.log(`Row ${i + 1}: Missing event name - eventData.name is:`, eventData.name);
+            results.errors.push(`Row ${i + 1}: Event name is required`);
+            results.skipped++;
+            continue;
+          }
+
+          // Set defaults for required fields if not provided
+          if (!eventData.link) {
+            eventData.link = `https://example.com/events/${eventData.name.toLowerCase().replace(/\s+/g, '-')}`;
+          }
+          if (!eventData.start_date) {
+            eventData.start_date = new Date().toISOString().split('T')[0];
+          }
+          if (!eventData.end_date) {
+            eventData.end_date = eventData.start_date;
+          }
+          if (!eventData.location) {
+            eventData.location = 'TBD';
+          }
+          if (!eventData.priority) {
+            eventData.priority = 'medium';
+          }
+          if (!eventData.type) {
+            eventData.type = 'conference';
+          }
+          if (!eventData.goal || !Array.isArray(eventData.goal) || eventData.goal.length === 0) {
+            eventData.goal = ['networking'];
+          }
+          if (!eventData.status) {
+            eventData.status = 'planning';
+          }
+
+          console.log(`Final event data for row ${i + 1}:`, JSON.stringify(eventData, null, 2));
+
+          // Check for duplicates
+          console.log(`Checking for duplicates for row ${i + 1}...`);
+          const duplicateEvent = existingEvents.find(existing => {
+            // Primary match: exact name and date match
+            const nameMatch = existing.name.toLowerCase().trim() === eventData.name.toLowerCase().trim();
+            const dateMatch = existing.start_date === eventData.start_date && existing.end_date === eventData.end_date;
+
+            if (nameMatch && dateMatch) {
+              console.log(`Found exact duplicate: "${existing.name}" (${existing.start_date} - ${existing.end_date})`);
+              return true;
+            }
+
+            // Fuzzy match: similar name (>=80% similarity) and same dates
+            const similarity = calculateStringSimilarity(existing.name.toLowerCase(), eventData.name.toLowerCase());
+            if (similarity >= 0.8 && dateMatch) {
+              console.log(`Found fuzzy duplicate: "${existing.name}" vs "${eventData.name}" (${similarity * 100}% similar)`);
+              return true;
+            }
+
+            return false;
+          });
+
+          if (duplicateEvent) {
+            console.log(`Row ${i + 1}: Duplicate detected - ${duplicateEvent.name}`);
+            results.duplicates.push(`Row ${i + 1}: "${eventData.name}" matches existing event "${duplicateEvent.name}"`);
+
+            switch (deduplicationMode) {
+              case 'skip':
+                console.log(`Row ${i + 1}: Skipping duplicate (skip mode)`);
+                results.skipped++;
+                continue;
+
+              case 'update':
+                console.log(`Row ${i + 1}: Updating existing event (update mode)`);
+                const validatedUpdateData = insertEventSchema.partial().safeParse(eventData);
+
+                if (!validatedUpdateData.success) {
+                  const errors = validatedUpdateData.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+                  console.log(`Row ${i + 1}: Update validation failed:`, errors);
+                  results.errors.push(`Row ${i + 1}: ${errors}`);
+                  results.skipped++;
+                  continue;
+                }
+
+                await storage.updateEvent(duplicateEvent.id, validatedUpdateData.data);
+                console.log(`Row ${i + 1}: Updated existing event ID ${duplicateEvent.id}`);
+                results.updated++;
+                continue;
+
+              case 'merge':
+                console.log(`Row ${i + 1}: Smart merging with existing event (merge mode)`);
+                const mergedData = smartMergeEventData(duplicateEvent, eventData);
+                const validatedMergeData = insertEventSchema.partial().safeParse(mergedData);
+
+                if (!validatedMergeData.success) {
+                  const errors = validatedMergeData.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+                  console.log(`Row ${i + 1}: Merge validation failed:`, errors);
+                  results.errors.push(`Row ${i + 1}: ${errors}`);
+                  results.skipped++;
+                  continue;
+                }
+
+                await storage.updateEvent(duplicateEvent.id, validatedMergeData.data);
+                console.log(`Row ${i + 1}: Smart merged existing event ID ${duplicateEvent.id}`);
+                results.updated++;
+                continue;
+
+              case 'import':
+                console.log(`Row ${i + 1}: Importing anyway (import mode)`);
+                // Continue with normal import process
+                break;
+
+              default:
+                results.skipped++;
+                continue;
+            }
+          }
+
+          // Validate with schema
+          const validatedData = insertEventSchema.safeParse(eventData);
+
+          if (!validatedData.success) {
+            const errors = validatedData.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            console.log(`Row ${i + 1}: Validation failed:`, errors);
+            console.log(`Validation error details:`, validatedData.error.errors);
+            results.errors.push(`Row ${i + 1}: ${errors}`);
+            results.skipped++;
+            continue;
+          }
+
+          console.log(`Row ${i + 1}: Validation passed, creating event...`);
+
+          // Create the event
+          const createdEvent = await storage.createEvent(validatedData.data);
+          console.log(`Row ${i + 1}: Event created successfully:`, JSON.stringify(createdEvent, null, 2));
+          results.imported++;
+
+        } catch (error) {
+          console.error(`Error importing row ${i + 1}:`, error);
+          console.error(`Error stack for row ${i + 1}:`, error instanceof Error ? error.stack : 'No stack trace');
+          results.errors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          results.skipped++;
+        }
+      }
+
+      console.log(`CSV import completed: ${results.imported} imported, ${results.updated} updated, ${results.skipped} skipped`);
+      console.log("Final results:", JSON.stringify(results, null, 2));
+      console.log("=== CSV IMPORT COMPLETED ===");
+
+      res.json(results);
+    } catch (error) {
+      console.error('CSV import error:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      res.status(500).json({ message: "Failed to import CSV data" });
+    }
+  });
+
+  // Helper function for string similarity (Levenshtein distance)
+  function calculateStringSimilarity(str1: string, str2: string): number {
+    const len1 = str1.length;
+    const len2 = str2.length;
+
+    if (len1 === 0) return len2 === 0 ? 1 : 0;
+    if (len2 === 0) return 0;
+
+    const matrix = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(null));
+
+    for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+    for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+
+    for (let i = 1; i <= len1; i++) {
+      for (let j = 1; j <= len2; j++) {
+        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + cost
+        );
+      }
+    }
+
+    const maxLen = Math.max(len1, len2);
+    return (maxLen - matrix[len1][len2]) / maxLen;
+  }
+
   // CFP Submissions API routes
   app.get("/api/cfp-submissions", async (req: Request, res: Response) => {
     try {
@@ -705,18 +1060,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Attendees API routes
   app.get("/api/attendees", async (req: Request, res: Response) => {
     try {
+      console.log("GET /api/attendees - Starting request");
       const eventId = req.query.eventId ? parseInt(req.query.eventId as string) : undefined;
+      console.log("GET /api/attendees - eventId:", eventId);
 
       let attendees;
       if (eventId) {
+        console.log("GET /api/attendees - Fetching attendees for eventId:", eventId);
         attendees = await storage.getAttendeesByEvent(eventId);
       } else {
+        console.log("GET /api/attendees - Fetching all attendees");
         attendees = await storage.getAttendees();
       }
 
+      console.log("GET /api/attendees - Successfully fetched", attendees.length, "attendees");
       res.json(attendees);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch attendees" });
+      console.error("GET /api/attendees - Error:", error);
+      console.error("GET /api/attendees - Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+      res.status(500).json({
+        message: "Failed to fetch attendees",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -740,17 +1105,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/attendees", async (req: Request, res: Response) => {
     try {
+      console.log("POST /api/attendees - Starting request");
+      console.log("POST /api/attendees - Request body:", JSON.stringify(req.body, null, 2));
+
       const attendeeData = insertAttendeeSchema.safeParse(req.body);
 
       if (!attendeeData.success) {
+        console.error("POST /api/attendees - Validation failed:", attendeeData.error);
         const validationError = fromZodError(attendeeData.error);
         return res.status(400).json({ message: validationError.message });
       }
 
+      console.log("POST /api/attendees - Validation passed, creating attendee with data:", JSON.stringify(attendeeData.data, null, 2));
       const attendee = await storage.createAttendee(attendeeData.data);
+      console.log("POST /api/attendees - Successfully created attendee:", JSON.stringify(attendee, null, 2));
       res.status(201).json(attendee);
     } catch (error) {
-      res.status(500).json({ message: "Failed to create attendee" });
+      console.error("POST /api/attendees - Error:", error);
+      console.error("POST /api/attendees - Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+      res.status(500).json({
+        message: "Failed to create attendee",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

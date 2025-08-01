@@ -606,7 +606,7 @@ spec:
     spec:
       containers:
       - name: ospo-app
-        image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/ospo-events-app:latest
+        image: ospo-events-app:latest
         ports:
         - containerPort: 4576
         env:
@@ -659,7 +659,7 @@ spec:
             path: /api/health
             port: 4576
           initialDelaySeconds: 10
-          periodSeconds: 30
+          periodSeconds: 10
       volumes:
       - name: keycloak-config
         configMap:

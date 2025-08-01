@@ -231,12 +231,29 @@ export async function initializeDatabase(): Promise<boolean> {
         id SERIAL PRIMARY KEY,
         event_id INTEGER NOT NULL,
         name TEXT NOT NULL,
-        email TEXT,
-        role TEXT,
+        email TEXT NOT NULL,
+        role TEXT NOT NULL,
+        user_id INTEGER,
         notes TEXT,
-        user_id INTEGER
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
+
+    // Add missing columns to attendees table if they don't exist
+    try {
+      await pool.query(`ALTER TABLE attendees ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW()`);
+      await pool.query(`ALTER TABLE attendees ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW()`);
+
+      // Fix nullability constraints to match schema
+      await pool.query(`ALTER TABLE attendees ALTER COLUMN email SET NOT NULL`);
+      await pool.query(`ALTER TABLE attendees ALTER COLUMN role SET NOT NULL`);
+
+      console.log("✅ Added missing columns to attendees table and fixed constraints");
+    } catch (error) {
+      console.log("Attendees table columns already exist or constraints already correct:", error);
+    }
+
     console.log("✅ Attendees table initialized");
 
     // Create sponsorships table with IF NOT EXISTS to preserve existing data
