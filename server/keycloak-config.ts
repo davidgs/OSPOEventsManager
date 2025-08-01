@@ -146,10 +146,16 @@ export async function initKeycloak(app: Express) {
       throw new Error('Failed to create Keycloak instance');
     }
 
-        console.log('Skipping Keycloak middleware registration due to compatibility issues...');
-    // Temporarily disable Keycloak middleware to allow application to start
-    // We'll rely on Bearer token authentication in the API routes instead
-    console.log('Using Bearer token authentication only for API routes');
+    // Initialize Keycloak middleware for session-based authentication
+    console.log('Registering Keycloak middleware for session-based authentication...');
+
+    // Apply Keycloak middleware
+    app.use(keycloak.middleware({
+      logout: '/logout',
+      admin: '/'
+    }));
+
+    console.log('Keycloak middleware registration completed successfully');
 
     // Store both configs - external for token validation, internal for server communication
     (keycloak as any)._serverKeycloakConfig = serverKeycloakConfig;

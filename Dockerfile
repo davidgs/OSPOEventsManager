@@ -52,10 +52,16 @@ RUN mkdir -p server/public && \
 RUN addgroup -g 1001 -S nodejs && \
   adduser -S nodejs -u 1001 -G nodejs
 
-# Create uploads directory with proper permissions and ownership
+# Create uploads directory with proper permissions and ownership AFTER all files are copied
 RUN mkdir -p public/uploads && \
-  chown -R nodejs:nodejs /app && \
-  chmod -R 775 /app/public/uploads
+  mkdir -p server/public/uploads && \
+  chown -R nodejs:root /app && \
+  chmod -R 775 /app/public && \
+  chmod -R 775 /app/server/public && \
+  chmod -R g+rws /app/public/uploads && \
+  chmod -R g+rws /app/server/public/uploads && \
+  ls -la /app/public/ && \
+  ls -la /app/server/public/
 
 # Switch to non-root user
 USER nodejs

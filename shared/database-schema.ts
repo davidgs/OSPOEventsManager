@@ -34,6 +34,7 @@ export const events = pgTable("events", {
   type: text("type").notNull(),
   goal: text("goal").array().notNull(),
   cfp_deadline: date("cfp_deadline"),
+  cfp_link: text("cfp_link"),
   status: text("status").notNull().default("planning"),
   notes: text("notes"),
   created_by_id: integer("created_by_id"),

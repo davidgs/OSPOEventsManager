@@ -57,9 +57,7 @@ const EventDetailsPage: FC = () => {
   const { data: cfpSubmissions = [], isLoading: isLoadingCfp } = useQuery({
     queryKey: ["/api/cfp-submissions", eventId],
     queryFn: async ({ queryKey }) => {
-      const res = await fetch(`/api/cfp-submissions?eventId=${eventId}`, {
-        credentials: "include",
-      });
+      const res = await apiRequest("GET", `/api/cfp-submissions?eventId=${eventId}`);
       if (!res.ok) throw new Error("Failed to fetch CFP submissions");
       return await res.json();
     },
@@ -70,9 +68,7 @@ const EventDetailsPage: FC = () => {
   const { data: attendees = [], isLoading: isLoadingAttendees } = useQuery({
     queryKey: ["/api/attendees", eventId],
     queryFn: async ({ queryKey }) => {
-      const res = await fetch(`/api/attendees?eventId=${eventId}`, {
-        credentials: "include",
-      });
+      const res = await apiRequest("GET", `/api/attendees?eventId=${eventId}`);
       if (!res.ok) throw new Error("Failed to fetch attendees");
       return await res.json();
     },
@@ -84,9 +80,7 @@ const EventDetailsPage: FC = () => {
     useQuery({
       queryKey: ["/api/sponsorships", eventId],
       queryFn: async ({ queryKey }) => {
-        const res = await fetch(`/api/sponsorships?eventId=${eventId}`, {
-          credentials: "include",
-        });
+        const res = await apiRequest("GET", `/api/sponsorships?eventId=${eventId}`);
         if (!res.ok) throw new Error("Failed to fetch sponsorships");
         return await res.json();
       },
@@ -97,9 +91,7 @@ const EventDetailsPage: FC = () => {
   const { data: eventAssets = [], isLoading: isLoadingAssets } = useQuery({
     queryKey: ["/api/assets", "event", eventId],
     queryFn: async ({ queryKey }) => {
-      const res = await fetch(`/api/assets?eventId=${eventId}`, {
-        credentials: "include",
-      });
+      const res = await apiRequest("GET", `/api/assets?eventId=${eventId}`);
       if (!res.ok) throw new Error("Failed to fetch event assets");
       return await res.json();
     },

@@ -1,0 +1,6 @@
+Event Name,Website URL,Start Date,End Date,Location,Priority,Event Type,Goals,CFP Deadline,Status,Notes
+"KubeCon + CloudNativeCon North America 2024","https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/","2024-11-12","2024-11-15","Salt Lake City, UT","high","conference","speaking,attending","2024-08-15","confirmed","Major Kubernetes and cloud native conference"
+"DockerCon 2024","https://www.docker.com/dockercon/","2024-05-07","2024-05-09","Los Angeles, CA","medium","conference","sponsoring,exhibiting","2024-02-15","completed","Container technology conference"
+"Open Source Summit Europe 2024","https://events.linuxfoundation.org/open-source-summit-europe/","2024-09-16","2024-09-18","Vienna, Austria","high","conference","speaking","2024-06-01","confirmed","Premier open source conference in Europe"
+"DevOpsDays Boston 2024","https://devopsdays.org/events/2024-boston/","2024-10-21","2024-10-22","Boston, MA","medium","meetup","attending","2024-08-01","planning","Local DevOps community event"
+"FOSDEM 2025","https://fosdem.org/2025/","2025-02-01","2025-02-02","Brussels, Belgium","high","conference","speaking,attending","2024-11-01","planning","Free and open source software developers' European meeting"
