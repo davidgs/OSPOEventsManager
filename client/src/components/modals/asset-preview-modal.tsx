@@ -36,7 +36,6 @@ import {
   FileAudio,
   FileVideo,
   File,
-
 } from "lucide-react";
 
 interface AssetPreviewModalProps {
@@ -232,7 +231,6 @@ export function AssetPreviewModal({
               ) : (
                 <p className="mt-1 text-sm text-muted-foreground">
                   {asset.description || "No description provided"}
-
                 </p>
               )}
             </div>
@@ -327,7 +325,6 @@ export function AssetPreviewModal({
                 )}
               </CardContent>
             </Card>
-
           </div>
         </div>
       </DialogContent>
