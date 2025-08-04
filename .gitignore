@@ -27,6 +27,7 @@ Thumbs.db
 .env.development
 .env.dev
 .env.prod
+.env*
 
 # IDE/Editor files
 .vscode/
