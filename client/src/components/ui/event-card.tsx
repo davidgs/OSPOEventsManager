@@ -1,6 +1,10 @@
 import { FC } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PriorityBadge } from "@/components/ui/priority-badge";
+import { TypeBadge } from "@/components/ui/type-badge";
+import { GoalBadge } from "@/components/ui/goal-badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Calendar,
   FileText,
@@ -72,104 +76,6 @@ const EventCard: FC<EventCardProps> = ({
     }
   };
 
-  // Helper function to get badge style based on priority
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-red-100 text-red-800 hover:bg-red-100"
-          >
-            High Priority
-          </Badge>
-        );
-      case "medium":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-          >
-            Medium Priority
-          </Badge>
-        );
-      case "low":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-green-100 text-green-800 hover:bg-green-100"
-          >
-            Low Priority
-          </Badge>
-        );
-      default:
-        return (
-          <Badge
-            variant="outline"
-            className="bg-gray-100 text-gray-800 hover:bg-gray-100"
-          >
-            Planning
-          </Badge>
-        );
-    }
-  };
-
-  // Helper function to get badge style based on type
-  const getTypeBadge = (type: string) => {
-    return (
-      <Badge
-        variant="outline"
-        className="bg-blue-100 text-blue-800 hover:bg-blue-100"
-      >
-        {type.charAt(0).toUpperCase() + type.slice(1)}
-      </Badge>
-    );
-  };
-
-  // Helper function to get badge style based on goal
-  const getGoalBadge = (goal: string) => {
-    switch (goal) {
-      case "speaking":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-purple-100 text-purple-800 hover:bg-purple-100"
-          >
-            Speaking
-          </Badge>
-        );
-      case "sponsoring":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-green-100 text-green-800 hover:bg-green-100"
-          >
-            Sponsoring
-          </Badge>
-        );
-      case "attending":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-purple-100 text-purple-800 hover:bg-purple-100"
-          >
-            Attending
-          </Badge>
-        );
-      case "exhibiting":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-indigo-100 text-indigo-800 hover:bg-indigo-100"
-          >
-            Exhibiting
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
-
   // Check if this event has a CFP deadline that's coming soon (within the next 7 days)
   const hasCfpDeadlineSoon = () => {
     if (!event.cfp_deadline) return false;
@@ -196,15 +102,15 @@ const EventCard: FC<EventCardProps> = ({
 
   return (
     <Card
-      className={`overflow-hidden shadow rounded-lg border-l-4 ${getBorderColor(
+      className={`overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200 rounded-lg border border-gray-200 dark:border-gray-700 border-l-4 ${getBorderColor(
         event.priority
-      )}`}
+      )} bg-white dark:bg-gray-800`}
     >
       <CardContent className="p-3 sm:p-5">
         <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            {getPriorityBadge(event.priority)}
-            {getTypeBadge(event.type)}
+            <PriorityBadge priority={event.priority} />
+            <TypeBadge type={event.type} />
           </div>
           <div className="flex items-center space-x-1 sm:space-x-2">
             <Button
@@ -243,9 +149,9 @@ const EventCard: FC<EventCardProps> = ({
         </div>
 
         {hasCfpDeadlineSoon() && (
-          <div className="bg-yellow-50 p-2 rounded mb-2 sm:mb-3">
-            <div className="flex text-xs sm:text-sm text-yellow-800">
-              <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-600 mr-1 sm:mr-2 flex-shrink-0" />
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50 p-2 rounded mb-2 sm:mb-3">
+            <div className="flex text-xs sm:text-sm text-yellow-800 dark:text-yellow-200">
+              <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-600 dark:text-yellow-400 mr-1 sm:mr-2 flex-shrink-0" />
               <span className="break-words">
                 CFP Deadline:{" "}
                 <strong>
@@ -300,10 +206,10 @@ const EventCard: FC<EventCardProps> = ({
                                   <Clock className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
                                 )}
                                 <div className="flex-1">
-                                  <p className="text-gray-900 break-words leading-tight">
+                                  <p className="text-gray-900 dark:text-gray-100 break-words leading-tight">
                                     {submission.title}
                                   </p>
-                                  <p className="text-xs text-gray-500 capitalize">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                                     {submission.status}
                                   </p>
                                 </div>
@@ -314,7 +220,7 @@ const EventCard: FC<EventCardProps> = ({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       No CFP submissions found.
                     </p>
                   )}
@@ -324,7 +230,7 @@ const EventCard: FC<EventCardProps> = ({
             <Popover>
               <PopoverTrigger asChild>
                 <div className="flex items-center space-x-1 cursor-pointer hover:text-primary transition-colors">
-                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                   <span className="text-xs sm:text-sm font-medium">
                     {attendeeCount}{" "}
                     {attendeeCount === 1 ? "Attendee" : "Attendees"}
@@ -339,9 +245,9 @@ const EventCard: FC<EventCardProps> = ({
                       {attendees.map((attendee, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-2 p-1 rounded hover:bg-gray-100"
+                          className="flex items-center gap-2 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
                         >
-                          <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 flex-shrink-0">
+                          <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 flex-shrink-0">
                             {attendee.name.charAt(0).toUpperCase()}
                           </div>
                           <span className="text-sm truncate">
@@ -351,7 +257,9 @@ const EventCard: FC<EventCardProps> = ({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">No attendees found.</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      No attendees found.
+                    </p>
                   )}
                 </div>
               </PopoverContent>
@@ -360,7 +268,7 @@ const EventCard: FC<EventCardProps> = ({
               <Popover>
                 <PopoverTrigger asChild>
                   <div className="flex items-center space-x-1 cursor-pointer hover:text-primary transition-colors">
-                    <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
+                    <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
                     <span className="text-xs sm:text-sm font-medium">
                       {tripReports.length}{" "}
                       {tripReports.length === 1
@@ -381,7 +289,7 @@ const EventCard: FC<EventCardProps> = ({
                               <p className="text-sm font-medium break-words leading-tight">
                                 {report.name}
                               </p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
                                 by {report.uploadedByName}
                               </p>
                             </div>
@@ -397,74 +305,24 @@ const EventCard: FC<EventCardProps> = ({
 
           <div className="flex flex-col space-y-2">
             <div className="mb-1">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Conference Goals
               </h4>
             </div>
             <div className="flex items-center flex-wrap gap-1">
-              {/* Access the goal field from the event */}
-              {(event.goal || []).map((goal: string, index: number) => {
-                if (goal === "speaking") {
-                  return speakers && speakers.length > 0 ? (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="bg-purple-100 text-purple-800 hover:bg-purple-100"
-                    >
-                      <Mic className="h-3 w-3 mr-1" />
-                      {speakers.some((s) =>
-                        s.submissions.some((sub) => sub.status === "accepted")
-                      )
-                        ? "Speaking"
-                        : "CFP Submitted"}
-                    </Badge>
-                  ) : (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="bg-purple-100 text-purple-800 hover:bg-purple-100"
-                    >
-                      <Mic className="h-3 w-3 mr-1" />
-                      Speaking
-                    </Badge>
-                  );
-                } else if (goal === "attending") {
-                  return (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="bg-purple-100 text-purple-800 hover:bg-purple-100"
-                    >
-                      <User className="h-3 w-3 mr-1" />
-                      Attending
-                    </Badge>
-                  );
-                } else {
-                  return (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className={
-                        goal === "sponsoring"
-                          ? "bg-green-100 text-green-800 hover:bg-green-100"
-                          : "bg-indigo-100 text-indigo-800 hover:bg-indigo-100"
-                      }
-                    >
-                      {goal.charAt(0).toUpperCase() + goal.slice(1)}
-                    </Badge>
-                  );
-                }
-              })}
+              {(event.goal || []).map((goal: string, index: number) => (
+                <GoalBadge key={index} goal={goal} />
+              ))}
             </div>
           </div>
         </div>
       </CardContent>
 
-      <CardFooter className="bg-gray-50 px-3 sm:px-5 py-2 sm:py-3 flex justify-end">
+      <CardFooter className="bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700 px-3 sm:px-5 py-2 sm:py-3 flex justify-end">
         <Link href={`/events/${event.id}`}>
           <Button
             variant="link"
-            className="text-sm sm:text-base font-medium text-primary hover:text-blue-700 p-0 h-auto"
+            className="text-sm sm:text-base font-medium text-primary hover:text-primary/80 dark:text-blue-400 dark:hover:text-blue-300 p-0 h-auto"
           >
             View details →
           </Button>

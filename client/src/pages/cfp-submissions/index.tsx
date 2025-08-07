@@ -44,6 +44,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertCFPSubmissionSchema, cfpStatuses } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import {
@@ -286,48 +287,6 @@ const CfpSubmissionsPage: FC = () => {
     }
   };
 
-  // Status badge style
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "accepted":
-        return (
-          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-            <Check className="h-3 w-3 mr-1" /> Accepted
-          </span>
-        );
-      case "rejected":
-        return (
-          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-            <X className="h-3 w-3 mr-1" /> Rejected
-          </span>
-        );
-      case "draft":
-        return (
-          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-            Draft
-          </span>
-        );
-      case "submitted":
-        return (
-          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-            <Clock className="h-3 w-3 mr-1" /> Submitted
-          </span>
-        );
-      case "withdrawn":
-        return (
-          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-            Withdrawn
-          </span>
-        );
-      default:
-        return (
-          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </span>
-        );
-    }
-  };
-
   // Loading state
   const isLoading = isLoadingSubmissions || isLoadingEvents;
 
@@ -546,13 +505,16 @@ const CfpSubmissionsPage: FC = () => {
                         >
                           <SelectTrigger className="w-[130px] h-8">
                             <SelectValue>
-                              {getStatusBadge(submission.status)}
+                              <StatusBadge
+                                status={submission.status}
+                                type="cfp"
+                              />
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             {cfpStatuses.map((status) => (
                               <SelectItem key={status} value={status}>
-                                {getStatusBadge(status)}
+                                <StatusBadge status={status} type="cfp" />
                               </SelectItem>
                             ))}
                           </SelectContent>

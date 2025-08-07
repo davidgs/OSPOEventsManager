@@ -12,7 +12,7 @@ import * as schema from "./database-schema.js";
 // =============================================================================
 
 // Event priorities
-export const eventPriorities = ["high", "medium", "low"] as const;
+export const eventPriorities = ["essential", "high", "medium", "low", "nice to have"] as const;
 export const eventPrioritySchema = z.enum(eventPriorities);
 export type EventPriority = z.infer<typeof eventPrioritySchema>;
 
