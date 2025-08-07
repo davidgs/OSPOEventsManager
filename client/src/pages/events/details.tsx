@@ -24,6 +24,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PriorityBadge } from "@/components/ui/priority-badge";
+import { TypeBadge } from "@/components/ui/type-badge";
+import { GoalBadge } from "@/components/ui/goal-badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -57,7 +61,10 @@ const EventDetailsPage: FC = () => {
   const { data: cfpSubmissions = [], isLoading: isLoadingCfp } = useQuery({
     queryKey: ["/api/cfp-submissions", eventId],
     queryFn: async ({ queryKey }) => {
-      const res = await apiRequest("GET", `/api/cfp-submissions?eventId=${eventId}`);
+      const res = await apiRequest(
+        "GET",
+        `/api/cfp-submissions?eventId=${eventId}`
+      );
       if (!res.ok) throw new Error("Failed to fetch CFP submissions");
       return await res.json();
     },
@@ -80,7 +87,10 @@ const EventDetailsPage: FC = () => {
     useQuery({
       queryKey: ["/api/sponsorships", eventId],
       queryFn: async ({ queryKey }) => {
-        const res = await apiRequest("GET", `/api/sponsorships?eventId=${eventId}`);
+        const res = await apiRequest(
+          "GET",
+          `/api/sponsorships?eventId=${eventId}`
+        );
         if (!res.ok) throw new Error("Failed to fetch sponsorships");
         return await res.json();
       },
@@ -153,75 +163,6 @@ const EventDetailsPage: FC = () => {
     }
   };
 
-  // Determine priority badge style
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return (
-          <Badge variant="outline" className="bg-red-100 text-red-800">
-            High Priority
-          </Badge>
-        );
-      case "medium":
-        return (
-          <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
-            Medium Priority
-          </Badge>
-        );
-      case "low":
-        return (
-          <Badge variant="outline" className="bg-green-100 text-green-800">
-            Low Priority
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="bg-gray-100 text-gray-800">
-            Planning
-          </Badge>
-        );
-    }
-  };
-
-  const getTypeBadge = (type: string) => {
-    return (
-      <Badge variant="outline" className="bg-blue-100 text-blue-800">
-        {type.charAt(0).toUpperCase() + type.slice(1)}
-      </Badge>
-    );
-  };
-
-  const getGoalBadge = (goal: string) => {
-    switch (goal) {
-      case "speaking":
-        return (
-          <Badge variant="outline" className="bg-purple-100 text-purple-800">
-            Speaking
-          </Badge>
-        );
-      case "sponsoring":
-        return (
-          <Badge variant="outline" className="bg-green-100 text-green-800">
-            Sponsoring
-          </Badge>
-        );
-      case "attending":
-        return (
-          <Badge variant="outline" className="bg-purple-100 text-purple-800">
-            Attending
-          </Badge>
-        );
-      case "exhibiting":
-        return (
-          <Badge variant="outline" className="bg-indigo-100 text-indigo-800">
-            Exhibiting
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
-
   const isLoading =
     isLoadingEvent ||
     isLoadingCfp ||
@@ -231,26 +172,30 @@ const EventDetailsPage: FC = () => {
 
   if (isNaN(eventId)) {
     return (
-      <div className="py-6">
+      <div className="min-h-screen bg-background py-6">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
-          <div className="bg-red-50 p-4 rounded-md">
+          <div className="bg-destructive/10 border border-destructive/20 p-6 rounded-lg">
             <div className="flex">
               <div className="flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-red-400" />
+                <AlertTriangle className="h-6 w-6 text-destructive" />
               </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
+              <div className="ml-4">
+                <h3 className="text-lg font-semibold text-destructive">
                   Invalid Event ID
                 </h3>
-                <div className="mt-2 text-sm text-red-700">
+                <div className="mt-2 text-muted-foreground">
                   <p>
                     The event ID provided is not valid. Please check the URL and
                     try again.
                   </p>
                 </div>
-                <div className="mt-4">
+                <div className="mt-6">
                   <Link href="/events">
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    >
                       <ChevronLeft className="mr-2 h-4 w-4" />
                       Back to Events
                     </Button>
@@ -266,26 +211,30 @@ const EventDetailsPage: FC = () => {
 
   if (isErrorEvent) {
     return (
-      <div className="py-6">
+      <div className="min-h-screen bg-background py-6">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
-          <div className="bg-red-50 p-4 rounded-md">
+          <div className="bg-destructive/10 border border-destructive/20 p-6 rounded-lg">
             <div className="flex">
               <div className="flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-red-400" />
+                <AlertTriangle className="h-6 w-6 text-destructive" />
               </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
+              <div className="ml-4">
+                <h3 className="text-lg font-semibold text-destructive">
                   Error Loading Event
                 </h3>
-                <div className="mt-2 text-sm text-red-700">
+                <div className="mt-2 text-muted-foreground">
                   <p>
                     There was an error loading the event details. Please try
                     again later.
                   </p>
                 </div>
-                <div className="mt-4">
+                <div className="mt-6">
                   <Link href="/events">
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    >
                       <ChevronLeft className="mr-2 h-4 w-4" />
                       Back to Events
                     </Button>
@@ -301,12 +250,14 @@ const EventDetailsPage: FC = () => {
 
   if (isLoading) {
     return (
-      <div className="py-6">
+      <div className="min-h-screen bg-background py-6">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
-          <div className="flex justify-center items-center h-64">
+          <div className="flex justify-center items-center h-96">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading event details...</p>
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-border border-t-primary mx-auto"></div>
+              <p className="mt-6 text-lg text-muted-foreground">
+                Loading event details...
+              </p>
             </div>
           </div>
         </div>
@@ -316,26 +267,30 @@ const EventDetailsPage: FC = () => {
 
   if (!event) {
     return (
-      <div className="py-6">
+      <div className="min-h-screen bg-background py-6">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
-          <div className="bg-yellow-50 p-4 rounded-md">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-6 rounded-lg">
             <div className="flex">
               <div className="flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-yellow-400" />
+                <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
               </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">
+              <div className="ml-4">
+                <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200">
                   Event Not Found
                 </h3>
-                <div className="mt-2 text-sm text-yellow-700">
+                <div className="mt-2 text-yellow-700 dark:text-yellow-300">
                   <p>
                     The event you're looking for doesn't exist or has been
                     removed.
                   </p>
                 </div>
-                <div className="mt-4">
+                <div className="mt-6">
                   <Link href="/events">
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-yellow-400 text-yellow-800 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900/30"
+                    >
                       <ChevronLeft className="mr-2 h-4 w-4" />
                       Back to Events
                     </Button>
@@ -350,23 +305,24 @@ const EventDetailsPage: FC = () => {
   }
 
   return (
-    <div className="py-6">
+    <div className="min-h-screen bg-background py-6">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
         {/* Back button and actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-          <div className="mb-4 sm:mb-0">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+          <div className="mb-4 lg:mb-0">
             <Link href="/events">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="hover:bg-accent">
                 <ChevronLeft className="mr-2 h-4 w-4" />
                 Back to Events
               </Button>
             </Link>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap gap-3">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsEditModalOpen(true)}
+              className="hover:bg-accent"
             >
               <Edit className="mr-2 h-4 w-4" />
               Edit Event
@@ -378,7 +334,11 @@ const EventDetailsPage: FC = () => {
             >
               Delete Event
             </Button>
-            <Button size="sm" asChild>
+            <Button
+              size="sm"
+              asChild
+              className="bg-primary hover:bg-primary/90"
+            >
               <a href={event.link} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Event Website
@@ -388,99 +348,129 @@ const EventDetailsPage: FC = () => {
         </div>
 
         {/* Event header */}
-        <div className="mb-6 bg-white shadow rounded-lg p-6">
-          <div className="flex flex-col md:flex-row md:items-start gap-6">
+        <div className="mb-8 bg-card border-border shadow-lg rounded-xl p-8">
+          <div className="flex flex-col xl:flex-row xl:items-start gap-8">
             <div className="flex-1">
-              <div className="flex flex-wrap gap-2 mb-2">
-                {getPriorityBadge(event.priority)}
-                {getTypeBadge(event.type)}
-                {getGoalBadge(event.goal)}
-                <Badge variant="outline" className="bg-gray-100 text-gray-800">
-                  {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                </Badge>
+              {/* Badges */}
+              <div className="flex flex-wrap gap-3 mb-6">
+                <div className="flex items-center gap-2">
+                  <PriorityBadge priority={event.priority} />
+                  <TypeBadge type={event.type} />
+                  {Array.isArray(event.goal)
+                    ? event.goal.map((goal: string, index: number) => (
+                        <GoalBadge key={index} goal={goal} />
+                      ))
+                    : JSON.parse(event.goal || "[]").map(
+                        (goal: string, index: number) => (
+                          <GoalBadge key={index} goal={goal} />
+                        )
+                      )}
+                  <Badge
+                    variant="secondary"
+                    className="bg-muted text-muted-foreground font-medium"
+                  >
+                    {event.status.charAt(0).toUpperCase() +
+                      event.status.slice(1)}
+                  </Badge>
+                </div>
               </div>
 
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {/* Event title */}
+              <h1 className="text-4xl font-bold text-foreground mb-6 leading-tight">
                 {event.name}
               </h1>
 
-              <div className="flex items-center text-gray-500 mb-2">
-                <MapPin className="h-5 w-5 text-gray-400 mr-2" />
-                <span>{event.location}</span>
+              {/* Event details */}
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center text-muted-foreground">
+                  <MapPin className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
+                  <span className="text-lg">{event.location}</span>
+                </div>
+
+                <div className="flex items-center text-muted-foreground">
+                  <Calendar className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
+                  <span className="text-lg">
+                    {event.start_date && event.end_date ? (
+                      <>
+                        {format(new Date(event.start_date), "MMMM d, yyyy")} -{" "}
+                        {format(new Date(event.end_date), "MMMM d, yyyy")}
+                      </>
+                    ) : (
+                      "Date TBD"
+                    )}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center text-gray-500 mb-4">
-                <Calendar className="h-5 w-5 text-gray-400 mr-2" />
-                <span>
-                  {event.start_date && event.end_date ? (
-                    <>
-                      {format(new Date(event.start_date), "MMMM d, yyyy")} -{" "}
-                      {format(new Date(event.end_date), "MMMM d, yyyy")}
-                    </>
-                  ) : (
-                    "Date TBD"
-                  )}
-                </span>
-              </div>
-
+              {/* CFP Deadline */}
               {event.cfp_deadline && (
                 <div
-                  className={`flex items-center p-3 rounded-md mb-4 ${
+                  className={`flex items-center p-4 rounded-lg mb-6 border-l-4 ${
                     new Date(event.cfp_deadline) > new Date()
-                      ? "bg-yellow-50 text-yellow-800"
-                      : "bg-gray-50 text-gray-600"
+                      ? "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-900 dark:text-yellow-200 border-yellow-400"
+                      : "bg-muted text-muted-foreground border-border"
                   }`}
                 >
-                  <Clipboard className="h-5 w-5 mr-2" />
-                  <span>
-                    CFP Deadline:{" "}
-                    <strong>
+                  <Clipboard className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">
+                      CFP Deadline:{" "}
                       {format(new Date(event.cfp_deadline), "MMMM d, yyyy")}
-                    </strong>
+                    </p>
                     {new Date(event.cfp_deadline) > new Date() && (
-                      <span className="ml-1">
-                        (
+                      <p className="text-sm opacity-75 mt-1">
                         {Math.ceil(
                           (new Date(event.cfp_deadline).getTime() -
                             new Date().getTime()) /
                             (1000 * 60 * 60 * 24)
                         )}{" "}
-                        days left)
-                      </span>
+                        days remaining
+                      </p>
                     )}
-                  </span>
+                  </div>
                 </div>
               )}
 
+              {/* Notes */}
               {event.notes && (
-                <div className="mt-4 bg-gray-50 p-4 rounded-md">
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">
+                <div className="bg-muted/50 border border-border rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">
                     Notes
                   </h3>
-                  <p className="text-gray-700 whitespace-pre-line">
+                  <p className="text-muted-foreground whitespace-pre-line leading-relaxed">
                     {event.notes}
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="md:w-64 flex flex-col gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-500">
-                    ATTENDANCE
+            {/* Stats cards */}
+            <div className="xl:w-80 flex flex-col gap-4">
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">
+                    Attendance
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <Users className="h-5 w-5 text-primary mr-2" />
-                      <span className="font-medium">
-                        {attendees.length} Attendees
-                      </span>
+                      <Users className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-3" />
+                      <div>
+                        <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                          {attendees.length}
+                        </p>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          Attendees
+                        </p>
+                      </div>
                     </div>
                     <Link href={`/attendees?eventId=${event.id}`}>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-600 dark:text-blue-300 dark:hover:bg-blue-900/30"
+                      >
                         View
                       </Button>
                     </Link>
@@ -488,22 +478,31 @@ const EventDetailsPage: FC = () => {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-500">
-                    CFP SUBMISSIONS
+              <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide">
+                    CFP Submissions
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <FileText className="h-5 w-5 text-primary mr-2" />
-                      <span className="font-medium">
-                        {cfpSubmissions.length} Submissions
-                      </span>
+                      <FileText className="h-6 w-6 text-green-600 dark:text-green-400 mr-3" />
+                      <div>
+                        <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                          {cfpSubmissions.length}
+                        </p>
+                        <p className="text-sm text-green-700 dark:text-green-300">
+                          Submissions
+                        </p>
+                      </div>
                     </div>
                     <Link href={`/cfp-submissions?eventId=${event.id}`}>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-green-300 text-green-700 hover:bg-green-100 dark:border-green-600 dark:text-green-300 dark:hover:bg-green-900/30"
+                      >
                         View
                       </Button>
                     </Link>
@@ -511,22 +510,31 @@ const EventDetailsPage: FC = () => {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-500">
-                    SPONSORSHIP
+              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wide">
+                    Sponsorship
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <DollarSign className="h-5 w-5 text-primary mr-2" />
-                      <span className="font-medium">
-                        {sponsorships.length} Sponsorships
-                      </span>
+                      <DollarSign className="h-6 w-6 text-purple-600 dark:text-purple-400 mr-3" />
+                      <div>
+                        <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                          {sponsorships.length}
+                        </p>
+                        <p className="text-sm text-purple-700 dark:text-purple-300">
+                          Sponsorships
+                        </p>
+                      </div>
                     </div>
                     <Link href={`/sponsorships?eventId=${event.id}`}>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-purple-300 text-purple-700 hover:bg-purple-100 dark:border-purple-600 dark:text-purple-300 dark:hover:bg-purple-900/30"
+                      >
                         View
                       </Button>
                     </Link>
@@ -538,100 +546,146 @@ const EventDetailsPage: FC = () => {
         </div>
 
         {/* Tabs content */}
-        <Tabs defaultValue="attendees" className="mb-6">
-          <TabsList className="grid grid-cols-4 mb-6">
-            <TabsTrigger value="attendees" className="text-sm">
+        <Tabs defaultValue="attendees" className="mb-8">
+          <TabsList className="grid grid-cols-4 mb-8 bg-muted/50 p-1 rounded-lg">
+            <TabsTrigger
+              value="attendees"
+              className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <Users className="mr-2 h-4 w-4" />
               Attendees
             </TabsTrigger>
-            <TabsTrigger value="cfp-submissions" className="text-sm">
+            <TabsTrigger
+              value="cfp-submissions"
+              className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <FileText className="mr-2 h-4 w-4" />
               CFP Submissions
             </TabsTrigger>
-            <TabsTrigger value="sponsorships" className="text-sm">
+            <TabsTrigger
+              value="sponsorships"
+              className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <DollarSign className="mr-2 h-4 w-4" />
               Sponsorships
             </TabsTrigger>
-            <TabsTrigger value="assets" className="text-sm">
+            <TabsTrigger
+              value="assets"
+              className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
               <File className="mr-2 h-4 w-4" />
               Assets
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="attendees">
-            <Card>
-              <CardHeader>
+            <Card className="border-border shadow-md">
+              <CardHeader className="border-b border-border bg-muted/20">
                 <div className="flex justify-between items-center">
-                  <CardTitle>Event Attendees</CardTitle>
+                  <CardTitle className="text-xl font-semibold text-foreground">
+                    Event Attendees
+                  </CardTitle>
                   <Link href={`/attendees?eventId=${event.id}`}>
-                    <Button size="sm">Manage Attendees</Button>
+                    <Button
+                      size="sm"
+                      className="bg-primary hover:bg-primary/90"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Manage Attendees
+                    </Button>
                   </Link>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 {attendees.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Users className="mx-auto h-12 w-12 text-gray-300" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">
+                  <div className="text-center py-16">
+                    <Users className="mx-auto h-16 w-16 text-muted-foreground/50" />
+                    <h3 className="mt-4 text-lg font-semibold text-foreground">
                       No Attendees Yet
                     </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Get started by adding attendees for this event.
+                    <p className="mt-2 text-muted-foreground max-w-sm mx-auto">
+                      Get started by adding attendees for this event to track
+                      participation and engagement.
                     </p>
-                    <div className="mt-6">
+                    <div className="mt-8">
                       <Link href={`/attendees?eventId=${event.id}`}>
-                        <Button>Add Attendees</Button>
+                        <Button className="bg-primary hover:bg-primary/90">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Attendees
+                        </Button>
                       </Link>
                     </div>
                   </div>
                 ) : (
-                  <div className="overflow-hidden rounded-md border">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            Name
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                          >
-                            Role
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
-                          >
-                            Email
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {attendees.slice(0, 5).map((attendee) => (
-                          <tr key={attendee.id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {attendee.name}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {attendee.role || "-"}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                              {attendee.email || "-"}
-                            </td>
+                  <div className="overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-muted/30 border-b border-border">
+                          <tr>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              Name
+                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              Role
+                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              Email
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {attendees.length > 5 && (
-                      <div className="bg-gray-50 px-6 py-3 text-right">
-                        <Link href={`/attendees?eventId=${event.id}`}>
-                          <Button variant="link" className="text-sm">
-                            View all {attendees.length} attendees
-                          </Button>
-                        </Link>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {attendees
+                            .slice(0, 10)
+                            .map((attendee: any, index: number) => (
+                              <tr
+                                key={attendee.id}
+                                className="hover:bg-muted/30 transition-colors"
+                              >
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center">
+                                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                      <span className="text-sm font-medium text-primary">
+                                        {attendee.name
+                                          ? attendee.name
+                                              .charAt(0)
+                                              .toUpperCase()
+                                          : "A"}
+                                      </span>
+                                    </div>
+                                    <div className="ml-4">
+                                      <div className="text-sm font-medium text-foreground">
+                                        {attendee.name || "Anonymous Attendee"}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-muted text-muted-foreground"
+                                  >
+                                    {attendee.role || "Attendee"}
+                                  </Badge>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                                  {attendee.email || "No email provided"}
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {attendees.length > 10 && (
+                      <div className="px-6 py-4 bg-muted/20 border-t border-border">
+                        <p className="text-sm text-muted-foreground text-center">
+                          Showing 10 of {attendees.length} attendees.{" "}
+                          <Link
+                            href={`/attendees?eventId=${event.id}`}
+                            className="text-primary hover:text-primary/80 font-medium"
+                          >
+                            View all attendees
+                          </Link>
+                        </p>
                       </div>
                     )}
                   </div>

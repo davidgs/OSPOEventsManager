@@ -82,8 +82,8 @@ fi
 # Check for .env file
 if [[ ! -f .env ]]; then
     print_error ".env file not found!"
-    echo "Please copy .env.template to .env and configure your values:"
-    echo "  cp .env.template .env"
+    echo "Please copy env.template to .env and configure your values:"
+    echo "  cp env.template .env"
     echo "  # Edit .env with your configuration"
     exit 1
 fi
@@ -620,6 +620,8 @@ spec:
           value: "${KEYCLOAK_REALM}"
         - name: KEYCLOAK_CLIENT_ID
           value: "${KEYCLOAK_CLIENT_ID}"
+        - name: KEYCLOAK_CLIENT_URL
+          value: "${VITE_KEYCLOAK_URL}"
         - name: MINIO_ENDPOINT
           value: "minio:9000"
         - name: MINIO_ACCESS_KEY
@@ -632,6 +634,54 @@ spec:
           value: "${JWT_SECRET}"
         - name: SESSION_SECRET
           value: "${SESSION_SECRET}"
+        - name: SESSION_RESAVE
+          value: "${SESSION_RESAVE}"
+        - name: SESSION_SAVE_UNINITIALIZED
+          value: "${SESSION_SAVE_UNINITIALIZED}"
+        - name: SESSION_SECURE
+          value: "${SESSION_SECURE}"
+        - name: SESSION_HTTP_ONLY
+          value: "${SESSION_HTTP_ONLY}"
+        - name: SESSION_MAX_AGE
+          value: "${SESSION_MAX_AGE}"
+        - name: SESSION_SAME_SITE
+          value: "${SESSION_SAME_SITE}"
+        - name: SESSION_NAME
+          value: "${SESSION_NAME}"
+        - name: RATE_LIMIT_WINDOW_MS
+          value: "${RATE_LIMIT_WINDOW_MS}"
+        - name: RATE_LIMIT_MAX
+          value: "${RATE_LIMIT_MAX}"
+        - name: RATE_LIMIT_MESSAGE
+          value: "${RATE_LIMIT_MESSAGE}"
+        - name: RATE_LIMIT_RETRY_AFTER
+          value: "${RATE_LIMIT_RETRY_AFTER}"
+        - name: RATE_LIMIT_STANDARD_HEADERS
+          value: "${RATE_LIMIT_STANDARD_HEADERS}"
+        - name: RATE_LIMIT_LEGACY_HEADERS
+          value: "${RATE_LIMIT_LEGACY_HEADERS}"
+        - name: RATE_LIMIT_SKIP_PATHS
+          value: "${RATE_LIMIT_SKIP_PATHS}"
+        - name: CSP_STYLE_SRC
+          value: "${CSP_STYLE_SRC}"
+        - name: CSP_FONT_SRC
+          value: "${CSP_FONT_SRC}"
+        - name: CSP_OBJECT_SRC
+          value: "${CSP_OBJECT_SRC}"
+        - name: HELMET_COEP
+          value: "${HELMET_COEP}"
+        - name: HELMET_HSTS_MAX_AGE
+          value: "${HELMET_HSTS_MAX_AGE}"
+        - name: HELMET_HSTS_INCLUDE_SUBDOMAINS
+          value: "${HELMET_HSTS_INCLUDE_SUBDOMAINS}"
+        - name: HELMET_HSTS_PRELOAD
+          value: "${HELMET_HSTS_PRELOAD}"
+        - name: PROXY_FORWARDED_PROTO
+          value: "${PROXY_FORWARDED_PROTO}"
+        - name: PROXY_REDIRECT_PATTERN
+          value: "${PROXY_REDIRECT_PATTERN}"
+        - name: PROXY_TIMEOUT_MS
+          value: "${PROXY_TIMEOUT_MS}"
         volumeMounts:
         - name: keycloak-config
           mountPath: /app/keycloak.json

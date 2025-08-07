@@ -3,8 +3,17 @@ import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PriorityBadge } from "@/components/ui/priority-badge";
+import { TypeBadge } from "@/components/ui/type-badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, MapPin, FileText, Users, BookOpen } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  MapPin,
+  FileText,
+  Users,
+  BookOpen,
+} from "lucide-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { Event } from "@shared/schema";
@@ -13,56 +22,50 @@ const EventDetailsPage: FC = () => {
   const [match, params] = useRoute("/events/:id");
   const eventId = params?.id;
 
-  const { 
-    data: event, 
+  const {
+    data: event,
     isLoading: isLoadingEvent,
-    error: eventError 
+    error: eventError,
   } = useQuery({
-    queryKey: ['/api/events', eventId],
+    queryKey: ["/api/events", eventId],
     queryFn: async () => {
       const response = await fetch(`/api/events/${eventId}`);
       if (!response.ok) {
-        throw new Error('Failed to load event');
+        throw new Error("Failed to load event");
       }
       return response.json();
     },
     enabled: !!eventId,
   });
 
-  const { 
-    data: cfpSubmissions = [] 
-  } = useQuery({
-    queryKey: ['/api/cfp-submissions'],
+  const { data: cfpSubmissions = [] } = useQuery({
+    queryKey: ["/api/cfp-submissions"],
     queryFn: async () => {
-      const response = await fetch('/api/cfp-submissions');
+      const response = await fetch("/api/cfp-submissions");
       if (!response.ok) {
-        throw new Error('Failed to load CFP submissions');
+        throw new Error("Failed to load CFP submissions");
       }
       return response.json();
     },
   });
 
-  const { 
-    data: attendees = [] 
-  } = useQuery({
-    queryKey: ['/api/attendees'],
+  const { data: attendees = [] } = useQuery({
+    queryKey: ["/api/attendees"],
     queryFn: async () => {
-      const response = await fetch('/api/attendees');
+      const response = await fetch("/api/attendees");
       if (!response.ok) {
-        throw new Error('Failed to load attendees');
+        throw new Error("Failed to load attendees");
       }
       return response.json();
     },
   });
 
-  const { 
-    data: assets = [] 
-  } = useQuery({
-    queryKey: ['/api/assets'],
+  const { data: assets = [] } = useQuery({
+    queryKey: ["/api/assets"],
     queryFn: async () => {
-      const response = await fetch('/api/assets');
+      const response = await fetch("/api/assets");
       if (!response.ok) {
-        throw new Error('Failed to load assets');
+        throw new Error("Failed to load assets");
       }
       return response.json();
     },
@@ -73,35 +76,34 @@ const EventDetailsPage: FC = () => {
   }
 
   if (isLoadingEvent) {
-    return <div className="flex items-center justify-center min-h-screen">Loading event details...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading event details...
+      </div>
+    );
   }
 
   if (eventError || !event) {
-    return <div className="flex items-center justify-center min-h-screen">Failed to load event details</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Failed to load event details
+      </div>
+    );
   }
 
   // Filter data for this specific event
-  const eventCfpSubmissions = cfpSubmissions.filter((cfp: any) => cfp.eventId === parseInt(eventId));
-  const eventAttendees = attendees.filter((attendee: any) => attendee.eventId === parseInt(eventId));
-  const eventAssets = assets.filter((asset: any) => asset.eventId === parseInt(eventId));
-  const tripReports = eventAssets.filter((asset: any) => asset.type === 'trip_report');
-
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return <Badge variant="outline" className="bg-red-100 text-red-800">High Priority</Badge>;
-      case "medium":
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Medium Priority</Badge>;
-      case "low":
-        return <Badge variant="outline" className="bg-green-100 text-green-800">Low Priority</Badge>;
-      default:
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800">Planning</Badge>;
-    }
-  };
-
-  const getTypeBadge = (type: string) => {
-    return <Badge variant="outline" className="bg-blue-100 text-blue-800">{type.charAt(0).toUpperCase() + type.slice(1)}</Badge>;
-  };
+  const eventCfpSubmissions = cfpSubmissions.filter(
+    (cfp: any) => cfp.eventId === parseInt(eventId)
+  );
+  const eventAttendees = attendees.filter(
+    (attendee: any) => attendee.eventId === parseInt(eventId)
+  );
+  const eventAssets = assets.filter(
+    (asset: any) => asset.eventId === parseInt(eventId)
+  );
+  const tripReports = eventAssets.filter(
+    (asset: any) => asset.type === "trip_report"
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -125,8 +127,8 @@ const EventDetailsPage: FC = () => {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl">{event.name}</CardTitle>
                 <div className="flex gap-2">
-                  {getPriorityBadge(event.priority)}
-                  {getTypeBadge(event.type)}
+                  <PriorityBadge priority={event.priority} />
+                  <TypeBadge type={event.type} />
                 </div>
               </div>
             </CardHeader>
@@ -134,10 +136,11 @@ const EventDetailsPage: FC = () => {
               <div className="flex items-center text-gray-600">
                 <Calendar className="h-4 w-4 mr-2" />
                 <span>
-                  {format(new Date(event.startDate), "MMMM d, yyyy")} - {format(new Date(event.endDate), "MMMM d, yyyy")}
+                  {format(new Date(event.startDate), "MMMM d, yyyy")} -{" "}
+                  {format(new Date(event.endDate), "MMMM d, yyyy")}
                 </span>
               </div>
-              
+
               <div className="flex items-center text-gray-600">
                 <MapPin className="h-4 w-4 mr-2" />
                 <span>{event.location}</span>
@@ -146,7 +149,12 @@ const EventDetailsPage: FC = () => {
               {event.link && (
                 <div>
                   <strong>Website:</strong>{" "}
-                  <a href={event.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  <a
+                    href={event.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
                     {event.link}
                   </a>
                 </div>
@@ -154,7 +162,8 @@ const EventDetailsPage: FC = () => {
 
               {event.cfpDeadline && (
                 <div>
-                  <strong>CFP Deadline:</strong> {format(new Date(event.cfpDeadline), "MMMM d, yyyy")}
+                  <strong>CFP Deadline:</strong>{" "}
+                  {format(new Date(event.cfpDeadline), "MMMM d, yyyy")}
                 </div>
               )}
 
@@ -169,7 +178,11 @@ const EventDetailsPage: FC = () => {
                 <strong>Goals:</strong>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {(event.goal || []).map((goal: string, index: number) => (
-                    <Badge key={index} variant="outline" className="bg-purple-100 text-purple-800">
+                    <Badge
+                      key={index}
+                      variant="outline"
+                      className="bg-purple-100 text-purple-800"
+                    >
                       {goal.charAt(0).toUpperCase() + goal.slice(1)}
                     </Badge>
                   ))}
@@ -195,19 +208,28 @@ const EventDetailsPage: FC = () => {
                   {eventCfpSubmissions.map((cfp: any) => (
                     <div key={cfp.id} className="border-b pb-2 last:border-0">
                       <h4 className="font-medium text-sm">{cfp.title}</h4>
-                      <p className="text-xs text-gray-500">by {cfp.submitterName}</p>
-                      <Badge variant="outline" className={
-                        cfp.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                        cfp.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }>
+                      <p className="text-xs text-gray-500">
+                        by {cfp.submitterName}
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className={
+                          cfp.status === "accepted"
+                            ? "bg-green-100 text-green-800"
+                            : cfp.status === "rejected"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }
+                      >
                         {cfp.status}
                       </Badge>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No CFP submissions found.</p>
+                <p className="text-sm text-gray-500">
+                  No CFP submissions found.
+                </p>
               )}
             </CardContent>
           </Card>
@@ -250,9 +272,14 @@ const EventDetailsPage: FC = () => {
               <CardContent>
                 <div className="space-y-2">
                   {tripReports.map((report: any) => (
-                    <div key={report.id} className="border-b pb-2 last:border-0">
+                    <div
+                      key={report.id}
+                      className="border-b pb-2 last:border-0"
+                    >
                       <h4 className="font-medium text-sm">{report.name}</h4>
-                      <p className="text-xs text-gray-500">by {report.uploadedByName}</p>
+                      <p className="text-xs text-gray-500">
+                        by {report.uploadedByName}
+                      </p>
                     </div>
                   ))}
                 </div>

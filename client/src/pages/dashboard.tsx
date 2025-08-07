@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PriorityBadge } from "@/components/ui/priority-badge";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
@@ -118,7 +119,9 @@ const DashboardPageContent: FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          Dashboard
+        </h1>
         <div className="flex gap-2">
           <Link href="/events">
             <Button className="flex items-center gap-2">
@@ -205,31 +208,25 @@ const DashboardPageContent: FC = () => {
                 {upcomingEvents.map((event: any) => (
                   <div
                     key={event.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className="flex items-center justify-between p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-800/50 hover:bg-gray-200 dark:hover:bg-gray-800/70 transition-colors shadow-sm"
                   >
                     <div>
-                      <h4 className="font-medium">{event.name}</h4>
-                      <p className="text-sm text-gray-600">{event.location}</p>
-                      <p className="text-xs text-gray-500">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                        {event.name}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {event.location}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-500">
                         {format(new Date(event.start_date), "MMM d, yyyy")}
                       </p>
                     </div>
-                    <Badge
-                      className={
-                        event.priority === "high"
-                          ? "bg-red-100 text-red-800"
-                          : event.priority === "medium"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-green-100 text-green-800"
-                      }
-                    >
-                      {event.priority}
-                    </Badge>
+                    <PriorityBadge priority={event.priority} />
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">
+              <p className="text-gray-500 dark:text-gray-400 text-center py-4">
                 No upcoming events
               </p>
             )}
@@ -250,21 +247,23 @@ const DashboardPageContent: FC = () => {
                 {approachingDeadlines.map((event: any) => (
                   <div
                     key={event.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className="flex items-center justify-between p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-800/50 hover:bg-gray-200 dark:hover:bg-gray-800/70 transition-colors shadow-sm"
                   >
                     <div>
-                      <h4 className="font-medium">{event.name}</h4>
-                      <p className="text-sm text-gray-600">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                        {event.name}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Deadline:{" "}
                         {format(new Date(event.cfp_deadline), "MMM d, yyyy")}
                       </p>
                     </div>
-                    <Clock className="h-4 w-4 text-orange-500" />
+                    <Clock className="h-4 w-4 text-orange-500 dark:text-orange-400" />
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">
+              <p className="text-gray-500 dark:text-gray-400 text-center py-4">
                 No approaching deadlines
               </p>
             )}
@@ -285,14 +284,16 @@ const DashboardPageContent: FC = () => {
                 {recentSubmissions.map((submission: any) => (
                   <div
                     key={submission.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className="flex items-center justify-between p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-800/50 hover:bg-gray-200 dark:hover:bg-gray-800/70 transition-colors shadow-sm"
                   >
                     <div>
-                      <h4 className="font-medium">{submission.title}</h4>
-                      <p className="text-sm text-gray-600">
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                        {submission.title}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         by {submission.submitterName}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-500">
                         {format(
                           new Date(submission.submissionDate),
                           "MMM d, yyyy"
@@ -302,12 +303,12 @@ const DashboardPageContent: FC = () => {
                     <Badge
                       className={
                         submission.status === "accepted"
-                          ? "bg-green-100 text-green-800"
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800"
                           : submission.status === "rejected"
-                          ? "bg-red-100 text-red-800"
+                          ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800"
                           : submission.status === "submitted"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
+                          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                          : "bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700"
                       }
                     >
                       {submission.status}
@@ -316,7 +317,7 @@ const DashboardPageContent: FC = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">
+              <p className="text-gray-500 dark:text-gray-400 text-center py-4">
                 No recent submissions
               </p>
             )}

@@ -1,7 +1,13 @@
 import { FC, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Event, Attendee, CFPSubmission, Asset } from "@shared/schema";
+import {
+  Event,
+  Attendee,
+  CFPSubmission,
+  Asset,
+  eventPriorities,
+} from "@/../../shared/database-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -450,9 +456,11 @@ const EventsPageContent: FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Priorities</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
+                  {eventPriorities.map((priority) => (
+                    <SelectItem key={priority} value={priority}>
+                      {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <div className="relative col-span-2">
@@ -517,6 +525,7 @@ const EventsPageContent: FC = () => {
                 tripReportCounts={eventTripReports}
                 eventSpeakers={eventSpeakers}
                 eventAttendees={eventAttendees}
+                onEditEvent={openEditModal}
               />
             )}
 

@@ -12,6 +12,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PriorityBadge } from "@/components/ui/priority-badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Dialog,
   DialogContent,
@@ -201,68 +203,6 @@ export default function ApprovalWorkflowsPage() {
     createWorkflowMutation.mutate(workflowData);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "pending":
-        return (
-          <Badge variant="outline" className="flex items-center gap-1">
-            <Clock className="h-3 w-3" /> Pending
-          </Badge>
-        );
-      case "approved":
-        return (
-          <Badge
-            variant="success"
-            className="flex items-center gap-1 bg-green-500"
-          >
-            <CheckCircle className="h-3 w-3" /> Approved
-          </Badge>
-        );
-      case "rejected":
-        return (
-          <Badge variant="destructive" className="flex items-center gap-1">
-            <XCircle className="h-3 w-3" /> Rejected
-          </Badge>
-        );
-      case "changes_requested":
-        return (
-          <Badge
-            variant="warning"
-            className="flex items-center gap-1 bg-yellow-500"
-          >
-            <AlertCircle className="h-3 w-3" /> Changes Requested
-          </Badge>
-        );
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return (
-          <Badge variant="destructive" className="capitalize">
-            {priority}
-          </Badge>
-        );
-      case "medium":
-        return (
-          <Badge variant="outline" className="capitalize">
-            {priority}
-          </Badge>
-        );
-      case "low":
-        return (
-          <Badge variant="secondary" className="capitalize">
-            {priority}
-          </Badge>
-        );
-      default:
-        return <Badge className="capitalize">{priority}</Badge>;
-    }
-  };
-
   const renderWorkflowCards = () => {
     if (isLoading) {
       return Array(6)
@@ -293,7 +233,7 @@ export default function ApprovalWorkflowsPage() {
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start mb-2">
             <CardTitle className="text-xl">{workflow.title}</CardTitle>
-            {getStatusBadge(workflow.status)}
+            <StatusBadge status={workflow.status} type="approval" />
           </div>
           <div className="flex justify-between items-center">
             <CardDescription className="flex items-center gap-1 capitalize">
@@ -309,7 +249,9 @@ export default function ApprovalWorkflowsPage() {
                 </span>
               )}
             </CardDescription>
-            <div>{getPriorityBadge(workflow.priority)}</div>
+            <div>
+              <PriorityBadge priority={workflow.priority} />
+            </div>
           </div>
         </CardHeader>
         <CardContent>

@@ -42,71 +42,21 @@ console.log('Keycloak configuration:', {
  */
 export const initKeycloak = (): Promise<boolean> => {
   return new Promise((resolve) => {
-    console.log('Initializing Keycloak...');
+    console.log('Initializing Keycloak with working configuration...');
 
-    // Enhanced initialization with better session detection
+    // Use the working configuration from prod
     keycloak
       .init({
         onLoad: 'check-sso',
-        silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
-        checkLoginIframe: true,
-        enableLogging: true,
-        pkceMethod: 'S256',
-        flow: 'standard'
+        checkLoginIframe: false,
+        enableLogging: false
       })
       .then((authenticated) => {
-        console.log('[KEYCLOAK_INIT] Keycloak initialized successfully. Authenticated:', authenticated);
-        console.log('[KEYCLOAK_INIT] Keycloak token:', keycloak.token ? 'present' : 'missing');
-        console.log('[KEYCLOAK_INIT] Keycloak subject:', keycloak.subject);
-        console.log('[KEYCLOAK_INIT] Full token info:', {
-          authenticated: keycloak.authenticated,
-          token: keycloak.token ? `${keycloak.token.substring(0, 20)}...` : null,
-          tokenParsed: keycloak.tokenParsed ? 'present' : 'missing',
-          subject: keycloak.subject,
-          username: keycloak.tokenParsed?.preferred_username,
-          exp: keycloak.tokenParsed?.exp,
-          iat: keycloak.tokenParsed?.iat
-        });
-
-        if (authenticated && keycloak.token) {
-          console.log('User is authenticated, setting up token refresh');
-          setupTokenRefresh();
-
-          // Clean up OAuth callback parameters from URL after successful authentication
-          const url = new URL(window.location.href);
-          console.log('Current URL during cleanup:', url.toString());
-          console.log('URL search params:', Array.from(url.searchParams.entries()));
-          console.log('URL pathname:', url.pathname);
-          console.log('URL search:', url.search);
-
-          const hasOAuthParams = url.searchParams.has('code') || url.searchParams.has('state') ||
-                                 url.searchParams.has('session_state') || url.searchParams.has('iss') ||
-                                 url.searchParams.has('auth_callback');
-
-          console.log('Has OAuth params:', hasOAuthParams);
-
-          // Always clean up any OAuth parameters that might exist
-          if (url.search) {
-            console.log('Cleaning up all query parameters from URL');
-
-            // Clear all parameters and rebuild URL
-            const cleanUrl = `${url.origin}${url.pathname}`;
-            console.log('Clean URL:', cleanUrl);
-
-            // Update browser URL without triggering page reload
-            window.history.replaceState({}, document.title, cleanUrl);
-            console.log('URL updated to:', cleanUrl);
-          } else {
-            console.log('No query parameters found in URL');
-          }
-        } else {
-          console.log('User is not authenticated or no token found');
-        }
+        console.log('Keycloak initialized. Authenticated:', authenticated);
         resolve(authenticated);
       })
       .catch((error) => {
         console.error('Failed to initialize Keycloak:', error);
-        // Continue without authentication
         resolve(false);
       });
   });
