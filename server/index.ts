@@ -23,55 +23,78 @@ function log(message: string, source = "express") {
 
 const app = express();
 
+// Trust proxy - TEMPORARILY DISABLED for debugging
+// app.set('trust proxy', 1);
+
 // Security middleware
+const keycloakUrl = process.env.KEYCLOAK_CLIENT_URL || process.env.VITE_KEYCLOAK_URL || "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com";
+// Extract base URL (without /auth) for CSP - Keycloak needs both base URL and /auth path
+const keycloakBaseUrl = keycloakUrl.replace(/\/auth$/, '');
+console.log(`🔐 CSP Keycloak URL: ${keycloakUrl}`);
+console.log(`🔐 CSP Keycloak Base URL: ${keycloakBaseUrl}`);
+console.log(`🔐 KEYCLOAK_CLIENT_URL: ${process.env.KEYCLOAK_CLIENT_URL}`);
+console.log(`🔐 VITE_KEYCLOAK_URL: ${process.env.VITE_KEYCLOAK_URL}`);
+const additionalConnectSrc = process.env.CSP_CONNECT_SRC ? process.env.CSP_CONNECT_SRC.split(',') : [];
+const additionalFrameSrc = process.env.CSP_FRAME_SRC ? process.env.CSP_FRAME_SRC.split(',') : [];
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'self'", "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", ...(process.env.CSP_STYLE_SRC || "https://fonts.googleapis.com").split(',')],
+      scriptSrc: ["'self'", ...(process.env.CSP_SCRIPT_SRC || "").split(',').filter(Boolean)],
+      imgSrc: ["'self'", "data:", "https:", ...(process.env.CSP_IMG_SRC || "").split(',').filter(Boolean)],
+              connectSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalConnectSrc],
+      fontSrc: ["'self'", ...(process.env.CSP_FONT_SRC || "https://fonts.gstatic.com").split(',')],
+      objectSrc: [process.env.CSP_OBJECT_SRC || "'none'"],
+      mediaSrc: ["'self'", ...(process.env.CSP_MEDIA_SRC || "").split(',').filter(Boolean)],
+              frameSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalFrameSrc],
     },
   },
-  crossOriginEmbedderPolicy: false,
+  crossOriginEmbedderPolicy: process.env.HELMET_COEP !== 'true',
   hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
+    maxAge: parseInt(process.env.HELMET_HSTS_MAX_AGE || '31536000'),
+    includeSubDomains: process.env.HELMET_HSTS_INCLUDE_SUBDOMAINS !== 'false',
+    preload: process.env.HELMET_HSTS_PRELOAD !== 'false'
   }
 }));
 
-// Rate limiting
+// Rate limiting - exclude health endpoints
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // Default 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX || '100'), // Default 100 requests per window
   message: {
-    error: "Too many requests from this IP, please try again later.",
-    retryAfter: 900
+    error: process.env.RATE_LIMIT_MESSAGE || "Too many requests from this IP, please try again later.",
+    retryAfter: parseInt(process.env.RATE_LIMIT_RETRY_AFTER || '900')
   },
-  standardHeaders: true,
-  legacyHeaders: false,
+  standardHeaders: process.env.RATE_LIMIT_STANDARD_HEADERS !== 'false', // Default true
+  legacyHeaders: process.env.RATE_LIMIT_LEGACY_HEADERS === 'true', // Default false
+  // Skip validation for X-Forwarded-For in containerized environments
+  validate: {
+    xForwardedForHeader: false
+  },
+  // Skip rate limiting for health endpoints
+  skip: (req) => {
+    const skipPaths = (process.env.RATE_LIMIT_SKIP_PATHS || '/api/health,/api/version').split(',');
+    return skipPaths.includes(req.path);
+  }
 });
 
-app.use(limiter);
+// TEMPORARILY DISABLED for debugging
+// app.use(limiter);
 
 // Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
-  resave: false,
-  saveUninitialized: false,
+  resave: process.env.SESSION_RESAVE === 'true' || false,
+  saveUninitialized: process.env.SESSION_SAVE_UNINITIALIZED === 'true' || false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    httpOnly: true, // Prevent XSS attacks
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'strict' // CSRF protection
+    secure: process.env.SESSION_SECURE === 'true' || process.env.NODE_ENV === 'production',
+    httpOnly: process.env.SESSION_HTTP_ONLY !== 'false', // Default true, can be disabled
+    maxAge: parseInt(process.env.SESSION_MAX_AGE || '86400000'), // Default 24 hours in ms
+    sameSite: (process.env.SESSION_SAME_SITE as 'strict' | 'lax' | 'none') || 'lax'
   },
-  name: 'ospo.sid' // Custom session name
+  name: process.env.SESSION_NAME || 'ospo.sid'
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -108,6 +131,10 @@ console.log(`Setting up Keycloak proxy to internal URL: ${keycloakInternalUrl}`)
 // requests to come with the /auth prefix. However, our proxy is forwarding
 // /auth requests to http://keycloak:8080/auth, which would create /auth/auth
 // So we need to strip the /auth prefix before forwarding to Keycloak
+const proxyForwardedHost = process.env.PROXY_FORWARDED_HOST || `localhost:${process.env.PORT || '4576'}`;
+const proxyForwardedProto = process.env.PROXY_FORWARDED_PROTO || 'http';
+const proxyForwardedPort = process.env.PROXY_FORWARDED_PORT || process.env.PORT || '4576';
+
 const proxyOptions = {
   target: keycloakInternalUrl,
   changeOrigin: true,
@@ -117,9 +144,9 @@ const proxyOptions = {
   },
   // Preserve the original host header to maintain port information
   headers: {
-    'X-Forwarded-Host': 'localhost:7654',
-    'X-Forwarded-Proto': 'http',
-    'X-Forwarded-Port': '7654'
+    'X-Forwarded-Host': proxyForwardedHost,
+    'X-Forwarded-Proto': proxyForwardedProto,
+    'X-Forwarded-Port': proxyForwardedPort
   },
   // Handle redirects properly
   followRedirects: false,
@@ -127,9 +154,13 @@ const proxyOptions = {
     // Intercept redirect responses and fix the location header
     if (proxyRes.statusCode && proxyRes.statusCode >= 300 && proxyRes.statusCode < 400) {
       const location = proxyRes.headers.location;
-      if (location && typeof location === "string" && location.includes('localhost/auth')) {
-        proxyRes.headers.location = location.replace('localhost/auth', 'localhost:4576/auth');
-        console.log(`Fixed redirect from ${location} to ${proxyRes.headers.location}`);
+      if (location && typeof location === "string") {
+        const redirectPattern = process.env.PROXY_REDIRECT_PATTERN || 'localhost/auth';
+        const redirectReplacement = process.env.PROXY_REDIRECT_REPLACEMENT || `localhost:${process.env.PORT || '4576'}/auth`;
+        if (location.includes(redirectPattern)) {
+          proxyRes.headers.location = location.replace(redirectPattern, redirectReplacement);
+          console.log(`Fixed redirect from ${location} to ${proxyRes.headers.location}`);
+        }
       }
     }
   }
@@ -157,7 +188,7 @@ app.use('/auth', (req, res, next) => {
         </html>
       `);
     }
-  }, 10000); // 10 second timeout
+  }, parseInt(process.env.PROXY_TIMEOUT_MS || '10000')); // Default 10 second timeout
 
   keycloakProxy(req, res, (err: any) => {
     // Clear the timeout since the request completed (with or without error)

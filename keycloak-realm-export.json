@@ -51,16 +51,12 @@
         "http://localhost/*",
         "http://localhost:80/*",
         "http://localhost:4576/*",
-        "https://*.replit.dev/*",
-        "https://*.replit.app/*",
         "https://*.apps.ospo-osci.z3b1.p1.openshiftapps.com/*"
       ],
       "webOrigins": [
         "http://localhost",
         "http://localhost:80",
         "http://localhost:4576",
-        "https://*.replit.dev",
-        "https://*.replit.app",
         "https://*.apps.ospo-osci.z3b1.p1.openshiftapps.com"
       ],
       "protocol": "openid-connect",
