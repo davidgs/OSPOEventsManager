@@ -24,8 +24,10 @@ import {
   Upload,
   Plus,
   Search,
+  Table,
 } from "lucide-react";
 import EventsList from "@/components/ui/events-list";
+import EventsCompactList from "@/components/ui/events-compact-list";
 import CalendarView from "@/components/ui/calendar-view";
 import AddEventModal from "@/components/ui/add-event-modal-fixed";
 import EditEventModal from "@/components/ui/edit-event-modal";
@@ -37,6 +39,7 @@ import { z } from "zod";
 
 enum ViewMode {
   List = "list",
+  CompactList = "compact",
   Calendar = "calendar",
   Map = "map",
 }
@@ -358,8 +361,8 @@ const EventsPageContent: FC = () => {
     // Filter by search term
     if (
       searchTerm &&
-      !event.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !event.location.toLowerCase().includes(searchTerm.toLowerCase())
+      !(event.name || "").toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !(event.location || "").toLowerCase().includes(searchTerm.toLowerCase())
     ) {
       matches = false;
     }
@@ -414,7 +417,17 @@ const EventsPageContent: FC = () => {
                 className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium h-8 sm:h-auto"
               >
                 <List className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />{" "}
-                <span className="hidden xs:inline">List</span>
+                <span className="hidden xs:inline">Cards</span>
+              </Button>
+              <Button
+                variant={
+                  viewMode === ViewMode.CompactList ? "secondary" : "ghost"
+                }
+                onClick={() => setViewMode(ViewMode.CompactList)}
+                className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium h-8 sm:h-auto"
+              >
+                <Table className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />{" "}
+                <span className="hidden xs:inline">Table</span>
               </Button>
               <Button
                 variant={viewMode === ViewMode.Calendar ? "secondary" : "ghost"}
@@ -517,6 +530,19 @@ const EventsPageContent: FC = () => {
               />
             )}
 
+            {viewMode === ViewMode.CompactList && (
+              <EventsCompactList
+                events={filteredEvents}
+                cfpCounts={cfpCounts}
+                attendeeCounts={attendeeCounts}
+                eventSpeakers={eventSpeakers}
+                eventAttendees={eventAttendees}
+                eventTripReports={eventTripReports}
+                onEditEvent={openEditModal}
+                onDeleteEvent={openDeleteDialog}
+              />
+            )}
+
             {viewMode === ViewMode.Calendar && (
               <CalendarView
                 events={filteredEvents}
@@ -545,36 +571,45 @@ const EventsPageContent: FC = () => {
         )}
 
         {/* Pagination */}
-        {filteredEvents.length > 0 && viewMode === ViewMode.List && (
-          <div className="flex items-center justify-between mt-4 sm:mt-6">
-            <div className="flex flex-1 justify-between sm:hidden">
-              <Button variant="outline" size="sm" className="text-xs py-1 h-8">
-                Previous
-              </Button>
-              <Button variant="outline" size="sm" className="text-xs py-1 h-8">
-                Next
-              </Button>
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs sm:text-sm text-foreground">
-                  Showing <span className="font-medium">1</span> to{" "}
-                  <span className="font-medium">
-                    {Math.min(filteredEvents.length, 12)}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-medium">{filteredEvents.length}</span>{" "}
-                  events
-                </p>
+        {filteredEvents.length > 0 &&
+          (viewMode === ViewMode.List || viewMode === ViewMode.CompactList) && (
+            <div className="flex items-center justify-between mt-4 sm:mt-6">
+              <div className="flex flex-1 justify-between sm:hidden">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs py-1 h-8"
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs py-1 h-8"
+                >
+                  Next
+                </Button>
               </div>
-              {filteredEvents.length > 12 && (
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                  {/* Pagination controls would go here when we implement pagination */}
+                  <p className="text-xs sm:text-sm text-foreground">
+                    Showing <span className="font-medium">1</span> to{" "}
+                    <span className="font-medium">
+                      {Math.min(filteredEvents.length, 12)}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-medium">{filteredEvents.length}</span>{" "}
+                    events
+                  </p>
                 </div>
-              )}
+                {filteredEvents.length > 12 && (
+                  <div>
+                    {/* Pagination controls would go here when we implement pagination */}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
 
       {/* Modals */}
