@@ -227,11 +227,10 @@ const AttendeesPage: FC = () => {
       // Filter by search term
       if (
         searchTerm &&
-        !attendee.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !(
-          attendee.email &&
-          attendee.email.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+        !(attendee.name || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) &&
+        !(attendee.email || "").toLowerCase().includes(searchTerm.toLowerCase())
       ) {
         matches = false;
       }

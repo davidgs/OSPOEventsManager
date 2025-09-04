@@ -265,8 +265,10 @@ const CfpSubmissionsPage: FC = () => {
       // Filter by search term
       if (
         searchTerm &&
-        !submission.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !submission.submitterName
+        !(submission.title || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) &&
+        !(submission.submitterName || "")
           .toLowerCase()
           .includes(searchTerm.toLowerCase())
       ) {

@@ -3,8 +3,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import {
-  Plus, Search, DollarSign, AlertTriangle,
-  ArrowUpDown, Mail
+  Plus,
+  Search,
+  DollarSign,
+  AlertTriangle,
+  ArrowUpDown,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +17,25 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,7 +43,16 @@ import { insertSponsorshipSchema } from "@shared/schema";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
 const SponsorshipsPage: FC = () => {
@@ -54,72 +82,75 @@ const SponsorshipsPage: FC = () => {
     isLoading: isLoadingSponsorships,
     isError: isErrorSponsorships,
   } = useQuery({
-    queryKey: ['/api/sponsorships', eventId],
+    queryKey: ["/api/sponsorships", eventId],
     queryFn: async ({ queryKey }) => {
       const url = eventId
         ? `/api/sponsorships?eventId=${eventId}`
-        : '/api/sponsorships';
-      const res = await apiRequest('GET', url);
-      if (!res.ok) throw new Error('Failed to fetch sponsorships');
+        : "/api/sponsorships";
+      const res = await apiRequest("GET", url);
+      if (!res.ok) throw new Error("Failed to fetch sponsorships");
       return await res.json();
     },
   });
 
   // Fetch events for dropdown
-  const {
-    data: events = [],
-    isLoading: isLoadingEvents,
-  } = useQuery({
-    queryKey: ['/api/events'],
+  const { data: events = [], isLoading: isLoadingEvents } = useQuery({
+    queryKey: ["/api/events"],
   });
 
   // Extract unique tiers and statuses for filters
-  const tiers = Array.from(new Set(sponsorships.map((sponsorship: any) => sponsorship.tier)));
-  const statuses = Array.from(new Set(sponsorships.map((sponsorship: any) => sponsorship.status)));
+  const tiers = Array.from(
+    new Set(sponsorships.map((sponsorship: any) => sponsorship.tier))
+  );
+  const statuses = Array.from(
+    new Set(sponsorships.map((sponsorship: any) => sponsorship.status))
+  );
 
   // Add sponsorship mutation
-  const { mutate: addSponsorship, isPending: isAddingSponsorship } = useMutation({
-    mutationFn: async (data: z.infer<typeof insertSponsorshipSchema>) => {
-      return await apiRequest('POST', '/api/sponsorships', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sponsorships'] });
-      setIsAddModalOpen(false);
-      toast({
-        title: "Sponsorship Added",
-        description: "The sponsorship has been added successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add sponsorship",
-        variant: "destructive",
-      });
-    },
-  });
+  const { mutate: addSponsorship, isPending: isAddingSponsorship } =
+    useMutation({
+      mutationFn: async (data: z.infer<typeof insertSponsorshipSchema>) => {
+        return await apiRequest("POST", "/api/sponsorships", data);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/sponsorships"] });
+        setIsAddModalOpen(false);
+        toast({
+          title: "Sponsorship Added",
+          description: "The sponsorship has been added successfully.",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to add sponsorship",
+          variant: "destructive",
+        });
+      },
+    });
 
   // Delete sponsorship mutation
-  const { mutate: deleteSponsorship, isPending: isDeletingSponsorship } = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest('DELETE', `/api/sponsorships/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sponsorships'] });
-      setIsDeleteDialogOpen(false);
-      toast({
-        title: "Sponsorship Deleted",
-        description: "The sponsorship has been deleted successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete sponsorship",
-        variant: "destructive",
-      });
-    },
-  });
+  const { mutate: deleteSponsorship, isPending: isDeletingSponsorship } =
+    useMutation({
+      mutationFn: async (id: number) => {
+        await apiRequest("DELETE", `/api/sponsorships/${id}`);
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/sponsorships"] });
+        setIsDeleteDialogOpen(false);
+        toast({
+          title: "Sponsorship Deleted",
+          description: "The sponsorship has been deleted successfully.",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to delete sponsorship",
+          variant: "destructive",
+        });
+      },
+    });
 
   // Form for adding a new sponsorship
   const form = useForm<z.infer<typeof insertSponsorshipSchema>>({
@@ -137,7 +168,9 @@ const SponsorshipsPage: FC = () => {
   });
 
   // Handle adding a new sponsorship
-  const handleAddSponsorship = (data: z.infer<typeof insertSponsorshipSchema>) => {
+  const handleAddSponsorship = (
+    data: z.infer<typeof insertSponsorshipSchema>
+  ) => {
     addSponsorship(data);
   };
 
@@ -164,8 +197,8 @@ const SponsorshipsPage: FC = () => {
         break;
       case "amount":
         // Handle amount sorting (convert to number if possible)
-        const amountA = a.amount ? a.amount.replace(/[^0-9.]/g, '') : "0";
-        const amountB = b.amount ? b.amount.replace(/[^0-9.]/g, '') : "0";
+        const amountA = a.amount ? a.amount.replace(/[^0-9.]/g, "") : "0";
+        const amountB = b.amount ? b.amount.replace(/[^0-9.]/g, "") : "0";
         comparison = parseFloat(amountA) - parseFloat(amountB);
         break;
       case "status":
@@ -205,9 +238,15 @@ const SponsorshipsPage: FC = () => {
       }
 
       // Filter by search term
-      if (searchTerm &&
-          !sponsorship.tier.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !(sponsorship.contact_name && sponsorship.contact_name.toLowerCase().includes(searchTerm.toLowerCase()))) {
+      if (
+        searchTerm &&
+        !(sponsorship.tier || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) &&
+        !(sponsorship.contact_name || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      ) {
         matches = false;
       }
 
@@ -229,13 +268,29 @@ const SponsorshipsPage: FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case "confirmed":
-        return <Badge variant="outline" className="bg-green-100 text-green-800">Confirmed</Badge>;
+        return (
+          <Badge variant="outline" className="bg-green-100 text-green-800">
+            Confirmed
+          </Badge>
+        );
       case "pending":
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+        return (
+          <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+            Pending
+          </Badge>
+        );
       case "cancelled":
-        return <Badge variant="outline" className="bg-red-100 text-red-800">Cancelled</Badge>;
+        return (
+          <Badge variant="outline" className="bg-red-100 text-red-800">
+            Cancelled
+          </Badge>
+        );
       default:
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800">{status}</Badge>;
+        return (
+          <Badge variant="outline" className="bg-gray-100 text-gray-800">
+            {status}
+          </Badge>
+        );
     }
   };
 
@@ -248,10 +303,13 @@ const SponsorshipsPage: FC = () => {
         {/* Header */}
         <div className="md:flex md:items-center md:justify-between pb-6">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate">Sponsorships</h2>
+            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate">
+              Sponsorships
+            </h2>
             {eventId && !isLoadingEvents && (
               <p className="mt-1 text-sm text-gray-500">
-                Showing sponsorships for event: <span className="font-medium">{getEventName(eventId)}</span>
+                Showing sponsorships for event:{" "}
+                <span className="font-medium">{getEventName(eventId)}</span>
               </p>
             )}
           </div>
@@ -267,10 +325,7 @@ const SponsorshipsPage: FC = () => {
         <div className="mb-6 bg-white shadow rounded-lg p-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <div className="flex flex-col sm:flex-row gap-4">
-              <Select
-                value={levelFilter}
-                onValueChange={setLevelFilter}
-              >
+              <Select value={levelFilter} onValueChange={setLevelFilter}>
                 <SelectTrigger className="w-full md:w-[180px]">
                   <SelectValue placeholder="All Tiers" />
                 </SelectTrigger>
@@ -284,10 +339,7 @@ const SponsorshipsPage: FC = () => {
                 </SelectContent>
               </Select>
 
-              <Select
-                value={statusFilter}
-                onValueChange={setStatusFilter}
-              >
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-[180px]">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
@@ -326,8 +378,17 @@ const SponsorshipsPage: FC = () => {
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
               <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
-              <p className="mt-4 text-red-500">Failed to load sponsorships. Please try again.</p>
-              <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/sponsorships'] })} className="mt-4">
+              <p className="mt-4 text-red-500">
+                Failed to load sponsorships. Please try again.
+              </p>
+              <Button
+                onClick={() =>
+                  queryClient.invalidateQueries({
+                    queryKey: ["/api/sponsorships"],
+                  })
+                }
+                className="mt-4"
+              >
                 Retry
               </Button>
             </div>
@@ -336,14 +397,23 @@ const SponsorshipsPage: FC = () => {
           <Card>
             <CardContent className="text-center p-12">
               <DollarSign className="mx-auto h-12 w-12 text-gray-400" />
-              <CardTitle className="mt-4 text-xl">No Sponsorships Found</CardTitle>
+              <CardTitle className="mt-4 text-xl">
+                No Sponsorships Found
+              </CardTitle>
               <p className="mt-2 text-gray-500">
                 {searchTerm || levelFilter !== "all" || statusFilter !== "all"
                   ? "Try adjusting your search or filters to find what you're looking for."
                   : "Get started by adding your first sponsorship."}
               </p>
-              {!(searchTerm || levelFilter !== "all" || statusFilter !== "all") && (
-                <Button onClick={() => setIsAddModalOpen(true)} className="mt-6">
+              {!(
+                searchTerm ||
+                levelFilter !== "all" ||
+                statusFilter !== "all"
+              ) && (
+                <Button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="mt-6"
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Add Sponsorship
                 </Button>
@@ -381,7 +451,10 @@ const SponsorshipsPage: FC = () => {
                       </div>
                     </th>
                     {!eventId && (
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Event
                       </th>
                     )}
@@ -409,7 +482,10 @@ const SponsorshipsPage: FC = () => {
                         )}
                       </div>
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Actions
                     </th>
                   </tr>
@@ -418,14 +494,20 @@ const SponsorshipsPage: FC = () => {
                   {filteredSponsorships.map((sponsorship: any) => (
                     <tr key={sponsorship.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{sponsorship.level}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {sponsorship.level}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{sponsorship.amount || "-"}</div>
+                        <div className="text-sm text-gray-500">
+                          {sponsorship.amount || "-"}
+                        </div>
                       </td>
                       {!eventId && (
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{getEventName(sponsorship.eventId)}</div>
+                          <div className="text-sm text-gray-500">
+                            {getEventName(sponsorship.eventId)}
+                          </div>
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -478,7 +560,10 @@ const SponsorshipsPage: FC = () => {
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleAddSponsorship)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleAddSponsorship)}
+              className="space-y-4"
+            >
               {/* Event Selection (if not pre-selected) */}
               {!eventId && (
                 <FormField
@@ -486,9 +571,13 @@ const SponsorshipsPage: FC = () => {
                   name="event_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Event <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>
+                        Event <span className="text-red-500">*</span>
+                      </FormLabel>
                       <Select
-                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        onValueChange={(value) =>
+                          field.onChange(parseInt(value))
+                        }
                         defaultValue={field.value?.toString()}
                       >
                         <FormControl>
@@ -498,7 +587,10 @@ const SponsorshipsPage: FC = () => {
                         </FormControl>
                         <SelectContent>
                           {events.map((event: any) => (
-                            <SelectItem key={event.id} value={event.id.toString()}>
+                            <SelectItem
+                              key={event.id}
+                              value={event.id.toString()}
+                            >
                               {event.name}
                             </SelectItem>
                           ))}
@@ -516,9 +608,15 @@ const SponsorshipsPage: FC = () => {
                 name="sponsor_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Sponsor Name <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>
+                      Sponsor Name <span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Microsoft, Google, IBM" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="e.g. Microsoft, Google, IBM"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -531,9 +629,15 @@ const SponsorshipsPage: FC = () => {
                 name="tier"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Sponsorship Tier <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>
+                      Sponsorship Tier <span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Gold, Silver, Platinum" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="e.g. Gold, Silver, Platinum"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -548,7 +652,11 @@ const SponsorshipsPage: FC = () => {
                   <FormItem>
                     <FormLabel>Amount</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. $5,000" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="e.g. $5,000"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormDescription>
                       Optional: Sponsorship amount
@@ -564,8 +672,13 @@ const SponsorshipsPage: FC = () => {
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>
+                      Status <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select status" />
@@ -590,7 +703,11 @@ const SponsorshipsPage: FC = () => {
                   <FormItem>
                     <FormLabel>Contact Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Contact person name" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="Contact person name"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormDescription>
                       Optional: Name of contact person
@@ -608,7 +725,12 @@ const SponsorshipsPage: FC = () => {
                   <FormItem>
                     <FormLabel>Contact Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Contact email address" {...field} value={field.value || ""} />
+                      <Input
+                        type="email"
+                        placeholder="Contact email address"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormDescription>
                       Optional: Email of contact person
@@ -641,7 +763,11 @@ const SponsorshipsPage: FC = () => {
               />
 
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddModalOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isAddingSponsorship}>
@@ -654,16 +780,24 @@ const SponsorshipsPage: FC = () => {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this sponsorship?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Are you sure you want to delete this sponsorship?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the {selectedSponsorship?.level} sponsorship from this event. This action cannot be undone.
+              This will permanently remove the {selectedSponsorship?.level}{" "}
+              sponsorship from this event. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletingSponsorship}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeletingSponsorship}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
