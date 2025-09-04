@@ -46,7 +46,7 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https:", ...(process.env.CSP_IMG_SRC || "").split(',').filter(Boolean)],
               connectSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalConnectSrc],
       fontSrc: ["'self'", ...(process.env.CSP_FONT_SRC || "https://fonts.gstatic.com").split(',')],
-      objectSrc: [process.env.CSP_OBJECT_SRC || "'none'"],
+      objectSrc: [process.env.CSP_OBJECT_SRC === 'none' ? "'none'" : (process.env.CSP_OBJECT_SRC || "'none'")],
       mediaSrc: ["'self'", ...(process.env.CSP_MEDIA_SRC || "").split(',').filter(Boolean)],
               frameSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalFrameSrc],
     },

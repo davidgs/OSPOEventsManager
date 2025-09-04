@@ -112,6 +112,9 @@ print_status "Namespace: $NAMESPACE"
 print_status "App URL: $APP_URL"
 print_status "Keycloak URL: $KEYCLOAK_URL"
 
+# Set default values for CSP if not defined
+CSP_OBJECT_SRC="${CSP_OBJECT_SRC:-'none'}"
+
 # Check OpenShift connection
 print_status "Checking OpenShift connection..."
 if ! oc whoami &>/dev/null; then
@@ -606,7 +609,7 @@ spec:
     spec:
       containers:
       - name: ospo-app
-        image: ospo-events-app:latest
+        image: image-registry.openshift-image-registry.svc:5000/dev-rh-events-org/ospo-events-app:latest
         ports:
         - containerPort: 4576
         env:
