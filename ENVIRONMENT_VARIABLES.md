@@ -74,7 +74,7 @@ This document lists all environment variables used by the OSPO Events Manager ap
 | `KEYCLOAK_CLIENT_ID` | `ospo-events-app` | Keycloak client ID |
 | `KEYCLOAK_SERVICE_NAME` | `keycloak` | Kubernetes service name for Keycloak |
 | `KEYCLOAK_SERVICE_PORT` | `8080` | Keycloak service port |
-| `KEYCLOAK_ADMIN_USERNAME` | `admin` | Keycloak admin username |
+| `KEYCLOAK_ADMIN` | `admin` | Keycloak admin username |
 | `KEYCLOAK_ADMIN_PASSWORD` | `admin` | Keycloak admin password (⚠️ Change in production) |
 
 ## 🔄 Proxy Configuration

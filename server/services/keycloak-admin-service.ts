@@ -26,7 +26,7 @@ export class KeycloakAdminService {
     this.config = {
       serverUrl: process.env.KEYCLOAK_SERVER_URL || 'https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com/auth',
       realm: process.env.KEYCLOAK_REALM || 'ospo-events',
-      adminUsername: process.env.KEYCLOAK_ADMIN_USERNAME || 'admin',
+      adminUsername: process.env.KEYCLOAK_ADMIN || 'admin',
       adminPassword: process.env.KEYCLOAK_ADMIN_PASSWORD || 'admin',
       clientId: process.env.KEYCLOAK_CLIENT_ID || 'ospo-events-app'
     };
