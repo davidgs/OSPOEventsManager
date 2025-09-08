@@ -1,4 +1,4 @@
-import { FC } from "react";
+import React, { FC, useState } from "react";
 import { Event } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,17 @@ import { TypeBadge } from "@/components/ui/type-badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PriorityBadge } from "@/components/ui/priority-badge";
 import { GoalBadge } from "@/components/ui/goal-badge";
-import { Edit, Trash2, Users, FileText, MapPin, Calendar } from "lucide-react";
+import {
+  Edit,
+  Trash2,
+  Users,
+  FileText,
+  MapPin,
+  Calendar,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
 import { format } from "date-fns";
 
 interface EventsCompactListProps {
@@ -28,6 +38,7 @@ interface EventsCompactListProps {
   >;
   onEditEvent: (event: Event) => void;
   onDeleteEvent: (event: Event) => void;
+  onEventClick?: (event: Event) => void;
 }
 
 const EventsCompactList: FC<EventsCompactListProps> = ({
@@ -39,7 +50,93 @@ const EventsCompactList: FC<EventsCompactListProps> = ({
   eventTripReports = {},
   onEditEvent,
   onDeleteEvent,
+  onEventClick,
 }) => {
+  const [sortField, setSortField] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-3 w-3" />;
+    }
+    return sortDirection === "asc" ? (
+      <ChevronUp className="h-3 w-3" />
+    ) : (
+      <ChevronDown className="h-3 w-3" />
+    );
+  };
+
+  const sortedEvents = [...events].sort((a, b) => {
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortField) {
+      case "name":
+        aValue = a.name || "";
+        bValue = b.name || "";
+        break;
+      case "type":
+        aValue = a.type || "";
+        bValue = b.type || "";
+        break;
+      case "start_date":
+        aValue = new Date(a.start_date);
+        bValue = new Date(b.start_date);
+        break;
+      case "location":
+        aValue = a.location || "";
+        bValue = b.location || "";
+        break;
+      case "status":
+        aValue = a.status || "";
+        bValue = b.status || "";
+        break;
+      case "priority":
+        aValue = a.priority || "";
+        bValue = b.priority || "";
+        break;
+      case "goal":
+        aValue = a.goal || "";
+        bValue = b.goal || "";
+        break;
+      case "attendees":
+        aValue = attendeeCounts[a.id] || 0;
+        bValue = attendeeCounts[b.id] || 0;
+        break;
+      case "cfp":
+        aValue = cfpCounts[a.id] || 0;
+        bValue = cfpCounts[b.id] || 0;
+        break;
+      case "reports":
+        aValue = eventTripReports[a.id]?.length || 0;
+        bValue = eventTripReports[b.id]?.length || 0;
+        break;
+      default:
+        aValue = a.name || "";
+        bValue = b.name || "";
+    }
+
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const handleRowClick = (event: Event, e: React.MouseEvent) => {
+    // Don't trigger row click if clicking on action buttons
+    if ((e.target as HTMLElement).closest("button")) {
+      return;
+    }
+    onEventClick?.(event);
+  };
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "MMM dd, yyyy");
@@ -69,35 +166,95 @@ const EventsCompactList: FC<EventsCompactListProps> = ({
         <table className="min-w-full divide-y divide-border">
           <thead className="bg-muted/50">
             <tr>
-              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Event
+              <th
+                className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => handleSort("name")}
+              >
+                <div className="flex items-center">
+                  Event
+                  {getSortIcon("name")}
+                </div>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Type
+              <th
+                className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => handleSort("type")}
+              >
+                <div className="flex items-center">
+                  Type
+                  {getSortIcon("type")}
+                </div>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Dates
+              <th
+                className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => handleSort("start_date")}
+              >
+                <div className="flex items-center">
+                  Dates
+                  {getSortIcon("start_date")}
+                </div>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Location
+              <th
+                className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => handleSort("location")}
+              >
+                <div className="flex items-center">
+                  Location
+                  {getSortIcon("location")}
+                </div>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Status
+              <th
+                className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => handleSort("status")}
+              >
+                <div className="flex items-center">
+                  Status
+                  {getSortIcon("status")}
+                </div>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Priority
+              <th
+                className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => handleSort("priority")}
+              >
+                <div className="flex items-center">
+                  Priority
+                  {getSortIcon("priority")}
+                </div>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Goal
+              <th
+                className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => handleSort("goal")}
+              >
+                <div className="flex items-center">
+                  Goal
+                  {getSortIcon("goal")}
+                </div>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Participants
+              <th
+                className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => handleSort("attendees")}
+              >
+                <div className="flex items-center">
+                  Participants
+                  {getSortIcon("attendees")}
+                </div>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                CFP
+              <th
+                className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => handleSort("cfp")}
+              >
+                <div className="flex items-center">
+                  CFP
+                  {getSortIcon("cfp")}
+                </div>
               </th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Reports
+              <th
+                className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted/70 transition-colors"
+                onClick={() => handleSort("reports")}
+              >
+                <div className="flex items-center">
+                  Reports
+                  {getSortIcon("reports")}
+                </div>
               </th>
               <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Actions
@@ -105,10 +262,12 @@ const EventsCompactList: FC<EventsCompactListProps> = ({
             </tr>
           </thead>
           <tbody className="bg-card divide-y divide-border">
-            {events.map((event) => (
+            {sortedEvents.map((event) => (
               <tr
                 key={event.id}
-                className="hover:bg-muted/30 transition-colors"
+                className="hover:bg-muted/30 transition-colors cursor-pointer group"
+                onClick={(e) => handleRowClick(event, e)}
+                title="Click to view event details"
               >
                 <td className="px-3 py-4 whitespace-nowrap">
                   <div className="flex flex-col">
@@ -155,7 +314,14 @@ const EventsCompactList: FC<EventsCompactListProps> = ({
                   <PriorityBadge priority={event.priority} />
                 </td>
                 <td className="px-3 py-4 whitespace-nowrap">
-                  {event.goal && <GoalBadge goal={event.goal} />}
+                  <div className="flex flex-wrap gap-1">
+                    {(typeof event.goal === "string"
+                      ? JSON.parse(event.goal)
+                      : event.goal || []
+                    ).map((goal: string, index: number) => (
+                      <GoalBadge key={index} goal={goal} />
+                    ))}
+                  </div>
                 </td>
                 <td className="px-3 py-4 whitespace-nowrap">
                   <div className="flex items-center space-x-2">
@@ -191,7 +357,8 @@ const EventsCompactList: FC<EventsCompactListProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => onEditEvent(event)}
-                      className="h-7 w-7 p-0 hover:bg-muted"
+                      className="h-7 w-7 p-0 hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Edit event"
                     >
                       <Edit className="h-3 w-3" />
                     </Button>
@@ -199,7 +366,8 @@ const EventsCompactList: FC<EventsCompactListProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => onDeleteEvent(event)}
-                      className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
+                      className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Delete event"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

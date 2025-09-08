@@ -1,5 +1,6 @@
 import React from "react";
 import { Badge } from "./badge";
+import { safeToLowerCase, safeCapitalize } from "@/lib/utils";
 
 interface GoalBadgeProps {
   goal: string;
@@ -7,7 +8,7 @@ interface GoalBadgeProps {
 }
 
 const getGoalColors = (goal: string): string => {
-  const normalizedGoal = goal?.toLowerCase() || "";
+  const normalizedGoal = safeToLowerCase(goal);
 
   switch (normalizedGoal) {
     case "speaking":
@@ -34,7 +35,7 @@ export const GoalBadge: React.FC<GoalBadgeProps> = ({
   className = "",
 }) => {
   const goalColors = getGoalColors(goal);
-  const displayText = goal.charAt(0).toUpperCase() + goal.slice(1);
+  const displayText = safeCapitalize(goal);
 
   return (
     <Badge variant="outline" className={`${goalColors} ${className}`}>

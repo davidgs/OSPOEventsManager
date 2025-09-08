@@ -1,8 +1,20 @@
 import Keycloak from 'keycloak-js';
 
 // Determine the Keycloak URL based on the environment
-const getKeycloakUrl = () => {
-  // First, check if there's an environment variable set
+const getKeycloakUrl = async () => {
+  try {
+    // Try to get the configuration from the server first
+    const response = await fetch('/api/keycloak-config');
+    if (response.ok) {
+      const config = await response.json();
+      console.log('Using server-provided Keycloak URL:', config['auth-server-url']);
+      return config['auth-server-url'];
+    }
+  } catch (error) {
+    console.warn('Failed to get Keycloak config from server, falling back to environment:', error);
+  }
+
+  // Fallback to environment variable
   const envUrl = import.meta.env.VITE_KEYCLOAK_URL;
   if (envUrl) {
     // Handle relative URLs by appending to origin
@@ -22,44 +34,48 @@ const getKeycloakUrl = () => {
   return defaultUrl;
 };
 
-// Create Keycloak instance with dynamic URL
-const keycloak = new Keycloak({
-  url: getKeycloakUrl(),
-  realm: 'ospo-events',
-  clientId: 'ospo-events-app',
-});
+// Create Keycloak instance - URL will be set dynamically
+let keycloak: Keycloak;
 
-// Log the Keycloak configuration for debugging
-console.log('Keycloak configuration:', {
-  url: getKeycloakUrl(),
-  realm: 'ospo-events',
-  clientId: 'ospo-events-app'
-});
 
 /**
  * Initialize Keycloak and handle authentication
  * @returns Promise with the authentication result
  */
-export const initKeycloak = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    console.log('Initializing Keycloak with working configuration...');
+export const initKeycloak = async (): Promise<boolean> => {
+  try {
+    console.log('Initializing Keycloak with dynamic configuration...');
 
-    // Use the working configuration from prod
-    keycloak
-      .init({
-        onLoad: 'check-sso',
-        checkLoginIframe: false,
-        enableLogging: false
-      })
-      .then((authenticated) => {
-        console.log('Keycloak initialized. Authenticated:', authenticated);
-        resolve(authenticated);
-      })
-      .catch((error) => {
-        console.error('Failed to initialize Keycloak:', error);
-        resolve(false);
-      });
-  });
+    // Get the Keycloak URL dynamically
+    const keycloakUrl = await getKeycloakUrl();
+
+    // Create Keycloak instance with the dynamic URL
+    keycloak = new Keycloak({
+      url: keycloakUrl,
+      realm: 'ospo-events',
+      clientId: 'ospo-events-app',
+    });
+
+    // Log the Keycloak configuration for debugging
+    console.log('Keycloak configuration:', {
+      url: keycloakUrl,
+      realm: 'ospo-events',
+      clientId: 'ospo-events-app',
+    });
+
+    // Initialize Keycloak
+    const authenticated = await keycloak.init({
+      onLoad: 'check-sso',
+      checkLoginIframe: false,
+      enableLogging: false
+    });
+
+    console.log('Keycloak initialized. Authenticated:', authenticated);
+    return authenticated;
+  } catch (error) {
+    console.error('Failed to initialize Keycloak:', error);
+    return false;
+  }
 };
 
 /**
@@ -121,28 +137,28 @@ export const login = (): Promise<void> => {
         redirectUri: redirectUri,
         loginHint: ''
       })
-      .then(() => {
-        console.log('Login initiated successfully');
-        resolve();
-      })
-      .catch((error) => {
-        console.error('Login failed:', error);
+        .then(() => {
+          console.log('Login initiated successfully');
+          resolve();
+        })
+        .catch((error) => {
+          console.error('Login failed:', error);
 
-        // Try direct redirect as fallback with explicit realm
-        try {
-          const baseUrl = (keycloak.authServerUrl || getKeycloakUrl()).replace(/\/+$/, '');
-          const authUrl = `${baseUrl}/realms/ospo-events/protocol/openid-connect/auth`;
-          const clientId = keycloak.clientId;
-          const encodedRedirectUri = encodeURIComponent(redirectUri);
+          // Try direct redirect as fallback with explicit realm
+          try {
+            const baseUrl = (keycloak.authServerUrl || getKeycloakUrl()).replace(/\/+$/, '');
+            const authUrl = `${baseUrl}/realms/ospo-events/protocol/openid-connect/auth`;
+            const clientId = keycloak.clientId;
+            const encodedRedirectUri = encodeURIComponent(redirectUri);
 
-          console.log('Direct auth URL:', authUrl);
-          window.location.href = `${authUrl}?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=openid`;
-          resolve(); // This will resolve but page will redirect
-        } catch (err) {
-          console.error('Fallback login also failed:', err);
-          reject(err);
-        }
-      });
+            console.log('Direct auth URL:', authUrl);
+            window.location.href = `${authUrl}?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&response_type=code&scope=openid`;
+            resolve(); // This will resolve but page will redirect
+          } catch (err) {
+            console.error('Fallback login also failed:', err);
+            reject(err);
+          }
+        });
     } catch (error) {
       console.error('Unexpected error during login:', error);
       reject(error);
@@ -166,26 +182,26 @@ export const register = (): Promise<void> => {
       keycloak.register({
         redirectUri: currentUrl,
       })
-      .then(() => {
-        console.log('Registration initiated successfully');
-        resolve();
-      })
-      .catch((error) => {
-        console.error('Registration failed:', error);
+        .then(() => {
+          console.log('Registration initiated successfully');
+          resolve();
+        })
+        .catch((error) => {
+          console.error('Registration failed:', error);
 
-        // Try direct redirect as fallback
-        try {
-          const authUrl = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/registrations`;
-          const clientId = keycloak.clientId;
-          const redirectUri = encodeURIComponent(currentUrl);
+          // Try direct redirect as fallback
+          try {
+            const authUrl = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/registrations`;
+            const clientId = keycloak.clientId;
+            const redirectUri = encodeURIComponent(currentUrl);
 
-          window.location.href = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
-          resolve(); // This will resolve but page will redirect
-        } catch (err) {
-          console.error('Fallback registration also failed:', err);
-          reject(err);
-        }
-      });
+            window.location.href = `${authUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid`;
+            resolve(); // This will resolve but page will redirect
+          } catch (err) {
+            console.error('Fallback registration also failed:', err);
+            reject(err);
+          }
+        });
     } catch (error) {
       console.error('Unexpected error during registration:', error);
       reject(error);
@@ -210,25 +226,25 @@ export const logout = (): Promise<void> => {
       keycloak.logout({
         redirectUri: window.location.origin
       })
-      .then(() => {
-        console.log('Logout initiated successfully');
-        resolve();
-      })
-      .catch((error) => {
-        console.error('Logout failed:', error);
+        .then(() => {
+          console.log('Logout initiated successfully');
+          resolve();
+        })
+        .catch((error) => {
+          console.error('Logout failed:', error);
 
-        // Fallback - direct redirect to logout endpoint
-        try {
-          const logoutUrl = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/logout`;
-          const redirectUri = encodeURIComponent(window.location.origin);
+          // Fallback - direct redirect to logout endpoint
+          try {
+            const logoutUrl = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/logout`;
+            const redirectUri = encodeURIComponent(window.location.origin);
 
-          window.location.href = `${logoutUrl}?redirect_uri=${redirectUri}`;
-          resolve(); // This will resolve but page will redirect
-        } catch (err) {
-          console.error('Fallback logout also failed:', err);
-          reject(err);
-        }
-      });
+            window.location.href = `${logoutUrl}?redirect_uri=${redirectUri}`;
+            resolve(); // This will resolve but page will redirect
+          } catch (err) {
+            console.error('Fallback logout also failed:', err);
+            reject(err);
+          }
+        });
     } catch (error) {
       console.error('Unexpected error during logout:', error);
       // Try to recover by reloading the page

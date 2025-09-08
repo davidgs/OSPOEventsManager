@@ -1,4 +1,6 @@
+import { useLocation } from "wouter";
 import { FC, useState } from "react";
+import { safeToLowerCase, safeCapitalize } from "@/lib/utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
@@ -46,9 +48,19 @@ enum ViewMode {
 
 const EventsPageContent: FC = () => {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
-  // View state
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.List);
+  // View state with persistence
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem("events-view-mode");
+    return (saved as ViewMode) || ViewMode.List;
+  });
+
+  // Save view mode to localStorage whenever it changes
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem("events-view-mode", mode);
+  };
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -304,6 +316,11 @@ const EventsPageContent: FC = () => {
     addEvent(eventData);
   };
 
+  // Handle event click to navigate to details
+  const handleEventClick = (event: Event) => {
+    setLocation(`/events/${event.id}`);
+  };
+
   // Handle editing an event
   const handleEditEvent = (id: number, eventData: z.infer<any>) => {
     // Debug the event data being submitted
@@ -361,8 +378,12 @@ const EventsPageContent: FC = () => {
     // Filter by search term
     if (
       searchTerm &&
-      !(event.name || "").toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !(event.location || "").toLowerCase().includes(searchTerm.toLowerCase())
+      !safeToLowerCase(event.name || "").includes(
+        safeToLowerCase(searchTerm)
+      ) &&
+      !safeToLowerCase(event.location || "").includes(
+        safeToLowerCase(searchTerm)
+      )
     ) {
       matches = false;
     }
@@ -413,7 +434,7 @@ const EventsPageContent: FC = () => {
             <div className="flex space-x-1 sm:space-x-3">
               <Button
                 variant={viewMode === ViewMode.List ? "secondary" : "ghost"}
-                onClick={() => setViewMode(ViewMode.List)}
+                onClick={() => handleViewModeChange(ViewMode.List)}
                 className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium h-8 sm:h-auto"
               >
                 <List className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />{" "}
@@ -423,7 +444,7 @@ const EventsPageContent: FC = () => {
                 variant={
                   viewMode === ViewMode.CompactList ? "secondary" : "ghost"
                 }
-                onClick={() => setViewMode(ViewMode.CompactList)}
+                onClick={() => handleViewModeChange(ViewMode.CompactList)}
                 className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium h-8 sm:h-auto"
               >
                 <Table className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />{" "}
@@ -431,7 +452,7 @@ const EventsPageContent: FC = () => {
               </Button>
               <Button
                 variant={viewMode === ViewMode.Calendar ? "secondary" : "ghost"}
-                onClick={() => setViewMode(ViewMode.Calendar)}
+                onClick={() => handleViewModeChange(ViewMode.Calendar)}
                 className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium h-8 sm:h-auto"
               >
                 <CalendarIcon className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />{" "}
@@ -439,7 +460,7 @@ const EventsPageContent: FC = () => {
               </Button>
               <Button
                 variant={viewMode === ViewMode.Map ? "secondary" : "ghost"}
-                onClick={() => setViewMode(ViewMode.Map)}
+                onClick={() => handleViewModeChange(ViewMode.Map)}
                 className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium h-8 sm:h-auto"
               >
                 <MapPin className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />{" "}
@@ -471,7 +492,7 @@ const EventsPageContent: FC = () => {
                   <SelectItem value="all">All Priorities</SelectItem>
                   {eventPriorities.map((priority) => (
                     <SelectItem key={priority} value={priority}>
-                      {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                      {safeCapitalize(priority)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -540,6 +561,7 @@ const EventsPageContent: FC = () => {
                 eventTripReports={eventTripReports}
                 onEditEvent={openEditModal}
                 onDeleteEvent={openDeleteDialog}
+                onEventClick={handleEventClick}
               />
             )}
 
@@ -646,6 +668,7 @@ const EventsPageContent: FC = () => {
 };
 
 const EventsPage: FC = () => {
+  const [, setLocation] = useLocation();
   console.log("EventsPage mounting");
 
   return (

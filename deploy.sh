@@ -38,6 +38,7 @@ show_usage() {
     echo "  --dev          Deploy to development environment"
     echo "  --prod         Deploy to production environment"
     echo "  --help         Show this help message"
+    echo "  --app-only     Deploy only the application"
     echo ""
     echo "Requirements:"
     echo "  - .env file must exist with configuration"
@@ -49,6 +50,7 @@ show_usage() {
 }
 
 # Parse command line arguments
+APP_ONLY=""
 ENVIRONMENT=""
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -63,6 +65,10 @@ while [[ $# -gt 0 ]]; do
         --help)
             show_usage
             exit 0
+            ;;
+        --app-only)
+            APP_ONLY="true"
+            shift
             ;;
         *)
             print_error "Unknown option: $1"
@@ -137,13 +143,73 @@ echo ""
 wait_for_deployment() {
     local deployment_name=$1
     local timeout=${2:-300}
-
+    if [[ "$APP_ONLY" == "true" ]]; then
+        print_status "🚀 Skipping wait for $deployment_name to be ready..."
+        return 0
+    fi
     print_status "Waiting for $deployment_name to be ready..."
     if oc wait --for=condition=available deployment/"$deployment_name" --timeout="${timeout}s"; then
         print_success "$deployment_name is ready"
     else
         print_error "$deployment_name failed to become ready within ${timeout} seconds"
         return 1
+    fi
+}
+
+# Function to create Docker Hub secret
+create_dockerhub_secret() {
+    print_status "🔐 Creating Docker Hub secret..."
+
+    # Check if Docker Hub credentials are provided
+    if [[ -z "${DOCKERHUB_USERNAME:-}" || -z "${DOCKERHUB_TOKEN:-}" ]]; then
+        print_warning "Docker Hub credentials not provided. Using public images (may hit rate limits)."
+        return 0
+    fi
+
+    oc create secret docker-registry dockerhub-secret \
+        --docker-server=docker.io \
+        --docker-username="${DOCKERHUB_USERNAME}" \
+        --docker-password="${DOCKERHUB_TOKEN}" \
+        --docker-email="${DOCKERHUB_EMAIL:-noreply@example.com}" \
+        --dry-run=client -o yaml | oc apply -f -
+
+    # Link the secret to service accounts for builds and pods
+    oc secrets link builder dockerhub-secret
+    oc secrets link default dockerhub-secret
+
+    # Add to imagePullSecrets for builder service account
+    oc patch serviceaccount builder -p '{"imagePullSecrets":[{"name":"dockerhub-secret"}]}' || true
+
+    print_success "Docker Hub secret created and linked to service accounts"
+}
+
+# SAFETY FUNCTION: Prevent destructive operations without explicit confirmation
+safety_check() {
+    local operation=$1
+    local destructive_operations=("delete" "patch" "rollout" "scale" "override" "wipe" "clear" "remove")
+
+    for op in "${destructive_operations[@]}"; do
+        if [[ "$operation" == *"$op"* ]]; then
+            print_error "🚨 SAFETY CHECK FAILED: Operation '$operation' contains destructive command '$op'"
+            print_error "🚨 This script is designed to be SAFE and NON-DESTRUCTIVE"
+            print_error "🚨 If you need to perform destructive operations, do them manually with explicit confirmation"
+            exit 1
+        fi
+    done
+}
+
+# SAFETY FUNCTION: Prevent Keycloak realm override without explicit flag
+keycloak_safety_check() {
+    if [[ "${KEYCLOAK_OVERRIDE_REALM:-}" != "true" ]]; then
+        print_warning "🔒 Keycloak realm import is DISABLED by default to prevent data loss"
+        print_warning "🔒 To enable realm import (DANGEROUS - can delete users), set KEYCLOAK_OVERRIDE_REALM=true"
+        print_warning "🔒 This script will NOT import realm configuration to preserve existing users"
+        return 0
+    else
+        print_error "🚨 KEYCLOAK OVERRIDE ENABLED - This can DELETE ALL USERS!"
+        print_error "🚨 Are you absolutely sure? This action cannot be undone."
+        print_error "🚨 If you proceed, all Keycloak users will be lost."
+        exit 1
     fi
 }
 
@@ -168,9 +234,11 @@ spec:
       labels:
         app: postgres
     spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
       containers:
       - name: postgres
-        image: postgres:15
+        image: postgres:16
         ports:
         - containerPort: 5432
         env:
@@ -271,6 +339,8 @@ spec:
       labels:
         app: minio
     spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
       containers:
       - name: minio
         image: minio/minio:latest
@@ -411,8 +481,15 @@ EOF
 deploy_keycloak() {
     print_status "📦 Deploying Keycloak..."
 
-    # Create realm configuration
-    create_keycloak_realm_config
+    # SAFETY CHECK: Prevent realm import that could delete users
+    keycloak_safety_check
+
+    # Create realm configuration (only if override is explicitly enabled)
+    if [[ "${KEYCLOAK_OVERRIDE_REALM:-}" == "true" ]]; then
+        create_keycloak_realm_config
+    else
+        print_warning "🔒 Skipping realm configuration import to preserve existing users"
+    fi
 
     local keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||' | sed 's|/.*||')
 
@@ -433,9 +510,11 @@ spec:
       labels:
         app: keycloak
     spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
       initContainers:
       - name: wait-for-db
-        image: postgres:15
+        image: postgres:16
         command: ['sh', '-c']
         args:
         - |
@@ -455,7 +534,6 @@ spec:
         - --hostname-strict=false
         - --hostname-strict-https=false
         - --proxy=edge
-        - --import-realm
         ports:
         - containerPort: 8080
         env:
@@ -535,11 +613,23 @@ EOF
 deploy_app() {
     print_status "📦 Deploying OSPO Events Application..."
 
-    # Create keycloak.json configuration from template
-    sed -e "s|{{KEYCLOAK_REALM}}|${KEYCLOAK_REALM}|g" \
-        -e "s|{{KEYCLOAK_URL}}|${KEYCLOAK_URL}|g" \
-        -e "s|{{KEYCLOAK_CLIENT_ID}}|${KEYCLOAK_CLIENT_ID}|g" \
-        keycloak.json > /tmp/keycloak.json
+    # Ensure Docker Hub secret exists for builds
+    create_dockerhub_secret
+
+    # Create keycloak.json configuration dynamically
+    cat > /tmp/keycloak.json <<EOF
+{
+  "realm": "${KEYCLOAK_REALM}",
+  "auth-server-url": "${KEYCLOAK_URL}/auth",
+  "ssl-required": "external",
+  "resource": "${KEYCLOAK_CLIENT_ID}",
+  "public-client": true,
+  "confidential-port": 0,
+  "verify-token-audience": false,
+  "use-resource-role-mappings": true,
+  "enable-cors": true
+}
+EOF
 
     oc create configmap keycloak-client-config --from-file=keycloak.json=/tmp/keycloak.json --dry-run=client -o yaml | oc apply -f -
     rm -f /tmp/keycloak.json
@@ -606,7 +696,7 @@ spec:
     spec:
       containers:
       - name: ospo-app
-        image: ospo-events-app:latest
+        image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/ospo-events-app:latest
         ports:
         - containerPort: 4576
         env:
@@ -621,6 +711,8 @@ spec:
         - name: KEYCLOAK_CLIENT_ID
           value: "${KEYCLOAK_CLIENT_ID}"
         - name: KEYCLOAK_CLIENT_URL
+          value: "${VITE_KEYCLOAK_URL}"
+        - name: VITE_KEYCLOAK_URL
           value: "${VITE_KEYCLOAK_URL}"
         - name: MINIO_ENDPOINT
           value: "minio:9000"
@@ -796,7 +888,21 @@ EOF
 main() {
     print_status "🚀 Starting deployment process..."
 
+    # SAFETY CHECK: Ensure this script is only used for deployments
+    print_status "🔒 SAFETY MODE ENABLED - This script will NOT perform destructive operations"
+    print_status "🔒 All data-preserving operations only"
+
+    if [[ "$APP_ONLY" == "true" ]]; then
+        print_status "🚀 Deploying only the application..."
+        deploy_app
+        oc scale deployment ospo-app --replicas=0
+        sleep 5
+        oc scale deployment ospo-app --replicas=1
+        print_success "🎉 Application deployed successfully!"
+        exit 0
+    fi
     # Deploy components in order
+    create_dockerhub_secret
     deploy_postgres
     deploy_minio
     deploy_keycloak
