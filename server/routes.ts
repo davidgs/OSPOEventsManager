@@ -575,6 +575,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Keycloak configuration endpoint
+  app.get("/api/keycloak-config", (req: Request, res: Response) => {
+    const keycloakUrl = process.env.KEYCLOAK_CLIENT_URL || process.env.VITE_KEYCLOAK_URL || "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com/auth";
+
+    res.json({
+      realm: "ospo-events",
+      "auth-server-url": keycloakUrl,
+      "ssl-required": "external",
+      resource: "ospo-events-app",
+      "public-client": true,
+      "confidential-port": 0,
+      "verify-token-audience": false,
+      "use-resource-role-mappings": true,
+      "enable-cors": true
+    });
+  });
+
   // Events API routes
   app.get("/api/events", async (req: Request, res: Response) => {
     try {

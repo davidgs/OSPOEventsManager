@@ -1,5 +1,6 @@
 import React from "react";
 import { Badge } from "./badge";
+import { safeToLowerCase, safeCapitalize } from "@/lib/utils";
 
 interface TypeBadgeProps {
   type: string;
@@ -7,7 +8,7 @@ interface TypeBadgeProps {
 }
 
 const getTypeColors = (type: string): string => {
-  const normalizedType = type?.toLowerCase() || "";
+  const normalizedType = safeToLowerCase(type);
 
   switch (normalizedType) {
     case "conference":
@@ -34,7 +35,7 @@ export const TypeBadge: React.FC<TypeBadgeProps> = ({
   className = "",
 }) => {
   const typeColors = getTypeColors(type);
-  const displayText = type.charAt(0).toUpperCase() + type.slice(1);
+  const displayText = safeCapitalize(type);
 
   return (
     <Badge variant="outline" className={`${typeColors} ${className}`}>

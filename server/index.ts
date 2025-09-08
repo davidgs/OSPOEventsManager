@@ -27,7 +27,7 @@ const app = express();
 // app.set('trust proxy', 1);
 
 // Security middleware
-const keycloakUrl = process.env.KEYCLOAK_CLIENT_URL || process.env.VITE_KEYCLOAK_URL || "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com";
+const keycloakUrl = process.env.KEYCLOAK_CLIENT_URL || process.env.VITE_KEYCLOAK_URL || "https://keycloak-prod-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com";
 // Extract base URL (without /auth) for CSP - Keycloak needs both base URL and /auth path
 const keycloakBaseUrl = keycloakUrl.replace(/\/auth$/, '');
 console.log(`🔐 CSP Keycloak URL: ${keycloakUrl}`);
@@ -44,11 +44,11 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", ...(process.env.CSP_STYLE_SRC || "https://fonts.googleapis.com").split(',')],
       scriptSrc: ["'self'", ...(process.env.CSP_SCRIPT_SRC || "").split(',').filter(Boolean)],
       imgSrc: ["'self'", "data:", "https:", ...(process.env.CSP_IMG_SRC || "").split(',').filter(Boolean)],
-              connectSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalConnectSrc],
+      connectSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalConnectSrc],
       fontSrc: ["'self'", ...(process.env.CSP_FONT_SRC || "https://fonts.gstatic.com").split(',')],
-      objectSrc: [process.env.CSP_OBJECT_SRC || "'none'"],
+      objectSrc: [process.env.CSP_OBJECT_SRC || "none"],
       mediaSrc: ["'self'", ...(process.env.CSP_MEDIA_SRC || "").split(',').filter(Boolean)],
-              frameSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalFrameSrc],
+      frameSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalFrameSrc],
     },
   },
   crossOriginEmbedderPolicy: process.env.HELMET_COEP !== 'true',
@@ -314,8 +314,8 @@ app.get("/version", async (_req: Request, res: Response) => {
     // Protect API routes (except health check and version) with Bearer token support
     const authMiddleware = getAuthMiddleware(keycloak);
     app.use('/api', (req, res, next) => {
-      // Allow health check, version, and fix endpoints without authentication
-      if (req.path === '/health' || req.path === '/version' || req.path === '/fix-david-asset') {
+      // Allow health check, version, fix, and keycloak-config endpoints without authentication
+      if (req.path === '/health' || req.path === '/version' || req.path === '/fix-david-asset' || req.path === '/keycloak-config') {
         return next();
       }
 
@@ -327,8 +327,8 @@ app.get("/version", async (_req: Request, res: Response) => {
 
     // SECURITY: When Keycloak is not available, implement strict fallback security
     app.use('/api', (req, res, next) => {
-      // Allow health check and version endpoints without authentication
-      if (req.path === '/health' || req.path === '/version') {
+      // Allow health check, version, and keycloak-config endpoints without authentication
+      if (req.path === '/health' || req.path === '/version' || req.path === '/keycloak-config') {
         return next();
       }
 

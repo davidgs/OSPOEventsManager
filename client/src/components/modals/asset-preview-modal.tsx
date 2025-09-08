@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { type Asset } from "@shared/schema";
-import { formatBytes, formatDate } from "@/lib/utils";
+import { formatBytes, formatDate, safeToLowerCase } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -117,7 +117,7 @@ export function AssetPreviewModal({
   const isPrfFile = (mimeType: string, fileName: string) => {
     return (
       mimeType === "application/octet-stream" &&
-      fileName.toLowerCase().endsWith(".prf")
+      safeToLowerCase(fileName).endsWith(".prf")
     );
   };
 

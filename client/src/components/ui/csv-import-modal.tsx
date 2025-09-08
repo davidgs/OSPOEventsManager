@@ -17,6 +17,7 @@ import { Separator } from "./separator";
 import { Trash2, Upload, Download, ArrowRight, X } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import { apiRequest } from "../../lib/queryClient";
+import { safeToLowerCase } from "../../lib/utils";
 import {
   eventPriorities,
   eventTypes,
@@ -506,7 +507,7 @@ export function CSVImportModal({
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue
-                        placeholder={`Select ${col.label.toLowerCase()}`}
+                        placeholder={`Select ${safeToLowerCase(col.label)}`}
                       />
                     </SelectTrigger>
                     <SelectContent>
@@ -527,7 +528,7 @@ export function CSVImportModal({
                         ? "url"
                         : "text"
                     }
-                    placeholder={`Enter default ${col.label.toLowerCase()}`}
+                    placeholder={`Enter default ${safeToLowerCase(col.label)}`}
                     value={defaultValues[col.key] || ""}
                     onChange={(e) =>
                       setDefaultValues((prev) => ({
