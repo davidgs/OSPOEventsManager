@@ -58,6 +58,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+import { safeToLowerCase, safeCapitalize } from "@/lib/utils";
 
 const formSchema = insertCFPSubmissionSchema.extend({
   submissionDate: z.date().optional(),
@@ -265,10 +266,12 @@ const CfpSubmissionsPage: FC = () => {
       // Filter by search term
       if (
         searchTerm &&
-        !submission.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !submission.submitterName
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
+        !safeToLowerCase(submission.title).includes(
+          safeToLowerCase(searchTerm)
+        ) &&
+        !safeToLowerCase(submission.submitterName).includes(
+          safeToLowerCase(searchTerm)
+        )
       ) {
         matches = false;
       }
@@ -326,7 +329,7 @@ const CfpSubmissionsPage: FC = () => {
                   <SelectItem value="all">All Statuses</SelectItem>
                   {cfpStatuses.map((status) => (
                     <SelectItem key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                      {safeCapitalize(status)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -668,7 +671,7 @@ const CfpSubmissionsPage: FC = () => {
                         <SelectContent>
                           {cfpStatuses.map((status) => (
                             <SelectItem key={status} value={status}>
-                              {status.charAt(0).toUpperCase() + status.slice(1)}
+                              {safeCapitalize(status)}
                             </SelectItem>
                           ))}
                         </SelectContent>

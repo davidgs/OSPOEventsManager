@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { safeToLowerCase } from "@/lib/utils";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 import {
   Dialog,
@@ -10,14 +11,19 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  File, FileText as FileTextIcon, PresentationIcon, 
-  Upload, Search, CheckCircle2, X
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  File,
+  FileText as FileTextIcon,
+  PresentationIcon,
+  Upload,
+  Search,
+  CheckCircle2,
+  X,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface LinkAssetModalProps {
   isOpen: boolean;
@@ -25,9 +31,13 @@ interface LinkAssetModalProps {
   eventId: number;
 }
 
-export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps) {
+export function LinkAssetModal({
+  isOpen,
+  onClose,
+  eventId,
+}: LinkAssetModalProps) {
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
 
   // Fetch all unlinked assets (assets that aren't already linked to this event)
@@ -39,16 +49,18 @@ export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps
   // Link assets to event mutation
   const { mutate: linkAssets, isPending: isLinking } = useMutation({
     mutationFn: async (assetIds: number[]) => {
-      const promises = assetIds.map(assetId => 
-        apiRequest('PUT', `/api/assets/${assetId}`, { eventId })
+      const promises = assetIds.map((assetId) =>
+        apiRequest("PUT", `/api/assets/${assetId}`, { eventId })
       );
       await Promise.all(promises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/assets`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/assets', 'event', eventId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/assets", "event", eventId],
+      });
       toast({
-        title: 'Assets Linked',
+        title: "Assets Linked",
         description: `Successfully linked ${selectedAssets.length} asset(s) to the event.`,
       });
       onClose();
@@ -56,23 +68,27 @@ export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps
     },
     onError: (error) => {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to link assets to event',
-        variant: 'destructive',
+        title: "Error",
+        description: error.message || "Failed to link assets to event",
+        variant: "destructive",
       });
     },
   });
 
   // Filter assets based on search query
-  const filteredAssets = assets.filter(asset => 
-    asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    asset.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (asset.description && asset.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredAssets = assets.filter(
+    (asset) =>
+      safeToLowerCase(asset.name).includes(safeToLowerCase(searchQuery)) ||
+      safeToLowerCase(asset.type).includes(safeToLowerCase(searchQuery)) ||
+      (asset.description &&
+        safeToLowerCase(asset.description).includes(
+          safeToLowerCase(searchQuery)
+        ))
   );
 
   const handleToggleAsset = (assetId: number) => {
     if (selectedAssets.includes(assetId)) {
-      setSelectedAssets(selectedAssets.filter(id => id !== assetId));
+      setSelectedAssets(selectedAssets.filter((id) => id !== assetId));
     } else {
       setSelectedAssets([...selectedAssets, assetId]);
     }
@@ -81,9 +97,9 @@ export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps
   const handleLinkAssets = () => {
     if (selectedAssets.length === 0) {
       toast({
-        title: 'No Assets Selected',
-        description: 'Please select at least one asset to link to the event.',
-        variant: 'destructive',
+        title: "No Assets Selected",
+        description: "Please select at least one asset to link to the event.",
+        variant: "destructive",
       });
       return;
     }
@@ -94,27 +110,31 @@ export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps
   useEffect(() => {
     if (!isOpen) {
       setSelectedAssets([]);
-      setSearchQuery('');
+      setSearchQuery("");
     }
   }, [isOpen]);
 
   const getAssetIcon = (asset: any) => {
-    if (asset.mimeType.startsWith('image/')) {
+    if (asset.mimeType.startsWith("image/")) {
       return (
         <div className="w-12 h-12 bg-gray-100 rounded-md overflow-hidden">
           <img
-            src={asset.filePath.startsWith('/') ? asset.filePath : `/${asset.filePath}`}
+            src={
+              asset.filePath.startsWith("/")
+                ? asset.filePath
+                : `/${asset.filePath}`
+            }
             alt={asset.name}
             className="w-full h-full object-contain"
           />
         </div>
       );
     } else {
-      return asset.type === 'abstract' ? (
+      return asset.type === "abstract" ? (
         <FileTextIcon className="h-12 w-12 text-blue-500" />
-      ) : asset.type === 'presentation' ? (
+      ) : asset.type === "presentation" ? (
         <PresentationIcon className="h-12 w-12 text-purple-500" />
-      ) : asset.type === 'trip_report' ? (
+      ) : asset.type === "trip_report" ? (
         <FileTextIcon className="h-12 w-12 text-green-500" />
       ) : (
         <File className="h-12 w-12 text-gray-500" />
@@ -128,7 +148,8 @@ export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps
         <DialogHeader>
           <DialogTitle>Link Existing Assets</DialogTitle>
           <DialogDescription>
-            Select assets to link to this event. You can search by name, type, or description.
+            Select assets to link to this event. You can search by name, type,
+            or description.
           </DialogDescription>
         </DialogHeader>
 
@@ -142,7 +163,7 @@ export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps
           />
           {searchQuery && (
             <button
-              onClick={() => setSearchQuery('')}
+              onClick={() => setSearchQuery("")}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600"
               aria-label="Clear search"
             >
@@ -159,11 +180,13 @@ export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps
           ) : filteredAssets.length === 0 ? (
             <div className="text-center py-8">
               <File className="mx-auto h-12 w-12 text-gray-300" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No Assets Found</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No Assets Found
+              </h3>
               <p className="mt-1 text-sm text-gray-500">
                 {searchQuery
-                  ? 'No assets match your search criteria'
-                  : 'There are no unlinked assets available'}
+                  ? "No assets match your search criteria"
+                  : "There are no unlinked assets available"}
               </p>
             </div>
           ) : (
@@ -172,9 +195,9 @@ export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps
                 <div
                   key={asset.id}
                   className={`flex items-center p-3 rounded-lg border transition-colors ${
-                    selectedAssets.includes(asset.id) 
-                      ? 'border-primary/50 bg-primary/5' 
-                      : 'border-gray-200 hover:bg-gray-50'
+                    selectedAssets.includes(asset.id)
+                      ? "border-primary/50 bg-primary/5"
+                      : "border-gray-200 hover:bg-gray-50"
                   }`}
                 >
                   <div className="mr-3">
@@ -184,22 +207,24 @@ export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps
                       id={`asset-${asset.id}`}
                     />
                   </div>
-                  <div className="mr-4">
-                    {getAssetIcon(asset)}
-                  </div>
+                  <div className="mr-4">{getAssetIcon(asset)}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center">
-                      <h4 className="text-sm font-medium text-gray-900 truncate">{asset.name}</h4>
+                      <h4 className="text-sm font-medium text-gray-900 truncate">
+                        {asset.name}
+                      </h4>
                       <span className="ml-2 text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-800 capitalize">
-                        {asset.type.replace('_', ' ')}
+                        {asset.type.replace("_", " ")}
                       </span>
                     </div>
                     {asset.description && (
-                      <p className="mt-1 text-xs text-gray-500 line-clamp-2">{asset.description}</p>
+                      <p className="mt-1 text-xs text-gray-500 line-clamp-2">
+                        {asset.description}
+                      </p>
                     )}
                     <p className="mt-1 text-xs text-gray-500">
-                      Uploaded by {asset.uploadedByName || 'Unknown'} • 
-                      {' '}{(asset.fileSize / 1024).toFixed(0)} KB
+                      Uploaded by {asset.uploadedByName || "Unknown"} •{" "}
+                      {(asset.fileSize / 1024).toFixed(0)} KB
                     </p>
                   </div>
                   {selectedAssets.includes(asset.id) && (
@@ -220,8 +245,8 @@ export function LinkAssetModal({ isOpen, onClose, eventId }: LinkAssetModalProps
           <Button variant="outline" onClick={onClose} disabled={isLinking}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleLinkAssets} 
+          <Button
+            onClick={handleLinkAssets}
             disabled={selectedAssets.length === 0 || isLinking}
           >
             {isLinking ? (

@@ -37,7 +37,7 @@ import {
   isSameDay,
 } from "date-fns";
 import { Event } from "@shared/schema";
-import { cn } from "@/lib/utils";
+import { cn, safeToLowerCase } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
@@ -143,7 +143,7 @@ const CalendarView: FC<CalendarViewProps> = ({
 
   // Helper function to get border color based on priority
   const getBorderColor = (priority: string) => {
-    const priorityLower = priority?.toLowerCase() || "";
+    const priorityLower = safeToLowerCase(priority);
     switch (priorityLower) {
       case "essential":
         return "border-purple-600 dark:border-purple-400 border-2";

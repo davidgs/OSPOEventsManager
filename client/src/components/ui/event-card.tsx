@@ -310,7 +310,10 @@ const EventCard: FC<EventCardProps> = ({
               </h4>
             </div>
             <div className="flex items-center flex-wrap gap-1">
-              {(event.goal || []).map((goal: string, index: number) => (
+              {(typeof event.goal === "string"
+                ? JSON.parse(event.goal)
+                : event.goal || []
+              ).map((goal: string, index: number) => (
                 <GoalBadge key={index} goal={goal} />
               ))}
             </div>

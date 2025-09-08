@@ -1,5 +1,6 @@
 import React from "react";
 import { Badge } from "./badge";
+import { safeToLowerCase } from "@/lib/utils";
 
 interface PriorityBadgeProps {
   priority: string;
@@ -7,7 +8,7 @@ interface PriorityBadgeProps {
 }
 
 const getPriorityColors = (priority: string): string => {
-  const normalizedPriority = priority?.toLowerCase() || "";
+  const normalizedPriority = safeToLowerCase(priority);
 
   switch (normalizedPriority) {
     case "essential":

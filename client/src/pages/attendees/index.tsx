@@ -43,6 +43,7 @@ import { insertAttendeeSchema } from "@shared/schema";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { safeToLowerCase } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -227,10 +228,10 @@ const AttendeesPage: FC = () => {
       // Filter by search term
       if (
         searchTerm &&
-        !attendee.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !safeToLowerCase(attendee.name).includes(safeToLowerCase(searchTerm)) &&
         !(
           attendee.email &&
-          attendee.email.toLowerCase().includes(searchTerm.toLowerCase())
+          safeToLowerCase(attendee.email).includes(safeToLowerCase(searchTerm))
         )
       ) {
         matches = false;

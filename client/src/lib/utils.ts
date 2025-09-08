@@ -2,6 +2,31 @@ import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import DOMPurify from "dompurify";
 
+// Safe string conversion utility
+export function safeToString(value: any): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  return String(value);
+}
+
+// Safe toLowerCase utility
+export function safeToLowerCase(value: any): string {
+  return safeToString(value).toLowerCase();
+}
+
+// Safe charAt utility
+export function safeCharAt(value: any, index: number): string {
+  const str = safeToString(value);
+  return str.charAt(index);
+}
+
+// Safe string manipulation utilities
+export function safeCapitalize(value: any): string {
+  const str = safeToString(value);
+  if (str.length === 0) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
