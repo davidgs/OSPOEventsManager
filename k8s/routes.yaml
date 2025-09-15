@@ -1,0 +1,33 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  host: ${keycloak_hostname}
+  to:
+    kind: Service
+    name: keycloak
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: ospo-app
+  labels:
+    app: ospo-app
+spec:
+  host: ${app_hostname}
+  to:
+    kind: Service
+    name: ospo-app
+  port:
+    targetPort: 4576
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

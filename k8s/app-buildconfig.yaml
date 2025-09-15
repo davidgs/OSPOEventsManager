@@ -1,0 +1,21 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: ospo-events-app
+  labels:
+    app: ospo-app
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: ospo-events-app:latest
+  source:
+    type: Binary
+  strategy:
+    type: Docker
+    dockerStrategy:
+      buildArgs:
+        - name: VITE_KEYCLOAK_URL
+          value: "${VITE_KEYCLOAK_URL}"
+  triggers:
+    - type: ConfigChange

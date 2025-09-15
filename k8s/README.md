@@ -1,202 +1,215 @@
-# OSPO Events Manager - Kubernetes/OpenShift Deployment
+# K8s Directory - OpenShift Deployment Manifests
 
-This directory contains Helm charts and deployment scripts for deploying the OSPO Events Manager to Kubernetes or OpenShift.
+This directory contains all the Kubernetes/OpenShift YAML manifests required for deploying the OSPO Events Manager application. These files are used by the `deploy.sh` script to create and manage the application infrastructure.
 
-## 🚀 New Repeatable Deployment Process
+## Directory Structure
 
-We've redesigned the deployment to be **fully automated** and **repeatable** without manual intervention.
-
-### ✅ Key Features
-
-- **Single-command deployment** with comprehensive configuration
-- **Automatic Keycloak realm and client setup**
-- **Automatic database schema creation**
-- **Proper OpenShift route configuration**
-- **Comprehensive deployment testing**
-- **No manual post-deployment fixes required**
-
-## Prerequisites
-
-- OpenShift CLI (`oc`) installed and logged in
-- Helm 3.x installed
-- `kubectl`, `curl`, and `jq` installed (for testing)
-
-## 🎯 Quick Start
-
-### 1. Deploy to OpenShift (Recommended)
-
-```bash
-# Simply run the deployment script
-./deploy-openshift.sh
+```
+k8s/
+├── README.md                    # This file
+├── app-buildconfig.yaml         # Build configuration for the application
+├── app-deployment.yaml          # Application deployment and service
+├── app-imagestream.yaml         # OpenShift ImageStream for the application
+├── keycloak-deployment.yaml     # Keycloak authentication service
+├── minio-deployment.yaml        # MinIO object storage for file uploads
+├── ollama-deployment.yaml       # Ollama AI service with GPU support
+├── postgres-deployment.yaml     # PostgreSQL database
+└── routes.yaml                  # OpenShift routes for external access
 ```
 
-**That's it!** The script will:
-- ✅ Check all prerequisites
-- ✅ Validate the Helm chart
-- ✅ Deploy all components
-- ✅ Set up database schema automatically
-- ✅ Configure Keycloak realm and client
-- ✅ Run comprehensive tests
-- ✅ Display access URLs
+## File Descriptions
 
-### 2. Manual Helm Deployment
+### Core Application Files
 
-If you prefer to run Helm directly:
+#### `app-buildconfig.yaml`
+- **Purpose**: Defines the OpenShift BuildConfig for building the application Docker image
+- **Features**:
+  - Source-to-image (S2I) build strategy
+  - Node.js 20 runtime
+  - Environment variable injection during build
+  - Docker Hub authentication for base images
+- **Used by**: `deploy_app()` function in deploy.sh
 
+#### `app-imagestream.yaml`
+- **Purpose**: Defines the OpenShift ImageStream for the application image
+- **Features**:
+  - Tracks built application images
+  - Supports image versioning and tagging
+- **Used by**: `deploy_app()` function in deploy.sh
+
+#### `app-deployment.yaml`
+- **Purpose**: Defines the main application deployment, service, and PVC
+- **Features**:
+  - Node.js application container
+  - Environment variable configuration
+  - Persistent volume for uploads (`/app/uploads`)
+  - Health checks and resource limits
+  - ClusterIP service for internal communication
+- **Used by**: `deploy_app()` function in deploy.sh
+
+### Database Files
+
+#### `postgres-deployment.yaml`
+- **Purpose**: PostgreSQL database deployment for application and Keycloak data
+- **Features**:
+  - PostgreSQL 16 container
+  - Two separate databases: events and keycloak
+  - Persistent volume for data storage
+  - Database initialization scripts
+  - Resource limits and health checks
+- **Used by**: `deploy_postgres()` function in deploy.sh
+
+### Authentication Files
+
+#### `keycloak-deployment.yaml`
+- **Purpose**: Keycloak authentication service deployment
+- **Features**:
+  - Keycloak container with PostgreSQL backend
+  - Realm and client configuration via ConfigMaps
+  - Health checks and startup probes
+  - Resource limits and scaling
+- **Used by**: `deploy_keycloak()` function in deploy.sh
+
+### Storage Files
+
+#### `minio-deployment.yaml`
+- **Purpose**: MinIO object storage for file uploads and attachments
+- **Features**:
+  - MinIO S3-compatible storage
+  - Persistent volume for file storage
+  - Default credentials configuration
+  - Health checks and resource limits
+- **Used by**: `deploy_minio()` function in deploy.sh
+
+### AI Service Files
+
+#### `ollama-deployment.yaml`
+- **Purpose**: Ollama AI service for natural language SQL querying
+- **Features**:
+  - Ollama container with GPU support
+  - NVIDIA GPU resource requests (`nvidia.com/gpu: "1"`)
+  - Node selector for GPU-enabled nodes (`hardware: "nvidia-gpu"`)
+  - Tolerations for GPU node scheduling
+  - Persistent storage for AI models
+  - External route for API access
+- **Used by**: `deploy_ai()` function in deploy.sh
+
+### Networking Files
+
+#### `routes.yaml`
+- **Purpose**: OpenShift routes for external access to services
+- **Features**:
+  - Application route with TLS termination
+  - Keycloak authentication route
+  - Edge TLS termination with redirect
+- **Used by**: `create_routes()` function in deploy.sh
+
+## Deployment Process
+
+These YAML files are processed by the `deploy.sh` script using the following workflow:
+
+1. **Environment Variable Substitution**: Files are processed with `envsubst` to inject environment-specific values
+2. **Sequential Application**: Files are applied in dependency order (database → storage → auth → app → AI)
+3. **Validation**: Each deployment is validated for successful startup
+4. **Health Checks**: Services are verified to be running and healthy
+
+## Environment Variables
+
+The following environment variables are used by `envsubst` for template substitution:
+
+- `POSTGRES_USER` - PostgreSQL username
+- `POSTGRES_PASSWORD` - PostgreSQL password
+- `POSTGRES_DB` - Main application database name
+- `KEYCLOAK_DB_NAME` - Keycloak database name
+- `KEYCLOAK_ADMIN_USER` - Keycloak admin username
+- `KEYCLOAK_ADMIN_PASSWORD` - Keycloak admin password
+- `KEYCLOAK_CLIENT_SECRET` - Keycloak client secret
+- `MINIO_ROOT_USER` - MinIO admin username
+- `MINIO_ROOT_PASSWORD` - MinIO admin password
+- `NAMESPACE` - OpenShift project namespace
+- `APP_URL` - Application external URL
+- `KEYCLOAK_URL` - Keycloak external URL
+
+## Resource Requirements
+
+### CPU and Memory
+- **Application**: 512m CPU, 1Gi memory (requests), 1 CPU, 2Gi memory (limits)
+- **PostgreSQL**: 500m CPU, 1Gi memory (requests), 1 CPU, 2Gi memory (limits)
+- **Keycloak**: 500m CPU, 1Gi memory (requests), 1 CPU, 2Gi memory (limits)
+- **MinIO**: 250m CPU, 512Mi memory (requests), 500m CPU, 1Gi memory (limits)
+- **Ollama**: 2 CPU, 8Gi memory (requests), 4 CPU, 16Gi memory (limits)
+
+### Storage
+- **PostgreSQL**: 10Gi persistent volume
+- **MinIO**: 10Gi persistent volume
+- **Application**: 5Gi persistent volume for uploads
+- **Ollama**: EmptyDir volume for AI models (temporary)
+
+### GPU Resources (Ollama)
+- **NVIDIA GPU**: 1 GPU unit required
+- **Node Selector**: `hardware: "nvidia-gpu"`
+- **Tolerations**: For GPU node scheduling
+
+## Security Considerations
+
+- All services use ClusterIP for internal communication
+- External access only through OpenShift routes
+- TLS termination at the router level
+- Persistent volumes for data retention
+- Resource limits to prevent resource exhaustion
+- Health checks for service reliability
+
+## Maintenance
+
+### Updating Deployments
+1. Modify the appropriate YAML file
+2. Run `./deploy.sh --dev` or `./deploy.sh --prod` to apply changes
+3. Use specific deployment functions for targeted updates:
+   - `./deploy.sh --dev --app-only` for application updates
+   - `./deploy.sh --dev --keycloak-only` for Keycloak updates
+   - `./deploy.sh --dev --ai-only` for AI service updates
+
+### Backup and Restore
+- Use `./deploy.sh --backup` to backup all data
+- Use `./deploy.sh --restore -f /path/to/backup` to restore data
+- Use `./deploy.sh --delete` to delete pods while preserving data
+- Use `./deploy.sh --destroy` to completely destroy all data (CATASTROPHIC)
+
+## Troubleshooting
+
+### Common Issues
+1. **Resource Constraints**: Check cluster resource availability
+2. **GPU Scheduling**: Ensure GPU nodes are available for Ollama
+3. **Storage Issues**: Verify PVC creation and mounting
+4. **Network Connectivity**: Check routes and service endpoints
+
+### Debugging Commands
 ```bash
-# Deploy using Helm
-helm upgrade --install ospo-events ./ospo-app-chart \
-  --namespace prod-rh-events-org \
-  --create-namespace \
-  --values ospo-app-chart/values-openshift.yaml \
-  --wait --timeout=15m
+# Check pod status
+oc get pods
 
-# Test the deployment
-./test-deployment.sh prod-rh-events-org ospo-events
-```
-
-## 📋 Components
-
-The deployment includes:
-
-### 1. **PostgreSQL Database**
-- **Purpose**: Stores all application data
-- **Credentials**: ospo_user / ospo_password_change_me
-- **Database**: ospo_events
-- **Auto-setup**: Complete schema with tables, indexes, and triggers
-
-### 2. **Keycloak Authentication**
-- **Purpose**: OpenID Connect authentication server
-- **Admin**: admin / admin_change_me
-- **Realm**: ospo-events (automatically created)
-- **Client**: ospo-events-app (public client for JavaScript)
-- **Auto-setup**: Realm, client, and protocol mappers
-
-### 3. **MinIO Object Storage**
-- **Purpose**: File upload storage
-- **Credentials**: minioadmin / minioadmin_change_me
-- **Auto-setup**: Buckets and permissions
-
-### 4. **OSPO Events Application**
-- **Purpose**: Main application server
-- **Auto-setup**: All environment variables and connections
-
-## 🌐 Access URLs
-
-After deployment, access the application via:
-
-```bash
-# Get the application URL
-oc get route ospo-events-ospo-app -n prod-rh-events-org -o jsonpath='{.spec.host}'
-
-# Get the Keycloak admin URL
-oc get route ospo-events-keycloak -n prod-rh-events-org -o jsonpath='{.spec.host}'
-```
-
-## 🔧 Configuration
-
-### Key Configuration Files
-
-| File | Purpose |
-|------|---------|
-| `deploy-openshift.sh` | **Main deployment script** |
-| `test-deployment.sh` | Comprehensive testing script |
-| `DEPLOYMENT-GUIDE.md` | Detailed deployment documentation |
-| `ospo-app-chart/values-openshift.yaml` | OpenShift-specific configuration |
-| `ospo-app-chart/templates/` | Helm templates |
-
-### Environment-Specific Configuration
-
-Edit `ospo-app-chart/values-openshift.yaml` to customize:
-
-```yaml
-# Application settings
-app:
-  baseUrl: "https://your-app-domain.com"
-
-# Keycloak settings
-keycloak:
-  publicUrl: "https://your-keycloak-domain.com/auth"
-
-# OpenShift settings
-openshift:
-  domain: "your-openshift-cluster.com"
-```
-
-## 🧪 Testing
-
-The deployment includes comprehensive automated testing:
-
-```bash
-# Run all tests
-./test-deployment.sh prod-rh-events-org ospo-events
-
-# Tests include:
-# ✅ Deployment readiness
-# ✅ Service endpoints
-# ✅ Database connectivity
-# ✅ Keycloak configuration
-# ✅ OpenID Connect setup
-# ✅ Route accessibility
-```
-
-## 🔍 Troubleshooting
-
-### Common Commands
-
-```bash
-# Check deployment status
-oc get pods -l app.kubernetes.io/instance=ospo-events
-
-# Check logs
-oc logs -l app.kubernetes.io/instance=ospo-events -f
+# Check service endpoints
+oc get svc
 
 # Check routes
-oc get routes -l app.kubernetes.io/instance=ospo-events
+oc get routes
 
-# Check events
-oc get events --sort-by=.metadata.creationTimestamp
+# Check persistent volumes
+oc get pvc
 
-# Test health endpoints
-curl https://$(oc get route ospo-events-ospo-app -o jsonpath='{.spec.host}')/api/health
+# View pod logs
+oc logs <pod-name>
+
+# Check resource usage
+oc adm top pods
 ```
 
-### Clean Deployment
+## File History
 
-To start fresh:
+This directory was standardized from inline YAML in `deploy.sh` to improve:
+- **Maintainability**: Easier to modify and version control
+- **Readability**: Clear separation of concerns
+- **Reusability**: Files can be applied independently
+- **Documentation**: Each file has a specific purpose and can be documented
 
-```bash
-# Complete cleanup
-helm uninstall ospo-events -n prod-rh-events-org
-kubectl delete namespace prod-rh-events-org
-
-# Redeploy
-./deploy-openshift.sh
-```
-
-## 📚 Additional Resources
-
-- **[DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md)** - Comprehensive deployment guide
-- **[values-openshift.yaml](./ospo-app-chart/values-openshift.yaml)** - Configuration reference
-- **[test-deployment.sh](./test-deployment.sh)** - Testing script source
-
-## 🔄 Migration from Old Deployment
-
-If you have an existing deployment using the old process:
-
-1. **Backup your data** (if needed)
-2. **Clean up existing resources**: `./cleanup-existing.sh`
-3. **Deploy using new process**: `./deploy-openshift.sh`
-
-## 🎉 Benefits of New Process
-
-- **🚀 Faster deployment** - Single command execution
-- **🔒 Secure by default** - Proper authentication configuration
-- **🛠️ Self-healing** - Automatic setup and configuration
-- **📊 Comprehensive testing** - Built-in validation
-- **📖 Better documentation** - Clear deployment steps
-- **🔄 Repeatable** - Works the same way every time
-
----
-
-**Need help?** Check the [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md) for detailed instructions and troubleshooting.
+For deployment instructions, see the main [README.md](../README.md) and [deploy.sh](../deploy.sh) script.

@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama-nvidia-gpu
+  labels:
+    app: ollama-nvidia-gpu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama-nvidia-gpu
+  template:
+    metadata:
+      labels:
+        app: ollama-nvidia-gpu
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          ports:
+            - containerPort: 11434
+          env:
+            - name: OLLAMA_HOST
+              value: "0.0.0.0"
+            - name: HOME
+              value: "/tmp"
+            - name: OLLAMA_MODELS
+              value: "/tmp/.ollama"
+          resources:
+            requests:
+              nvidia.com/gpu: "1"
+              memory: "8Gi"
+              cpu: "2"
+            limits:
+              nvidia.com/gpu: "1"
+              memory: "16Gi"
+              cpu: "4"
+          volumeMounts:
+            - name: models-storage
+              mountPath: /tmp/.ollama
+      volumes:
+        - name: models-storage
+          emptyDir: {}
+      nodeSelector:
+        hardware: "nvidia-gpu"
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-nvidia-gpu
+  labels:
+    app: ollama-nvidia-gpu
+spec:
+  selector:
+    app: ollama-nvidia-gpu
+  ports:
+    - port: 11434
+      targetPort: 11434
+      protocol: TCP
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: ollama-nvidia-gpu
+  labels:
+    app: ollama-nvidia-gpu
+spec:
+  to:
+    kind: Service
+    name: ollama-nvidia-gpu
+  port:
+    targetPort: 11434
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
