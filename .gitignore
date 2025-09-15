@@ -9,7 +9,7 @@ dist/
 build/
 .next/
 out/
-
+backup/
 # Development
 .DS_Store
 Thumbs.db

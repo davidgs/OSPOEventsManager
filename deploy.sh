@@ -39,6 +39,12 @@ show_usage() {
     echo "  --prod         Deploy to production environment"
     echo "  --help         Show this help message"
     echo "  --app-only     Deploy only the application"
+    echo "  --keycloak-only Deploy only the keycloak pod"
+    echo "  --ai-only      Deploy only the AI (Ollama) service"
+    echo "  --delete       Delete all pods while preserving data (WARNING: destructive)"
+    echo "  --backup       Create a complete backup of all data (users, events, uploads)"
+    echo "  --restore -f   Restore data from backup directory (use with -f /path/to/backup)"
+    echo "  --destroy      DESTROY ALL DATA - Remove pods and all PVCs (CATASTROPHIC)"
     echo ""
     echo "Requirements:"
     echo "  - .env file must exist with configuration"
@@ -51,6 +57,13 @@ show_usage() {
 
 # Parse command line arguments
 APP_ONLY=""
+KEYCLOAK_ONLY=""
+AI_ONLY=""
+DELETE_ONLY=""
+BACKUP_ONLY=""
+RESTORE_ONLY=""
+RESTORE_PATH=""
+DESTROY_ONLY=""
 ENVIRONMENT=""
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -70,6 +83,39 @@ while [[ $# -gt 0 ]]; do
             APP_ONLY="true"
             shift
             ;;
+        --keycloak-only)
+            KEYCLOAK_ONLY="true"
+            shift
+            ;;
+        --ai-only)
+            AI_ONLY="true"
+            shift
+            ;;
+        --delete)
+            DELETE_ONLY="true"
+            shift
+            ;;
+        --backup)
+            BACKUP_ONLY="true"
+            shift
+            ;;
+        --restore)
+            RESTORE_ONLY="true"
+            shift
+            ;;
+        -f)
+            if [[ "$RESTORE_ONLY" == "true" ]]; then
+                RESTORE_PATH="$2"
+                shift 2
+            else
+                print_error "Option -f can only be used with --restore"
+                exit 1
+            fi
+            ;;
+        --destroy)
+            DESTROY_ONLY="true"
+            shift
+            ;;
         *)
             print_error "Unknown option: $1"
             show_usage
@@ -78,9 +124,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Validate arguments
-if [[ -z "$ENVIRONMENT" ]]; then
+# Validate arguments (skip for operations that don't need environment)
+if [[ "$DELETE_ONLY" != "true" && "$BACKUP_ONLY" != "true" && "$RESTORE_ONLY" != "true" && "$DESTROY_ONLY" != "true" && -z "$ENVIRONMENT" ]]; then
     print_error "Environment not specified. Use --dev or --prod"
+    show_usage
+    exit 1
+fi
+
+# Validate restore path if restore is specified
+if [[ "$RESTORE_ONLY" == "true" && -z "$RESTORE_PATH" ]]; then
+    print_error "Restore path must be specified with -f option"
     show_usage
     exit 1
 fi
@@ -217,94 +270,14 @@ keycloak_safety_check() {
 deploy_postgres() {
     print_status "📦 Deploying PostgreSQL..."
 
-    cat <<EOF | oc apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres
-  labels:
-    app: postgres
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres
-  template:
-    metadata:
-      labels:
-        app: postgres
-    spec:
-      imagePullSecrets:
-      - name: dockerhub-secret
-      containers:
-      - name: postgres
-        image: postgres:16
-        ports:
-        - containerPort: 5432
-        env:
-        - name: POSTGRES_DB
-          value: "${POSTGRES_DB}"
-        - name: POSTGRES_USER
-          value: "${POSTGRES_USER}"
-        - name: POSTGRES_PASSWORD
-          value: "${POSTGRES_PASSWORD}"
-        - name: PGDATA
-          value: /var/lib/postgresql/data/pgdata
-        volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-        resources:
-          requests:
-            cpu: "${POSTGRES_CPU_REQUEST}"
-            memory: "${POSTGRES_MEMORY_REQUEST}"
-          limits:
-            cpu: "${POSTGRES_CPU_LIMIT}"
-            memory: "${POSTGRES_MEMORY_LIMIT}"
-        livenessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
-          initialDelaySeconds: 5
-          periodSeconds: 5
-      volumes:
-      - name: postgres-storage
-        persistentVolumeClaim:
-          claimName: postgres-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres
-  labels:
-    app: postgres
-spec:
-  ports:
-  - port: 5432
-    targetPort: 5432
-  selector:
-    app: postgres
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-EOF
+    # Check if PostgreSQL deployment file exists
+    if [[ ! -f "k8s/postgres-deployment.yaml" ]]; then
+        print_error "PostgreSQL deployment file not found: k8s/postgres-deployment.yaml"
+        exit 1
+    fi
+
+    # Apply PostgreSQL deployment
+    envsubst < k8s/postgres-deployment.yaml | oc apply -f -
 
     wait_for_deployment postgres
 
@@ -322,96 +295,14 @@ EOF
 deploy_minio() {
     print_status "📦 Deploying Minio..."
 
-    cat <<EOF | oc apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: minio
-  labels:
-    app: minio
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: minio
-  template:
-    metadata:
-      labels:
-        app: minio
-    spec:
-      imagePullSecrets:
-      - name: dockerhub-secret
-      containers:
-      - name: minio
-        image: minio/minio:latest
-        args:
-        - server
-        - /data
-        - --console-address
-        - :9001
-        ports:
-        - containerPort: 9000
-        - containerPort: 9001
-        env:
-        - name: MINIO_ROOT_USER
-          value: "${MINIO_ROOT_USER}"
-        - name: MINIO_ROOT_PASSWORD
-          value: "${MINIO_ROOT_PASSWORD}"
-        volumeMounts:
-        - name: minio-storage
-          mountPath: /data
-        resources:
-          requests:
-            cpu: "${MINIO_CPU_REQUEST}"
-            memory: "${MINIO_MEMORY_REQUEST}"
-          limits:
-            cpu: "${MINIO_CPU_LIMIT}"
-            memory: "${MINIO_MEMORY_LIMIT}"
-        livenessProbe:
-          httpGet:
-            path: /minio/health/live
-            port: 9000
-          initialDelaySeconds: 30
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /minio/health/ready
-            port: 9000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-      volumes:
-      - name: minio-storage
-        persistentVolumeClaim:
-          claimName: minio-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: minio
-  labels:
-    app: minio
-spec:
-  ports:
-  - port: 9000
-    targetPort: 9000
-    name: api
-  - port: 9001
-    targetPort: 9001
-    name: console
-  selector:
-    app: minio
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: minio-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 20Gi
-EOF
+    # Check if MinIO deployment file exists
+    if [[ ! -f "k8s/minio-deployment.yaml" ]]; then
+        print_error "MinIO deployment file not found: k8s/minio-deployment.yaml"
+        exit 1
+    fi
+
+    # Apply MinIO deployment
+    envsubst < k8s/minio-deployment.yaml | oc apply -f -
 
     wait_for_deployment minio
 }
@@ -493,118 +384,16 @@ deploy_keycloak() {
 
     local keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||' | sed 's|/.*||')
 
-    cat <<EOF | oc apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: keycloak
-  labels:
-    app: keycloak
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: keycloak
-  template:
-    metadata:
-      labels:
-        app: keycloak
-    spec:
-      imagePullSecrets:
-      - name: dockerhub-secret
-      initContainers:
-      - name: wait-for-db
-        image: postgres:16
-        command: ['sh', '-c']
-        args:
-        - |
-          until pg_isready -h ${KEYCLOAK_DB_HOST} -p ${KEYCLOAK_DB_PORT} -U ${KEYCLOAK_DB_USER}; do
-            echo "Waiting for database..."
-            sleep 2
-          done
-        env:
-        - name: PGPASSWORD
-          value: "${KEYCLOAK_DB_PASSWORD}"
-      containers:
-      - name: keycloak
-        image: quay.io/keycloak/keycloak:23.0.6
-        args:
-        - start-dev
-        - --http-port=8080
-        - --hostname-strict=false
-        - --hostname-strict-https=false
-        - --proxy=edge
-        ports:
-        - containerPort: 8080
-        env:
-        - name: KEYCLOAK_ADMIN
-          value: "${KEYCLOAK_ADMIN}"
-        - name: KEYCLOAK_ADMIN_PASSWORD
-          value: "${KEYCLOAK_ADMIN_PASSWORD}"
-        - name: KC_DB
-          value: postgres
-        - name: KC_DB_URL
-          value: jdbc:postgresql://${KEYCLOAK_DB_HOST}:${KEYCLOAK_DB_PORT}/${KEYCLOAK_DB_NAME}
-        - name: KC_DB_USERNAME
-          value: "${KEYCLOAK_DB_USER}"
-        - name: KC_DB_PASSWORD
-          value: "${KEYCLOAK_DB_PASSWORD}"
-        - name: KC_HOSTNAME
-          value: "${keycloak_hostname}"
-        - name: KC_HOSTNAME_ADMIN
-          value: "${keycloak_hostname}"
-        - name: KC_HTTP_RELATIVE_PATH
-          value: "/auth"
-        volumeMounts:
-        - name: realm-config
-          mountPath: /opt/keycloak/data/import
-          readOnly: true
-        resources:
-          requests:
-            cpu: "${KEYCLOAK_CPU_REQUEST}"
-            memory: "${KEYCLOAK_MEMORY_REQUEST}"
-          limits:
-            cpu: "${KEYCLOAK_CPU_LIMIT}"
-            memory: "${KEYCLOAK_MEMORY_LIMIT}"
-        livenessProbe:
-          httpGet:
-            path: /auth
-            port: 8080
-          initialDelaySeconds: 120
-          periodSeconds: 30
-          timeoutSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /auth
-            port: 8080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 5
-        startupProbe:
-          httpGet:
-            path: /auth
-            port: 8080
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          failureThreshold: 30
-      volumes:
-      - name: realm-config
-        configMap:
-          name: keycloak-realm-config
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: keycloak
-  labels:
-    app: keycloak
-spec:
-  ports:
-  - port: 8080
-    targetPort: 8080
-  selector:
-    app: keycloak
-EOF
+    # Check if Keycloak deployment file exists
+    if [[ ! -f "k8s/keycloak-deployment.yaml" ]]; then
+        print_error "Keycloak deployment file not found: k8s/keycloak-deployment.yaml"
+        exit 1
+    fi
+
+    # Apply Keycloak deployment with environment variable substitution
+    keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||' | sed 's|/.*||')
+    export keycloak_hostname
+    envsubst < k8s/keycloak-deployment.yaml | oc apply -f -
 
     wait_for_deployment keycloak 600  # Keycloak takes longer to start
 }
@@ -635,253 +424,633 @@ EOF
     rm -f /tmp/keycloak.json
 
     # Create ImageStream
-    cat <<EOF | oc apply -f -
-apiVersion: image.openshift.io/v1
-kind: ImageStream
-metadata:
-  name: ospo-events-app
-  labels:
-    app: ospo-app
-spec:
-  lookupPolicy:
-    local: false
-EOF
+    if [[ ! -f "k8s/app-imagestream.yaml" ]]; then
+        print_error "App ImageStream file not found: k8s/app-imagestream.yaml"
+        exit 1
+    fi
+    oc apply -f k8s/app-imagestream.yaml
 
     # Create BuildConfig
-    cat <<EOF | oc apply -f -
-apiVersion: build.openshift.io/v1
-kind: BuildConfig
-metadata:
-  name: ospo-events-app
-  labels:
-    app: ospo-app
-spec:
-  output:
-    to:
-      kind: ImageStreamTag
-      name: ospo-events-app:latest
-  source:
-    type: Binary
-  strategy:
-    type: Docker
-    dockerStrategy:
-      buildArgs:
-      - name: VITE_KEYCLOAK_URL
-        value: "${VITE_KEYCLOAK_URL}"
-  triggers:
-  - type: ConfigChange
-EOF
+    if [[ ! -f "k8s/app-buildconfig.yaml" ]]; then
+        print_error "App BuildConfig file not found: k8s/app-buildconfig.yaml"
+        exit 1
+    fi
+    envsubst < k8s/app-buildconfig.yaml | oc apply -f -
 
     # Start build
     print_status "🔨 Starting application build..."
     oc start-build ospo-events-app --from-dir=. --wait
 
     # Create Deployment
-    cat <<EOF | oc apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ospo-app
-  labels:
-    app: ospo-app
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: ospo-app
-  template:
-    metadata:
-      labels:
-        app: ospo-app
-    spec:
-      containers:
-      - name: ospo-app
-        image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/ospo-events-app:latest
-        ports:
-        - containerPort: 4576
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: DATABASE_URL
-          value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
-        - name: KEYCLOAK_URL
-          value: "http://keycloak:8080"
-        - name: KEYCLOAK_REALM
-          value: "${KEYCLOAK_REALM}"
-        - name: KEYCLOAK_CLIENT_ID
-          value: "${KEYCLOAK_CLIENT_ID}"
-        - name: KEYCLOAK_CLIENT_URL
-          value: "${VITE_KEYCLOAK_URL}"
-        - name: VITE_KEYCLOAK_URL
-          value: "${VITE_KEYCLOAK_URL}"
-        - name: MINIO_ENDPOINT
-          value: "minio:9000"
-        - name: MINIO_ACCESS_KEY
-          value: "${MINIO_ROOT_USER}"
-        - name: MINIO_SECRET_KEY
-          value: "${MINIO_ROOT_PASSWORD}"
-        - name: MINIO_BUCKET
-          value: "${MINIO_BUCKET_NAME}"
-        - name: JWT_SECRET
-          value: "${JWT_SECRET}"
-        - name: SESSION_SECRET
-          value: "${SESSION_SECRET}"
-        - name: SESSION_RESAVE
-          value: "${SESSION_RESAVE}"
-        - name: SESSION_SAVE_UNINITIALIZED
-          value: "${SESSION_SAVE_UNINITIALIZED}"
-        - name: SESSION_SECURE
-          value: "${SESSION_SECURE}"
-        - name: SESSION_HTTP_ONLY
-          value: "${SESSION_HTTP_ONLY}"
-        - name: SESSION_MAX_AGE
-          value: "${SESSION_MAX_AGE}"
-        - name: SESSION_SAME_SITE
-          value: "${SESSION_SAME_SITE}"
-        - name: SESSION_NAME
-          value: "${SESSION_NAME}"
-        - name: RATE_LIMIT_WINDOW_MS
-          value: "${RATE_LIMIT_WINDOW_MS}"
-        - name: RATE_LIMIT_MAX
-          value: "${RATE_LIMIT_MAX}"
-        - name: RATE_LIMIT_MESSAGE
-          value: "${RATE_LIMIT_MESSAGE}"
-        - name: RATE_LIMIT_RETRY_AFTER
-          value: "${RATE_LIMIT_RETRY_AFTER}"
-        - name: RATE_LIMIT_STANDARD_HEADERS
-          value: "${RATE_LIMIT_STANDARD_HEADERS}"
-        - name: RATE_LIMIT_LEGACY_HEADERS
-          value: "${RATE_LIMIT_LEGACY_HEADERS}"
-        - name: RATE_LIMIT_SKIP_PATHS
-          value: "${RATE_LIMIT_SKIP_PATHS}"
-        - name: CSP_STYLE_SRC
-          value: "${CSP_STYLE_SRC}"
-        - name: CSP_FONT_SRC
-          value: "${CSP_FONT_SRC}"
-        - name: CSP_OBJECT_SRC
-          value: "${CSP_OBJECT_SRC}"
-        - name: HELMET_COEP
-          value: "${HELMET_COEP}"
-        - name: HELMET_HSTS_MAX_AGE
-          value: "${HELMET_HSTS_MAX_AGE}"
-        - name: HELMET_HSTS_INCLUDE_SUBDOMAINS
-          value: "${HELMET_HSTS_INCLUDE_SUBDOMAINS}"
-        - name: HELMET_HSTS_PRELOAD
-          value: "${HELMET_HSTS_PRELOAD}"
-        - name: PROXY_FORWARDED_PROTO
-          value: "${PROXY_FORWARDED_PROTO}"
-        - name: PROXY_REDIRECT_PATTERN
-          value: "${PROXY_REDIRECT_PATTERN}"
-        - name: PROXY_TIMEOUT_MS
-          value: "${PROXY_TIMEOUT_MS}"
-        volumeMounts:
-        - name: keycloak-config
-          mountPath: /app/keycloak.json
-          subPath: keycloak.json
-        - name: keycloak-config
-          mountPath: /app/public/keycloak.json
-          subPath: keycloak.json
-        - name: uploads
-          mountPath: /app/uploads
-        resources:
-          requests:
-            cpu: "${APP_CPU_REQUEST}"
-            memory: "${APP_MEMORY_REQUEST}"
-          limits:
-            cpu: "${APP_CPU_LIMIT}"
-            memory: "${APP_MEMORY_LIMIT}"
-        livenessProbe:
-          httpGet:
-            path: /api/health
-            port: 4576
-          initialDelaySeconds: 30
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /api/health
-            port: 4576
-          initialDelaySeconds: 10
-          periodSeconds: 10
-      volumes:
-      - name: keycloak-config
-        configMap:
-          name: keycloak-client-config
-      - name: uploads
-        persistentVolumeClaim:
-          claimName: ospo-uploads-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: ospo-app
-  labels:
-    app: ospo-app
-spec:
-  ports:
-  - port: 4576
-    targetPort: 4576
-  selector:
-    app: ospo-app
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: ospo-uploads-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-EOF
+    if [[ ! -f "k8s/app-deployment.yaml" ]]; then
+        print_error "App deployment file not found: k8s/app-deployment.yaml"
+        exit 1
+    fi
+    envsubst < k8s/app-deployment.yaml | oc apply -f -
 
     wait_for_deployment ospo-app
+}
+
+# Function to deploy AI (Ollama) service
+deploy_ai() {
+    print_status "🤖 Deploying AI (Ollama) Service..."
+
+    # Check if Ollama deployment file exists
+    if [[ ! -f "k8s/ollama-deployment.yaml" ]]; then
+        print_error "Ollama deployment file not found: k8s/ollama-deployment.yaml"
+        exit 1
+    fi
+
+    # Apply Ollama deployment
+    oc apply -f k8s/ollama-deployment.yaml
+
+    # Wait for deployment to be ready
+    wait_for_deployment ollama-nvidia-gpu
+
+    print_success "🤖 AI (Ollama) service deployed successfully!"
+
+    # Show Ollama service information
+    print_status "📋 Ollama Service Information:"
+    echo "  - Service: ollama-nvidia-gpu"
+    echo "  - Port: 11434"
+    echo "  - GPU: NVIDIA GPU required"
+    echo "  - Models: Will be downloaded on first use"
+
+    # Show how to download models
+    print_status "📥 To download models, you can:"
+    echo "  1. Port forward: oc port-forward svc/ollama-nvidia-gpu 11434:11434"
+    echo "  2. Pull model: ollama pull codellama:7b-instruct"
+    echo "  3. Or use the internal service URL: http://ollama-nvidia-gpu:11434"
 }
 
 # Function to create routes
 create_routes() {
     print_status "🌐 Creating Routes..."
 
+    # Check if routes file exists
+    if [[ ! -f "k8s/routes.yaml" ]]; then
+        print_error "Routes file not found: k8s/routes.yaml"
+        exit 1
+    fi
+
+    # Set hostname variables for substitution
     local keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||')
     local app_hostname=$(echo "$APP_URL" | sed 's|https://||')
+    export keycloak_hostname
+    export app_hostname
 
-    cat <<EOF | oc apply -f -
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: keycloak
-  labels:
-    app: keycloak
-spec:
-  host: ${keycloak_hostname}
-  to:
-    kind: Service
-    name: keycloak
-  port:
-    targetPort: 8080
-  tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
----
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: ospo-app
-  labels:
-    app: ospo-app
-spec:
-  host: ${app_hostname}
-  to:
-    kind: Service
-    name: ospo-app
-  port:
-    targetPort: 4576
-  tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
-EOF
+    # Apply routes with environment variable substitution
+    envsubst < k8s/routes.yaml | oc apply -f -
 
     print_success "Routes created successfully"
+}
+
+# Function to safely delete all pods while preserving data
+delete_all_pods() {
+    print_warning "⚠️  WARNING: This will delete ALL pods in the cluster!"
+    print_warning "⚠️  This action will:"
+    print_warning "   - Delete all running pods (ospo-app, keycloak, postgres, minio, ollama)"
+    print_warning "   - Delete all deployments, services, and routes"
+    print_warning "   - DELETE ALL DATA if PersistentVolumeClaims are removed"
+    print_warning ""
+    print_warning "⚠️  DATA PRESERVATION:"
+    print_warning "   ✅ Keycloak user data will be preserved (stored in PostgreSQL PVC)"
+    print_warning "   ✅ Event data will be preserved (stored in PostgreSQL PVC)"
+    print_warning "   ✅ Uploaded files will be preserved (stored in MinIO PVC)"
+    print_warning "   ✅ Application uploads will be preserved (stored in app PVC)"
+    print_warning ""
+    print_warning "⚠️  THIS ACTION CANNOT BE UNDONE!"
+    echo ""
+
+    # Require explicit confirmation
+    read -p "Are you absolutely sure you want to delete all pods? Type 'DELETE ALL PODS' to confirm: " confirmation
+
+    if [[ "$confirmation" != "DELETE ALL PODS" ]]; then
+        print_error "Deletion cancelled. You must type 'DELETE ALL PODS' exactly to confirm."
+        exit 1
+    fi
+
+    print_status "🗑️  Starting safe deletion of all pods..."
+
+    # Delete deployments (this will delete pods)
+    print_status "Deleting deployments..."
+    oc delete deployment ospo-app --ignore-not-found=true
+    oc delete deployment keycloak --ignore-not-found=true
+    oc delete deployment postgres --ignore-not-found=true
+    oc delete deployment minio --ignore-not-found=true
+    oc delete deployment ollama-nvidia-gpu --ignore-not-found=true
+
+    # Delete services
+    print_status "Deleting services..."
+    oc delete service ospo-app --ignore-not-found=true
+    oc delete service keycloak --ignore-not-found=true
+    oc delete service postgres --ignore-not-found=true
+    oc delete service minio --ignore-not-found=true
+    oc delete service ollama-nvidia-gpu --ignore-not-found=true
+
+    # Delete routes
+    print_status "Deleting routes..."
+    oc delete route ospo-app --ignore-not-found=true
+    oc delete route keycloak --ignore-not-found=true
+    oc delete route ollama-nvidia-gpu --ignore-not-found=true
+
+    # Delete configmaps
+    print_status "Deleting configmaps..."
+    oc delete configmap keycloak-client-config --ignore-not-found=true
+    oc delete configmap keycloak-realm-config --ignore-not-found=true
+
+    # Delete secrets (but preserve PVCs and ImageStreams)
+    print_status "Deleting secrets..."
+    oc delete secret dockerhub-secret --ignore-not-found=true
+
+    # Delete ImageStreams and BuildConfigs
+    print_status "Deleting build resources..."
+    oc delete imagestream ospo-events-app --ignore-not-found=true
+    oc delete buildconfig ospo-events-app --ignore-not-found=true
+
+    # Explicitly preserve PVCs - DO NOT DELETE THESE
+    print_status "✅ PRESERVING PersistentVolumeClaims (data safe):"
+    print_status "   - postgres-pvc (Keycloak users + Event data)"
+    print_status "   - minio-pvc (File uploads)"
+    print_status "   - ospo-uploads-pvc (Application uploads)"
+
+    # Wait for pods to be fully deleted
+    print_status "Waiting for pods to be fully deleted..."
+    sleep 10
+
+    # Verify PVCs are still there
+    print_status "Verifying data preservation..."
+    if oc get pvc postgres-pvc >/dev/null 2>&1; then
+        print_success "✅ PostgreSQL PVC preserved (Keycloak users + Events data safe)"
+    else
+        print_error "❌ PostgreSQL PVC missing! Data may be lost!"
+    fi
+
+    if oc get pvc minio-pvc >/dev/null 2>&1; then
+        print_success "✅ MinIO PVC preserved (File uploads safe)"
+    else
+        print_error "❌ MinIO PVC missing! File uploads may be lost!"
+    fi
+
+    if oc get pvc ospo-uploads-pvc >/dev/null 2>&1; then
+        print_success "✅ App uploads PVC preserved (Application uploads safe)"
+    else
+        print_error "❌ App uploads PVC missing! Application uploads may be lost!"
+    fi
+
+    print_success "🎉 All pods deleted successfully!"
+    print_status "📋 Summary:"
+    echo "   ✅ All deployments, services, and routes removed"
+    echo "   ✅ All user data preserved in PostgreSQL"
+    echo "   ✅ All event data preserved in PostgreSQL"
+    echo "   ✅ All file uploads preserved in MinIO"
+    echo "   ✅ All application uploads preserved"
+    echo ""
+    print_status "💡 To redeploy, run:"
+    echo "   ./deploy.sh --${ENVIRONMENT}"
+    echo ""
+    print_warning "⚠️  Note: You may need to recreate users in Keycloak if this was the first deployment"
+}
+
+# Function to create a complete backup of all data
+backup_all_data() {
+    if [[ -z "$ENVIRONMENT" ]]; then
+        print_error "Environment must be specified for backup operation. Use --dev or --prod"
+        show_usage
+        exit 1
+    fi
+
+    print_status "📦 Starting complete data backup..."
+
+    # Create backup directory with timestamp
+    BACKUP_TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    BACKUP_DIR="backup/${ENVIRONMENT}_backup_${BACKUP_TIMESTAMP}"
+
+    print_status "Creating backup directory: $BACKUP_DIR"
+    mkdir -p "$BACKUP_DIR"
+
+    # Check if PostgreSQL pod is running
+    if ! oc get pod -l app=postgres --field-selector=status.phase=Running | grep -q postgres; then
+        print_error "PostgreSQL pod is not running. Cannot backup database data."
+        print_status "Attempting to start PostgreSQL..."
+        oc scale deployment postgres --replicas=1
+        print_status "Waiting for PostgreSQL to be ready..."
+        sleep 30
+    fi
+
+    # Backup PostgreSQL database
+    print_status "📊 Backing up PostgreSQL database..."
+    if oc get pod -l app=postgres --field-selector=status.phase=Running | grep -q postgres; then
+        POSTGRES_POD=$(oc get pod -l app=postgres --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
+
+        # Backup the main events database
+        oc exec $POSTGRES_POD -- pg_dump -U ${POSTGRES_USER} -d ${POSTGRES_DB} > "$BACKUP_DIR/events_database.sql"
+
+        # Backup the Keycloak database
+        oc exec $POSTGRES_POD -- pg_dump -U ${POSTGRES_USER} -d ${KEYCLOAK_DB_NAME} > "$BACKUP_DIR/keycloak_database.sql"
+
+        print_success "✅ PostgreSQL databases backed up"
+    else
+        print_error "❌ Could not backup PostgreSQL - pod not running"
+    fi
+
+    # Backup MinIO data
+    print_status "📁 Backing up MinIO file uploads..."
+    if oc get pod -l app=minio --field-selector=status.phase=Running | grep -q minio; then
+        MINIO_POD=$(oc get pod -l app=minio --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
+
+        # Create MinIO backup directory
+        mkdir -p "$BACKUP_DIR/minio_backup"
+
+        # Try to use oc rsync first
+        if oc rsync $MINIO_POD:/data "$BACKUP_DIR/minio_backup/" --no-perms=true 2>/dev/null; then
+            print_success "✅ MinIO file uploads backed up via rsync"
+        else
+            print_warning "⚠️  MinIO rsync failed, trying alternative methods..."
+
+            # Alternative 1: Try to copy individual files using oc cp
+            print_status "Trying file-by-file copy method..."
+            if oc exec $MINIO_POD -- find /data -type f -name "*" 2>/dev/null | head -10 > /dev/null; then
+                # Get list of files and copy them individually
+                oc exec $MINIO_POD -- find /data -type f 2>/dev/null | while read file; do
+                    if [[ -n "$file" ]]; then
+                        # Create directory structure
+                        dir=$(dirname "$file")
+                        mkdir -p "$BACKUP_DIR/minio_backup$dir"
+                        # Copy file
+                        oc cp "$MINIO_POD:$file" "$BACKUP_DIR/minio_backup$file" 2>/dev/null || true
+                    fi
+                done
+                print_success "✅ MinIO file uploads backed up via file copy"
+            else
+                # Alternative 2: Use MinIO client to export data
+                print_status "Trying MinIO client export method..."
+                if oc exec $MINIO_POD -- which mc >/dev/null 2>&1; then
+                    oc exec $MINIO_POD -- mc mirror /data /tmp/backup 2>/dev/null || true
+                    oc cp "$MINIO_POD:/tmp/backup" "$BACKUP_DIR/minio_backup/" 2>/dev/null || true
+                    oc exec $MINIO_POD -- rm -rf /tmp/backup 2>/dev/null || true
+                    print_success "✅ MinIO file uploads backed up via MinIO client"
+                else
+                    print_warning "⚠️  MinIO backup skipped - no suitable method available"
+                    print_warning "   MinIO container lacks rsync, tar, and MinIO client"
+                    print_warning "   Consider upgrading MinIO image or implementing custom backup"
+                fi
+            fi
+        fi
+    else
+        print_error "❌ Could not backup MinIO - pod not running"
+    fi
+
+    # Backup application uploads
+    print_status "📎 Backing up application uploads..."
+    if oc get pod -l app=ospo-app --field-selector=status.phase=Running | grep -q ospo-app; then
+        APP_POD=$(oc get pod -l app=ospo-app --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
+
+        # Create app uploads backup directory
+        mkdir -p "$BACKUP_DIR/app_uploads_backup"
+
+        # Try to use oc rsync first
+        if oc rsync $APP_POD:/app/uploads "$BACKUP_DIR/app_uploads_backup/" --no-perms=true 2>/dev/null; then
+            print_success "✅ Application uploads backed up via rsync"
+        else
+            print_warning "⚠️  App uploads rsync failed, trying alternative methods..."
+
+            # Alternative 1: Try to copy individual files using oc cp
+            print_status "Trying file-by-file copy method..."
+            if oc exec $APP_POD -- find /app/uploads -type f -name "*" 2>/dev/null | head -10 > /dev/null; then
+                # Get list of files and copy them individually
+                oc exec $APP_POD -- find /app/uploads -type f 2>/dev/null | while read file; do
+                    if [[ -n "$file" ]]; then
+                        # Create directory structure
+                        dir=$(dirname "$file")
+                        mkdir -p "$BACKUP_DIR/app_uploads_backup$dir"
+                        # Copy file
+                        oc cp "$APP_POD:$file" "$BACKUP_DIR/app_uploads_backup$file" 2>/dev/null || true
+                    fi
+                done
+                print_success "✅ Application uploads backed up via file copy"
+            else
+                # Alternative 2: Try tar if available
+                print_status "Trying tar method..."
+                if oc exec $APP_POD -- which tar >/dev/null 2>&1; then
+                    oc exec $APP_POD -- tar -czf /tmp/app_uploads_backup.tar.gz -C /app/uploads .
+                    oc cp $APP_POD:/tmp/app_uploads_backup.tar.gz "$BACKUP_DIR/app_uploads_backup.tar.gz"
+                    oc exec $APP_POD -- rm /tmp/app_uploads_backup.tar.gz
+                    print_success "✅ Application uploads backed up via tar"
+                else
+                    print_warning "⚠️  App uploads backup skipped - no suitable method available"
+                    print_warning "   App container lacks rsync and tar"
+                fi
+            fi
+        fi
+    else
+        print_error "❌ Could not backup application uploads - pod not running"
+    fi
+
+    # Create backup metadata
+    print_status "📋 Creating backup metadata..."
+    cat > "$BACKUP_DIR/backup_metadata.txt" <<EOF
+OSPO Events Manager Backup
+=========================
+Backup Date: $(date)
+Environment: $ENVIRONMENT
+Namespace: $NAMESPACE
+Database: $POSTGRES_DB
+Keycloak Database: $KEYCLOAK_DB_NAME
+
+Contents:
+- events_database.sql: Main application database
+- keycloak_database.sql: Keycloak user and authentication data
+- minio_backup/: File uploads from MinIO
+- app_uploads_backup/: Application uploads
+- backup_metadata.txt: This file
+
+Restore Command:
+./deploy.sh --restore -f $BACKUP_DIR
+EOF
+
+    print_success "🎉 Backup completed successfully!"
+    print_status "📋 Backup Summary:"
+    echo "   📁 Backup Location: $BACKUP_DIR"
+    echo "   📊 Events Database: $(du -h "$BACKUP_DIR/events_database.sql" 2>/dev/null | cut -f1 || echo "N/A")"
+    echo "   👥 Keycloak Database: $(du -h "$BACKUP_DIR/keycloak_database.sql" 2>/dev/null | cut -f1 || echo "N/A")"
+    echo "   📁 MinIO Data: $(du -sh "$BACKUP_DIR/minio_backup" 2>/dev/null | cut -f1 || echo "N/A")"
+    echo "   📎 App Uploads: $(du -sh "$BACKUP_DIR/app_uploads_backup" 2>/dev/null | cut -f1 || echo "N/A")"
+    echo ""
+    print_status "💡 To restore this backup:"
+    echo "   ./deploy.sh --restore -f $BACKUP_DIR"
+}
+
+# Function to restore data from backup
+restore_from_backup() {
+    if [[ -z "$RESTORE_PATH" ]]; then
+        print_error "Restore path must be specified with -f option"
+        exit 1
+    fi
+
+    if [[ ! -d "$RESTORE_PATH" ]]; then
+        print_error "Backup directory not found: $RESTORE_PATH"
+        exit 1
+    fi
+
+    print_warning "⚠️  WARNING: This will RESTORE data from backup!"
+    print_warning "⚠️  This action will:"
+    print_warning "   - Restore PostgreSQL databases (events + keycloak)"
+    print_warning "   - Restore MinIO file uploads"
+    print_warning "   - Restore application uploads"
+    print_warning "   - OVERWRITE existing data in the cluster"
+    print_warning ""
+    print_warning "⚠️  CURRENT DATA WILL BE LOST!"
+    echo ""
+
+    # Show backup info
+    if [[ -f "$RESTORE_PATH/backup_metadata.txt" ]]; then
+        print_status "📋 Backup Information:"
+        cat "$RESTORE_PATH/backup_metadata.txt"
+        echo ""
+    fi
+
+    # Require explicit confirmation
+    read -p "Are you absolutely sure you want to restore from backup? Type 'RESTORE FROM BACKUP' to confirm: " confirmation
+
+    if [[ "$confirmation" != "RESTORE FROM BACKUP" ]]; then
+        print_error "Restore cancelled. You must type 'RESTORE FROM BACKUP' exactly to confirm."
+        exit 1
+    fi
+
+    print_status "🔄 Starting data restoration..."
+
+    # Ensure PostgreSQL is running
+    print_status "Ensuring PostgreSQL is running..."
+    oc scale deployment postgres --replicas=1
+    sleep 10
+
+    # Wait for PostgreSQL to be ready
+    print_status "Waiting for PostgreSQL to be ready..."
+    until oc get pod -l app=postgres --field-selector=status.phase=Running | grep -q postgres; do
+        print_status "Waiting for PostgreSQL pod..."
+        sleep 5
+    done
+
+    POSTGRES_POD=$(oc get pod -l app=postgres --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
+
+    # Restore PostgreSQL databases
+    print_status "📊 Restoring PostgreSQL databases..."
+
+    # Restore events database
+    if [[ -f "$RESTORE_PATH/events_database.sql" ]]; then
+        print_status "Restoring events database..."
+        oc exec -i $POSTGRES_POD -- psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} < "$RESTORE_PATH/events_database.sql"
+        print_success "✅ Events database restored"
+    else
+        print_error "❌ Events database backup not found"
+    fi
+
+    # Restore Keycloak database
+    if [[ -f "$RESTORE_PATH/keycloak_database.sql" ]]; then
+        print_status "Restoring Keycloak database..."
+        oc exec -i $POSTGRES_POD -- psql -U ${POSTGRES_USER} -d ${KEYCLOAK_DB_NAME} < "$RESTORE_PATH/keycloak_database.sql"
+        print_success "✅ Keycloak database restored"
+    else
+        print_error "❌ Keycloak database backup not found"
+    fi
+
+    # Restore MinIO data
+    print_status "📁 Restoring MinIO file uploads..."
+    oc scale deployment minio --replicas=1
+    sleep 10
+
+    until oc get pod -l app=minio --field-selector=status.phase=Running | grep -q minio; do
+        print_status "Waiting for MinIO pod..."
+        sleep 5
+    done
+
+    MINIO_POD=$(oc get pod -l app=minio --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
+
+    if [[ -d "$RESTORE_PATH/minio_backup" ]]; then
+        if oc rsync "$RESTORE_PATH/minio_backup/" $MINIO_POD:/data --no-perms=true 2>/dev/null; then
+            print_success "✅ MinIO file uploads restored via rsync"
+        else
+            print_warning "⚠️  MinIO rsync failed, trying alternative methods..."
+
+            # Try file-by-file restore
+            if find "$RESTORE_PATH/minio_backup" -type f | head -1 >/dev/null 2>&1; then
+                print_status "Trying file-by-file restore..."
+                find "$RESTORE_PATH/minio_backup" -type f | while read file; do
+                    if [[ -n "$file" ]]; then
+                        # Calculate relative path
+                        rel_path="${file#$RESTORE_PATH/minio_backup}"
+                        oc cp "$file" "$MINIO_POD:/data$rel_path" 2>/dev/null || true
+                    fi
+                done
+                print_success "✅ MinIO file uploads restored via file copy"
+            else
+                print_warning "⚠️  MinIO restore skipped - no files found"
+            fi
+        fi
+    elif [[ -f "$RESTORE_PATH/minio_backup.tar.gz" ]]; then
+        print_status "Restoring MinIO from tar archive..."
+        oc cp "$RESTORE_PATH/minio_backup.tar.gz" $MINIO_POD:/tmp/
+        oc exec $MINIO_POD -- tar -xzf /tmp/minio_backup.tar.gz -C /data
+        oc exec $MINIO_POD -- rm /tmp/minio_backup.tar.gz
+        print_success "✅ MinIO file uploads restored from tar"
+    else
+        print_error "❌ MinIO backup directory or tar file not found"
+    fi
+
+    # Restore application uploads
+    print_status "📎 Restoring application uploads..."
+    oc scale deployment ospo-app --replicas=1
+    sleep 10
+
+    until oc get pod -l app=ospo-app --field-selector=status.phase=Running | grep -q ospo-app; do
+        print_status "Waiting for application pod..."
+        sleep 5
+    done
+
+    APP_POD=$(oc get pod -l app=ospo-app --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
+
+    if [[ -d "$RESTORE_PATH/app_uploads_backup" ]]; then
+        if oc rsync "$RESTORE_PATH/app_uploads_backup/" $APP_POD:/app/uploads --no-perms=true 2>/dev/null; then
+            print_success "✅ Application uploads restored via rsync"
+        else
+            print_warning "⚠️  App uploads rsync failed, trying alternative methods..."
+
+            # Try file-by-file restore
+            if find "$RESTORE_PATH/app_uploads_backup" -type f | head -1 >/dev/null 2>&1; then
+                print_status "Trying file-by-file restore..."
+                find "$RESTORE_PATH/app_uploads_backup" -type f | while read file; do
+                    if [[ -n "$file" ]]; then
+                        # Calculate relative path
+                        rel_path="${file#$RESTORE_PATH/app_uploads_backup}"
+                        oc cp "$file" "$APP_POD:/app/uploads$rel_path" 2>/dev/null || true
+                    fi
+                done
+                print_success "✅ Application uploads restored via file copy"
+            else
+                print_warning "⚠️  App uploads restore skipped - no files found"
+            fi
+        fi
+    elif [[ -f "$RESTORE_PATH/app_uploads_backup.tar.gz" ]]; then
+        print_status "Restoring app uploads from tar archive..."
+        oc cp "$RESTORE_PATH/app_uploads_backup.tar.gz" $APP_POD:/tmp/
+        oc exec $APP_POD -- tar -xzf /tmp/app_uploads_backup.tar.gz -C /app/uploads
+        oc exec $APP_POD -- rm /tmp/app_uploads_backup.tar.gz
+        print_success "✅ Application uploads restored from tar"
+    else
+        print_error "❌ Application uploads backup directory or tar file not found"
+    fi
+
+    print_success "🎉 Data restoration completed successfully!"
+    print_status "📋 Restore Summary:"
+    echo "   ✅ Events database restored"
+    echo "   ✅ Keycloak database restored"
+    echo "   ✅ MinIO file uploads restored"
+    echo "   ✅ Application uploads restored"
+    echo ""
+    print_status "💡 You may need to restart services for changes to take effect"
+}
+
+# Function to completely destroy all data
+destroy_all_data() {
+    if [[ -z "$ENVIRONMENT" ]]; then
+        print_error "Environment must be specified for destroy operation. Use --dev or --prod"
+        show_usage
+        exit 1
+    fi
+
+    print_error "💀 CATASTROPHIC DESTRUCTION WARNING 💀"
+    print_error "💀 THIS WILL PERMANENTLY DESTROY ALL DATA 💀"
+    print_error ""
+    print_error "⚠️  THIS ACTION WILL:"
+    print_error "   - Delete ALL pods in the cluster"
+    print_error "   - Delete ALL PersistentVolumeClaims (ALL DATA WILL BE LOST)"
+    print_error "   - Delete ALL deployments, services, and routes"
+    print_error "   - Delete ALL configuration and secrets"
+    print_error "   - Make ALL user data, events, and uploads IRRETRIEVABLE"
+    print_error ""
+    print_error "💀 DATA THAT WILL BE DESTROYED FOREVER:"
+    print_error "   - All Keycloak users and authentication data"
+    print_error "   - All events and event management data"
+    print_error "   - All file uploads and attachments"
+    print_error "   - All application configuration and settings"
+    print_error ""
+    print_error "💀 THIS CANNOT BE UNDONE! 💀"
+    print_error ""
+    print_error "⚠️  YOU SHOULD BACKUP THE CLUSTER FIRST:"
+    print_error "   ./deploy.sh --backup"
+    echo ""
+
+    # Multiple confirmation prompts
+    print_warning "First confirmation: Type 'I UNDERSTAND DATA WILL BE LOST'"
+    read -p "Confirmation: " confirmation1
+
+    if [[ "$confirmation1" != "I UNDERSTAND DATA WILL BE LOST" ]]; then
+        print_error "Destruction cancelled."
+        exit 1
+    fi
+
+    print_warning "Second confirmation: Type 'DESTROY ALL DATA PERMANENTLY'"
+    read -p "Confirmation: " confirmation2
+
+    if [[ "$confirmation2" != "DESTROY ALL DATA PERMANENTLY" ]]; then
+        print_error "Destruction cancelled."
+        exit 1
+    fi
+
+    print_warning "Final confirmation: Type 'FINAL CONFIRMATION - DESTROY EVERYTHING'"
+    read -p "Final confirmation: " confirmation3
+
+    if [[ "$confirmation3" != "FINAL CONFIRMATION - DESTROY EVERYTHING" ]]; then
+        print_error "Destruction cancelled."
+        exit 1
+    fi
+
+    print_error "💀 PROCEEDING WITH CATASTROPHIC DESTRUCTION 💀"
+
+    # Delete all deployments first
+    print_status "Deleting all deployments..."
+    oc delete deployment --all --ignore-not-found=true
+
+    # Delete all services
+    print_status "Deleting all services..."
+    oc delete service --all --ignore-not-found=true
+
+    # Delete all routes
+    print_status "Deleting all routes..."
+    oc delete route --all --ignore-not-found=true
+
+    # Delete all configmaps
+    print_status "Deleting all configmaps..."
+    oc delete configmap --all --ignore-not-found=true
+
+    # Delete all secrets
+    print_status "Deleting all secrets..."
+    oc delete secret --all --ignore-not-found=true
+
+    # Delete all ImageStreams and BuildConfigs
+    print_status "Deleting all build resources..."
+    oc delete imagestream --all --ignore-not-found=true
+    oc delete buildconfig --all --ignore-not-found=true
+
+    # CATASTROPHIC: Delete all PVCs (THIS DESTROYS ALL DATA)
+    print_error "💀 DESTROYING ALL PERSISTENT VOLUME CLAIMS 💀"
+    print_error "💀 ALL DATA WILL BE PERMANENTLY LOST 💀"
+    oc delete pvc --all --ignore-not-found=true
+
+    print_error "💀 CATASTROPHIC DESTRUCTION COMPLETED 💀"
+    print_error "💀 ALL DATA HAS BEEN PERMANENTLY DESTROYED 💀"
+    print_error ""
+    print_error "📋 What was destroyed:"
+    print_error "   💀 All pods and deployments"
+    print_error "   💀 All services and routes"
+    print_error "   💀 All configuration and secrets"
+    print_error "   💀 All PersistentVolumeClaims"
+    print_error "   💀 ALL USER DATA (irretrievable)"
+    print_error "   💀 ALL EVENT DATA (irretrievable)"
+    print_error "   💀 ALL FILE UPLOADS (irretrievable)"
+    print_error ""
+    print_error "⚠️  To start fresh, run: ./deploy.sh --${ENVIRONMENT}"
 }
 
 # Main deployment function
@@ -889,8 +1058,41 @@ main() {
     print_status "🚀 Starting deployment process..."
 
     # SAFETY CHECK: Ensure this script is only used for deployments
-    print_status "🔒 SAFETY MODE ENABLED - This script will NOT perform destructive operations"
-    print_status "🔒 All data-preserving operations only"
+    if [[ "$DELETE_ONLY" != "true" && "$BACKUP_ONLY" != "true" && "$RESTORE_ONLY" != "true" && "$DESTROY_ONLY" != "true" ]]; then
+        print_status "🔒 SAFETY MODE ENABLED - This script will NOT perform destructive operations"
+        print_status "🔒 All data-preserving operations only"
+    fi
+
+    # Handle backup operation
+    if [[ "$BACKUP_ONLY" == "true" ]]; then
+        backup_all_data
+        exit 0
+    fi
+
+    # Handle restore operation
+    if [[ "$RESTORE_ONLY" == "true" ]]; then
+        restore_from_backup
+        exit 0
+    fi
+
+    # Handle destroy operation
+    if [[ "$DESTROY_ONLY" == "true" ]]; then
+        destroy_all_data
+        exit 0
+    fi
+
+    # Handle delete operation
+    if [[ "$DELETE_ONLY" == "true" ]]; then
+        if [[ -z "$ENVIRONMENT" ]]; then
+            print_error "Environment must be specified for delete operation. Use --dev or --prod"
+            show_usage
+            exit 1
+        fi
+        print_warning "⚠️  WARNING: DELETE operation requested!"
+        print_warning "⚠️  This will delete ALL pods in the $ENVIRONMENT environment!"
+        delete_all_pods
+        exit 0
+    fi
 
     if [[ "$APP_ONLY" == "true" ]]; then
         print_status "🚀 Deploying only the application..."
@@ -899,14 +1101,49 @@ main() {
         sleep 5
         oc scale deployment ospo-app --replicas=1
         print_success "🎉 Application deployed successfully!"
+        if [[ "$KEYCLOAK_ONLY" == "true" ]]; then
+            print_status "🚀 Deploying the keycloak pod..."
+            deploy_keycloak
+            oc scale deployment keycloak --replicas=0
+            sleep 5
+            oc scale deployment keycloak --replicas=1
+            print_success "🎉 Keycloak deployed successfully!"
+            exit 0
+        fi
         exit 0
     fi
+    if [[ "$KEYCLOAK_ONLY" == "true" ]]; then
+        print_status "🚀 Deploying only the keycloak pod..."
+        deploy_keycloak
+        oc scale deployment keycloak --replicas=0
+        sleep 5
+        oc scale deployment keycloak --replicas=1
+        print_success "🎉 Keycloak deployed successfully!"
+        if [[ "$APP_ONLY" == "true" ]]; then
+            print_status "🚀 Deploying the application..."
+            deploy_app
+            oc scale deployment ospo-app --replicas=0
+            sleep 5
+            oc scale deployment ospo-app --replicas=1
+            print_success "🎉 Application deployed successfully!"
+            exit 0
+        fi
+        exit 0
+    fi
+
+    if [[ "$AI_ONLY" == "true" ]]; then
+        print_status "🚀 Deploying only the AI (Ollama) service..."
+        deploy_ai
+        exit 0
+    fi
+
     # Deploy components in order
     create_dockerhub_secret
     deploy_postgres
     deploy_minio
     deploy_keycloak
     deploy_app
+    deploy_ai
     create_routes
 
     print_success "🎉 Deployment completed successfully!"
@@ -916,6 +1153,7 @@ main() {
     echo "   Namespace: $NAMESPACE"
     echo "   Application URL: $APP_URL"
     echo "   Keycloak URL: $KEYCLOAK_URL"
+    echo "   AI Service: ollama-nvidia-gpu (internal)"
     echo ""
     print_status "🔍 Checking deployment status..."
     oc get pods -l app
