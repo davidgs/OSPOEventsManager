@@ -11,7 +11,9 @@
     "build:server": "tsc --project tsconfig.server.json",
     "start": "NODE_ENV=production tsx dist/server/index.ts",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "geocode": "tsx scripts/geocode-events.ts",
+    "geocode:test": "tsx scripts/test-geocoding.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

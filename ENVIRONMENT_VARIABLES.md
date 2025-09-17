@@ -98,6 +98,12 @@ This document lists all environment variables used by the OSPO Events Manager ap
 | `MINIO_BUCKET` | - | MinIO bucket name for uploads |
 | `UPLOADS_DIR` | `public/uploads` | Local uploads directory (fallback) |
 
+## 🤖 AI Configuration (Ollama)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OLLAMA_MODEL` | `qwen2.5:7b-instruct` | AI model to use for SQL generation and chat |
+
 ## 🌐 Frontend Build Variables
 
 | Variable | Default | Description |

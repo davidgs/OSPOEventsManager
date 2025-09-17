@@ -407,7 +407,7 @@ deploy_keycloak() {
 # Function to create application build and deployment
 deploy_app() {
     print_status "📦 Deploying OSPO Events Application..."
-
+    echo "Build started: $(date)"
     # Ensure Docker Hub secret exists for builds
     create_dockerhub_secret
 
@@ -432,6 +432,7 @@ EOF
     # Create ImageStream
     if [[ ! -f "k8s/app-imagestream.yaml" ]]; then
         print_error "App ImageStream file not found: k8s/app-imagestream.yaml"
+        echo "Build failed: $(date)"
         exit 1
     fi
     oc apply -f k8s/app-imagestream.yaml
@@ -439,6 +440,7 @@ EOF
     # Create BuildConfig
     if [[ ! -f "k8s/app-buildconfig.yaml" ]]; then
         print_error "App BuildConfig file not found: k8s/app-buildconfig.yaml"
+        echo "Build failed: $(date)"
         exit 1
     fi
     envsubst < k8s/app-buildconfig.yaml | oc apply -f -
@@ -474,6 +476,21 @@ deploy_ai() {
     envsubst < k8s/ollama-deployment.yaml | oc apply -f -
     if [[ "$AI_ONLY" == "true" ]]; then
         print_status "AI (Ollama) service deployment complete!"
+        wait_for_deployment ollama
+
+        # Automatically pull the configured model for --ai-only deployments too
+        if [[ -n "${OLLAMA_MODEL}" ]]; then
+            print_status "📥 Pulling configured AI model: ${OLLAMA_MODEL}"
+            if oc exec deployment/ollama -- ollama pull "${OLLAMA_MODEL}"; then
+                print_success "✅ AI model ${OLLAMA_MODEL} downloaded successfully!"
+            else
+                print_warning "⚠️  Failed to download model ${OLLAMA_MODEL}. You may need to pull it manually:"
+                echo "  oc exec deployment/ollama -- ollama pull ${OLLAMA_MODEL}"
+            fi
+        else
+            print_warning "⚠️  OLLAMA_MODEL not configured in .env file"
+            echo "  Add OLLAMA_MODEL=qwen2.5:7b-instruct to your .env file"
+        fi
         return
     fi
     # Wait for deployment to be ready (only used in full deployment, not --ai-only)
@@ -481,18 +498,34 @@ deploy_ai() {
 
     print_success "🤖 AI (Ollama) service deployed successfully!"
 
+    # Automatically pull the configured model
+    if [[ -n "${OLLAMA_MODEL}" ]]; then
+        print_status "📥 Pulling configured AI model: ${OLLAMA_MODEL}"
+        if oc exec deployment/ollama -- ollama pull "${OLLAMA_MODEL}"; then
+            print_success "✅ AI model ${OLLAMA_MODEL} downloaded successfully!"
+        else
+            print_warning "⚠️  Failed to download model ${OLLAMA_MODEL}. You may need to pull it manually:"
+            echo "  oc exec deployment/ollama -- ollama pull ${OLLAMA_MODEL}"
+        fi
+    else
+        print_warning "⚠️  OLLAMA_MODEL not configured in .env file"
+        echo "  Add OLLAMA_MODEL=qwen2.5:7b-instruct to your .env file"
+    fi
+
     # Show Ollama service information
     print_status "📋 Ollama Service Information:"
     echo "  - Service: ollama"
     echo "  - Port: 11434"
     echo "  - GPU: NVIDIA GPU required"
-    echo "  - Models: Will be downloaded on first use"
+    echo "  - Configured Model: ${OLLAMA_MODEL:-'Not configured'}"
 
-    # Show how to download models
-    print_status "📥 To download models, you can:"
-    echo "  1. Port forward: oc port-forward svc/ollama 11434:11434"
-    echo "  2. Pull model: ollama pull codellama:7b-instruct"
-    echo "  3. Or use the internal service URL: http://ollama:11434"
+    # Show available models
+    print_status "📋 Available models:"
+    if oc exec deployment/ollama -- ollama list 2>/dev/null; then
+        echo ""
+    else
+        print_warning "Could not list models (Ollama may still be starting)"
+    fi
 }
 
 # Function to create routes
@@ -1108,49 +1141,72 @@ main() {
 
     if [[ "$APP_ONLY" == "true" ]]; then
         print_status "🚀 Deploying only the application..."
+        echo "Application deployment started: $(date)"
+        app_up=$(oc get pods  | grep ospo-app | wc -l)
+        if [[ $app_up -gt 0 ]]; then
+          oc scale deployment ospo-app --replicas=0
+          sleep 5
+        fi
         deploy_app
-        oc scale deployment ospo-app --replicas=0
-        sleep 5
         oc scale deployment ospo-app --replicas=1
         print_success "🎉 Application deployed successfully!"
         if [[ "$KEYCLOAK_ONLY" == "true" ]]; then
             print_status "🚀 Deploying the keycloak pod..."
+            keycloak_up=$(oc get pods  | grep keycloak | wc -l)
+            if [[ $keycloak_up -gt 0 ]]; then
+              oc scale deployment keycloak --replicas=0
+              sleep 5
+            fi
             deploy_keycloak
-            oc scale deployment keycloak --replicas=0
-            sleep 5
             oc scale deployment keycloak --replicas=1
             print_success "🎉 Keycloak deployed successfully!"
+            echo "Keycloak deployment completed: $(date)"
             exit 0
         fi
+        echo "Application deployment completed: $(date)"
         exit 0
     fi
     if [[ "$KEYCLOAK_ONLY" == "true" ]]; then
         print_status "🚀 Deploying only the keycloak pod..."
-        oc scale deployment keycloak --replicas=0
+        echo "Keycloak deployment started: $(date)"
+        keycloak_up=$(oc get pods  | grep keycloak | wc -l)
+        if [[ $keycloak_up -gt 0 ]]; then
+          oc scale deployment keycloak --replicas=0
+          sleep 5
+        fi
         deploy_keycloak
         sleep 5
         oc scale deployment keycloak --replicas=1
         print_success "🎉 Keycloak deployed successfully!"
         if [[ "$APP_ONLY" == "true" ]]; then
             print_status "🚀 Deploying the application..."
+            app_up=$(oc get pods  | grep ospo-app | wc -l)
+            if [[ $app_up -gt 0 ]]; then
+              oc scale deployment ospo-app --replicas=0
+              sleep 5
+            fi
             deploy_app
-            oc scale deployment ospo-app --replicas=0
-            sleep 5
             oc scale deployment ospo-app --replicas=1
             print_success "🎉 Application deployed successfully!"
+            echo "Application deployment completed: $(date)"
             exit 0
         fi
+        echo "Keycloak deployment completed: $(date)"
         exit 0
     fi
 
     if [[ "$AI_ONLY" == "true" ]]; then
         print_status "🚀 Deploying only the AI (Ollama) service..."
-        oc scale deployment ollama --replicas=0
-        sleep 5
-
+        echo "AI deployment started: $(date)"
+        ollama_up=$(oc get pods  | grep ollama | wc -l)
+        if [[ $ollama_up -gt 0 ]]; then
+          oc scale deployment ollama --replicas=0
+          sleep 5
+        fi
         deploy_ai
         oc scale deployment ollama --replicas=1
         print_success "🎉 AI (Ollama) service deployed successfully!"
+        echo "AI deployment completed: $(date)"
         exit 0
     fi
 
