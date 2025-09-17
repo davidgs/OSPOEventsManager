@@ -7,15 +7,15 @@ WORKDIR /app
 ARG VITE_KEYCLOAK_URL
 ENV VITE_KEYCLOAK_URL=$VITE_KEYCLOAK_URL
 
-# Copy package files and install dependencies
+# Copy package files and install dependencies with optimizations
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --prefer-offline --no-audit --no-fund
 
 # Copy the rest of the application code
 COPY . .
 
-# Build only the client assets for production
-RUN timeout 300 npx vite build || echo "Vite build timed out, creating minimal static files"
+# Build only the client assets for production with optimizations
+RUN timeout 300 npx vite build --mode production || echo "Vite build timed out, creating minimal static files"
 RUN if [ ! -d "dist/public" ]; then \
   mkdir -p dist/public && \
   echo '<!DOCTYPE html><html><head><title>OSPO Events</title></head><body><div id="root">Loading...</div></body></html>' > dist/public/index.html; \
@@ -30,9 +30,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4576
 
-# Copy package files and install all dependencies (including dev deps for tsx)
+# Copy package files and install all dependencies (including dev deps for tsx) with optimizations
 COPY package*.json ./
-RUN npm ci --include=dev
+RUN npm ci --include=dev --prefer-offline --no-audit --no-fund
 
 # Copy application files from the builder stage
 COPY --from=client-builder /app/server ./server
@@ -59,9 +59,7 @@ RUN mkdir -p public/uploads && \
   chmod -R 775 /app/public && \
   chmod -R 775 /app/server/public && \
   chmod -R g+rws /app/public/uploads && \
-  chmod -R g+rws /app/server/public/uploads && \
-  ls -la /app/public/ && \
-  ls -la /app/server/public/
+  chmod -R g+rws /app/server/public/uploads
 
 # Switch to non-root user
 USER nodejs

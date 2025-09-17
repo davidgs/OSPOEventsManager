@@ -159,11 +159,15 @@ if [[ "$ENVIRONMENT" == "dev" ]]; then
     APP_URL="$DEV_APP_URL"
     KEYCLOAK_URL="$DEV_KEYCLOAK_URL"
     VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_DEV"
+    KEYCLOAK_CLIENT_URL="$VITE_KEYCLOAK_URL_DEV"
+    export NAMESPACE APP_URL KEYCLOAK_URL VITE_KEYCLOAK_URL KEYCLOAK_CLIENT_URL
 else
     NAMESPACE="$PROD_NAMESPACE"
     APP_URL="$PROD_APP_URL"
     KEYCLOAK_URL="$PROD_KEYCLOAK_URL"
     VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_PROD"
+    KEYCLOAK_CLIENT_URL="$VITE_KEYCLOAK_URL_PROD"
+    export NAMESPACE APP_URL KEYCLOAK_URL VITE_KEYCLOAK_URL KEYCLOAK_CLIENT_URL
 fi
 
 print_success "Configuration loaded for $ENVIRONMENT environment"
@@ -375,11 +379,13 @@ deploy_keycloak() {
     # SAFETY CHECK: Prevent realm import that could delete users
     keycloak_safety_check
 
-    # Create realm configuration (only if override is explicitly enabled)
+    # Create realm configuration ConfigMap (always required for volume mount)
     if [[ "${KEYCLOAK_OVERRIDE_REALM:-}" == "true" ]]; then
         create_keycloak_realm_config
     else
-        print_warning "🔒 Skipping realm configuration import to preserve existing users"
+        print_warning "🔒 Creating empty realm config to preserve existing users"
+        # Create empty ConfigMap to satisfy volume mount requirement
+        oc create configmap keycloak-realm-config --from-literal=realm.json='{}' --dry-run=client -o yaml | oc apply -f -
     fi
 
     local keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||' | sed 's|/.*||')
@@ -447,7 +453,10 @@ EOF
         exit 1
     fi
     envsubst < k8s/app-deployment.yaml | oc apply -f -
-
+    if [[ "$APP_ONLY" == "true" ]]; then
+        print_status "Application deployment complete!"
+        return
+    fi
     wait_for_deployment ospo-app
 }
 
@@ -462,25 +471,28 @@ deploy_ai() {
     fi
 
     # Apply Ollama deployment
-    oc apply -f k8s/ollama-deployment.yaml
-
-    # Wait for deployment to be ready
-    wait_for_deployment ollama-nvidia-gpu
+    envsubst < k8s/ollama-deployment.yaml | oc apply -f -
+    if [[ "$AI_ONLY" == "true" ]]; then
+        print_status "AI (Ollama) service deployment complete!"
+        return
+    fi
+    # Wait for deployment to be ready (only used in full deployment, not --ai-only)
+    wait_for_deployment ollama
 
     print_success "🤖 AI (Ollama) service deployed successfully!"
 
     # Show Ollama service information
     print_status "📋 Ollama Service Information:"
-    echo "  - Service: ollama-nvidia-gpu"
+    echo "  - Service: ollama"
     echo "  - Port: 11434"
     echo "  - GPU: NVIDIA GPU required"
     echo "  - Models: Will be downloaded on first use"
 
     # Show how to download models
     print_status "📥 To download models, you can:"
-    echo "  1. Port forward: oc port-forward svc/ollama-nvidia-gpu 11434:11434"
+    echo "  1. Port forward: oc port-forward svc/ollama 11434:11434"
     echo "  2. Pull model: ollama pull codellama:7b-instruct"
-    echo "  3. Or use the internal service URL: http://ollama-nvidia-gpu:11434"
+    echo "  3. Or use the internal service URL: http://ollama:11434"
 }
 
 # Function to create routes
@@ -538,7 +550,7 @@ delete_all_pods() {
     oc delete deployment keycloak --ignore-not-found=true
     oc delete deployment postgres --ignore-not-found=true
     oc delete deployment minio --ignore-not-found=true
-    oc delete deployment ollama-nvidia-gpu --ignore-not-found=true
+    oc delete deployment ollama --ignore-not-found=true
 
     # Delete services
     print_status "Deleting services..."
@@ -546,13 +558,13 @@ delete_all_pods() {
     oc delete service keycloak --ignore-not-found=true
     oc delete service postgres --ignore-not-found=true
     oc delete service minio --ignore-not-found=true
-    oc delete service ollama-nvidia-gpu --ignore-not-found=true
+    oc delete service ollama --ignore-not-found=true
 
     # Delete routes
     print_status "Deleting routes..."
     oc delete route ospo-app --ignore-not-found=true
     oc delete route keycloak --ignore-not-found=true
-    oc delete route ollama-nvidia-gpu --ignore-not-found=true
+    oc delete route ollama --ignore-not-found=true
 
     # Delete configmaps
     print_status "Deleting configmaps..."
@@ -1114,8 +1126,8 @@ main() {
     fi
     if [[ "$KEYCLOAK_ONLY" == "true" ]]; then
         print_status "🚀 Deploying only the keycloak pod..."
-        deploy_keycloak
         oc scale deployment keycloak --replicas=0
+        deploy_keycloak
         sleep 5
         oc scale deployment keycloak --replicas=1
         print_success "🎉 Keycloak deployed successfully!"
@@ -1133,7 +1145,12 @@ main() {
 
     if [[ "$AI_ONLY" == "true" ]]; then
         print_status "🚀 Deploying only the AI (Ollama) service..."
+        oc scale deployment ollama --replicas=0
+        sleep 5
+
         deploy_ai
+        oc scale deployment ollama --replicas=1
+        print_success "🎉 AI (Ollama) service deployed successfully!"
         exit 0
     fi
 
@@ -1153,7 +1170,7 @@ main() {
     echo "   Namespace: $NAMESPACE"
     echo "   Application URL: $APP_URL"
     echo "   Keycloak URL: $KEYCLOAK_URL"
-    echo "   AI Service: ollama-nvidia-gpu (internal)"
+    echo "   AI Service: ollama (internal)"
     echo ""
     print_status "🔍 Checking deployment status..."
     oc get pods -l app

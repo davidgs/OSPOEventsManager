@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProtectedRoute } from "@/components/protected-route";
+import { ChatWidget } from "@/components/chat/chat-widget";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -79,6 +80,7 @@ function App() {
             </Switch>
           </main>
           <Footer />
+          <ChatWidget />
         </div>
       </TooltipProvider>
     </ThemeProvider>

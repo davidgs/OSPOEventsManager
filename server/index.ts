@@ -27,7 +27,7 @@ const app = express();
 // app.set('trust proxy', 1);
 
 // Security middleware
-const keycloakUrl = process.env.KEYCLOAK_CLIENT_URL || process.env.VITE_KEYCLOAK_URL || "https://keycloak-prod-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com";
+const keycloakUrl = process.env.KEYCLOAK_CLIENT_URL || process.env.VITE_KEYCLOAK_URL || "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com/auth";
 // Extract base URL (without /auth) for CSP - Keycloak needs both base URL and /auth path
 const keycloakBaseUrl = keycloakUrl.replace(/\/auth$/, '');
 console.log(`🔐 CSP Keycloak URL: ${keycloakUrl}`);
@@ -314,8 +314,8 @@ app.get("/version", async (_req: Request, res: Response) => {
     // Protect API routes (except health check and version) with Bearer token support
     const authMiddleware = getAuthMiddleware(keycloak);
     app.use('/api', (req, res, next) => {
-      // Allow health check, version, fix, and keycloak-config endpoints without authentication
-      if (req.path === '/health' || req.path === '/version' || req.path === '/fix-david-asset' || req.path === '/keycloak-config') {
+      // Allow health check, version, fix, keycloak-config, and AI endpoints without authentication
+      if (req.path === '/health' || req.path === '/version' || req.path === '/fix-david-asset' || req.path === '/keycloak-config' || req.path.startsWith('/ai/')) {
         return next();
       }
 
@@ -327,8 +327,8 @@ app.get("/version", async (_req: Request, res: Response) => {
 
     // SECURITY: When Keycloak is not available, implement strict fallback security
     app.use('/api', (req, res, next) => {
-      // Allow health check, version, and keycloak-config endpoints without authentication
-      if (req.path === '/health' || req.path === '/version' || req.path === '/keycloak-config') {
+      // Allow health check, version, keycloak-config, and AI endpoints without authentication
+      if (req.path === '/health' || req.path === '/version' || req.path === '/keycloak-config' || req.path.startsWith('/ai/')) {
         return next();
       }
 
