@@ -28,6 +28,22 @@ export const eventGoalsArraySchema = z.array(eventGoalSchema).min(1, "Select at 
 export type EventGoal = z.infer<typeof eventGoalSchema>;
 export type EventGoals = z.infer<typeof eventGoalsArraySchema>;
 
+// Geographic constants
+export const continents = ["North America", "South America", "Europe", "Asia", "Africa", "Oceania", "Antarctica"] as const;
+export const continentSchema = z.enum(continents);
+export type Continent = z.infer<typeof continentSchema>;
+
+// Common countries for dropdowns
+export const commonCountries = [
+  "United States", "Canada", "Mexico", "Brazil", "Argentina", "Chile",
+  "United Kingdom", "Germany", "France", "Spain", "Italy", "Netherlands", "Sweden", "Norway",
+  "China", "Japan", "South Korea", "India", "Singapore", "Thailand", "Malaysia", "Indonesia",
+  "South Africa", "Nigeria", "Egypt", "Kenya", "Morocco", "Tunisia",
+  "Australia", "New Zealand"
+] as const;
+export const countrySchema = z.enum(commonCountries);
+export type Country = z.infer<typeof countrySchema>;
+
 // Event statuses
 export const eventStatuses = ["planning", "confirmed", "completed", "cancelled"] as const;
 export const eventStatusSchema = z.enum(eventStatuses);

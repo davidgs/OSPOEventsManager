@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ollama-nvidia-gpu
+  name: ollama
   labels:
-    app: ollama-nvidia-gpu
+    app: ollama
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ollama-nvidia-gpu
+      app: ollama
   template:
     metadata:
       labels:
-        app: ollama-nvidia-gpu
+        app: ollama
     spec:
       containers:
         - name: ollama
@@ -28,11 +28,9 @@ spec:
               value: "/tmp/.ollama"
           resources:
             requests:
-              nvidia.com/gpu: "1"
               memory: "8Gi"
               cpu: "2"
             limits:
-              nvidia.com/gpu: "1"
               memory: "16Gi"
               cpu: "4"
           volumeMounts:
@@ -42,21 +40,22 @@ spec:
         - name: models-storage
           emptyDir: {}
       nodeSelector:
-        hardware: "nvidia-gpu"
+        nvidia.com/gpu.present: "true"
       tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
+        - key: gpu
+          operator: Equal
+          value: required
           effect: NoSchedule
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: ollama-nvidia-gpu
+  name: ollama
   labels:
-    app: ollama-nvidia-gpu
+    app: ollama
 spec:
   selector:
-    app: ollama-nvidia-gpu
+    app: ollama
   ports:
     - port: 11434
       targetPort: 11434
@@ -66,13 +65,13 @@ spec:
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: ollama-nvidia-gpu
+  name: ollama
   labels:
-    app: ollama-nvidia-gpu
+    app: ollama
 spec:
   to:
     kind: Service
-    name: ollama-nvidia-gpu
+    name: ollama
   port:
     targetPort: 11434
   tls:

@@ -24,6 +24,14 @@ import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 
+// Geolocation types
+interface GeolocationResult {
+  country?: string;
+  region?: string;
+  continent?: string;
+  display_name?: string;
+}
+
 // Authorization utilities
 interface AuthorizedUser {
   id: number;
@@ -50,6 +58,105 @@ function hasPermission(user: AuthorizedUser, resource: string, action: string): 
   }
 
   return false;
+}
+
+// Geolocation service using Nominatim (free OpenStreetMap geocoding)
+async function geocodeLocation(location: string): Promise<GeolocationResult | null> {
+  try {
+    const encodedLocation = encodeURIComponent(location);
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedLocation}&addressdetails=1&limit=1`;
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'OSPOEventsManager/1.0'
+      }
+    });
+
+    if (!response.ok) {
+      console.error('Geocoding API error:', response.status, response.statusText);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return null;
+    }
+
+    const result = data[0];
+    const address = result.address || {};
+
+    // Map Nominatim address components to our geographic fields
+    const country = address.country;
+    const region = address.state || address.province || address.region || address.county;
+
+    // Determine continent based on country
+    const continentMap: { [key: string]: string } = {
+      // North America
+      'United States': 'North America', 'Canada': 'North America', 'Mexico': 'North America',
+      'United States of America': 'North America',
+
+      // Europe
+      'United Kingdom': 'Europe', 'Germany': 'Europe', 'France': 'Europe', 'Spain': 'Europe',
+      'Italy': 'Europe', 'Netherlands': 'Europe', 'Sweden': 'Europe', 'Norway': 'Europe',
+      'Poland': 'Europe', 'Czech Republic': 'Europe', 'Hungary': 'Europe', 'Portugal': 'Europe',
+      'Ireland': 'Europe', 'Greece': 'Europe', 'Romania': 'Europe', 'Bulgaria': 'Europe',
+      'Croatia': 'Europe', 'Slovenia': 'Europe', 'Slovakia': 'Europe', 'Estonia': 'Europe',
+      'Latvia': 'Europe', 'Lithuania': 'Europe', 'Finland': 'Europe', 'Denmark': 'Europe',
+      'Austria': 'Europe', 'Switzerland': 'Europe', 'Belgium': 'Europe', 'Luxembourg': 'Europe',
+
+      // Asia
+      'China': 'Asia', 'Japan': 'Asia', 'South Korea': 'Asia', 'India': 'Asia', 'Singapore': 'Asia',
+      'Thailand': 'Asia', 'Malaysia': 'Asia', 'Indonesia': 'Asia', 'Philippines': 'Asia',
+      'Vietnam': 'Asia', 'Taiwan': 'Asia', 'Hong Kong': 'Asia', 'Sri Lanka': 'Asia',
+      'Bangladesh': 'Asia', 'Pakistan': 'Asia', 'Nepal': 'Asia', 'Bhutan': 'Asia',
+      'Myanmar': 'Asia', 'Cambodia': 'Asia', 'Laos': 'Asia', 'Mongolia': 'Asia',
+      'Kazakhstan': 'Asia', 'Uzbekistan': 'Asia', 'Kyrgyzstan': 'Asia', 'Tajikistan': 'Asia',
+      'Turkmenistan': 'Asia', 'Afghanistan': 'Asia', 'Iran': 'Asia', 'Iraq': 'Asia',
+      'Turkey': 'Asia', 'Saudi Arabia': 'Asia', 'United Arab Emirates': 'Asia', 'Israel': 'Asia',
+      'Jordan': 'Asia', 'Lebanon': 'Asia', 'Syria': 'Asia', 'Yemen': 'Asia', 'Oman': 'Asia',
+      'Kuwait': 'Asia', 'Qatar': 'Asia', 'Bahrain': 'Asia',
+
+      // Africa
+      'South Africa': 'Africa', 'Nigeria': 'Africa', 'Egypt': 'Africa', 'Kenya': 'Africa',
+      'Morocco': 'Africa', 'Tunisia': 'Africa', 'Algeria': 'Africa', 'Ghana': 'Africa',
+      'Ethiopia': 'Africa', 'Uganda': 'Africa', 'Tanzania': 'Africa', 'Zimbabwe': 'Africa',
+      'Botswana': 'Africa', 'Namibia': 'Africa', 'Senegal': 'Africa', 'Mali': 'Africa',
+      'Burkina Faso': 'Africa', 'Niger': 'Africa', 'Chad': 'Africa', 'Cameroon': 'Africa',
+      'Gabon': 'Africa', 'Congo': 'Africa', 'Central African Republic': 'Africa', 'Rwanda': 'Africa',
+      'Burundi': 'Africa', 'Madagascar': 'Africa', 'Mauritius': 'Africa', 'Seychelles': 'Africa',
+      'Comoros': 'Africa', 'Djibouti': 'Africa', 'Somalia': 'Africa', 'Sudan': 'Africa',
+      'South Sudan': 'Africa', 'Eritrea': 'Africa', 'Libya': 'Africa', 'Angola': 'Africa',
+      'Mozambique': 'Africa', 'Malawi': 'Africa', 'Zambia': 'Africa', 'Lesotho': 'Africa',
+      'Eswatini': 'Africa', 'Liberia': 'Africa', 'Sierra Leone': 'Africa', 'Guinea': 'Africa',
+      'Guinea-Bissau': 'Africa', 'Gambia': 'Africa', 'Cape Verde': 'Africa', 'Ivory Coast': 'Africa',
+      'Togo': 'Africa', 'Benin': 'Africa', 'Equatorial Guinea': 'Africa', 'São Tomé and Príncipe': 'Africa',
+
+      // South America
+      'Brazil': 'South America', 'Argentina': 'South America', 'Chile': 'South America',
+      'Colombia': 'South America', 'Peru': 'South America', 'Venezuela': 'South America',
+      'Ecuador': 'South America', 'Uruguay': 'South America', 'Paraguay': 'South America',
+      'Bolivia': 'South America', 'Guyana': 'South America', 'Suriname': 'South America',
+      'French Guiana': 'South America',
+
+      // Oceania
+      'Australia': 'Oceania', 'New Zealand': 'Oceania', 'Fiji': 'Oceania', 'Papua New Guinea': 'Oceania',
+      'Samoa': 'Oceania', 'Tonga': 'Oceania', 'Vanuatu': 'Oceania', 'Solomon Islands': 'Oceania'
+    };
+
+    const continent = country ? continentMap[country] || null : null;
+
+    return {
+      country,
+      region,
+      continent: continent || undefined,
+      display_name: result.display_name
+    };
+
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    return null;
+  }
 }
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -495,7 +602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('[FIX DAVID ASSET] Error:', error);
-      res.status(500).json({ message: "Failed to fix asset ownership", error: error.message });
+      res.status(500).json({ message: "Failed to fix asset ownership", error: (error as Error).message });
     }
   });
 
@@ -537,7 +644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('[FIX DAVID ASSET NOW] Error:', error);
-      res.status(500).json({ message: "Failed to fix asset ownership", error: error.message });
+      res.status(500).json({ message: "Failed to fix asset ownership", error: (error as Error).message });
     }
   });
 
@@ -592,7 +699,308 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // AI Chat endpoints
+  app.post("/api/ai/sql-chat", async (req: Request, res: Response) => {
+    try {
+      const { message } = req.body;
+
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      console.log(`AI Chat request: ${message}`);
+
+      // SQL safety validation function
+      const validateSQL = (sql: string): { valid: boolean; error?: string } => {
+        // Clean up markdown formatting first
+        const cleanedSQL = sql.replace(/```sql\n?|\n?```/g, '').trim().toLowerCase();
+
+        // Only allow SELECT statements
+        if (!cleanedSQL.startsWith('select')) {
+          return { valid: false, error: "Only SELECT queries are allowed" };
+        }
+
+        // Block dangerous operations (but allow column names like updated_at)
+        const dangerousKeywords = [
+          'drop', 'delete', 'insert', 'alter', 'create', 'truncate',
+          'grant', 'revoke', 'execute', 'exec', 'sp_', 'xp_', '--',
+          'union', 'information_schema', 'pg_', 'sys.', 'system.'
+        ];
+
+        // Check for comment blocks separately
+        if (cleanedSQL.includes('/*') || cleanedSQL.includes('*/')) {
+          return { valid: false, error: "Comment blocks are not allowed" };
+        }
+
+        // Block UPDATE statements but allow column names containing 'update'
+        if (cleanedSQL.includes(' update ') || cleanedSQL.startsWith('update ')) {
+          return { valid: false, error: "UPDATE statements are not allowed" };
+        }
+
+        // Check for dangerous keywords (but be more lenient with column names)
+        for (const keyword of dangerousKeywords) {
+          // Only block if it's a standalone keyword, not part of a column name
+          const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+          if (regex.test(cleanedSQL)) {
+            return { valid: false, error: `Dangerous operation detected: ${keyword}` };
+          }
+        }
+
+        return { valid: true };
+      };
+
+      // Improved fallback SQL generation with comprehensive geographic mappings
+      const generateFallbackSQL = (message: string): string => {
+        const lowerMessage = message.toLowerCase();
+
+
+        // Event queries
+        if (lowerMessage.includes("all events") || lowerMessage.includes("show events")) {
+          return "SELECT id, name, location, start_date, end_date, status, priority, type FROM events WHERE status = 'confirmed' ORDER BY start_date DESC LIMIT 50";
+        }
+
+        if (lowerMessage.includes("high priority") || lowerMessage.includes("important")) {
+          return "SELECT id, name, location, start_date, end_date, status, priority, type FROM events WHERE priority IN ('high', 'critical') AND status = 'confirmed' ORDER BY start_date DESC";
+        }
+
+        // Geographic queries using new geographic fields
+        if (lowerMessage.includes("asia")) {
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Asia' AND status = 'confirmed' ORDER BY start_date DESC";
+        }
+
+        if (lowerMessage.includes("africa")) {
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Africa' AND status = 'confirmed' ORDER BY start_date DESC";
+        }
+
+        if (lowerMessage.includes("europe")) {
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Europe' AND status = 'confirmed' ORDER BY start_date DESC";
+        }
+
+        if (lowerMessage.includes("america") || lowerMessage.includes("north america")) {
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'North America' AND status = 'confirmed' ORDER BY start_date DESC";
+        }
+
+        if (lowerMessage.includes("south america")) {
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'South America' AND status = 'confirmed' ORDER BY start_date DESC";
+        }
+
+        if (lowerMessage.includes("oceania") || lowerMessage.includes("australia")) {
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Oceania' AND status = 'confirmed' ORDER BY start_date DESC";
+        }
+
+        // Attendee queries
+        if (lowerMessage.includes("attendees") || lowerMessage.includes("attending")) {
+          return "SELECT e.id, e.name, e.location, e.start_date, e.status, a.name as attendee_name, a.email, a.role FROM events e JOIN attendees a ON e.id = a.event_id WHERE e.status = 'confirmed' ORDER BY e.start_date DESC";
+        }
+
+        // CFP queries
+        if (lowerMessage.includes("cfp") || lowerMessage.includes("submission")) {
+          return "SELECT c.id, c.title, c.submitter_name, c.status, c.submission_date, e.name as event_name FROM cfp_submissions c JOIN events e ON c.event_id = e.id WHERE e.status = 'confirmed' ORDER BY c.submission_date DESC";
+        }
+
+        // Sponsorship queries
+        if (lowerMessage.includes("sponsor")) {
+          return "SELECT s.id, s.sponsor_name, s.amount, s.status, e.name as event_name FROM sponsorships s JOIN events e ON s.event_id = e.id WHERE e.status = 'confirmed' ORDER BY s.amount DESC";
+        }
+
+        // Count queries
+        if (lowerMessage.includes("how many") || lowerMessage.includes("count")) {
+          if (lowerMessage.includes("event")) {
+            return "SELECT COUNT(*) as total_events FROM events WHERE status = 'confirmed'";
+          }
+          if (lowerMessage.includes("attendee")) {
+            return "SELECT COUNT(*) as total_attendees FROM attendees";
+          }
+          if (lowerMessage.includes("cfp") || lowerMessage.includes("submission")) {
+            return "SELECT COUNT(*) as total_submissions FROM cfp_submissions";
+          }
+        }
+
+        // Default fallback
+        return "SELECT id, name, location, start_date, end_date, status, priority, type FROM events WHERE status = 'confirmed' ORDER BY start_date DESC LIMIT 10";
+      };
+
+      // Try Ollama first - this is the whole point of having AI
+      let aiResponse;
+      try {
+        const ollamaUrl = process.env.OLLAMA_URL || "http://ollama:11434";
+        const response = await fetch(`${ollamaUrl}/api/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: "qwen2.5:7b-instruct",
+            messages: [
+              {
+                role: "system",
+                content: `You are an AI assistant that converts natural language queries into SAFE SQL for an events database.
+
+CRITICAL SAFETY RULES:
+- ONLY generate SELECT statements with JOINs
+- NEVER include DROP, DELETE, INSERT, UPDATE, ALTER, CREATE, TRUNCATE
+- NEVER include UNION, subqueries, or system tables
+- Always use proper WHERE clauses for filtering
+- Limit results with LIMIT when appropriate
+
+Database schema:
+- users table: id, username, name, email, bio, role, job_title, headshot, keycloak_id, preferences, last_login, created_at, updated_at
+- events table: id, name, link, start_date, end_date, location, priority, type, goal (array), cfp_deadline, cfp_link, status, notes, created_by_id, created_at, updated_at
+- cfp_submissions table: id, event_id, title, abstract, submitter_name, status, notes, submitter_id, submission_date, created_at, updated_at
+- attendees table: id, event_id, name, email, role, user_id, notes, created_at, updated_at
+- sponsorships table: id, event_id, sponsor_name, tier, amount, contact_email, contact_name, status, notes, created_at, updated_at
+- assets table: id, name, type, file_path, file_size, mime_type, uploaded_by, event_id, cfp_submission_id, uploaded_at
+- stakeholders table: id, user_id, name, email, role, department, organization, notes, created_at, updated_at
+- approval_workflows table: id, title, description, item_type, item_id, priority, status, due_date, estimated_costs, requester_id, created_at, updated_at, metadata (jsonb)
+- workflow_reviewers table: id, workflow_id, reviewer_id, status, reviewed_at, created_at, updated_at
+- workflow_stakeholders table: id, workflow_id, stakeholder_id, role, created_at, updated_at
+- workflow_comments table: id, workflow_id, commenter_id, comment, created_at, updated_at
+- workflow_history table: id, workflow_id, action, performed_by, details, performed_at
+
+IMPORTANT GEOGRAPHIC REASONING:
+When users ask for geographic regions, you must understand that:
+- "Asia" includes: Singapore, Japan, China, India, Thailand, Malaysia, Indonesia, Philippines, Vietnam, South Korea, Taiwan, Hong Kong, etc.
+- "Europe" includes: UK, France, Germany, Netherlands, Spain, Italy, Sweden, Norway, etc.
+- "North America" includes: USA, Canada, Mexico
+- "South America" includes: Brazil, Argentina, Chile, etc.
+
+Use comprehensive LIKE patterns that include major cities and countries in each region.
+For "Asia" queries, include: Singapore, Tokyo, Japan, Beijing, China, Mumbai, India, Bangkok, Thailand, Kuala Lumpur, Malaysia, Jakarta, Indonesia, Manila, Philippines, Ho Chi Minh, Vietnam, Seoul, Korea, etc.
+
+Return ONLY the SQL query, no explanations or markdown formatting.`
+              },
+              {
+                role: "user",
+                content: message
+              }
+            ],
+            stream: false
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json() as any;
+          aiResponse = data.message.content;
+          console.log("Ollama response:", aiResponse);
+
+          // Clean up the response (remove markdown formatting)
+          aiResponse = aiResponse.replace(/```sql\n?|\n?```/g, '').trim();
+
+          // Validate the AI-generated SQL (validation function already cleans markdown)
+          const validation = validateSQL(aiResponse);
+          if (!validation.valid) {
+            console.log(`AI generated unsafe SQL: ${validation.error}`);
+            throw new Error(`Unsafe SQL generated: ${validation.error}`);
+          }
+        } else {
+          throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+        }
+      } catch (ollamaError) {
+        console.log("Ollama failed, using fallback SQL generation:", (ollamaError as Error).message);
+        aiResponse = generateFallbackSQL(message);
+      }
+
+      // Final validation of the SQL query
+      const finalValidation = validateSQL(aiResponse);
+      if (!finalValidation.valid) {
+        console.error("Final SQL validation failed:", finalValidation.error);
+        return res.status(500).json({
+          error: "SQL validation failed",
+          message: `Query rejected for safety: ${finalValidation.error}`
+        });
+      }
+
+      // Execute the SQL query
+      let results;
+      try {
+        const query = aiResponse.replace(/```sql\n?|\n?```/g, '').trim();
+        console.log("Executing validated SQL:", query);
+
+        results = await db.execute(query);
+        console.log(`Query returned ${results.rows?.length || 0} rows`);
+      } catch (sqlError) {
+        console.error("SQL execution error:", sqlError);
+        return res.status(500).json({
+          error: "Failed to execute query",
+          message: "The generated SQL query failed to execute. Please try rephrasing your question.",
+          sql: aiResponse
+        });
+      }
+
+      // Generate a natural language response instead of showing raw SQL
+      let naturalResponse;
+      if (results.rows && results.rows.length > 0) {
+        if (results.rows.length === 1) {
+          const event = results.rows[0];
+          const formattedDate = event.start_date && typeof event.start_date === 'string' ? new Date(event.start_date).toLocaleDateString('en-US', {
+            month: 'numeric',
+            day: 'numeric',
+            year: 'numeric'
+          }) : 'No date';
+          naturalResponse = `I found 1 event: **${event.name}** in ${event.location} (${formattedDate})`;
+        } else {
+          naturalResponse = `I found ${results.rows.length} events matching your criteria:`;
+        }
+      } else {
+        naturalResponse = "I didn't find any events matching your criteria.";
+      }
+
+      res.json({
+        message: naturalResponse,
+        results: results.rows || [],
+        count: results.rows?.length || 0,
+        sql: aiResponse // Keep SQL for debugging but don't show to user
+      });
+
+    } catch (error) {
+      console.error("AI chat error:", error);
+      res.status(500).json({
+        error: "AI chat failed",
+        message: "An error occurred while processing your request. Please try again."
+      });
+    }
+  });
+
+  // AI Models endpoint
+  app.get("/api/ai/models", async (req: Request, res: Response) => {
+    try {
+      const ollamaUrl = process.env.OLLAMA_URL || "http://ollama:11434";
+      const response = await fetch(`${ollamaUrl}/api/tags`);
+
+      if (response.ok) {
+        const data = await response.json();
+        res.json(data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch models" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to connect to Ollama" });
+    }
+  });
+
   // Events API routes
+  // Geolocation API endpoint
+  app.post("/api/geolocation/lookup", async (req: Request, res: Response) => {
+    try {
+      const { location } = req.body;
+
+      if (!location || typeof location !== 'string') {
+        return res.status(400).json({ error: 'Location is required' });
+      }
+
+      const geoResult = await geocodeLocation(location);
+
+      if (!geoResult) {
+        return res.status(404).json({ error: 'Location not found' });
+      }
+
+      res.json(geoResult);
+    } catch (error) {
+      console.error('Geolocation lookup error:', error);
+      res.status(500).json({ error: 'Geolocation lookup failed' });
+    }
+  });
+
   app.get("/api/events", async (req: Request, res: Response) => {
     try {
       console.log('GET /api/events called');
@@ -775,19 +1183,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Split comma-separated goals into array
                 eventData[dbColumn] = value.split(',').map(g => g.trim()).filter(g => g);
                 console.log(`Converted goals string to array:`, eventData[dbColumn]);
-              } else if (dbColumn.includes('date') && value) {
+              } else if (typeof dbColumn === 'string' && dbColumn.includes('date') && value) {
                 // Ensure dates are properly formatted
                 const date = new Date(value);
                 if (!isNaN(date.getTime())) {
-                  eventData[dbColumn] = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-                  console.log(`Converted date "${value}" to "${eventData[dbColumn]}"`);
+                  (eventData as any)[dbColumn] = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+                  console.log(`Converted date "${value}" to "${(eventData as any)[dbColumn]}"`);
                 } else {
-                  eventData[dbColumn] = null;
+                  (eventData as any)[dbColumn] = null;
                   console.log(`Invalid date "${value}", set to null`);
                 }
               } else {
-                eventData[dbColumn] = value;
-                console.log(`Direct assignment: ${dbColumn} = "${value}"`);
+                (eventData as any)[dbColumn as string] = value;
+                console.log(`Direct assignment: ${dbColumn as string} = "${value}"`);
               }
             } else {
               console.log(`Skipping mapping for "${csvColumn}" -> "${dbColumn}" (empty or undefined)`);
@@ -2219,7 +2627,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('[FIX ASSET OWNERSHIP] Error:', error);
-      res.status(500).json({ message: "Failed to fix asset ownership", error: error.message });
+      res.status(500).json({ message: "Failed to fix asset ownership", error: (error as Error).message });
     }
   });
 
