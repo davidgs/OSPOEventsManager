@@ -94,6 +94,8 @@ spec:
               value: "${PROXY_REDIRECT_PATTERN}"
             - name: PROXY_TIMEOUT_MS
               value: "${PROXY_TIMEOUT_MS}"
+            - name: OLLAMA_MODEL
+              value: "${OLLAMA_MODEL}"
           volumeMounts:
             - name: keycloak-config
               mountPath: /app/keycloak.json

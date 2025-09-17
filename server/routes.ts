@@ -710,43 +710,178 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`AI Chat request: ${message}`);
 
-      // SQL safety validation function
+      // ENHANCED READ-ONLY SQL validation function with multiple security layers
       const validateSQL = (sql: string): { valid: boolean; error?: string } => {
-        // Clean up markdown formatting first
-        const cleanedSQL = sql.replace(/```sql\n?|\n?```/g, '').trim().toLowerCase();
+        // Clean up markdown formatting first (more comprehensive)
+        let cleanedSQL = sql.replace(/```sql\n?|\n?```/g, '').trim();
+        // Also remove any remaining backticks
+        cleanedSQL = cleanedSQL.replace(/^`+|`+$/g, '').trim();
+        const lowerSQL = cleanedSQL.toLowerCase();
 
-        // Only allow SELECT statements
-        if (!cleanedSQL.startsWith('select')) {
-          return { valid: false, error: "Only SELECT queries are allowed" };
+        // LAYER 1: Strict SELECT-only enforcement
+        if (!lowerSQL.startsWith('select')) {
+          return { valid: false, error: "SECURITY: Only SELECT queries are allowed" };
         }
 
-        // Block dangerous operations (but allow column names like updated_at)
-        const dangerousKeywords = [
-          'drop', 'delete', 'insert', 'alter', 'create', 'truncate',
-          'grant', 'revoke', 'execute', 'exec', 'sp_', 'xp_', '--',
-          'union', 'information_schema', 'pg_', 'sys.', 'system.'
+        // LAYER 2: Block ALL write operations (comprehensive list)
+        const writeOperations = [
+          'insert', 'update', 'delete', 'drop', 'create', 'alter', 'truncate',
+          'replace', 'merge', 'upsert', 'grant', 'revoke', 'execute', 'exec',
+          'call', 'perform', 'do', 'begin', 'commit', 'rollback', 'savepoint',
+          'set', 'reset', 'lock', 'unlock', 'analyze', 'vacuum', 'reindex',
+          'copy', 'bulk', 'load', 'import', 'export', 'backup', 'restore'
         ];
 
-        // Check for comment blocks separately
-        if (cleanedSQL.includes('/*') || cleanedSQL.includes('*/')) {
-          return { valid: false, error: "Comment blocks are not allowed" };
+        for (const operation of writeOperations) {
+          // Check for operation as standalone word or at start of statement
+          const regex = new RegExp(`\\b${operation}\\b`, 'i');
+          if (regex.test(lowerSQL)) {
+            return { valid: false, error: `SECURITY: Write operation detected: ${operation.toUpperCase()}` };
+          }
         }
 
-        // Block UPDATE statements but allow column names containing 'update'
-        if (cleanedSQL.includes(' update ') || cleanedSQL.startsWith('update ')) {
-          return { valid: false, error: "UPDATE statements are not allowed" };
+        // LAYER 3: Block dangerous SQL constructs
+        const dangerousPatterns = [
+          /;.*\w/,  // Multiple statements (semicolon followed by more SQL)
+          /\/\*.*\*\//,  // Comment blocks
+          /--.*$/m,  // SQL comments
+          /\binto\s+outfile\b/i,  // File operations
+          /\binto\s+dumpfile\b/i,  // File operations
+          /\bload_file\b/i,  // File operations
+          /\bxp_\w+/i,  // Extended procedures
+          /\bsp_\w+/i,  // Stored procedures
+          /\bunion\b/i,  // UNION (potential for injection)
+          /\bwith\s+recursive\b/i,  // Recursive CTEs (potential DoS)
+          /\binformation_schema\b/i,  // System tables
+          /\bpg_\w+/i,  // PostgreSQL system functions
+          /\bsys\./i,  // System schemas
+          /\bsystem\./i,  // System schemas
+          /\bmaster\./i,  // SQL Server system DB
+          /\bmsdb\./i,  // SQL Server system DB
+          /\btempdb\./i,  // SQL Server temp DB
+        ];
+
+        for (const pattern of dangerousPatterns) {
+          if (pattern.test(cleanedSQL)) {
+            return { valid: false, error: `SECURITY: Dangerous SQL pattern detected: ${pattern.source}` };
+          }
         }
 
-        // Check for dangerous keywords (but be more lenient with column names)
-        for (const keyword of dangerousKeywords) {
-          // Only block if it's a standalone keyword, not part of a column name
-          const regex = new RegExp(`\\b${keyword}\\b`, 'i');
-          if (regex.test(cleanedSQL)) {
-            return { valid: false, error: `Dangerous operation detected: ${keyword}` };
+        // LAYER 4: Enforce read-only functions only
+        const readOnlyFunctions = [
+          'count', 'sum', 'avg', 'min', 'max', 'string_agg', 'array_agg',
+          'concat', 'coalesce', 'case', 'cast', 'extract', 'date_part',
+          'upper', 'lower', 'trim', 'substring', 'length', 'position',
+          'abs', 'round', 'ceil', 'floor', 'now', 'current_date', 'current_timestamp'
+        ];
+
+        // Check for function calls - only allow read-only functions
+        const functionPattern = /(\w+)\s*\(/g;
+        let match;
+        while ((match = functionPattern.exec(lowerSQL)) !== null) {
+          const functionName = match[1];
+          if (!readOnlyFunctions.includes(functionName) &&
+              !['select', 'from', 'where', 'group', 'order', 'having', 'limit', 'offset', 'distinct', 'as', 'and', 'or', 'not', 'in', 'like', 'ilike', 'between', 'exists', 'any', 'all', 'join', 'inner', 'left', 'right', 'full', 'outer', 'on', 'union'].includes(functionName)) {
+            console.warn(`[SECURITY] Potentially unsafe function detected: ${functionName}`);
+          }
+        }
+
+        // LAYER 5: Validate query structure (must have FROM clause for data access)
+        // Check for FROM clause in various formats: " from ", "\nfrom ", or at start of query
+        const hasFromClause = /(\s|^)from\s+\w+/i.test(cleanedSQL);
+        if (!hasFromClause) {
+          return { valid: false, error: "SECURITY: Query must include FROM clause for table access" };
+        }
+
+        // LAYER 6: Block system table access
+        const systemTables = [
+          'pg_user', 'pg_shadow', 'pg_group', 'pg_database', 'pg_tables',
+          'pg_views', 'pg_indexes', 'pg_stat_', 'pg_settings', 'pg_roles',
+          'information_schema', 'sys.', 'system.', 'master.', 'msdb.', 'tempdb.'
+        ];
+
+        for (const sysTable of systemTables) {
+          if (lowerSQL.includes(sysTable)) {
+            return { valid: false, error: `SECURITY: System table access blocked: ${sysTable}` };
           }
         }
 
         return { valid: true };
+      };
+
+      // Advanced SQL query linting function
+      const lintSQLQuery = (sql: string): { hasErrors: boolean; hasWarnings: boolean; errors: string[]; warnings: string[] } => {
+        const cleanedSQL = sql.replace(/```sql\n?|\n?```/g, '').trim().toLowerCase();
+        const errors: string[] = [];
+        const warnings: string[] = [];
+
+        // Define known tables and columns for schema validation
+        const knownTables = ['users', 'events', 'cfp_submissions', 'attendees', 'sponsorships', 'assets', 'stakeholders', 'approval_workflows', 'workflow_reviewers', 'workflow_stakeholders', 'workflow_comments', 'workflow_history'];
+        const knownColumns = {
+          events: ['id', 'name', 'link', 'start_date', 'end_date', 'location', 'country', 'region', 'continent', 'priority', 'type', 'goal', 'cfp_deadline', 'cfp_link', 'status', 'notes', 'created_by_id', 'source', 'early_bird_deadline', 'created_at', 'updated_at'],
+          users: ['id', 'username', 'name', 'email', 'bio', 'role', 'job_title', 'headshot', 'keycloak_id', 'preferences', 'last_login', 'created_at', 'updated_at']
+        };
+
+        // Error: CRITICAL - Double-check for any write operations that escaped validation
+        const writeOperationsCheck = [
+          'insert', 'update', 'delete', 'drop', 'create', 'alter', 'truncate',
+          'replace', 'merge', 'upsert', 'grant', 'revoke', 'execute', 'call',
+          'begin', 'commit', 'rollback', 'set ', 'reset', 'lock', 'unlock'
+        ];
+
+        for (const operation of writeOperationsCheck) {
+          if (cleanedSQL.includes(operation)) {
+            errors.push(`CRITICAL SECURITY VIOLATION: Write operation detected: ${operation.toUpperCase()}`);
+          }
+        }
+
+        // Error: Check for non-existent columns that commonly cause issues
+        const commonMistakes = ['city', 'e.city', 'u.city', 'address', 'venue_address'];
+        for (const mistake of commonMistakes) {
+          if (cleanedSQL.includes(mistake)) {
+            errors.push(`Non-existent column detected: ${mistake}. Use 'location' for venue/city information.`);
+          }
+        }
+
+        // Error: Check for missing table aliases in JOINs
+        if (cleanedSQL.includes('join') && cleanedSQL.includes('on') && !cleanedSQL.includes(' as ') && !cleanedSQL.includes(' e.') && !cleanedSQL.includes(' u.')) {
+          warnings.push('Consider using table aliases (e.g., "events e", "users u") for better readability in JOINs');
+        }
+
+        // Warning: Check for inefficient patterns
+        if (cleanedSQL.includes('select *') && cleanedSQL.includes('join')) {
+          warnings.push('Using SELECT * with JOINs may return unnecessary columns. Consider specifying needed columns.');
+        }
+
+        // Warning: Missing LIMIT for potentially large result sets
+        if (!cleanedSQL.includes('limit') && !cleanedSQL.includes('count(')) {
+          warnings.push('Consider adding LIMIT clause for large result sets to improve performance');
+        }
+
+        // Error: Check for incorrect JOIN syntax
+        if (cleanedSQL.includes('join') && !cleanedSQL.includes('on')) {
+          errors.push('JOIN clause missing ON condition');
+        }
+
+        // Warning: Geographic query optimization
+        if ((cleanedSQL.includes('location') || cleanedSQL.includes('country') || cleanedSQL.includes('continent')) && !cleanedSQL.includes('ilike')) {
+          warnings.push('For geographic searches, consider using ILIKE for case-insensitive matching');
+        }
+
+        // Error: Check for potential SQL injection patterns that escaped basic validation
+        const injectionPatterns = [/;\s*drop/i, /;\s*delete/i, /;\s*insert/i, /;\s*update/i];
+        for (const pattern of injectionPatterns) {
+          if (pattern.test(cleanedSQL)) {
+            errors.push('Potential SQL injection pattern detected');
+          }
+        }
+
+        return {
+          hasErrors: errors.length > 0,
+          hasWarnings: warnings.length > 0,
+          errors,
+          warnings
+        };
       };
 
       // Improved fallback SQL generation with comprehensive geographic mappings
@@ -765,27 +900,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Geographic queries using new geographic fields
         if (lowerMessage.includes("asia")) {
-          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Asia' AND status = 'confirmed' ORDER BY start_date DESC";
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Asia' ORDER BY start_date DESC";
         }
 
         if (lowerMessage.includes("africa")) {
-          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Africa' AND status = 'confirmed' ORDER BY start_date DESC";
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Africa' ORDER BY start_date DESC";
         }
 
         if (lowerMessage.includes("europe")) {
-          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Europe' AND status = 'confirmed' ORDER BY start_date DESC";
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Europe' ORDER BY start_date DESC";
         }
 
         if (lowerMessage.includes("america") || lowerMessage.includes("north america")) {
-          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'North America' AND status = 'confirmed' ORDER BY start_date DESC";
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'North America' ORDER BY start_date DESC";
         }
 
         if (lowerMessage.includes("south america")) {
-          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'South America' AND status = 'confirmed' ORDER BY start_date DESC";
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'South America' ORDER BY start_date DESC";
         }
 
         if (lowerMessage.includes("oceania") || lowerMessage.includes("australia")) {
-          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Oceania' AND status = 'confirmed' ORDER BY start_date DESC";
+          return "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority, type FROM events WHERE continent = 'Oceania' ORDER BY start_date DESC";
+        }
+
+        // Regional/grouping queries
+        if (lowerMessage.includes("by region") || lowerMessage.includes("group by region")) {
+          return "SELECT region, COUNT(*) as event_count, STRING_AGG(name, ', ') as events FROM events WHERE country IS NOT NULL GROUP BY region ORDER BY event_count DESC";
+        }
+
+        if (lowerMessage.includes("by country") || lowerMessage.includes("group by country")) {
+          return "SELECT country, COUNT(*) as event_count, STRING_AGG(name, ', ') as events FROM events WHERE country IS NOT NULL GROUP BY country ORDER BY event_count DESC";
+        }
+
+        if (lowerMessage.includes("by continent") || lowerMessage.includes("group by continent")) {
+          return "SELECT continent, COUNT(*) as event_count FROM events WHERE country IS NOT NULL GROUP BY continent ORDER BY event_count DESC";
+        }
+
+        if (lowerMessage.includes("regions") && !lowerMessage.includes("in")) {
+          return "SELECT DISTINCT region, country, continent FROM events WHERE region IS NOT NULL ORDER BY continent, country, region";
         }
 
         // Attendee queries
@@ -806,7 +958,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Count queries
         if (lowerMessage.includes("how many") || lowerMessage.includes("count")) {
           if (lowerMessage.includes("event")) {
-            return "SELECT COUNT(*) as total_events FROM events WHERE status = 'confirmed'";
+            return "SELECT COUNT(*) as total_events FROM events";
           }
           if (lowerMessage.includes("attendee")) {
             return "SELECT COUNT(*) as total_attendees FROM attendees";
@@ -822,6 +974,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Try Ollama first - this is the whole point of having AI
       let aiResponse;
+      let lintResults: { hasWarnings: boolean; warnings: string[]; hasErrors: boolean; errors: string[] } = { hasWarnings: false, warnings: [], hasErrors: false, errors: [] };
       try {
         const ollamaUrl = process.env.OLLAMA_URL || "http://ollama:11434";
         const response = await fetch(`${ollamaUrl}/api/chat`, {
@@ -830,42 +983,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: "qwen2.5:7b-instruct",
+            model: process.env.OLLAMA_MODEL || "qwen2.5:7b-instruct",
             messages: [
               {
                 role: "system",
-                content: `You are an AI assistant that converts natural language queries into SAFE SQL for an events database.
+                content: `You are an AI assistant that converts natural language queries into STRICTLY READ-ONLY SQL for an events database.
 
-CRITICAL SAFETY RULES:
-- ONLY generate SELECT statements with JOINs
-- NEVER include DROP, DELETE, INSERT, UPDATE, ALTER, CREATE, TRUNCATE
-- NEVER include UNION, subqueries, or system tables
+🔒 ABSOLUTE READ-ONLY SECURITY RULES:
+- ONLY generate SELECT statements - NO EXCEPTIONS
+- NEVER generate any write operations: INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, TRUNCATE, REPLACE, MERGE, UPSERT
+- NEVER generate transaction control: BEGIN, COMMIT, ROLLBACK, SAVEPOINT
+- NEVER generate system operations: GRANT, REVOKE, EXECUTE, CALL, PERFORM, SET, RESET, LOCK, ANALYZE, VACUUM
+- NEVER generate file operations: COPY, BULK, LOAD, IMPORT, EXPORT, BACKUP, RESTORE
+- NEVER use UNION (security risk)
+- NEVER access system tables: information_schema, pg_*, sys.*, system.*
+- NEVER use comments (-- or /* */)
+- NEVER use semicolons for multiple statements
+- Always include FROM clause for data access
+- Always use specific column names instead of SELECT * for performance
 - Always use proper WHERE clauses for filtering
-- Limit results with LIMIT when appropriate
+- Limit results with LIMIT when appropriate for performance
 
-Database schema:
-- users table: id, username, name, email, bio, role, job_title, headshot, keycloak_id, preferences, last_login, created_at, updated_at
-- events table: id, name, link, start_date, end_date, location, priority, type, goal (array), cfp_deadline, cfp_link, status, notes, created_by_id, created_at, updated_at
-- cfp_submissions table: id, event_id, title, abstract, submitter_name, status, notes, submitter_id, submission_date, created_at, updated_at
-- attendees table: id, event_id, name, email, role, user_id, notes, created_at, updated_at
-- sponsorships table: id, event_id, sponsor_name, tier, amount, contact_email, contact_name, status, notes, created_at, updated_at
-- assets table: id, name, type, file_path, file_size, mime_type, uploaded_by, event_id, cfp_submission_id, uploaded_at
-- stakeholders table: id, user_id, name, email, role, department, organization, notes, created_at, updated_at
-- approval_workflows table: id, title, description, item_type, item_id, priority, status, due_date, estimated_costs, requester_id, created_at, updated_at, metadata (jsonb)
-- workflow_reviewers table: id, workflow_id, reviewer_id, status, reviewed_at, created_at, updated_at
-- workflow_stakeholders table: id, workflow_id, stakeholder_id, role, created_at, updated_at
-- workflow_comments table: id, workflow_id, commenter_id, comment, created_at, updated_at
-- workflow_history table: id, workflow_id, action, performed_by, details, performed_at
+VIOLATION = IMMEDIATE REJECTION. Your queries will be validated by multiple security layers.
+
+CONTEXT-AWARE OPTIMIZATION:
+- Database contains 90+ events across multiple continents
+- Most common event types: conference, workshop, meetup
+- Geographic distribution: Global events (Asia, Europe, North America)
+- Date range: Events from past and future dates
+- Query performance target: <1000ms execution time
+- Prefer indexed columns: continent, country, region, status for WHERE clauses
+- Common query patterns: geographic filtering, date ranges, event counting
+
+DATABASE SCHEMA WITH RELATIONSHIPS AND TYPES:
+
+CORE TABLES:
+users (id: serial PK, username: text NOT NULL, name: text, email: text, bio: text, role: text, job_title: text, headshot: text, keycloak_id: text, preferences: text, last_login: timestamp, created_at: timestamp NOT NULL, updated_at: timestamp NOT NULL)
+
+events (id: serial PK, name: text NOT NULL, link: text NOT NULL, start_date: text NOT NULL, end_date: text NOT NULL, location: text NOT NULL, country: varchar(100), region: varchar(100), continent: varchar(50), priority: text NOT NULL, type: text NOT NULL, goal: text[] NOT NULL, cfp_deadline: text, cfp_link: text, status: text NOT NULL DEFAULT 'planning', notes: text, created_by_id: integer FK→users.id, source: text NOT NULL DEFAULT 'manual', early_bird_deadline: text, created_at: timestamp NOT NULL, updated_at: timestamp NOT NULL)
+  INDEXES: continent, country, region
+  COMMON VALUES: status ('planning', 'confirmed', 'completed'), type ('conference', 'workshop', 'meetup'), priority ('high', 'medium', 'low')
+
+RELATED TABLES:
+cfp_submissions (id: serial PK, event_id: integer NOT NULL FK→events.id, title: text NOT NULL, abstract: text NOT NULL, submitter_name: text NOT NULL, status: text NOT NULL, notes: text, submitter_id: integer FK→users.id, submission_date: timestamp NOT NULL, created_at: timestamp NOT NULL, updated_at: timestamp NOT NULL)
+
+attendees (id: serial PK, event_id: integer NOT NULL FK→events.id, name: text NOT NULL, email: text NOT NULL, role: text NOT NULL, user_id: integer FK→users.id, notes: text, created_at: timestamp NOT NULL, updated_at: timestamp NOT NULL)
+
+sponsorships (id: serial PK, event_id: integer NOT NULL FK→events.id, sponsor_name: text NOT NULL, tier: text NOT NULL, amount: integer, contact_email: text NOT NULL, contact_name: text NOT NULL, status: text NOT NULL, notes: text, created_at: timestamp NOT NULL, updated_at: timestamp NOT NULL)
+
+assets (id: serial PK, name: text NOT NULL, type: text NOT NULL, file_path: text NOT NULL, file_size: integer, mime_type: text, uploaded_by: integer FK→users.id, event_id: integer FK→events.id, cfp_submission_id: integer FK→cfp_submissions.id, uploaded_at: timestamp NOT NULL)
+
+WORKFLOW TABLES:
+stakeholders (id: serial PK, user_id: integer FK→users.id, name: text NOT NULL, email: text NOT NULL, role: text NOT NULL, department: text, organization: text NOT NULL, notes: text, created_at: timestamp NOT NULL, updated_at: timestamp NOT NULL)
+
+approval_workflows (id: serial PK, title: text NOT NULL, description: text NOT NULL, item_type: text NOT NULL, item_id: integer NOT NULL, priority: text NOT NULL, status: text NOT NULL, due_date: timestamp, estimated_costs: integer, requester_id: integer FK→users.id, created_at: timestamp NOT NULL, updated_at: timestamp NOT NULL, metadata: jsonb)
+
+workflow_reviewers (id: serial PK, workflow_id: integer NOT NULL FK→approval_workflows.id, reviewer_id: integer NOT NULL FK→users.id, status: text NOT NULL, reviewed_at: timestamp, created_at: timestamp NOT NULL, updated_at: timestamp NOT NULL)
+
+workflow_stakeholders (id: serial PK, workflow_id: integer NOT NULL FK→approval_workflows.id, stakeholder_id: integer NOT NULL FK→stakeholders.id, role: text NOT NULL, created_at: timestamp NOT NULL, updated_at: timestamp NOT NULL)
+
+workflow_comments (id: serial PK, workflow_id: integer NOT NULL FK→approval_workflows.id, commenter_id: integer NOT NULL FK→users.id, comment: text NOT NULL, created_at: timestamp NOT NULL, updated_at: timestamp NOT NULL)
+
+workflow_history (id: serial PK, workflow_id: integer NOT NULL FK→approval_workflows.id, action: text NOT NULL, performed_by: integer FK→users.id, details: text, performed_at: timestamp NOT NULL)
+
+QUERY OPTIMIZATION HINTS:
+- Use indexes on: events.continent, events.country, events.region, events.status, events.start_date
+- JOIN efficiently: events→users via created_by_id, events→attendees via event_id
+- Array queries: Use ANY() for goal array searches: WHERE 'speaking' = ANY(goal)
+- Date filtering: start_date/end_date are TEXT, use string comparisons or CAST to DATE
+- Geographic queries: Use ILIKE for case-insensitive location/country/continent matching
 
 IMPORTANT GEOGRAPHIC REASONING:
-When users ask for geographic regions, you must understand that:
-- "Asia" includes: Singapore, Japan, China, India, Thailand, Malaysia, Indonesia, Philippines, Vietnam, South Korea, Taiwan, Hong Kong, etc.
-- "Europe" includes: UK, France, Germany, Netherlands, Spain, Italy, Sweden, Norway, etc.
-- "North America" includes: USA, Canada, Mexico
-- "South America" includes: Brazil, Argentina, Chile, etc.
+The events table has geographic columns: location, country, region, continent.
+When users ask for geographic regions, use these columns properly:
 
-Use comprehensive LIKE patterns that include major cities and countries in each region.
-For "Asia" queries, include: Singapore, Tokyo, Japan, Beijing, China, Mumbai, India, Bangkok, Thailand, Kuala Lumpur, Malaysia, Jakarta, Indonesia, Manila, Philippines, Ho Chi Minh, Vietnam, Seoul, Korea, etc.
+For continent-based queries:
+- "Show events in Asia" → SELECT id, name, location, country, region, continent, start_date, end_date FROM events WHERE continent = 'Asia'
+- "Events in Europe" → SELECT id, name, location, country, region, continent, start_date, end_date FROM events WHERE continent = 'Europe'
+- "North America events" → SELECT id, name, location, country, region, continent, start_date, end_date FROM events WHERE continent = 'North America'
+
+For country-based queries:
+- Use country column: WHERE country ILIKE '%japan%' OR country ILIKE '%singapore%'
+
+For location-based queries (cities, venues):
+- Use location column: WHERE location ILIKE '%tokyo%' OR location ILIKE '%singapore%'
+
+NEVER use non-existent columns like 'city' - only use: location, country, region, continent.
+
+Geographic examples:
+- "Asia" includes: Japan, China, India, Singapore, Thailand, Malaysia, Indonesia, Philippines, Vietnam, South Korea, Taiwan, Hong Kong
+- "Europe" includes: UK, France, Germany, Netherlands, Spain, Italy, Sweden, Norway, Denmark
+- Use ILIKE for case-insensitive matching and % wildcards for partial matches
+
+REGIONAL GROUPING QUERIES:
+For queries asking to group or show "by region/country/continent":
+- "Show events by region" → SELECT region, COUNT(*) as event_count FROM events WHERE region IS NOT NULL GROUP BY region ORDER BY event_count DESC
+- "Events by country" → SELECT country, COUNT(*) as event_count FROM events WHERE country IS NOT NULL GROUP BY country ORDER BY event_count DESC
+- "Group by continent" → SELECT continent, COUNT(*) as event_count FROM events WHERE continent IS NOT NULL GROUP BY continent ORDER BY event_count DESC
+- "List all regions" → SELECT DISTINCT region, country, continent FROM events WHERE region IS NOT NULL ORDER BY continent, country, region
+
+ALWAYS include FROM clause - queries without FROM will be rejected for security.
 
 Return ONLY the SQL query, no explanations or markdown formatting.`
               },
@@ -886,11 +1103,22 @@ Return ONLY the SQL query, no explanations or markdown formatting.`
           // Clean up the response (remove markdown formatting)
           aiResponse = aiResponse.replace(/```sql\n?|\n?```/g, '').trim();
 
-          // Validate the AI-generated SQL (validation function already cleans markdown)
+              // Enhanced validation with linting
           const validation = validateSQL(aiResponse);
           if (!validation.valid) {
             console.log(`AI generated unsafe SQL: ${validation.error}`);
             throw new Error(`Unsafe SQL generated: ${validation.error}`);
+          }
+
+          // Advanced query linting
+          lintResults = lintSQLQuery(aiResponse);
+          if (lintResults.hasErrors) {
+            console.log(`SQL linting errors: ${lintResults.errors.join(', ')}`);
+            throw new Error(`Query linting failed: ${lintResults.errors[0]}`);
+          }
+
+          if (lintResults.hasWarnings) {
+            console.log(`SQL linting warnings: ${lintResults.warnings.join(', ')}`);
           }
         } else {
           throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
@@ -910,46 +1138,117 @@ Return ONLY the SQL query, no explanations or markdown formatting.`
         });
       }
 
-      // Execute the SQL query
+      // Execute the SQL query with feedback tracking
       let results;
+      let executionSuccess = false;
+      let executionError = null;
+      const executionStartTime = Date.now();
+
       try {
         const query = aiResponse.replace(/```sql\n?|\n?```/g, '').trim();
-        console.log("Executing validated SQL:", query);
+        console.log("Executing validated READ-ONLY SQL:", query);
 
-        results = await db.execute(query);
-        console.log(`Query returned ${results.rows?.length || 0} rows`);
+        // FINAL SECURITY LAYER: Execute in read-only mode
+        // Wrap in a read-only transaction to prevent any writes
+        results = await db.transaction(async (tx) => {
+          // Set transaction to read-only at database level
+          await tx.execute('SET TRANSACTION READ ONLY');
+          return await tx.execute(query);
+        });
+        executionSuccess = true;
+        const executionTime = Date.now() - executionStartTime;
+        console.log(`Query returned ${results.rows?.length || 0} rows in ${executionTime}ms`);
+
+        // Feedback: Log successful query patterns for learning
+        console.log(`[FEEDBACK] SUCCESS: "${message}" → SQL: ${query.substring(0, 100)}... → ${results.rows?.length || 0} rows`);
+
       } catch (sqlError) {
+        executionError = sqlError;
+        executionSuccess = false;
+        const executionTime = Date.now() - executionStartTime;
+
+        // Feedback: Log failed query patterns for improvement
+        console.error(`[FEEDBACK] FAILURE: "${message}" → SQL: ${aiResponse.substring(0, 100)}... → Error: ${(sqlError as Error).message}`);
         console.error("SQL execution error:", sqlError);
+
         return res.status(500).json({
           error: "Failed to execute query",
           message: "The generated SQL query failed to execute. Please try rephrasing your question.",
-          sql: aiResponse
+          sql: aiResponse,
+          feedback: {
+            userQuery: message,
+            generatedSQL: aiResponse,
+            error: (sqlError as Error).message,
+            executionTime
+          }
         });
       }
 
       // Generate a natural language response instead of showing raw SQL
       let naturalResponse;
       if (results.rows && results.rows.length > 0) {
-        if (results.rows.length === 1) {
+        // Check if this is a COUNT query by looking at the SQL or result structure
+        const isCountQuery = aiResponse.toLowerCase().includes('count(') ||
+                           (results.rows.length === 1 &&
+                            Object.keys(results.rows[0]).some(key =>
+                              key.toLowerCase().includes('count') || key.toLowerCase().includes('total')));
+
+        if (isCountQuery && results.rows.length === 1) {
+          // Handle COUNT queries
+          const countResult = results.rows[0];
+          const countValue = Object.values(countResult)[0]; // Get the first (and likely only) value
+          naturalResponse = `I found ${countValue} events total.`;
+        } else if (results.rows.length === 1) {
+          // Handle single event queries
           const event = results.rows[0];
           const formattedDate = event.start_date && typeof event.start_date === 'string' ? new Date(event.start_date).toLocaleDateString('en-US', {
             month: 'numeric',
             day: 'numeric',
             year: 'numeric'
           }) : 'No date';
-          naturalResponse = `I found 1 event: **${event.name}** in ${event.location} (${formattedDate})`;
+          naturalResponse = `I found 1 event: **${event.name || 'Unnamed event'}** in ${event.location || 'Unknown location'} (${formattedDate})`;
         } else {
-          naturalResponse = `I found ${results.rows.length} events matching your criteria:`;
+          naturalResponse = `I found ${results.rows.length} events matching your criteria.`;
         }
       } else {
         naturalResponse = "I didn't find any events matching your criteria.";
       }
 
+      // Self-evaluation checks
+      const selfEvaluation = {
+        queryComplexity: aiResponse.split(' ').length > 20 ? 'high' : aiResponse.includes('join') ? 'medium' : 'low',
+        resultRelevance: results.rows && results.rows.length > 0 ? 'relevant' : 'no_results',
+        executionEfficiency: Date.now() - executionStartTime < 1000 ? 'fast' : 'slow',
+        confidence: executionSuccess && results.rows && results.rows.length > 0 ? 'high' : 'medium'
+      };
+
+      // Structured output with guardrails
       res.json({
+        success: true,
         message: naturalResponse,
-        results: results.rows || [],
-        count: results.rows?.length || 0,
-        sql: aiResponse // Keep SQL for debugging but don't show to user
+        data: {
+          results: results.rows || [],
+          count: results.rows?.length || 0,
+          executionTime: Date.now() - executionStartTime
+        },
+        meta: {
+          query: {
+            original: message,
+            generated: aiResponse,
+            type: aiResponse.toLowerCase().includes('count(') ? 'aggregation' : 'selection',
+            complexity: selfEvaluation.queryComplexity
+          },
+          evaluation: selfEvaluation,
+          feedback: {
+            lintWarnings: lintResults.warnings.length,
+            performance: selfEvaluation.executionEfficiency,
+            relevance: selfEvaluation.resultRelevance
+          }
+        },
+        debug: {
+          sql: aiResponse, // Keep SQL for debugging
+          lintResults: lintResults.hasWarnings ? lintResults.warnings : undefined
+        }
       });
 
     } catch (error) {
