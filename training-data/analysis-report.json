@@ -1,0 +1,43 @@
+{
+  "totalQueries": 7,
+  "successRate": 42.857142857142854,
+  "failurePatterns": {
+    "missing_from_clause": 2,
+    "syntax_error": 1,
+    "other": 1
+  },
+  "queryCategories": {
+    "count": 1,
+    "general": 2,
+    "geographic": 2,
+    "event_type": 1,
+    "temporal": 1
+  },
+  "complexityDistribution": {
+    "simple": 7
+  },
+  "commonErrors": [
+    {
+      "error": "missing_from_clause",
+      "count": 2,
+      "examples": [
+        "Show all events",
+        "Events in Europe"
+      ]
+    },
+    {
+      "error": "syntax_error",
+      "count": 1,
+      "examples": [
+        "All conferences"
+      ]
+    },
+    {
+      "error": "other",
+      "count": 1,
+      "examples": [
+        "Events this year"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with attendee counts",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT e.id, e.name, e.location, e.start_date, COUNT(a.id) as attendee_count FROM events e LEFT JOIN attendees a ON e.id = a.event_id GROUP BY e.id, e.name, e.location, e.start_date ORDER BY attendee_count DESC",
+    "metadata": {
+      "category": "related_data",
+      "complexity": "complex",
+      "pattern": "event_attendee_count"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with CFP submission counts",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT e.id, e.name, e.location, e.start_date, COUNT(c.id) as cfp_count FROM events e LEFT JOIN cfp_submissions c ON e.id = c.event_id GROUP BY e.id, e.name, e.location, e.start_date ORDER BY cfp_count DESC",
+    "metadata": {
+      "category": "related_data",
+      "complexity": "complex",
+      "pattern": "event_cfp_count"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with the most attendees",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT e.id, e.name, e.location, COUNT(a.id) as attendee_count FROM events e LEFT JOIN attendees a ON e.id = a.event_id GROUP BY e.id, e.name, e.location ORDER BY attendee_count DESC LIMIT 10",
+    "metadata": {
+      "category": "related_data",
+      "complexity": "complex",
+      "pattern": "top_events_by_attendees"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Upcoming events with confirmed attendees",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT DISTINCT e.id, e.name, e.location, e.start_date FROM events e JOIN attendees a ON e.id = a.event_id WHERE e.start_date > NOW() AND a.status = 'confirmed' ORDER BY e.start_date ASC",
+    "metadata": {
+      "category": "related_data",
+      "complexity": "complex",
+      "pattern": "upcoming_with_confirmed_attendees"
+    }
+  }
+]

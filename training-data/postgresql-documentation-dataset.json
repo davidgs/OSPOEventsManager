@@ -1,0 +1,422 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events from the current week",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date FROM events WHERE start_date >= date_trunc('week', CURRENT_DATE) AND start_date < date_trunc('week', CURRENT_DATE) + interval '1 week'",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "complex",
+      "pattern": "date_trunc_week",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events from last month",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date FROM events WHERE start_date >= date_trunc('month', CURRENT_DATE) - interval '1 month' AND start_date < date_trunc('month', CURRENT_DATE)",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "complex",
+      "pattern": "date_trunc_month",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with age in days",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date, EXTRACT(DAY FROM (CURRENT_DATE - start_date::date)) as days_ago FROM events WHERE start_date < CURRENT_DATE",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "medium",
+      "pattern": "date_extract_age",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events by day of week",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT EXTRACT(DOW FROM start_date) as day_of_week, TO_CHAR(start_date, 'Day') as day_name, COUNT(*) FROM events GROUP BY EXTRACT(DOW FROM start_date), TO_CHAR(start_date, 'Day') ORDER BY day_of_week",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "complex",
+      "pattern": "day_of_week_extraction",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events in current quarter",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date FROM events WHERE EXTRACT(QUARTER FROM start_date) = EXTRACT(QUARTER FROM CURRENT_DATE) AND EXTRACT(YEAR FROM start_date) = EXTRACT(YEAR FROM CURRENT_DATE)",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "medium",
+      "pattern": "quarter_filtering",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with formatted dates",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, TO_CHAR(start_date, 'YYYY-MM-DD HH24:MI') as formatted_start FROM events ORDER BY start_date",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "medium",
+      "pattern": "date_formatting",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events duration in hours",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date, end_date, EXTRACT(EPOCH FROM (end_date - start_date))/3600 as duration_hours FROM events WHERE end_date IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "medium",
+      "pattern": "duration_calculation",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with case-insensitive name search",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, location FROM events WHERE name ILIKE '%conference%'",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "simple",
+      "pattern": "case_insensitive_like",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with location starting with specific text",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, location FROM events WHERE location ~ '^[Nn]ew'",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "medium",
+      "pattern": "regex_matching",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with concatenated location info",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, CONCAT(location, ', ', country) as full_location FROM events WHERE location IS NOT NULL AND country IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "simple",
+      "pattern": "string_concatenation",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with location length",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, location, LENGTH(location) as location_length FROM events WHERE location IS NOT NULL ORDER BY LENGTH(location) DESC",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "simple",
+      "pattern": "string_length",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with uppercase country names",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, location, UPPER(country) as country_upper FROM events WHERE country IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "simple",
+      "pattern": "string_case_conversion",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with trimmed and cleaned names",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, TRIM(REGEXP_REPLACE(name, '\\s+', ' ', 'g')) as clean_name FROM events WHERE name IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "medium",
+      "pattern": "string_cleaning",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with location substring extraction",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, location, SUBSTRING(location FROM 1 FOR 20) as short_location FROM events WHERE location IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "medium",
+      "pattern": "substring_extraction",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with string aggregation of countries",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT continent, STRING_AGG(DISTINCT country, ', ' ORDER BY country) as countries FROM events WHERE continent IS NOT NULL AND country IS NOT NULL GROUP BY continent",
+    "metadata": {
+      "category": "postgresql_aggregates",
+      "complexity": "complex",
+      "pattern": "string_aggregation",
+      "source": "PostgreSQL Aggregate Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with array aggregation of types",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT continent, ARRAY_AGG(DISTINCT type ORDER BY type) as event_types FROM events WHERE continent IS NOT NULL GROUP BY continent",
+    "metadata": {
+      "category": "postgresql_aggregates",
+      "complexity": "complex",
+      "pattern": "array_aggregation",
+      "source": "PostgreSQL Aggregate Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with statistical aggregates",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT continent, COUNT(*) as total_events, MIN(start_date) as earliest_event, MAX(start_date) as latest_event, AVG(EXTRACT(EPOCH FROM (end_date - start_date))/3600) as avg_duration_hours FROM events WHERE continent IS NOT NULL AND end_date IS NOT NULL GROUP BY continent",
+    "metadata": {
+      "category": "postgresql_aggregates",
+      "complexity": "complex",
+      "pattern": "statistical_aggregates",
+      "source": "PostgreSQL Aggregate Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with conditional aggregation",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT continent, COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'confirmed') as confirmed, COUNT(*) FILTER (WHERE priority = 'high') as high_priority FROM events WHERE continent IS NOT NULL GROUP BY continent",
+    "metadata": {
+      "category": "postgresql_aggregates",
+      "complexity": "complex",
+      "pattern": "conditional_aggregation",
+      "source": "PostgreSQL Aggregate Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with percentile calculations",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT continent, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (end_date - start_date))/3600) as median_duration_hours FROM events WHERE continent IS NOT NULL AND end_date IS NOT NULL GROUP BY continent",
+    "metadata": {
+      "category": "postgresql_aggregates",
+      "complexity": "complex",
+      "pattern": "percentile_calculation",
+      "source": "PostgreSQL Aggregate Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with row numbers by continent",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, continent, start_date, ROW_NUMBER() OVER (PARTITION BY continent ORDER BY start_date) as event_number FROM events WHERE continent IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_window",
+      "complexity": "complex",
+      "pattern": "row_number_window",
+      "source": "PostgreSQL Window Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with ranking by start date",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date, RANK() OVER (ORDER BY start_date) as date_rank, DENSE_RANK() OVER (ORDER BY start_date) as dense_date_rank FROM events",
+    "metadata": {
+      "category": "postgresql_window",
+      "complexity": "complex",
+      "pattern": "ranking_window",
+      "source": "PostgreSQL Window Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with running totals by continent",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, continent, start_date, COUNT(*) OVER (PARTITION BY continent ORDER BY start_date ROWS UNBOUNDED PRECEDING) as running_count FROM events WHERE continent IS NOT NULL ORDER BY continent, start_date",
+    "metadata": {
+      "category": "postgresql_window",
+      "complexity": "complex",
+      "pattern": "running_total_window",
+      "source": "PostgreSQL Window Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with lag and lead dates",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date, LAG(start_date) OVER (ORDER BY start_date) as previous_event_date, LEAD(start_date) OVER (ORDER BY start_date) as next_event_date FROM events ORDER BY start_date",
+    "metadata": {
+      "category": "postgresql_window",
+      "complexity": "complex",
+      "pattern": "lag_lead_window",
+      "source": "PostgreSQL Window Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with first and last values by type",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, type, start_date, FIRST_VALUE(name) OVER (PARTITION BY type ORDER BY start_date) as first_event_of_type, LAST_VALUE(name) OVER (PARTITION BY type ORDER BY start_date ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as last_event_of_type FROM events WHERE type IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_window",
+      "complexity": "complex",
+      "pattern": "first_last_value_window",
+      "source": "PostgreSQL Window Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with JSON metadata extraction",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\n- metadata (jsonb, optional event metadata)",
+    "output": "SELECT id, name, (metadata->>'speaker_count')::int as speaker_count FROM events WHERE metadata IS NOT NULL AND metadata ? 'speaker_count'",
+    "metadata": {
+      "category": "postgresql_json",
+      "complexity": "medium",
+      "pattern": "json_extraction",
+      "source": "PostgreSQL JSON Functions Documentation",
+      "notes": "Assumes metadata JSONB column exists"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with JSON array length",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\n- metadata (jsonb, optional event metadata)",
+    "output": "SELECT id, name, jsonb_array_length(metadata->'tags') as tag_count FROM events WHERE metadata IS NOT NULL AND metadata ? 'tags'",
+    "metadata": {
+      "category": "postgresql_json",
+      "complexity": "medium",
+      "pattern": "json_array_length",
+      "source": "PostgreSQL JSON Functions Documentation",
+      "notes": "Assumes metadata JSONB column with tags array"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with JSON key existence check",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\n- metadata (jsonb, optional event metadata)",
+    "output": "SELECT id, name, metadata FROM events WHERE metadata ? 'registration_required' AND (metadata->>'registration_required')::boolean = true",
+    "metadata": {
+      "category": "postgresql_json",
+      "complexity": "medium",
+      "pattern": "json_key_existence",
+      "source": "PostgreSQL JSON Functions Documentation",
+      "notes": "Assumes metadata JSONB column"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with index-optimized continent search",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nOptimize for performance using indexes and best practices.",
+    "output": "SELECT id, name, location, start_date FROM events WHERE continent = 'Asia' ORDER BY start_date DESC LIMIT 20",
+    "metadata": {
+      "category": "postgresql_performance",
+      "complexity": "simple",
+      "pattern": "indexed_filter_with_limit",
+      "source": "PostgreSQL Performance Tuning Documentation",
+      "notes": "Uses continent index, includes LIMIT for performance"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with composite index optimization",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nOptimize for performance using indexes and best practices.",
+    "output": "SELECT id, name, location FROM events WHERE status = 'confirmed' AND type = 'conference' ORDER BY start_date DESC LIMIT 50",
+    "metadata": {
+      "category": "postgresql_performance",
+      "complexity": "medium",
+      "pattern": "composite_index_optimization",
+      "source": "PostgreSQL Performance Tuning Documentation",
+      "notes": "Optimized for (status, type, start_date) composite index"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with covering index query",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nOptimize for performance using indexes and best practices.",
+    "output": "SELECT id, name, start_date, status FROM events WHERE continent = 'Europe' AND start_date > CURRENT_DATE ORDER BY start_date ASC",
+    "metadata": {
+      "category": "postgresql_performance",
+      "complexity": "medium",
+      "pattern": "covering_index_query",
+      "source": "PostgreSQL Performance Tuning Documentation",
+      "notes": "Query can be satisfied entirely from index"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with efficient pagination",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nOptimize for performance using indexes and best practices.",
+    "output": "SELECT id, name, location, start_date FROM events WHERE start_date > '2024-01-01' ORDER BY start_date DESC, id DESC LIMIT 25 OFFSET 0",
+    "metadata": {
+      "category": "postgresql_performance",
+      "complexity": "medium",
+      "pattern": "efficient_pagination",
+      "source": "PostgreSQL Performance Tuning Documentation",
+      "notes": "Uses stable sort with id for consistent pagination"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with EXISTS instead of IN for better performance",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nOptimize for performance using indexes and best practices.",
+    "output": "SELECT e.id, e.name, e.location FROM events e WHERE EXISTS (SELECT 1 FROM attendees a WHERE a.event_id = e.id AND a.status = 'confirmed')",
+    "metadata": {
+      "category": "postgresql_performance",
+      "complexity": "complex",
+      "pattern": "exists_optimization",
+      "source": "PostgreSQL Performance Tuning Documentation",
+      "notes": "EXISTS is often more efficient than IN with subqueries"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with proper NULL handling",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nAvoid common anti-patterns and use PostgreSQL best practices.",
+    "output": "SELECT id, name, location, country FROM events WHERE country IS NULL",
+    "metadata": {
+      "category": "postgresql_antipatterns",
+      "complexity": "medium",
+      "pattern": "null_comparison_fix",
+      "source": "PostgreSQL Best Practices Documentation",
+      "notes": "Corrects anti-pattern: Use IS NULL instead of = NULL"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with proper date comparison",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nAvoid common anti-patterns and use PostgreSQL best practices.",
+    "output": "SELECT id, name, location, start_date FROM events WHERE DATE(start_date) = '2024-01-01'",
+    "metadata": {
+      "category": "postgresql_antipatterns",
+      "complexity": "medium",
+      "pattern": "date_comparison_fix",
+      "source": "PostgreSQL Best Practices Documentation",
+      "notes": "Corrects anti-pattern: Date comparison should account for time component"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with proper LIKE escaping",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nAvoid common anti-patterns and use PostgreSQL best practices.",
+    "output": "SELECT id, name FROM events WHERE name LIKE '%100\\%%' ESCAPE '\\'",
+    "metadata": {
+      "category": "postgresql_antipatterns",
+      "complexity": "medium",
+      "pattern": "like_escaping_fix",
+      "source": "PostgreSQL Best Practices Documentation",
+      "notes": "Corrects anti-pattern: Special characters in LIKE patterns should be escaped"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with proper boolean handling",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nAvoid common anti-patterns and use PostgreSQL best practices.",
+    "output": "SELECT id, name, status FROM events WHERE status = 'confirmed'",
+    "metadata": {
+      "category": "postgresql_antipatterns",
+      "complexity": "medium",
+      "pattern": "boolean_handling_fix",
+      "source": "PostgreSQL Best Practices Documentation",
+      "notes": "Corrects anti-pattern: Use proper enum values instead of string booleans"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with efficient counting",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nAvoid common anti-patterns and use PostgreSQL best practices.",
+    "output": "SELECT COUNT(DISTINCT id) FROM events",
+    "metadata": {
+      "category": "postgresql_antipatterns",
+      "complexity": "medium",
+      "pattern": "efficient_counting_fix",
+      "source": "PostgreSQL Best Practices Documentation",
+      "notes": "Corrects anti-pattern: Use COUNT(DISTINCT) instead of subquery for counting unique values"
+    }
+  }
+]

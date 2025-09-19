@@ -13,7 +13,14 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "geocode": "tsx scripts/geocode-events.ts",
-    "geocode:test": "tsx scripts/test-geocoding.ts"
+    "geocode:test": "tsx scripts/test-geocoding.ts",
+    "extract-logs": "tsx scripts/extract-query-logs.ts",
+    "generate-training-data": "tsx scripts/generate-training-dataset.ts",
+    "curate-postgresql": "tsx scripts/curate-postgresql-docs.ts",
+    "prepare-final-dataset": "tsx scripts/prepare-final-dataset.ts",
+    "validate-dataset": "tsx scripts/validate-dataset-quality.ts",
+    "fix-dataset": "tsx scripts/fix-dataset-issues.ts",
+    "setup-cluster-training": "bash scripts/setup-cluster-training.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

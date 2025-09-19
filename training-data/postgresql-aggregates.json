@@ -1,0 +1,57 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with string aggregation of countries",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT continent, STRING_AGG(DISTINCT country, ', ' ORDER BY country) as countries FROM events WHERE continent IS NOT NULL AND country IS NOT NULL GROUP BY continent",
+    "metadata": {
+      "category": "postgresql_aggregates",
+      "complexity": "complex",
+      "pattern": "string_aggregation",
+      "source": "PostgreSQL Aggregate Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with array aggregation of types",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT continent, ARRAY_AGG(DISTINCT type ORDER BY type) as event_types FROM events WHERE continent IS NOT NULL GROUP BY continent",
+    "metadata": {
+      "category": "postgresql_aggregates",
+      "complexity": "complex",
+      "pattern": "array_aggregation",
+      "source": "PostgreSQL Aggregate Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with statistical aggregates",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT continent, COUNT(*) as total_events, MIN(start_date) as earliest_event, MAX(start_date) as latest_event, AVG(EXTRACT(EPOCH FROM (end_date - start_date))/3600) as avg_duration_hours FROM events WHERE continent IS NOT NULL AND end_date IS NOT NULL GROUP BY continent",
+    "metadata": {
+      "category": "postgresql_aggregates",
+      "complexity": "complex",
+      "pattern": "statistical_aggregates",
+      "source": "PostgreSQL Aggregate Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with conditional aggregation",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT continent, COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'confirmed') as confirmed, COUNT(*) FILTER (WHERE priority = 'high') as high_priority FROM events WHERE continent IS NOT NULL GROUP BY continent",
+    "metadata": {
+      "category": "postgresql_aggregates",
+      "complexity": "complex",
+      "pattern": "conditional_aggregation",
+      "source": "PostgreSQL Aggregate Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with percentile calculations",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT continent, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (end_date - start_date))/3600) as median_duration_hours FROM events WHERE continent IS NOT NULL AND end_date IS NOT NULL GROUP BY continent",
+    "metadata": {
+      "category": "postgresql_aggregates",
+      "complexity": "complex",
+      "pattern": "percentile_calculation",
+      "source": "PostgreSQL Aggregate Functions Documentation"
+    }
+  }
+]

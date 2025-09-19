@@ -1,0 +1,65 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sql-finetuning-job-v2
+  namespace: dev-rh-events-org
+spec:
+  template:
+    metadata:
+      labels:
+        app: sql-finetuning
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: finetuning
+        image: nvcr.io/nvidia/pytorch:23.10-py3
+        command: ["python3", "/scripts/train_cluster.py"]
+        resources:
+          requests:
+            nvidia.com/gpu: 1
+            memory: "8Gi"
+            cpu: "2"
+          limits:
+            nvidia.com/gpu: 1
+            memory: "16Gi"
+            cpu: "4"
+        env:
+        - name: BATCH_SIZE
+          value: "1"
+        - name: GRADIENT_ACCUMULATION_STEPS
+          value: "16"
+        - name: NUM_EPOCHS
+          value: "3"
+        - name: LORA_RANK
+          value: "8"
+        - name: LORA_ALPHA
+          value: "16"
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: CUDA_VISIBLE_DEVICES
+          value: "0"
+        volumeMounts:
+        - name: training-data
+          mountPath: /data
+        - name: training-script
+          mountPath: /scripts
+        - name: output-volume
+          mountPath: /output
+      volumes:
+      - name: training-data
+        configMap:
+          name: training-data
+      - name: training-script
+        configMap:
+          name: training-script
+          defaultMode: 0755
+      - name: output-volume
+        emptyDir: {}
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      - key: gpu
+        operator: Equal
+        value: required
+        effect: NoSchedule

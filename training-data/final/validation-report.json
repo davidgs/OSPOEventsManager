@@ -1,0 +1,991 @@
+{
+  "totalExamples": 119,
+  "validExamples": 119,
+  "invalidExamples": 0,
+  "overallScore": 96.86274509803923,
+  "categories": {
+    "syntaxValidation": {
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "score": 100
+    },
+    "securityValidation": {
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "score": 100
+    },
+    "performanceValidation": {
+      "passed": true,
+      "errors": [],
+      "warnings": [
+        "Example 1: Consider adding LIMIT clause for large result sets",
+        "Example 6: Consider adding LIMIT clause for large result sets",
+        "Example 7: Consider adding LIMIT clause for large result sets",
+        "Example 10: Consider adding LIMIT clause for large result sets",
+        "Example 11: Consider adding LIMIT clause for large result sets",
+        "Example 12: Consider adding LIMIT clause for large result sets",
+        "Example 13: Consider adding LIMIT clause for large result sets",
+        "Example 14: Consider adding LIMIT clause for large result sets",
+        "Example 14: Query doesn't appear to use indexed columns for filtering",
+        "Example 16: Consider adding LIMIT clause for large result sets",
+        "Example 16: Query doesn't appear to use indexed columns for filtering",
+        "Example 18: Consider adding LIMIT clause for large result sets",
+        "Example 19: Consider adding LIMIT clause for large result sets",
+        "Example 20: Consider adding LIMIT clause for large result sets",
+        "Example 20: Query doesn't appear to use indexed columns for filtering",
+        "Example 21: Consider adding LIMIT clause for large result sets",
+        "Example 22: Consider adding LIMIT clause for large result sets",
+        "Example 23: Consider adding LIMIT clause for large result sets",
+        "Example 24: Consider adding LIMIT clause for large result sets",
+        "Example 25: Consider adding LIMIT clause for large result sets",
+        "Example 25: Query doesn't appear to use indexed columns for filtering",
+        "Example 27: Consider adding LIMIT clause for large result sets",
+        "Example 27: Query doesn't appear to use indexed columns for filtering",
+        "Example 28: Consider adding LIMIT clause for large result sets",
+        "Example 28: Query doesn't appear to use indexed columns for filtering",
+        "Example 29: Consider adding LIMIT clause for large result sets",
+        "Example 30: Consider adding LIMIT clause for large result sets",
+        "Example 31: Consider adding LIMIT clause for large result sets",
+        "Example 32: Consider adding LIMIT clause for large result sets",
+        "Example 33: Consider adding LIMIT clause for large result sets",
+        "Example 34: Consider adding LIMIT clause for large result sets",
+        "Example 35: Consider adding LIMIT clause for large result sets",
+        "Example 35: Query doesn't appear to use indexed columns for filtering",
+        "Example 36: Consider adding LIMIT clause for large result sets",
+        "Example 37: Consider adding LIMIT clause for large result sets",
+        "Example 38: Consider adding LIMIT clause for large result sets",
+        "Example 40: Consider adding LIMIT clause for large result sets",
+        "Example 40: Query doesn't appear to use indexed columns for filtering",
+        "Example 41: Consider adding LIMIT clause for large result sets",
+        "Example 42: Consider adding LIMIT clause for large result sets",
+        "Example 42: Query doesn't appear to use indexed columns for filtering",
+        "Example 44: Consider adding LIMIT clause for large result sets",
+        "Example 44: Query doesn't appear to use indexed columns for filtering",
+        "Example 45: Consider adding LIMIT clause for large result sets",
+        "Example 46: Consider adding LIMIT clause for large result sets",
+        "Example 47: Consider adding LIMIT clause for large result sets",
+        "Example 48: Consider adding LIMIT clause for large result sets",
+        "Example 50: Query doesn't appear to use indexed columns for filtering",
+        "Example 51: Consider adding LIMIT clause for large result sets",
+        "Example 52: Consider adding LIMIT clause for large result sets",
+        "Example 53: Consider adding LIMIT clause for large result sets",
+        "Example 54: Consider adding LIMIT clause for large result sets",
+        "Example 55: Consider adding LIMIT clause for large result sets",
+        "Example 57: Consider adding LIMIT clause for large result sets",
+        "Example 58: Consider adding LIMIT clause for large result sets",
+        "Example 59: Consider adding LIMIT clause for large result sets",
+        "Example 60: Consider adding LIMIT clause for large result sets",
+        "Example 61: Consider adding LIMIT clause for large result sets",
+        "Example 63: Consider adding LIMIT clause for large result sets",
+        "Example 64: Consider adding LIMIT clause for large result sets",
+        "Example 66: Consider adding LIMIT clause for large result sets",
+        "Example 67: Consider adding LIMIT clause for large result sets",
+        "Example 68: Consider adding LIMIT clause for large result sets",
+        "Example 68: Query doesn't appear to use indexed columns for filtering",
+        "Example 69: Consider adding LIMIT clause for large result sets",
+        "Example 69: Query doesn't appear to use indexed columns for filtering",
+        "Example 71: Consider adding LIMIT clause for large result sets",
+        "Example 72: Consider adding LIMIT clause for large result sets",
+        "Example 73: Consider adding LIMIT clause for large result sets",
+        "Example 74: Consider adding LIMIT clause for large result sets",
+        "Example 76: Consider adding LIMIT clause for large result sets",
+        "Example 79: Consider adding LIMIT clause for large result sets",
+        "Example 79: Query doesn't appear to use indexed columns for filtering",
+        "Example 81: Consider adding LIMIT clause for large result sets",
+        "Example 83: Consider adding LIMIT clause for large result sets",
+        "Example 83: DISTINCT with ORDER BY can be inefficient, consider alternatives",
+        "Example 83: Query doesn't appear to use indexed columns for filtering",
+        "Example 85: Consider adding LIMIT clause for large result sets",
+        "Example 86: Consider adding LIMIT clause for large result sets",
+        "Example 86: Query doesn't appear to use indexed columns for filtering",
+        "Example 88: Consider adding LIMIT clause for large result sets",
+        "Example 88: Query doesn't appear to use indexed columns for filtering",
+        "Example 89: Consider adding LIMIT clause for large result sets",
+        "Example 89: Query doesn't appear to use indexed columns for filtering",
+        "Example 90: Consider adding LIMIT clause for large result sets",
+        "Example 90: Query doesn't appear to use indexed columns for filtering",
+        "Example 91: Consider adding LIMIT clause for large result sets",
+        "Example 93: Consider adding LIMIT clause for large result sets",
+        "Example 95: Consider adding LIMIT clause for large result sets",
+        "Example 96: Consider adding LIMIT clause for large result sets",
+        "Example 97: Consider adding LIMIT clause for large result sets",
+        "Example 99: Consider adding LIMIT clause for large result sets",
+        "Example 99: Query doesn't appear to use indexed columns for filtering",
+        "Example 103: Consider adding LIMIT clause for large result sets",
+        "Example 104: Consider adding LIMIT clause for large result sets",
+        "Example 105: Consider adding LIMIT clause for large result sets",
+        "Example 106: Consider adding LIMIT clause for large result sets",
+        "Example 107: Consider adding LIMIT clause for large result sets",
+        "Example 108: Consider adding LIMIT clause for large result sets",
+        "Example 110: Consider adding LIMIT clause for large result sets",
+        "Example 111: Consider adding LIMIT clause for large result sets",
+        "Example 113: Consider adding LIMIT clause for large result sets",
+        "Example 114: Consider adding LIMIT clause for large result sets",
+        "Example 116: Consider adding LIMIT clause for large result sets",
+        "Example 116: Query doesn't appear to use indexed columns for filtering",
+        "Example 118: Consider adding LIMIT clause for large result sets",
+        "Example 119: Consider adding LIMIT clause for large result sets"
+      ],
+      "score": 82.01680672268907
+    },
+    "consistencyValidation": {
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "score": 100
+    },
+    "domainValidation": {
+      "passed": false,
+      "errors": [
+        "Example 59: References non-existent column 'state', use 'location', 'country', 'region', or 'continent'"
+      ],
+      "warnings": [
+        "Example 77: Geographic query should likely use 'continent' column"
+      ],
+      "score": 99.15966386554622
+    },
+    "formatValidation": {
+      "passed": true,
+      "errors": [],
+      "warnings": [],
+      "score": 100
+    }
+  },
+  "detailedResults": [
+    {
+      "index": 1,
+      "instruction": "Generate a PostgreSQL SELECT query for: cancelled events\n\nDatabase Schema:\nevents table:\n- id (integ...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, type FROM events WHERE status = 'cancelled'...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 2,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with array aggregation of types\n\nDatabase Schema:\neve...",
+      "sql": "SELECT continent, ARRAY_AGG(DISTINCT type ORDER BY type) as event_types FROM events WHERE continent ...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 3,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events this year\n\nDatabase Schema:\nevents table:\n- id (integ...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events ORDER BY start_d...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 4,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with composite index optimization\n\nDatabase Schema:\ne...",
+      "sql": "SELECT id, name, location FROM events WHERE status = 'confirmed' AND type = 'conference' ORDER BY st...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 5,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with the most attendees\n\nDatabase Schema:\nevents tabl...",
+      "sql": "SELECT e.id, e.name, e.location, COUNT(a.id) as attendee_count FROM events e LEFT JOIN attendees a O...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 6,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with lag and lead dates\n\nDatabase Schema:\nevents tabl...",
+      "sql": "SELECT id, name, start_date, LAG(start_date) OVER (ORDER BY start_date) as previous_event_date, LEAD...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 7,
+      "instruction": "Generate a PostgreSQL SELECT query for: Find events in South America\n\nDatabase Schema:\nevents table:...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority FROM e...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 8,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events\n\nDatabase Schema:\nevents table:\n- id (integer, primar...",
+      "sql": "SELECT id, name, location, start_date, end_date, status FROM events ORDER BY start_date DESC LIMIT 2...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 9,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with percentile calculations\n\nDatabase Schema:\nevents...",
+      "sql": "SELECT continent, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (end_date - start_d...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 10,
+      "instruction": "Generate a PostgreSQL SELECT query for: All webinar events\n\nDatabase Schema:\nevents table:\n- id (int...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'webinar'...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 11,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with formatted dates\n\nDatabase Schema:\nevents table:\n...",
+      "sql": "SELECT id, name, TO_CHAR(start_date, 'YYYY-MM-DD HH24:MI') as formatted_start FROM events ORDER BY s...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 12,
+      "instruction": "Generate a PostgreSQL SELECT query for: List events\n\nDatabase Schema:\nevents table:\n- id (integer, p...",
+      "sql": "SELECT id, name, location, start_date, end_date, status FROM events ORDER BY start_date DESC",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 13,
+      "instruction": "Generate a PostgreSQL SELECT query for: high priority events\n\nDatabase Schema:\nevents table:\n- id (i...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE priority = 'high...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 14,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with JSON array length\n\nDatabase Schema:\nevents table...",
+      "sql": "SELECT id, name, jsonb_array_length(metadata->'tags') as tag_count FROM events WHERE metadata IS NOT...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 15,
+      "instruction": "Generate a PostgreSQL SELECT query for: Count events by priority level\n\nDatabase Schema:\nevents tabl...",
+      "sql": "SELECT priority, COUNT(*) FROM events GROUP BY priority ORDER BY CASE priority WHEN 'critical' THEN ...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 16,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with JSON metadata extraction\n\nDatabase Schema:\nevent...",
+      "sql": "SELECT id, name, (metadata->>'speaker_count')::int as speaker_count FROM events WHERE metadata IS NO...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 17,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with efficient counting\n\nDatabase Schema:\nevents tabl...",
+      "sql": "SELECT COUNT(DISTINCT id) FROM events",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 18,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events from the current week\n\nDatabase Schema:\nevents table:...",
+      "sql": "SELECT id, name, start_date FROM events WHERE start_date >= date_trunc('week', CURRENT_DATE) AND sta...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 19,
+      "instruction": "Generate a PostgreSQL SELECT query for: Find events in Europe\n\nDatabase Schema:\nevents table:\n- id (...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority FROM e...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 20,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events that have ended\n\nDatabase Schema:\nevents table:\n- id ...",
+      "sql": "SELECT id, name, location, start_date, end_date, status FROM events WHERE end_date < NOW() ORDER BY ...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 21,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show all North America events\n\nDatabase Schema:\nevents table...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status FROM events WHER...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 22,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events in Japan\n\nDatabase Schema:\nevents table:\n- id (intege...",
+      "sql": "SELECT id, name, location, country, start_date, end_date, status, priority FROM events WHERE country...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 23,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with ranking by start date\n\nDatabase Schema:\nevents t...",
+      "sql": "SELECT id, name, start_date, RANK() OVER (ORDER BY start_date) as date_rank, DENSE_RANK() OVER (ORDE...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 24,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with uppercase country names\n\nDatabase Schema:\nevents...",
+      "sql": "SELECT id, name, location, UPPER(country) as country_upper FROM events WHERE country IS NOT NULL",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 25,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with location starting with specific text\n\nDatabase S...",
+      "sql": "SELECT id, name, location FROM events WHERE location ~ '^[Nn]ew'",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 26,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with attendee counts\n\nDatabase Schema:\nevents table:\n...",
+      "sql": "SELECT e.id, e.name, e.location, e.start_date, COUNT(a.id) as attendee_count FROM events e LEFT JOIN...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 27,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events this year\n\nDatabase Schema:\nevents table:\n- id (integ...",
+      "sql": "SELECT id, name, location, start_date, end_date FROM events WHERE EXTRACT(YEAR FROM start_date) = 20...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 28,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events in current quarter\n\nDatabase Schema:\nevents table:\n- ...",
+      "sql": "SELECT id, name, start_date FROM events WHERE EXTRACT(QUARTER FROM start_date) = EXTRACT(QUARTER FRO...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 29,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events happening this week\n\nDatabase Schema:\nevents table:\n-...",
+      "sql": "SELECT id, name, location, start_date, end_date FROM events WHERE start_date >= date_trunc('week', N...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 30,
+      "instruction": "Generate a PostgreSQL SELECT query for: All conferences\n\nDatabase Schema:\nevents table:\n- id (intege...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'conferen...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 31,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with row numbers by continent\n\nDatabase Schema:\nevent...",
+      "sql": "SELECT id, name, continent, start_date, ROW_NUMBER() OVER (PARTITION BY continent ORDER BY start_dat...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 32,
+      "instruction": "Generate a PostgreSQL SELECT query for: Find events outside of Asia\n\nDatabase Schema:\nevents table:\n...",
+      "sql": "SELECT id, name, location, country, continent, start_date, end_date FROM events WHERE continent != '...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 33,
+      "instruction": "Generate a PostgreSQL SELECT query for: pending events\n\nDatabase Schema:\nevents table:\n- id (integer...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, type FROM events WHERE status = 'pending' O...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 34,
+      "instruction": "Generate a PostgreSQL SELECT query for: All meetup events\n\nDatabase Schema:\nevents table:\n- id (inte...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'meetup' ...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 35,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with trimmed and cleaned names\n\nDatabase Schema:\neven...",
+      "sql": "SELECT id, TRIM(REGEXP_REPLACE(name, '\\s+', ' ', 'g')) as clean_name FROM events WHERE name IS NOT N...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 36,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events between January and March 2024\n\nDatabase Schema:\neven...",
+      "sql": "SELECT id, name, location, start_date, end_date FROM events WHERE start_date >= '2024-01-01' AND sta...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 37,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events in United Kingdom\n\nDatabase Schema:\nevents table:\n- i...",
+      "sql": "SELECT id, name, location, country, start_date, end_date, status, priority FROM events WHERE country...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 38,
+      "instruction": "Generate a PostgreSQL SELECT query for: Find events in Oceania\n\nDatabase Schema:\nevents table:\n- id ...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority FROM e...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 39,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with CFP submission counts\n\nDatabase Schema:\nevents t...",
+      "sql": "SELECT e.id, e.name, e.location, e.start_date, COUNT(c.id) as cfp_count FROM events e LEFT JOIN cfp_...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 40,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with location substring extraction\n\nDatabase Schema:\n...",
+      "sql": "SELECT id, name, location, SUBSTRING(location FROM 1 FOR 20) as short_location FROM events WHERE loc...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 41,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events ordered by priority (custom order)\n\nDatabase Schema:\n...",
+      "sql": "SELECT id, name, priority, start_date FROM events ORDER BY CASE priority WHEN 'critical' THEN 1 WHEN...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 42,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with EXISTS instead of IN for better performance\n\nDat...",
+      "sql": "SELECT e.id, e.name, e.location FROM events e WHERE EXISTS (SELECT 1 FROM attendees a WHERE a.event_...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 43,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with running totals by continent\n\nDatabase Schema:\nev...",
+      "sql": "SELECT id, name, continent, start_date, COUNT(*) OVER (PARTITION BY continent ORDER BY start_date RO...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 44,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with JSON key existence check\n\nDatabase Schema:\nevent...",
+      "sql": "SELECT id, name, metadata FROM events WHERE metadata ? 'registration_required' AND (metadata->>'regi...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 45,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events next month\n\nDatabase Schema:\nevents table:\n- id (inte...",
+      "sql": "SELECT id, name, location, start_date, end_date FROM events WHERE start_date >= date_trunc('month', ...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 46,
+      "instruction": "Generate a PostgreSQL SELECT query for: low priority events\n\nDatabase Schema:\nevents table:\n- id (in...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE priority = 'low'...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 47,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show all Africa events\n\nDatabase Schema:\nevents table:\n- id ...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status FROM events WHER...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 48,
+      "instruction": "Generate a PostgreSQL SELECT query for: medium priority events\n\nDatabase Schema:\nevents table:\n- id ...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE priority = 'medi...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 49,
+      "instruction": "Generate a PostgreSQL SELECT query for: How many events are there?\n\nDatabase Schema:\nevents table:\n-...",
+      "sql": "SELECT COUNT(*) FROM events",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 50,
+      "instruction": "Generate a PostgreSQL SELECT query for: Total events this year\n\nDatabase Schema:\nevents table:\n- id ...",
+      "sql": "SELECT COUNT(*) FROM events WHERE EXTRACT(YEAR FROM start_date) = EXTRACT(YEAR FROM NOW())",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 51,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show cancelled events\n\nDatabase Schema:\nevents table:\n- id (...",
+      "sql": "SELECT id, name, location, start_date, end_date, status FROM events WHERE status = 'cancelled' ORDER...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 52,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show all South America events\n\nDatabase Schema:\nevents table...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status FROM events WHER...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 53,
+      "instruction": "Generate a PostgreSQL SELECT query for: critical priority events\n\nDatabase Schema:\nevents table:\n- i...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE priority = 'crit...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 54,
+      "instruction": "Generate a PostgreSQL SELECT query for: All hackathon events\n\nDatabase Schema:\nevents table:\n- id (i...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'hackatho...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 55,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show all Oceania events\n\nDatabase Schema:\nevents table:\n- id...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status FROM events WHER...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 56,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events grouped by month\n\nDatabase Schema:\nevents table:\n- id...",
+      "sql": "SELECT DATE_TRUNC('month', start_date) as month, COUNT(*) FROM events GROUP BY DATE_TRUNC('month', s...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 57,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events from last month\n\nDatabase Schema:\nevents table:\n- id ...",
+      "sql": "SELECT id, name, start_date FROM events WHERE start_date >= date_trunc('month', CURRENT_DATE) - inte...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 58,
+      "instruction": "Generate a PostgreSQL SELECT query for: All conferences\n\nDatabase Schema:\nevents table:\n- id (intege...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events WHERE type = 'co...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 59,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events in United States\n\nDatabase Schema:\nevents table:\n- id...",
+      "sql": "SELECT id, name, location, country, start_date, end_date, status, priority FROM events WHERE country...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 60,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with covering index query\n\nDatabase Schema:\nevents ta...",
+      "sql": "SELECT id, name, start_date, status FROM events WHERE continent = 'Europe' AND start_date > CURRENT_...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 61,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events in Europe or North America\n\nDatabase Schema:\nevents t...",
+      "sql": "SELECT id, name, location, country, continent, start_date, end_date FROM events WHERE continent IN (...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 62,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with string aggregation of countries\n\nDatabase Schema...",
+      "sql": "SELECT continent, STRING_AGG(DISTINCT country, ', ' ORDER BY country) as countries FROM events WHERE...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 63,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show all Asia events\n\nDatabase Schema:\nevents table:\n- id (i...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status FROM events WHER...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 64,
+      "instruction": "Generate a PostgreSQL SELECT query for: Past events\n\nDatabase Schema:\nevents table:\n- id (integer, p...",
+      "sql": "SELECT id, name, location, start_date, end_date, status FROM events WHERE end_date < NOW() ORDER BY ...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 65,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show me events\n\nDatabase Schema:\nevents table:\n- id (integer...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events ORDER BY start_d...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 66,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show all events\n\nDatabase Schema:\nevents table:\n- id (intege...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events ORDER BY start_d...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 67,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with age in days\n\nDatabase Schema:\nevents table:\n- id...",
+      "sql": "SELECT id, name, start_date, EXTRACT(DAY FROM (CURRENT_DATE - start_date::date)) as days_ago FROM ev...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 68,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with case-insensitive name search\n\nDatabase Schema:\ne...",
+      "sql": "SELECT id, name, location FROM events WHERE name ILIKE '%conference%'",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 69,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with case-insensitive location search\n\nDatabase Schem...",
+      "sql": "SELECT id, name, location, country FROM events WHERE location ILIKE '%paris%'",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 70,
+      "instruction": "Generate a PostgreSQL SELECT query for: How many events in each country?\n\nDatabase Schema:\nevents ta...",
+      "sql": "SELECT country, COUNT(*) FROM events WHERE country IS NOT NULL GROUP BY country ORDER BY COUNT(*) DE...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 71,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with proper NULL handling\n\nDatabase Schema:\nevents ta...",
+      "sql": "SELECT id, name, location, country FROM events WHERE country IS NULL",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 72,
+      "instruction": "Generate a PostgreSQL SELECT query for: Find events in Africa\n\nDatabase Schema:\nevents table:\n- id (...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority FROM e...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 73,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events starting today\n\nDatabase Schema:\nevents table:\n- id (...",
+      "sql": "SELECT id, name, location, start_date, end_date FROM events WHERE DATE(start_date) = CURRENT_DATE OR...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 74,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with first and last values by type\n\nDatabase Schema:\n...",
+      "sql": "SELECT id, name, type, start_date, FIRST_VALUE(name) OVER (PARTITION BY type ORDER BY start_date) as...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 75,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events by creation date\n\nDatabase Schema:\nevents table:\n- id...",
+      "sql": "SELECT id, name, created_at, start_date FROM events ORDER BY created_at DESC LIMIT 30",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 76,
+      "instruction": "Generate a PostgreSQL SELECT query for: Confirmed conferences\n\nDatabase Schema:\nevents table:\n- id (...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'conferen...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 77,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events in Europe\n\nDatabase Schema:\nevents table:\n- id (integ...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events ORDER BY start_d...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 78,
+      "instruction": "Generate a PostgreSQL SELECT query for: How many events are there in Asia?\n\nDatabase Schema:\nevents ...",
+      "sql": "SELECT COUNT(*) FROM events WHERE continent = 'Asia'",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 79,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with concatenated location info\n\nDatabase Schema:\neve...",
+      "sql": "SELECT id, name, CONCAT(location, ', ', country) as full_location FROM events WHERE location IS NOT ...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 80,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with efficient pagination\n\nDatabase Schema:\nevents ta...",
+      "sql": "SELECT id, name, location, start_date FROM events WHERE start_date > '2024-01-01' ORDER BY start_dat...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 81,
+      "instruction": "Generate a PostgreSQL SELECT query for: Recent events\n\nDatabase Schema:\nevents table:\n- id (integer,...",
+      "sql": "SELECT id, name, location, start_date, end_date FROM events WHERE start_date > NOW() - INTERVAL '30 ...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 82,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events by day of week\n\nDatabase Schema:\nevents table:\n- id (...",
+      "sql": "SELECT EXTRACT(DOW FROM start_date) as day_of_week, TO_CHAR(start_date, 'Day') as day_name, COUNT(*)...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 83,
+      "instruction": "Generate a PostgreSQL SELECT query for: Upcoming events with confirmed attendees\n\nDatabase Schema:\ne...",
+      "sql": "SELECT DISTINCT e.id, e.name, e.location, e.start_date FROM events e JOIN attendees a ON e.id = a.ev...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 84,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with statistical aggregates\n\nDatabase Schema:\nevents ...",
+      "sql": "SELECT continent, COUNT(*) as total_events, MIN(start_date) as earliest_event, MAX(start_date) as la...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 85,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events in the last 30 days\n\nDatabase Schema:\nevents table:\n-...",
+      "sql": "SELECT id, name, location, start_date, end_date, status FROM events WHERE start_date >= NOW() - inte...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 86,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with proper LIKE escaping\n\nDatabase Schema:\nevents ta...",
+      "sql": "SELECT id, name FROM events WHERE name LIKE '%100\\%%' ESCAPE '\\'",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 87,
+      "instruction": "Generate a PostgreSQL SELECT query for: How many events are confirmed?\n\nDatabase Schema:\nevents tabl...",
+      "sql": "SELECT COUNT(*) FROM events WHERE status = 'confirmed'",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 88,
+      "instruction": "Generate a PostgreSQL SELECT query for: Long event names\n\nDatabase Schema:\nevents table:\n- id (integ...",
+      "sql": "SELECT id, name, LENGTH(name) as name_length FROM events WHERE LENGTH(name) > 50 ORDER BY LENGTH(nam...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 89,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with proper date comparison\n\nDatabase Schema:\nevents ...",
+      "sql": "SELECT id, name, location, start_date FROM events WHERE DATE(start_date) = '2024-01-01'",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 90,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events duration in hours\n\nDatabase Schema:\nevents table:\n- i...",
+      "sql": "SELECT id, name, start_date, end_date, EXTRACT(EPOCH FROM (end_date - start_date))/3600 as duration_...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 91,
+      "instruction": "Generate a PostgreSQL SELECT query for: confirmed events\n\nDatabase Schema:\nevents table:\n- id (integ...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, type FROM events WHERE status = 'confirmed'...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 92,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with conditional aggregation\n\nDatabase Schema:\nevents...",
+      "sql": "SELECT continent, COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'confirmed') as confirmed, COUN...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 93,
+      "instruction": "Generate a PostgreSQL SELECT query for: Find events in Asia\n\nDatabase Schema:\nevents table:\n- id (in...",
+      "sql": "SELECT id, name, location, country, region, continent FROM events WHERE continent = 'Asia'",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 94,
+      "instruction": "Generate a PostgreSQL SELECT query for: Count events by type\n\nDatabase Schema:\nevents table:\n- id (i...",
+      "sql": "SELECT type, COUNT(*) FROM events GROUP BY type ORDER BY COUNT(*) DESC",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 95,
+      "instruction": "Generate a PostgreSQL SELECT query for: Find events with no location\n\nDatabase Schema:\nevents table:...",
+      "sql": "SELECT id, name, location, start_date, end_date, status FROM events WHERE location IS NULL OR locati...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 96,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events without countries\n\nDatabase Schema:\nevents table:\n- i...",
+      "sql": "SELECT id, name, location, country, start_date FROM events WHERE country IS NULL ORDER BY start_date...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 97,
+      "instruction": "Generate a PostgreSQL SELECT query for: High priority upcoming events\n\nDatabase Schema:\nevents table...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE priority = 'high...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 98,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with index-optimized continent search\n\nDatabase Schem...",
+      "sql": "SELECT id, name, location, start_date FROM events WHERE continent = 'Asia' ORDER BY start_date DESC ...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 99,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with location length\n\nDatabase Schema:\nevents table:\n...",
+      "sql": "SELECT id, name, location, LENGTH(location) as location_length FROM events WHERE location IS NOT NUL...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 100,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show all events\n\nDatabase Schema:\nevents table:\n- id (intege...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events ORDER BY start_d...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 101,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show me all conference events\n\nDatabase Schema:\nevents table...",
+      "sql": "SELECT id, name, location, country, start_date, end_date, status, priority FROM events WHERE type = ...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 102,
+      "instruction": "Generate a PostgreSQL SELECT query for: Find all upcoming events\n\nDatabase Schema:\nevents table:\n- i...",
+      "sql": "SELECT id, name, location, country, start_date, end_date, status, priority, type FROM events WHERE s...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 103,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with null-safe country filtering\n\nDatabase Schema:\nev...",
+      "sql": "SELECT id, name, location, country FROM events WHERE country IS NOT NULL AND country != '' ORDER BY ...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 104,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show upcoming events\n\nDatabase Schema:\nevents table:\n- id (i...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE start_date > NOW...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 105,
+      "instruction": "Generate a PostgreSQL SELECT query for: Find events in Asia\n\nDatabase Schema:\nevents table:\n- id (in...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority FROM e...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 106,
+      "instruction": "Generate a PostgreSQL SELECT query for: All conference events\n\nDatabase Schema:\nevents table:\n- id (...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'conferen...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 107,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events in France\n\nDatabase Schema:\nevents table:\n- id (integ...",
+      "sql": "SELECT id, name, location, country, start_date, end_date, status, priority FROM events WHERE country...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 108,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events in 2024\n\nDatabase Schema:\nevents table:\n- id (integer...",
+      "sql": "SELECT id, name, location, start_date, end_date, status FROM events WHERE EXTRACT(YEAR FROM start_da...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 109,
+      "instruction": "Generate a PostgreSQL SELECT query for: Count events in Europe\n\nDatabase Schema:\nevents table:\n- id ...",
+      "sql": "SELECT COUNT(*) FROM events WHERE continent = 'Europe'",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 110,
+      "instruction": "Generate a PostgreSQL SELECT query for: Find events in North America\n\nDatabase Schema:\nevents table:...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority FROM e...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 111,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events in Germany\n\nDatabase Schema:\nevents table:\n- id (inte...",
+      "sql": "SELECT id, name, location, country, start_date, end_date, status, priority FROM events WHERE country...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 112,
+      "instruction": "Generate a PostgreSQL SELECT query for: How many upcoming events?\n\nDatabase Schema:\nevents table:\n- ...",
+      "sql": "SELECT COUNT(*) FROM events WHERE start_date > NOW()",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 113,
+      "instruction": "Generate a PostgreSQL SELECT query for: Show all Europe events\n\nDatabase Schema:\nevents table:\n- id ...",
+      "sql": "SELECT id, name, location, country, region, continent, start_date, end_date, status FROM events WHER...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 114,
+      "instruction": "Generate a PostgreSQL SELECT query for: All workshop events\n\nDatabase Schema:\nevents table:\n- id (in...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'workshop...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 115,
+      "instruction": "Generate a PostgreSQL SELECT query for: What events do we have?\n\nDatabase Schema:\nevents table:\n- id...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, type FROM events ORDER BY start_date DESC L...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 116,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events in London\n\nDatabase Schema:\nevents table:\n- id (integ...",
+      "sql": "SELECT id, name, location, country, start_date, end_date FROM events WHERE location ILIKE '%London%'",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 117,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with string aggregation of types\n\nDatabase Schema:\nev...",
+      "sql": "SELECT continent, STRING_AGG(DISTINCT type, ', ' ORDER BY type) as event_types FROM events WHERE con...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 118,
+      "instruction": "Generate a PostgreSQL SELECT query for: Upcoming events\n\nDatabase Schema:\nevents table:\n- id (intege...",
+      "sql": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events WHERE start_date...",
+      "issues": [],
+      "score": 100
+    },
+    {
+      "index": 119,
+      "instruction": "Generate a PostgreSQL SELECT query for: Events with proper boolean handling\n\nDatabase Schema:\nevents...",
+      "sql": "SELECT id, name, status FROM events WHERE status = 'confirmed'",
+      "issues": [],
+      "score": 100
+    }
+  ]
+}

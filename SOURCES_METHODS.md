@@ -14,4 +14,17 @@ Things we looked at:
 - Simple SQL queries that got us most of the data we needed rather than using AI
   - Too many queries to build
 - AI models that were good at SQL
-  - We used 
+  - We used `qwen2.5:7b-instruct` as our primary model after testing
+  - Considered Code Llama and Mistral models based on TinyBird benchmarks
+  - Settled on Qwen 2.5 for good SQL performance and reliability
+
+## Implementation Results
+
+After implementing the AI system with comprehensive security and geographic data:
+- **98.9% geocoding success** (91/92 events)
+- **6-layer security system** for read-only enforcement
+- **Structured UI responses** with clickable event cards
+- **Geographic query support** across all continents
+- **Performance target**: <1000ms response time achieved
+
+See `AI_CHANGELOG.md` for detailed implementation history.

@@ -1,0 +1,57 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with row numbers by continent",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, continent, start_date, ROW_NUMBER() OVER (PARTITION BY continent ORDER BY start_date) as event_number FROM events WHERE continent IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_window",
+      "complexity": "complex",
+      "pattern": "row_number_window",
+      "source": "PostgreSQL Window Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with ranking by start date",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date, RANK() OVER (ORDER BY start_date) as date_rank, DENSE_RANK() OVER (ORDER BY start_date) as dense_date_rank FROM events",
+    "metadata": {
+      "category": "postgresql_window",
+      "complexity": "complex",
+      "pattern": "ranking_window",
+      "source": "PostgreSQL Window Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with running totals by continent",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, continent, start_date, COUNT(*) OVER (PARTITION BY continent ORDER BY start_date ROWS UNBOUNDED PRECEDING) as running_count FROM events WHERE continent IS NOT NULL ORDER BY continent, start_date",
+    "metadata": {
+      "category": "postgresql_window",
+      "complexity": "complex",
+      "pattern": "running_total_window",
+      "source": "PostgreSQL Window Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with lag and lead dates",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date, LAG(start_date) OVER (ORDER BY start_date) as previous_event_date, LEAD(start_date) OVER (ORDER BY start_date) as next_event_date FROM events ORDER BY start_date",
+    "metadata": {
+      "category": "postgresql_window",
+      "complexity": "complex",
+      "pattern": "lag_lead_window",
+      "source": "PostgreSQL Window Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with first and last values by type",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, type, start_date, FIRST_VALUE(name) OVER (PARTITION BY type ORDER BY start_date) as first_event_of_type, LAST_VALUE(name) OVER (PARTITION BY type ORDER BY start_date ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as last_event_of_type FROM events WHERE type IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_window",
+      "complexity": "complex",
+      "pattern": "first_last_value_window",
+      "source": "PostgreSQL Window Functions Documentation"
+    }
+  }
+]

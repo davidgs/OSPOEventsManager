@@ -1,0 +1,79 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with case-insensitive name search",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, location FROM events WHERE name ILIKE '%conference%'",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "simple",
+      "pattern": "case_insensitive_like",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with location starting with specific text",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, location FROM events WHERE location ~ '^[Nn]ew'",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "medium",
+      "pattern": "regex_matching",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with concatenated location info",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, CONCAT(location, ', ', country) as full_location FROM events WHERE location IS NOT NULL AND country IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "simple",
+      "pattern": "string_concatenation",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with location length",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, location, LENGTH(location) as location_length FROM events WHERE location IS NOT NULL ORDER BY LENGTH(location) DESC",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "simple",
+      "pattern": "string_length",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with uppercase country names",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, location, UPPER(country) as country_upper FROM events WHERE country IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "simple",
+      "pattern": "string_case_conversion",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with trimmed and cleaned names",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, TRIM(REGEXP_REPLACE(name, '\\s+', ' ', 'g')) as clean_name FROM events WHERE name IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "medium",
+      "pattern": "string_cleaning",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with location substring extraction",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, location, SUBSTRING(location FROM 1 FOR 20) as short_location FROM events WHERE location IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_strings",
+      "complexity": "medium",
+      "pattern": "substring_extraction",
+      "source": "PostgreSQL String Functions Documentation"
+    }
+  }
+]

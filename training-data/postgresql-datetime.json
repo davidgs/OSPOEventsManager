@@ -1,0 +1,79 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events from the current week",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date FROM events WHERE start_date >= date_trunc('week', CURRENT_DATE) AND start_date < date_trunc('week', CURRENT_DATE) + interval '1 week'",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "complex",
+      "pattern": "date_trunc_week",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events from last month",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date FROM events WHERE start_date >= date_trunc('month', CURRENT_DATE) - interval '1 month' AND start_date < date_trunc('month', CURRENT_DATE)",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "complex",
+      "pattern": "date_trunc_month",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with age in days",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date, EXTRACT(DAY FROM (CURRENT_DATE - start_date::date)) as days_ago FROM events WHERE start_date < CURRENT_DATE",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "medium",
+      "pattern": "date_extract_age",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events by day of week",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT EXTRACT(DOW FROM start_date) as day_of_week, TO_CHAR(start_date, 'Day') as day_name, COUNT(*) FROM events GROUP BY EXTRACT(DOW FROM start_date), TO_CHAR(start_date, 'Day') ORDER BY day_of_week",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "complex",
+      "pattern": "day_of_week_extraction",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events in current quarter",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date FROM events WHERE EXTRACT(QUARTER FROM start_date) = EXTRACT(QUARTER FROM CURRENT_DATE) AND EXTRACT(YEAR FROM start_date) = EXTRACT(YEAR FROM CURRENT_DATE)",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "medium",
+      "pattern": "quarter_filtering",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with formatted dates",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, TO_CHAR(start_date, 'YYYY-MM-DD HH24:MI') as formatted_start FROM events ORDER BY start_date",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "medium",
+      "pattern": "date_formatting",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events duration in hours",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions",
+    "output": "SELECT id, name, start_date, end_date, EXTRACT(EPOCH FROM (end_date - start_date))/3600 as duration_hours FROM events WHERE end_date IS NOT NULL",
+    "metadata": {
+      "category": "postgresql_datetime",
+      "complexity": "medium",
+      "pattern": "duration_calculation",
+      "source": "PostgreSQL Date/Time Functions Documentation"
+    }
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: How many events are there?",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n\nRelated tables: attendees, cfp_submissions, assets\nPostgreSQL version: 15\nGeographic columns available: location, country, region, continent",
+    "output": "SELECT COUNT(*) FROM events",
+    "metadata": {
+      "category": "count",
+      "complexity": "simple",
+      "originalSuccess": true,
+      "timestamp": "2025-09-18T17:57:47.967Z"
+    }
+  }
+]

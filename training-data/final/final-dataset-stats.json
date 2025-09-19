@@ -1,0 +1,38 @@
+{
+  "totalExamples": 117,
+  "categories": {
+    "count": 8,
+    "geographic": 22,
+    "temporal": 11,
+    "event_type": 7,
+    "status_priority": 9,
+    "related_data": 4,
+    "general": 13,
+    "postgresql_specific": 5,
+    "postgresql_datetime": 7,
+    "postgresql_strings": 8,
+    "postgresql_aggregates": 5,
+    "postgresql_window": 5,
+    "postgresql_json": 3,
+    "postgresql_performance": 5,
+    "postgresql_antipatterns": 5
+  },
+  "complexities": {
+    "simple": 61,
+    "medium": 33,
+    "complex": 23
+  },
+  "sources": {
+    "comprehensive": 70,
+    "PostgreSQL Date/Time Functions Documentation": 7,
+    "PostgreSQL String Functions Documentation": 7,
+    "PostgreSQL Aggregate Functions Documentation": 5,
+    "PostgreSQL Window Functions Documentation": 5,
+    "PostgreSQL JSON Functions Documentation": 3,
+    "PostgreSQL Performance Tuning Documentation": 5,
+    "PostgreSQL Best Practices Documentation": 5,
+    "synthetic": 10
+  },
+  "generatedAt": "2025-09-18T18:15:35.674Z",
+  "readyForFineTuning": true
+}

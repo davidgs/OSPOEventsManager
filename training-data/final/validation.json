@@ -1,0 +1,365 @@
+[
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Events with null-safe country filtering\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, country FROM events WHERE country IS NOT NULL AND country != '' ORDER BY country"
+      }
+    ],
+    "metadata": {
+      "category": "postgresql_specific",
+      "complexity": "medium",
+      "pattern": "null_safe_filter"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Show upcoming events\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE start_date > NOW() ORDER BY start_date ASC"
+      }
+    ],
+    "metadata": {
+      "category": "temporal",
+      "complexity": "simple",
+      "pattern": "future_events"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Find events in Asia\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority FROM events WHERE continent = 'Asia' ORDER BY start_date DESC"
+      }
+    ],
+    "metadata": {
+      "category": "geographic",
+      "complexity": "simple",
+      "pattern": "continent_filter"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: All conference events\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'conference' ORDER BY start_date DESC"
+      }
+    ],
+    "metadata": {
+      "category": "event_type",
+      "complexity": "simple",
+      "pattern": "type_filter"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Events in France\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, country, start_date, end_date, status, priority FROM events WHERE country = 'France' ORDER BY start_date DESC"
+      }
+    ],
+    "metadata": {
+      "category": "geographic",
+      "complexity": "simple",
+      "pattern": "country_filter"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Events in 2024\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, start_date, end_date, status FROM events WHERE EXTRACT(YEAR FROM start_date) = 2024 ORDER BY start_date ASC"
+      }
+    ],
+    "metadata": {
+      "category": "temporal",
+      "complexity": "medium",
+      "pattern": "year_filter"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Count events in Europe\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT COUNT(*) FROM events WHERE continent = 'Europe'"
+      }
+    ],
+    "metadata": {
+      "category": "general",
+      "complexity": "simple",
+      "pattern": "missing_from_clause",
+      "notes": "Corrected from common error: Missing FROM clause"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Find events in North America\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, country, region, continent, start_date, end_date, status, priority FROM events WHERE continent = 'North America' ORDER BY start_date DESC"
+      }
+    ],
+    "metadata": {
+      "category": "geographic",
+      "complexity": "simple",
+      "pattern": "continent_filter"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Events in Germany\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, country, start_date, end_date, status, priority FROM events WHERE country = 'Germany' ORDER BY start_date DESC"
+      }
+    ],
+    "metadata": {
+      "category": "geographic",
+      "complexity": "simple",
+      "pattern": "country_filter"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: How many upcoming events?\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT COUNT(*) FROM events WHERE start_date > NOW()"
+      }
+    ],
+    "metadata": {
+      "category": "count",
+      "complexity": "simple",
+      "pattern": "temporal_count"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Show all Europe events\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, country, region, continent, start_date, end_date, status FROM events WHERE continent = 'Europe' ORDER BY start_date ASC"
+      }
+    ],
+    "metadata": {
+      "category": "geographic",
+      "complexity": "simple",
+      "pattern": "continent_filter_alt"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: All workshop events\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'workshop' ORDER BY start_date DESC"
+      }
+    ],
+    "metadata": {
+      "category": "event_type",
+      "complexity": "simple",
+      "pattern": "type_filter"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: What events do we have?\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *\nGenerate ONLY SELECT queries (read-only)"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, start_date, end_date, status, type FROM events ORDER BY start_date DESC LIMIT 50"
+      }
+    ],
+    "metadata": {
+      "category": "general",
+      "complexity": "simple",
+      "pattern": "question_format",
+      "synthetic": true
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Events in London\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, country, start_date, end_date FROM events WHERE location ILIKE '%London%'"
+      }
+    ],
+    "metadata": {
+      "category": "general",
+      "complexity": "simple",
+      "pattern": "invalid_column",
+      "notes": "Corrected from common error: Invalid column 'city'"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Events with string aggregation of types\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT continent, STRING_AGG(DISTINCT type, ', ' ORDER BY type) as event_types FROM events WHERE continent IS NOT NULL GROUP BY continent"
+      }
+    ],
+    "metadata": {
+      "category": "postgresql_specific",
+      "complexity": "complex",
+      "pattern": "string_aggregation"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Upcoming events\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n\nRelated tables: attendees, cfp_submissions, assets\nPostgreSQL version: 15\nGeographic columns available: location, country, region, continent"
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events WHERE start_date > NOW() ORDER BY start_date ASC"
+      }
+    ],
+    "metadata": {
+      "category": "temporal",
+      "complexity": "simple",
+      "originalSuccess": true,
+      "timestamp": "2025-09-18T17:57:47.968Z"
+    }
+  },
+  {
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an expert PostgreSQL query generator for an event management system. \nGenerate ONLY SELECT queries that are:\n- Read-only (no INSERT, UPDATE, DELETE, or DDL)\n- Syntactically correct for PostgreSQL 15\n- Performance-optimized using proper indexes\n- Using specific column names (avoid SELECT *)\n- Handling NULL values properly\n- Using PostgreSQL-specific functions when appropriate\n\nAlways include FROM clause and proper WHERE conditions. Use LIMIT for large result sets."
+      },
+      {
+        "role": "user",
+        "content": "Generate a PostgreSQL SELECT query for: Events with proper boolean handling\n\nDatabase Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nAvoid common anti-patterns and use PostgreSQL best practices."
+      },
+      {
+        "role": "assistant",
+        "content": "SELECT id, name, status FROM events WHERE status = 'confirmed'"
+      }
+    ],
+    "metadata": {
+      "category": "postgresql_antipatterns",
+      "complexity": "medium",
+      "pattern": "boolean_handling_fix",
+      "source": "PostgreSQL Best Practices Documentation",
+      "notes": "Corrects anti-pattern: Use proper enum values instead of string booleans"
+    }
+  }
+]
