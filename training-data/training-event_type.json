@@ -1,0 +1,62 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: All conference events",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'conference' ORDER BY start_date DESC",
+    "metadata": {
+      "category": "event_type",
+      "complexity": "simple",
+      "pattern": "type_filter"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: All meetup events",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'meetup' ORDER BY start_date DESC",
+    "metadata": {
+      "category": "event_type",
+      "complexity": "simple",
+      "pattern": "type_filter"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: All workshop events",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'workshop' ORDER BY start_date DESC",
+    "metadata": {
+      "category": "event_type",
+      "complexity": "simple",
+      "pattern": "type_filter"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: All webinar events",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'webinar' ORDER BY start_date DESC",
+    "metadata": {
+      "category": "event_type",
+      "complexity": "simple",
+      "pattern": "type_filter"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: All hackathon events",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'hackathon' ORDER BY start_date DESC",
+    "metadata": {
+      "category": "event_type",
+      "complexity": "simple",
+      "pattern": "type_filter"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Confirmed conferences",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE type = 'conference' AND status = 'confirmed' ORDER BY start_date DESC",
+    "metadata": {
+      "category": "event_type",
+      "complexity": "medium",
+      "pattern": "type_status_filter"
+    }
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "totalExamples": 37,
+  "categories": {
+    "postgresql_datetime": 7,
+    "postgresql_strings": 7,
+    "postgresql_aggregates": 5,
+    "postgresql_window": 5,
+    "postgresql_json": 3,
+    "postgresql_performance": 5,
+    "postgresql_antipatterns": 5
+  },
+  "complexities": {
+    "complex": 14,
+    "medium": 18,
+    "simple": 5
+  },
+  "generatedAt": "2025-09-18T18:13:59.791Z",
+  "source": "PostgreSQL Official Documentation"
+}

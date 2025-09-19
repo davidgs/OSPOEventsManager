@@ -1,0 +1,82 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Show upcoming events",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date, status, priority FROM events WHERE start_date > NOW() ORDER BY start_date ASC",
+    "metadata": {
+      "category": "temporal",
+      "complexity": "simple",
+      "pattern": "future_events"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Past events",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date, status FROM events WHERE end_date < NOW() ORDER BY start_date DESC",
+    "metadata": {
+      "category": "temporal",
+      "complexity": "simple",
+      "pattern": "past_events"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events happening this week",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date FROM events WHERE start_date >= date_trunc('week', NOW()) AND start_date < date_trunc('week', NOW()) + interval '1 week' ORDER BY start_date ASC",
+    "metadata": {
+      "category": "temporal",
+      "complexity": "complex",
+      "pattern": "current_week"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events in 2024",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date, status FROM events WHERE EXTRACT(YEAR FROM start_date) = 2024 ORDER BY start_date ASC",
+    "metadata": {
+      "category": "temporal",
+      "complexity": "medium",
+      "pattern": "year_filter"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events next month",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date FROM events WHERE start_date >= date_trunc('month', NOW()) + interval '1 month' AND start_date < date_trunc('month', NOW()) + interval '2 months' ORDER BY start_date ASC",
+    "metadata": {
+      "category": "temporal",
+      "complexity": "complex",
+      "pattern": "next_month"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events in the last 30 days",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date, status FROM events WHERE start_date >= NOW() - interval '30 days' AND start_date <= NOW() ORDER BY start_date DESC",
+    "metadata": {
+      "category": "temporal",
+      "complexity": "medium",
+      "pattern": "last_30_days"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events starting today",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date FROM events WHERE DATE(start_date) = CURRENT_DATE ORDER BY start_date ASC",
+    "metadata": {
+      "category": "temporal",
+      "complexity": "medium",
+      "pattern": "today_events"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events between January and March 2024",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nRelated tables:\n- attendees (user_id, event_id, name, email, status)\n- cfp_submissions (id, event_id, submitter_id, submitter_name, title, status)\n- assets (id, event_id, type, name, uploaded_by_name)\n\nPostgreSQL version: 15\nGeographic columns: location, country, region, continent\nIndexed columns: id, start_date, status, type, country, continent\nAlways use specific column names, avoid SELECT *",
+    "output": "SELECT id, name, location, start_date, end_date FROM events WHERE start_date >= '2024-01-01' AND start_date < '2024-04-01' ORDER BY start_date ASC",
+    "metadata": {
+      "category": "temporal",
+      "complexity": "medium",
+      "pattern": "date_range"
+    }
+  }
+]

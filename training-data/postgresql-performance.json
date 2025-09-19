@@ -1,0 +1,62 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with index-optimized continent search",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nOptimize for performance using indexes and best practices.",
+    "output": "SELECT id, name, location, start_date FROM events WHERE continent = 'Asia' ORDER BY start_date DESC LIMIT 20",
+    "metadata": {
+      "category": "postgresql_performance",
+      "complexity": "simple",
+      "pattern": "indexed_filter_with_limit",
+      "source": "PostgreSQL Performance Tuning Documentation",
+      "notes": "Uses continent index, includes LIMIT for performance"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with composite index optimization",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nOptimize for performance using indexes and best practices.",
+    "output": "SELECT id, name, location FROM events WHERE status = 'confirmed' AND type = 'conference' ORDER BY start_date DESC LIMIT 50",
+    "metadata": {
+      "category": "postgresql_performance",
+      "complexity": "medium",
+      "pattern": "composite_index_optimization",
+      "source": "PostgreSQL Performance Tuning Documentation",
+      "notes": "Optimized for (status, type, start_date) composite index"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with covering index query",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nOptimize for performance using indexes and best practices.",
+    "output": "SELECT id, name, start_date, status FROM events WHERE continent = 'Europe' AND start_date > CURRENT_DATE ORDER BY start_date ASC",
+    "metadata": {
+      "category": "postgresql_performance",
+      "complexity": "medium",
+      "pattern": "covering_index_query",
+      "source": "PostgreSQL Performance Tuning Documentation",
+      "notes": "Query can be satisfied entirely from index"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with efficient pagination",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nOptimize for performance using indexes and best practices.",
+    "output": "SELECT id, name, location, start_date FROM events WHERE start_date > '2024-01-01' ORDER BY start_date DESC, id DESC LIMIT 25 OFFSET 0",
+    "metadata": {
+      "category": "postgresql_performance",
+      "complexity": "medium",
+      "pattern": "efficient_pagination",
+      "source": "PostgreSQL Performance Tuning Documentation",
+      "notes": "Uses stable sort with id for consistent pagination"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with EXISTS instead of IN for better performance",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\nOptimize for performance using indexes and best practices.",
+    "output": "SELECT e.id, e.name, e.location FROM events e WHERE EXISTS (SELECT 1 FROM attendees a WHERE a.event_id = e.id AND a.status = 'confirmed')",
+    "metadata": {
+      "category": "postgresql_performance",
+      "complexity": "complex",
+      "pattern": "exists_optimization",
+      "source": "PostgreSQL Performance Tuning Documentation",
+      "notes": "EXISTS is often more efficient than IN with subqueries"
+    }
+  }
+]

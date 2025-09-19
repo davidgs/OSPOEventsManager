@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { PriorityBadge } from "@/components/ui/priority-badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   MessageCircle,
@@ -16,6 +18,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 interface ChatMessage {
   id: string;
@@ -40,6 +43,7 @@ export function ChatWidget({ className }: ChatWidgetProps) {
   const [isResizing, setIsResizing] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Scroll to bottom when new messages are added
   useEffect(() => {
@@ -122,12 +126,13 @@ export function ChatWidget({ className }: ChatWidgetProps) {
       const data = await response.json();
 
       if (response.ok) {
-        // Add AI response
-        addMessage("ai", data.message, data.results, data.count);
+        // Add AI response with correct data structure
+        const results = data.data?.results || [];
+        const count = data.data?.count || 0;
 
-        if (data.results && data.results.length > 0) {
-          addMessage("system", `Found ${data.count} result(s):`);
-        }
+        addMessage("ai", data.message, results, count);
+
+        // Don't add duplicate system message since the AI message already includes the count
       } else {
         addMessage("ai", `Error: ${data.message || "Something went wrong"}`);
       }
@@ -165,8 +170,26 @@ export function ChatWidget({ className }: ChatWidgetProps) {
   };
 
   const handleShowInApp = () => {
+    // Get the latest results from messages
+    const latestResults =
+      messages.filter((m) => m.results && m.results.length > 0).pop()
+        ?.results || [];
+
+    handleShowInMainApp(latestResults);
+  };
+
+  const handleShowInMainApp = (results: any[]) => {
     setShowResultsInApp(true);
     setIsOpen(false);
+
+    // Store results in sessionStorage to pass to events page
+    if (results && results.length > 0) {
+      sessionStorage.setItem("chatSearchResults", JSON.stringify(results));
+      sessionStorage.setItem("chatSearchTimestamp", Date.now().toString());
+    }
+
+    // Navigate to the events page to show results in main app
+    setLocation("/events");
 
     // Clear the chat when showing results in main app
     setTimeout(() => {
@@ -182,8 +205,7 @@ export function ChatWidget({ className }: ChatWidgetProps) {
 
     toast({
       title: "Results shown in Main App",
-      description:
-        "The search results are now displayed in the main application.",
+      description: `${results.length} search results are now displayed in the main application.`,
     });
   };
 
@@ -276,7 +298,7 @@ export function ChatWidget({ className }: ChatWidgetProps) {
 
           <CardContent className="flex flex-col h-full p-0">
             {/* Status indicator */}
-            {messages.some((m) => m.results && m.results.length > 0) && (
+            {showResultsInApp && (
               <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border-b">
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <span className="text-sm text-green-700">
@@ -346,7 +368,9 @@ export function ChatWidget({ className }: ChatWidgetProps) {
                             {result.name ? (
                               <div
                                 className="p-2 bg-background rounded border cursor-pointer hover:bg-accent transition-colors"
-                                onClick={() => navigate(`/events/${result.id}`)}
+                                onClick={() =>
+                                  setLocation(`/events/${result.id}`)
+                                }
                               >
                                 <div className="font-medium text-sm">
                                   {result.name}
@@ -360,19 +384,15 @@ export function ChatWidget({ className }: ChatWidgetProps) {
                                     : "No date"}
                                 </div>
                                 <div className="flex gap-1 mt-1">
-                                  <Badge
-                                    variant={
-                                      result.status === "confirmed"
-                                        ? "default"
-                                        : "secondary"
-                                    }
+                                  <StatusBadge
+                                    status={result.status || "unknown"}
                                     className="text-xs"
-                                  >
-                                    {result.status || "unknown"}
-                                  </Badge>
-                                  <Badge variant="outline" className="text-xs">
-                                    {result.priority || "medium"}
-                                  </Badge>
+                                    showIcon={false}
+                                  />
+                                  <PriorityBadge
+                                    priority={result.priority || "medium"}
+                                    className="text-xs"
+                                  />
                                 </div>
                               </div>
                             ) : (

@@ -1,0 +1,38 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with JSON metadata extraction",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\n- metadata (jsonb, optional event metadata)",
+    "output": "SELECT id, name, (metadata->>'speaker_count')::int as speaker_count FROM events WHERE metadata IS NOT NULL AND metadata ? 'speaker_count'",
+    "metadata": {
+      "category": "postgresql_json",
+      "complexity": "medium",
+      "pattern": "json_extraction",
+      "source": "PostgreSQL JSON Functions Documentation",
+      "notes": "Assumes metadata JSONB column exists"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with JSON array length",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\n- metadata (jsonb, optional event metadata)",
+    "output": "SELECT id, name, jsonb_array_length(metadata->'tags') as tag_count FROM events WHERE metadata IS NOT NULL AND metadata ? 'tags'",
+    "metadata": {
+      "category": "postgresql_json",
+      "complexity": "medium",
+      "pattern": "json_array_length",
+      "source": "PostgreSQL JSON Functions Documentation",
+      "notes": "Assumes metadata JSONB column with tags array"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events with JSON key existence check",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nPostgreSQL version: 15\nAlways use specific column names, avoid SELECT *\nUse proper PostgreSQL syntax and functions\n- metadata (jsonb, optional event metadata)",
+    "output": "SELECT id, name, metadata FROM events WHERE metadata ? 'registration_required' AND (metadata->>'registration_required')::boolean = true",
+    "metadata": {
+      "category": "postgresql_json",
+      "complexity": "medium",
+      "pattern": "json_key_existence",
+      "source": "PostgreSQL JSON Functions Documentation",
+      "notes": "Assumes metadata JSONB column"
+    }
+  }
+]

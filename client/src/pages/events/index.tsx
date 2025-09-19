@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { FC, useState } from "react";
+import { FC, useState, useEffect } from "react";
 import { safeToLowerCase, safeCapitalize } from "@/lib/utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -72,6 +72,43 @@ const EventsPageContent: FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
+  // Chat search results state
+  const [chatSearchResults, setChatSearchResults] = useState<Event[]>([]);
+  const [showingChatResults, setShowingChatResults] = useState(false);
+
+  // Check for chat search results on component mount
+  useEffect(() => {
+    const storedResults = sessionStorage.getItem("chatSearchResults");
+    const timestamp = sessionStorage.getItem("chatSearchTimestamp");
+
+    if (storedResults && timestamp) {
+      const resultsAge = Date.now() - parseInt(timestamp);
+      // Only show results if they're less than 5 minutes old
+      if (resultsAge < 5 * 60 * 1000) {
+        try {
+          const results = JSON.parse(storedResults);
+          setChatSearchResults(results);
+          setShowingChatResults(true);
+
+          // Clear the stored results after using them
+          sessionStorage.removeItem("chatSearchResults");
+          sessionStorage.removeItem("chatSearchTimestamp");
+
+          toast({
+            title: "Chat Search Results",
+            description: `Showing ${results.length} events from your AI search`,
+          });
+        } catch (error) {
+          console.error("Error parsing chat search results:", error);
+        }
+      } else {
+        // Clear expired results
+        sessionStorage.removeItem("chatSearchResults");
+        sessionStorage.removeItem("chatSearchTimestamp");
+      }
+    }
+  }, [toast]);
+
   // Fetch events
   const {
     data: events = [],
@@ -108,6 +145,13 @@ const EventsPageContent: FC = () => {
   >({
     queryKey: ["/api/assets"],
   });
+
+  // Combined loading state
+  const isLoading =
+    isLoadingEvents ||
+    isLoadingCfp ||
+    isLoadingAttendees ||
+    isLoadingTripReports;
 
   // Calculate counts and organize data for each event
   const cfpCounts = cfpSubmissions.reduce(
@@ -321,6 +365,28 @@ const EventsPageContent: FC = () => {
     setLocation(`/events/${event.id}`);
   };
 
+  // Compute filtered events - use chat results if available, otherwise filter all events
+  const filteredEvents = showingChatResults
+    ? chatSearchResults
+    : events.filter((event: Event) => {
+        // Apply filters
+        const matchesType =
+          eventTypeFilter === "all" || event.type === eventTypeFilter;
+        const matchesPriority =
+          priorityFilter === "all" || event.priority === priorityFilter;
+        const matchesSearch =
+          searchTerm === "" ||
+          event.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event.location?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        return matchesType && matchesPriority && matchesSearch;
+      });
+
+  const clearChatResults = () => {
+    setShowingChatResults(false);
+    setChatSearchResults([]);
+  };
+
   // Handle editing an event
   const handleEditEvent = (id: number, eventData: z.infer<any>) => {
     // Debug the event data being submitted
@@ -510,6 +576,33 @@ const EventsPageContent: FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Chat search results banner */}
+        {showingChatResults && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    Showing AI Search Results
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    {chatSearchResults.length} events from your chat search
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearChatResults}
+                className="text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700"
+              >
+                Show All Events
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Content based on view mode */}
         {isLoading ? (

@@ -1,0 +1,25 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Find events in Asia",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n\nRelated tables: attendees, cfp_submissions, assets\nPostgreSQL version: 15\nGeographic columns available: location, country, region, continent",
+    "output": "SELECT id, name, location, country, region, continent FROM events WHERE continent = 'Asia'",
+    "metadata": {
+      "category": "geographic",
+      "complexity": "simple",
+      "originalSuccess": true,
+      "timestamp": "2025-09-18T17:57:47.968Z"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events in Europe",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n\nRelated tables: attendees, cfp_submissions, assets\nPostgreSQL version: 15\nGeographic columns available: location, country, region, continent",
+    "output": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events ORDER BY start_date DESC LIMIT 10",
+    "metadata": {
+      "category": "geographic",
+      "complexity": "simple",
+      "originalSuccess": false,
+      "error": "Missing FROM clause",
+      "timestamp": "2025-09-18T17:57:47.968Z"
+    }
+  }
+]

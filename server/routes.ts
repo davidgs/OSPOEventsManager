@@ -713,9 +713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // ENHANCED READ-ONLY SQL validation function with multiple security layers
       const validateSQL = (sql: string): { valid: boolean; error?: string } => {
         // Clean up markdown formatting first (more comprehensive)
-        let cleanedSQL = sql.replace(/```sql\n?|\n?```/g, '').trim();
-        // Also remove any remaining backticks
-        cleanedSQL = cleanedSQL.replace(/^`+|`+$/g, '').trim();
+        let cleanedSQL = sql.replace(/```sql\n?|\n?```|^`|`$/g, '').trim();
         const lowerSQL = cleanedSQL.toLowerCase();
 
         // LAYER 1: Strict SELECT-only enforcement
@@ -1084,7 +1082,7 @@ For queries asking to group or show "by region/country/continent":
 
 ALWAYS include FROM clause - queries without FROM will be rejected for security.
 
-Return ONLY the SQL query, no explanations or markdown formatting.`
+Return ONLY the SQL query, no explanations, no markdown formatting, no backticks.`
               },
               {
                 role: "user",
@@ -1100,8 +1098,8 @@ Return ONLY the SQL query, no explanations or markdown formatting.`
           aiResponse = data.message.content;
           console.log("Ollama response:", aiResponse);
 
-          // Clean up the response (remove markdown formatting)
-          aiResponse = aiResponse.replace(/```sql\n?|\n?```/g, '').trim();
+          // Clean up the response (remove markdown formatting and backticks)
+          aiResponse = aiResponse.replace(/```sql\n?|\n?```|^`|`$/g, '').trim();
 
               // Enhanced validation with linting
           const validation = validateSQL(aiResponse);
@@ -1145,7 +1143,7 @@ Return ONLY the SQL query, no explanations or markdown formatting.`
       const executionStartTime = Date.now();
 
       try {
-        const query = aiResponse.replace(/```sql\n?|\n?```/g, '').trim();
+        const query = aiResponse.replace(/```sql\n?|\n?```|^`|`$/g, '').trim();
         console.log("Executing validated READ-ONLY SQL:", query);
 
         // FINAL SECURITY LAYER: Execute in read-only mode
@@ -1208,7 +1206,12 @@ Return ONLY the SQL query, no explanations or markdown formatting.`
           }) : 'No date';
           naturalResponse = `I found 1 event: **${event.name || 'Unnamed event'}** in ${event.location || 'Unknown location'} (${formattedDate})`;
         } else {
-          naturalResponse = `I found ${results.rows.length} events matching your criteria.`;
+          // Handle multiple events - return structured data for frontend rendering
+          const totalCount = results.rows.length;
+          const showingCount = Math.min(totalCount, 20);
+          const moreText = totalCount > 20 ? ` (showing first ${showingCount})` : '';
+
+          naturalResponse = `I found ${totalCount} events${moreText}:`;
         }
       } else {
         naturalResponse = "I didn't find any events matching your criteria.";
@@ -1227,8 +1230,9 @@ Return ONLY the SQL query, no explanations or markdown formatting.`
         success: true,
         message: naturalResponse,
         data: {
-          results: results.rows || [],
+          results: results.rows ? results.rows.slice(0, 20) : [], // Limit to 20 events for UI performance
           count: results.rows?.length || 0,
+          totalCount: results.rows?.length || 0,
           executionTime: Date.now() - executionStartTime
         },
         meta: {

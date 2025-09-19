@@ -1,0 +1,83 @@
+[
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: How many events are there?",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n\nRelated tables: attendees, cfp_submissions, assets\nPostgreSQL version: 15\nGeographic columns available: location, country, region, continent",
+    "output": "SELECT COUNT(*) FROM events",
+    "metadata": {
+      "category": "count",
+      "complexity": "simple",
+      "originalSuccess": true,
+      "timestamp": "2025-09-18T17:57:47.967Z"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Show all events",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n\nRelated tables: attendees, cfp_submissions, assets\nPostgreSQL version: 15\nGeographic columns available: location, country, region, continent",
+    "output": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events ORDER BY start_date DESC LIMIT 10",
+    "metadata": {
+      "category": "general",
+      "complexity": "simple",
+      "originalSuccess": false,
+      "error": "Missing FROM clause",
+      "timestamp": "2025-09-18T17:57:47.968Z"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Find events in Asia",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n\nRelated tables: attendees, cfp_submissions, assets\nPostgreSQL version: 15\nGeographic columns available: location, country, region, continent",
+    "output": "SELECT id, name, location, country, region, continent FROM events WHERE continent = 'Asia'",
+    "metadata": {
+      "category": "geographic",
+      "complexity": "simple",
+      "originalSuccess": true,
+      "timestamp": "2025-09-18T17:57:47.968Z"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events in Europe",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n\nRelated tables: attendees, cfp_submissions, assets\nPostgreSQL version: 15\nGeographic columns available: location, country, region, continent",
+    "output": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events ORDER BY start_date DESC LIMIT 10",
+    "metadata": {
+      "category": "geographic",
+      "complexity": "simple",
+      "originalSuccess": false,
+      "error": "Missing FROM clause",
+      "timestamp": "2025-09-18T17:57:47.968Z"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: All conferences",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n\nRelated tables: attendees, cfp_submissions, assets\nPostgreSQL version: 15\nGeographic columns available: location, country, region, continent",
+    "output": "SELECT * FROM events WHERE type = 'conference'",
+    "metadata": {
+      "category": "event_type",
+      "complexity": "simple",
+      "originalSuccess": false,
+      "error": "Syntax error near backtick",
+      "timestamp": "2025-09-18T17:57:47.968Z"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Upcoming events",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n\nRelated tables: attendees, cfp_submissions, assets\nPostgreSQL version: 15\nGeographic columns available: location, country, region, continent",
+    "output": "SELECT * FROM events WHERE start_date > NOW()",
+    "metadata": {
+      "category": "temporal",
+      "complexity": "simple",
+      "originalSuccess": true,
+      "timestamp": "2025-09-18T17:57:47.968Z"
+    }
+  },
+  {
+    "instruction": "Generate a PostgreSQL SELECT query for: Events this year",
+    "input": "Database Schema:\nevents table:\n- id (integer, primary key)\n- name (text, event name)\n- location (text, event location/venue)\n- country (text, country name)\n- region (text, geographic region)\n- continent (text, continent name)\n- start_date (timestamp, event start)\n- end_date (timestamp, event end)\n- status (text: confirmed, pending, cancelled)\n- priority (text: low, medium, high, critical)\n- type (text: conference, meetup, workshop, webinar, hackathon)\n\nRelated tables: attendees, cfp_submissions, assets\nPostgreSQL version: 15\nGeographic columns available: location, country, region, continent",
+    "output": "SELECT id, name, location, start_date, end_date, status, priority, type FROM events ORDER BY start_date DESC LIMIT 10",
+    "metadata": {
+      "category": "general",
+      "complexity": "simple",
+      "originalSuccess": false,
+      "error": "PostgreSQL uses EXTRACT, not YEAR()",
+      "timestamp": "2025-09-18T17:57:47.968Z"
+    }
+  }
+]

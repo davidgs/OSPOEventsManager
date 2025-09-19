@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gpu-test-job
+  namespace: dev-rh-events-org
+spec:
+  template:
+    metadata:
+      labels:
+        app: gpu-test
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: gpu-test
+        image: nvcr.io/nvidia/cuda:12.1-base-ubuntu20.04
+        command: ["nvidia-smi"]
+        resources:
+          requests:
+            nvidia.com/gpu: 1
+          limits:
+            nvidia.com/gpu: 1
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      - key: gpu
+        operator: Equal
+        value: required
+        effect: NoSchedule
