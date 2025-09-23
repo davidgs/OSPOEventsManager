@@ -30,22 +30,33 @@ def install_dependencies():
         "transformers==4.40.0",
         "peft==0.10.0",
         "accelerate==0.29.0",
-        "bitsandbytes==0.43.0"
+        "bitsandbytes==0.43.0",
+        "huggingface_hub>=0.19.0"
     ]
 
     for package in packages:
         logger.info(f"Installing {package}...")
         try:
+            # First try with dependencies
             subprocess.check_call([
                 sys.executable, "-m", "pip", "install", package,
-                "--no-cache-dir", "--target", install_dir, "--break-system-packages",
-                "--no-deps"  # Skip dependency resolution to avoid conflicts
+                "--no-cache-dir", "--target", install_dir, "--break-system-packages"
             ])
             logger.info(f"✅ {package} installed successfully")
         except subprocess.CalledProcessError as e:
-            logger.error(f"❌ Failed to install {package}: {e}")
-            # Don't exit immediately, try to install other packages
-            logger.info("Continuing with other packages...")
+            logger.warning(f"⚠️ Failed to install {package} with deps: {e}")
+            # Try without dependencies as fallback
+            try:
+                subprocess.check_call([
+                    sys.executable, "-m", "pip", "install", package,
+                    "--no-cache-dir", "--target", install_dir, "--break-system-packages",
+                    "--no-deps"
+                ])
+                logger.info(f"✅ {package} installed successfully (no deps)")
+            except subprocess.CalledProcessError as e2:
+                logger.error(f"❌ Failed to install {package} even without deps: {e2}")
+                # Don't exit immediately, try to install other packages
+                logger.info("Continuing with other packages...")
 
     # Now install any missing dependencies that we actually need
     essential_deps = [
@@ -53,23 +64,53 @@ def install_dependencies():
         "pyarrow>=12.0.0",
         "dill>=0.3.0",
         "multiprocess",
-        "xxhash"
+        "xxhash",
+        "tokenizers>=0.15.0",  # Required for transformers
+        "safetensors>=0.3.0",  # Required for model loading
+        "numpy>=1.21.0",  # Required for datasets
+        "packaging>=20.0"  # Required for version checking
     ]
 
     for dep in essential_deps:
         logger.info(f"Installing essential dependency: {dep}...")
         try:
+            # First try with dependencies
             subprocess.check_call([
                 sys.executable, "-m", "pip", "install", dep,
-                "--no-cache-dir", "--target", install_dir, "--break-system-packages",
-                "--no-deps"
+                "--no-cache-dir", "--target", install_dir, "--break-system-packages"
             ])
             logger.info(f"✅ {dep} installed successfully")
         except subprocess.CalledProcessError as e:
-            logger.warning(f"⚠️ Failed to install {dep}: {e}")
-            # Continue anyway
+            logger.warning(f"⚠️ Failed to install {dep} with deps: {e}")
+            # Try without dependencies as fallback
+            try:
+                subprocess.check_call([
+                    sys.executable, "-m", "pip", "install", dep,
+                    "--no-cache-dir", "--target", install_dir, "--break-system-packages",
+                    "--no-deps"
+                ])
+                logger.info(f"✅ {dep} installed successfully (no deps)")
+            except subprocess.CalledProcessError as e2:
+                logger.warning(f"⚠️ Failed to install {dep} even without deps: {e2}")
+                # Continue anyway
 
     logger.info("✅ All dependencies installed successfully!")
+
+    # Verify Python path setup
+    logger.info("🔍 Verifying Python path setup...")
+    if install_dir not in sys.path:
+        sys.path.insert(0, install_dir)
+        logger.info(f"✅ Added {install_dir} to sys.path")
+
+    # Verify PYTHONPATH environment variable
+    pythonpath = os.environ.get('PYTHONPATH', '')
+    if install_dir not in pythonpath:
+        os.environ['PYTHONPATH'] = f"{install_dir}:{pythonpath}"
+        logger.info(f"✅ Updated PYTHONPATH: {os.environ['PYTHONPATH']}")
+
+    # Test import path
+    logger.info(f"🔍 Python import paths: {sys.path[:3]}...")
+    logger.info(f"🔍 PYTHONPATH: {os.environ.get('PYTHONPATH', 'Not set')}")
 
 # Install dependencies first
 install_dependencies()
@@ -98,6 +139,15 @@ try:
         else:
             logger.error("❌ datasets __init__.py not found")
             raise e
+
+    # Try importing huggingface_hub
+    try:
+        from huggingface_hub import HfApi
+        logger.info("✅ huggingface_hub imported successfully!")
+    except ImportError as e:
+        logger.error(f"❌ huggingface_hub import error: {e}")
+        # This is not critical for training, but good to have
+        logger.warning("⚠️ huggingface_hub not available, continuing without it")
 
     from transformers import (
         AutoTokenizer, AutoModelForCausalLM,
