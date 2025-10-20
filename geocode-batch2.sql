@@ -137,3 +137,4 @@ SELECT
 FROM events;
 
 COMMIT;
+

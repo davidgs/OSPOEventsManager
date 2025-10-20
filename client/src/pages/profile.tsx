@@ -61,17 +61,23 @@ export default function ProfilePage() {
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Fetch user profile data from server
-  const { data: serverUserData, isLoading } = useQuery({
+  const { data: serverUserData, isLoading, error: queryError } = useQuery({
     queryKey: [`/api/users/${user?.id}`],
     queryFn: async () => {
       if (!user?.id) return null;
       try {
+        console.log('[PROFILE] Fetching user data for ID:', user.id);
         const res = await apiRequest("GET", `/api/users/${user.id}`);
         if (res.ok) {
-          return res.json();
+          const data = await res.json();
+          console.log('[PROFILE] Server user data received:', data);
+          return data;
+        } else {
+          console.error('[PROFILE] API request failed:', res.status, res.statusText);
+          return null;
         }
-        return null;
       } catch (error) {
+        console.error('[PROFILE] Error fetching user data:', error);
         return null;
       }
     },
@@ -94,6 +100,13 @@ export default function ProfilePage() {
   useEffect(() => {
     if (authenticated && user && !isLoading) {
       const profileData = serverUserData || {};
+      console.log('[PROFILE] Loading user data:', {
+        user,
+        serverUserData,
+        profileData,
+        isLoading,
+        queryError
+      });
       form.reset({
         name: user.name || user.firstName || user.username || "",
         email: user.email || "",
@@ -102,7 +115,7 @@ export default function ProfilePage() {
         role: profileData.role || "",
       });
     }
-  }, [user, authenticated, serverUserData, isLoading, form]);
+  }, [user, authenticated, serverUserData, isLoading, form, queryError]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProfileFormData) => {
@@ -431,6 +444,11 @@ export default function ProfilePage() {
                   <p className="text-sm whitespace-pre-wrap">
                     {profileData.bio || "No bio provided"}
                   </p>
+                  {!serverUserData && (
+                    <p className="text-xs text-yellow-600 mt-1">
+                      ⚠️ Profile data not loaded from server
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -464,10 +482,15 @@ export default function ProfilePage() {
                   MEMBER SINCE
                 </label>
                 <p className="text-sm">
-                  {profileData.createdAt
-                    ? new Date(profileData.createdAt).toLocaleDateString()
+                  {profileData.created_at
+                    ? new Date(profileData.created_at).toLocaleDateString()
                     : "Unknown"}
                 </p>
+                {!serverUserData && (
+                  <p className="text-xs text-yellow-600 mt-1">
+                    ⚠️ Server data not available
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>

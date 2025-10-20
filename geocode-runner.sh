@@ -62,3 +62,4 @@ fi
 echo ""
 echo "🎉 Geocoding process completed!"
 echo "Check the output above for success/failure statistics."
+

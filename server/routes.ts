@@ -533,12 +533,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     defCharset: 'utf8',
     defParamCharset: 'utf8'
   });
+
+  // MinIO configuration
+  const useMinIO = process.env.MINIO_ENDPOINT && process.env.MINIO_ACCESS_KEY;
   const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'public', 'uploads');
 
-  // Ensure uploads directory exists and is secure
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true, mode: 0o755 });
+  // Initialize MinIO client if configured
+  let minioClient: any = null;
+  if (useMinIO) {
+    try {
+      const { Client } = await import('minio');
+      minioClient = new Client({
+        endPoint: process.env.MINIO_ENDPOINT!.replace(/^https?:\/\//, '').split(':')[0],
+        port: parseInt(process.env.MINIO_ENDPOINT!.split(':')[2] || '9000'),
+        useSSL: process.env.MINIO_ENDPOINT!.startsWith('https'),
+        accessKey: process.env.MINIO_ACCESS_KEY!,
+        secretKey: process.env.MINIO_SECRET_KEY!,
+      });
+      
+      // Ensure bucket exists
+      const bucketName = process.env.MINIO_BUCKET_NAME || 'ospo-uploads';
+      const bucketExists = await minioClient.bucketExists(bucketName);
+      if (!bucketExists) {
+        await minioClient.makeBucket(bucketName);
+        console.log(`Created MinIO bucket: ${bucketName}`);
+      }
+      console.log(`MinIO client initialized for bucket: ${bucketName}`);
+    } catch (error) {
+      console.error('Failed to initialize MinIO client:', error);
+      minioClient = null;
+    }
   }
+
+  // Ensure uploads directory exists as fallback
+  if (!useMinIO || !minioClient) {
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true, mode: 0o755 });
+    }
+  }
+
+  // Serve uploaded files - either from MinIO or local filesystem
+  app.get('/uploads/:filename', async (req: Request, res: Response) => {
+    const filename = req.params.filename;
+    
+    if (minioClient) {
+      try {
+        const bucketName = process.env.MINIO_BUCKET_NAME || 'ospo-uploads';
+        const stream = await minioClient.getObject(bucketName, filename);
+        
+        // Set appropriate headers
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day cache
+        
+        // Pipe the stream to response
+        stream.pipe(res);
+      } catch (error) {
+        console.error('Error serving file from MinIO:', error);
+        res.status(404).json({ message: 'File not found' });
+      }
+    } else {
+      // This will be handled by the static middleware in index.ts
+      res.status(404).json({ message: 'File not found - MinIO not configured' });
+    }
+  });
 
   // Version information endpoint (publicly accessible)
   app.get("/api/version", async (_req: Request, res: Response) => {
@@ -2018,6 +2074,35 @@ Return ONLY the SQL query, no explanations, no markdown formatting, no backticks
     }
   });
 
+  // Debug endpoint to check user data
+  app.get("/api/debug/user-info", async (req: Request, res: Response) => {
+    try {
+      const authUser = req.user as any;
+      console.log(`[DEBUG] Auth user info:`, authUser);
+      
+      let dbUser = null;
+      if (authUser?.id) {
+        try {
+          dbUser = await storage.getUserByKeycloakId(authUser.id);
+          console.log(`[DEBUG] DB user found:`, dbUser);
+        } catch (error) {
+          console.log(`[DEBUG] Error fetching DB user:`, error);
+        }
+      }
+      
+      res.json({
+        authenticated: !!authUser,
+        keycloakUser: authUser || null,
+        databaseUser: dbUser || null,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error in debug endpoint:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: "Debug endpoint failed", error: errorMessage });
+    }
+  });
+
   app.get("/api/users/:id", async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
@@ -2038,7 +2123,36 @@ Return ONLY the SQL query, no explanations, no markdown formatting, no backticks
 
       if (!user) {
         console.log(`[GET /api/users/:id] User not found for ID: ${id}`);
-        return res.status(404).json({ message: "User not found" });
+        
+        // Enhanced debugging: If user not found, try to create from Keycloak info
+        const authUser = req.user as any;
+        if (authUser && authUser.id === id) {
+          console.log(`[GET /api/users/:id] User not in DB but authenticated. Creating user record...`);
+          try {
+            const newUser = await storage.createUser({
+              keycloak_id: authUser.id,
+              username: authUser.username || authUser.id,
+              name: authUser.name || null,
+              email: authUser.email || null,
+            });
+            console.log(`[GET /api/users/:id] Created new user:`, newUser);
+            
+            // Return the newly created user
+            const { password, ...userWithoutPassword } = newUser as any;
+            return res.json(userWithoutPassword);
+          } catch (createError) {
+            console.error(`[GET /api/users/:id] Failed to create user:`, createError instanceof Error ? createError.message : 'Unknown error');
+          }
+        }
+        
+        return res.status(404).json({ 
+          message: "User not found",
+          debug: {
+            requestedId: id,
+            isNumeric: /^[0-9]+$/.test(id),
+            authUser: authUser ? { id: authUser.id, username: authUser.username } : null
+          }
+        });
       }
 
       // Don't return the password if it exists
@@ -2391,16 +2505,40 @@ Return ONLY the SQL query, no explanations, no markdown formatting, no backticks
 
       // SECURITY: Generate secure filename
       const fileName = generateSecureFilename(file.name, uploadedBy);
-      const filePath = path.join(uploadsDir, fileName);
-      const publicPath = `/uploads/${fileName}`;
+      let publicPath: string;
 
-      // SECURITY: Validate upload path
-      if (!validateUploadPath(filePath, uploadsDir)) {
-        return res.status(400).json({ message: "Invalid file path" });
+      if (minioClient) {
+        // Upload to MinIO
+        const bucketName = process.env.MINIO_BUCKET_NAME || 'ospo-uploads';
+        
+        try {
+          // Upload file to MinIO
+          await minioClient.putObject(bucketName, fileName, file.data, file.size, {
+            'Content-Type': file.mimetype,
+            'Content-Length': file.size
+          });
+          
+          // Generate public URL through our application
+          publicPath = `/uploads/${fileName}`;
+          
+          console.log(`File uploaded to MinIO: ${publicPath}`);
+        } catch (minioError) {
+          console.error('MinIO upload failed:', minioError);
+          return res.status(500).json({ message: "Failed to upload file to storage" });
+        }
+      } else {
+        // Fallback to local filesystem
+        const filePath = path.join(uploadsDir, fileName);
+        publicPath = `/uploads/${fileName}`;
+
+        // SECURITY: Validate upload path
+        if (!validateUploadPath(filePath, uploadsDir)) {
+          return res.status(400).json({ message: "Invalid file path" });
+        }
+
+        // Move the file to uploads directory
+        await file.mv(filePath);
       }
-
-      // Move the file to uploads directory
-      await file.mv(filePath);
 
       // Create asset record
       const assetData = {

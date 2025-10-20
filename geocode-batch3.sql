@@ -187,3 +187,4 @@ GROUP BY location
 ORDER BY location;
 
 COMMIT;
+

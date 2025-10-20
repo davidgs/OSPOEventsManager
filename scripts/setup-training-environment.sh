@@ -1010,3 +1010,4 @@ main "$@"
 EOF
 
 chmod +x scripts/setup-training-environment.sh
+
