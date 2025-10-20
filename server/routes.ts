@@ -835,7 +835,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         while ((match = functionPattern.exec(lowerSQL)) !== null) {
           const functionName = match[1];
           if (!readOnlyFunctions.includes(functionName) &&
-              !['select', 'from', 'where', 'group', 'order', 'having', 'limit', 'offset', 'distinct', 'as', 'and', 'or', 'not', 'in', 'like', 'ilike', 'between', 'exists', 'any', 'all', 'join', 'inner', 'left', 'right', 'full', 'outer', 'on', 'union'].includes(functionName)) {
+            !['select', 'from', 'where', 'group', 'order', 'having', 'limit', 'offset', 'distinct', 'as', 'and', 'or', 'not', 'in', 'like', 'ilike', 'between', 'exists', 'any', 'all', 'join', 'inner', 'left', 'right', 'full', 'outer', 'on', 'union'].includes(functionName)) {
             console.warn(`[SECURITY] Potentially unsafe function detected: ${functionName}`);
           }
         }
@@ -1157,7 +1157,7 @@ Return ONLY the SQL query, no explanations, no markdown formatting, no backticks
           // Clean up the response (remove markdown formatting and backticks)
           aiResponse = aiResponse.replace(/```sql\n?|\n?```|^`|`$/g, '').trim();
 
-              // Enhanced validation with linting
+          // Enhanced validation with linting
           const validation = validateSQL(aiResponse);
           if (!validation.valid) {
             console.log(`AI generated unsafe SQL: ${validation.error}`);
@@ -1243,9 +1243,9 @@ Return ONLY the SQL query, no explanations, no markdown formatting, no backticks
       if (results.rows && results.rows.length > 0) {
         // Check if this is a COUNT query by looking at the SQL or result structure
         const isCountQuery = aiResponse.toLowerCase().includes('count(') ||
-                           (results.rows.length === 1 &&
-                            Object.keys(results.rows[0]).some(key =>
-                              key.toLowerCase().includes('count') || key.toLowerCase().includes('total')));
+          (results.rows.length === 1 &&
+            Object.keys(results.rows[0]).some(key =>
+              key.toLowerCase().includes('count') || key.toLowerCase().includes('total')));
 
         if (isCountQuery && results.rows.length === 1) {
           // Handle COUNT queries

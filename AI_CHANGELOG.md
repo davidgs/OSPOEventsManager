@@ -4,6 +4,51 @@ This file tracks all improvements, fixes, and enhancements made to the AI-powere
 
 ---
 
+## 2025-09-17 - Training Dependency Fixes
+
+### 🔧 **Fine-Tuning Dependency Resolution**
+**Status**: ✅ Completed
+**Impact**: High - Enables model fine-tuning for better SQL generation
+
+#### Problem Identified
+- **Import errors**: `No module named 'datasets'` and `No module named 'huggingface_hub'`
+- **Incomplete dependency installation**: Using `--no-deps` was skipping critical dependencies
+- **Python path issues**: Packages installed but not properly accessible
+
+#### Dependencies Fixed
+- **Added missing packages**:
+  - `huggingface_hub>=0.19.0`
+  - `tokenizers>=0.15.0`
+  - `safetensors>=0.3.0`
+  - `numpy>=1.21.0`
+  - `packaging>=20.0`
+
+#### Installation Strategy Improvements
+- **Dual installation approach**: Try with dependencies first, fallback to `--no-deps`
+- **Enhanced error handling**: Continue with other packages if one fails
+- **Python path verification**: Ensure `/tmp/python_packages` is in `sys.path` and `PYTHONPATH`
+
+#### Files Created/Modified
+- **Modified**: `train_cluster_with_deps.py` - Fixed dependency installation and import handling
+- **Created**: `training-job-fixed-deps.yaml` - Updated training job with better resources
+- **Created**: `update-training-script.sh` - Script to update ConfigMap
+- **Created**: `diagnose-training-deps.sh` - Diagnostic script for troubleshooting
+- **Created**: `TRAINING_FIXES.md` - Complete documentation
+
+#### Resource Allocation Improvements
+- **Memory**: Increased to 6Gi request, 12Gi limit (from 4Gi/8Gi)
+- **CPU**: Increased to 2 request, 4 limit (from 1/2)
+- **GPU**: Explicit `nvidia.com/gpu` resource request
+- **Additional volume**: Dedicated `/tmp/python_packages` mount
+
+#### Expected Outcomes
+- ✅ All required dependencies install successfully
+- ✅ Python imports work without errors
+- ✅ Training proceeds to actual model fine-tuning
+- ✅ Better error messages for troubleshooting
+
+---
+
 ## 2025-09-17 - Major AI System Overhaul
 
 ### 🌍 **Geographic Data Implementation**

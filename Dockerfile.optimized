@@ -57,11 +57,11 @@ RUN mkdir -p server/public/uploads public/uploads
 
 # Add non-root user
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 -G nodejs
+  adduser -S nodejs -u 1001 -G nodejs
 
 # Set permissions
 RUN chown -R nodejs:nodejs /app && \
-    chmod -R 755 /app
+  chmod -R 755 /app
 
 # Install curl for health checks
 RUN apk add --no-cache curl
