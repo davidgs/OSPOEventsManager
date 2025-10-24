@@ -34,6 +34,12 @@ spec:
               value: "${VITE_KEYCLOAK_URL}"
             - name: VITE_KEYCLOAK_URL
               value: "${VITE_KEYCLOAK_URL}"
+            - name: KEYCLOAK_SERVER_URL
+              value: "${KEYCLOAK_URL}/auth"
+            - name: KEYCLOAK_ADMIN
+              value: "${KEYCLOAK_ADMIN}"
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: "${KEYCLOAK_ADMIN_PASSWORD}"
             - name: MINIO_ENDPOINT
               value: "minio:9000"
             - name: MINIO_ACCESS_KEY
@@ -94,6 +100,8 @@ spec:
               value: "${PROXY_REDIRECT_PATTERN}"
             - name: PROXY_TIMEOUT_MS
               value: "${PROXY_TIMEOUT_MS}"
+            - name: UPLOADS_DIR
+              value: "${UPLOADS_DIR}"
           volumeMounts:
             - name: keycloak-config
               mountPath: /app/keycloak.json

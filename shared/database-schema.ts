@@ -32,12 +32,13 @@ export const events = pgTable("events", {
   location: text("location").notNull(),
   priority: text("priority").notNull(),
   type: text("type").notNull(),
-  goal: text("goal").array().notNull(),
+  goal: text("goal").array(),
   cfp_deadline: date("cfp_deadline"),
   cfp_link: text("cfp_link"),
   status: text("status").notNull().default("planning"),
   notes: text("notes"),
   created_by_id: integer("created_by_id"),
+  updated_by_id: integer("updated_by_id"),
   created_at: timestamp("created_at").notNull().defaultNow(),
   updated_at: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -96,7 +97,22 @@ export const assets = pgTable("assets", {
   uploaded_by: integer("uploaded_by").notNull(),
   event_id: integer("event_id"),
   cfp_submission_id: integer("cfp_submission_id"),
+  created_by_id: integer("created_by_id"),
+  updated_by_id: integer("updated_by_id"),
   uploaded_at: timestamp("uploaded_at").notNull().defaultNow(),
+  created_at: timestamp("created_at").notNull().defaultNow(),
+  updated_at: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Edit history table
+export const editHistory = pgTable("edit_history", {
+  id: serial("id").primaryKey(),
+  entity_type: text("entity_type").notNull(),
+  entity_id: integer("entity_id").notNull(),
+  edited_by_id: integer("edited_by_id").notNull(),
+  edited_at: timestamp("edited_at").notNull().defaultNow(),
+  change_description: text("change_description"),
+  created_at: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Stakeholders table

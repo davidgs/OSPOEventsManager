@@ -77,4 +77,15 @@ export class UserService {
 
     return user || undefined;
   }
+
+  /**
+   * Gets all users from the database
+   * @returns Array of all user records
+   */
+  static async getAllUsers(): Promise<User[]> {
+    if (!db) {
+      throw new Error("Database connection is not available.");
+    }
+    return await db.select().from(users);
+  }
 }
