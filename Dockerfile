@@ -1,5 +1,5 @@
 # Build stage for the client
-FROM node:20-alpine AS client-builder
+FROM docker.io/library/node:20-alpine AS client-builder
 
 WORKDIR /app
 
@@ -22,7 +22,7 @@ RUN if [ ! -d "dist/public" ]; then \
   fi
 
 # Production stage
-FROM node:20-alpine
+FROM docker.io/library/node:20-alpine
 
 WORKDIR /app
 

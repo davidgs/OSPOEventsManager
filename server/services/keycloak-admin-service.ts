@@ -7,6 +7,9 @@ interface KeycloakUser {
   emailVerified: boolean;
   attributes?: Record<string, string[]>;
   requiredActions?: string[];
+  id?: string;
+  createdTimestamp?: number;
+  lastLogin?: number;
 }
 
 interface KeycloakAdminConfig {
@@ -228,6 +231,49 @@ export class KeycloakAdminService {
     } catch (error) {
       console.error('Error checking if user exists:', error);
       return false; // Assume user doesn't exist if we can't check
+    }
+  }
+
+  /**
+   * Get all users from Keycloak
+   */
+  async getAllUsers(): Promise<KeycloakUser[]> {
+    try {
+      const token = await this.getAdminToken();
+      const usersUrl = `${this.config.serverUrl}/admin/realms/${this.config.realm}/users`;
+
+      const response = await fetch(usersUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch users: ${response.status} - ${errorText}`);
+      }
+
+      const users = await response.json() as any[];
+
+      // Transform the response to match our KeycloakUser interface
+      return users.map(user => ({
+        username: user.username || '',
+        email: user.email || '',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        enabled: user.enabled || false,
+        emailVerified: user.emailVerified || false,
+        attributes: user.attributes || {},
+        requiredActions: user.requiredActions || [],
+        id: user.id,
+        createdTimestamp: user.createdTimestamp,
+        lastLogin: user.lastLogin
+      }));
+    } catch (error) {
+      console.error('Error fetching users from Keycloak:', error);
+      throw error;
     }
   }
 

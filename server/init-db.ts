@@ -53,7 +53,7 @@ export async function initializeDatabase(): Promise<boolean> {
       )
     `);
 
-        // Add missing columns to users table if they don't exist and fix constraints
+    // Add missing columns to users table if they don't exist and fix constraints
     try {
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT`);
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS job_title TEXT`);
@@ -89,6 +89,7 @@ export async function initializeDatabase(): Promise<boolean> {
         cfp_deadline TEXT,
         notes TEXT,
         created_by_id INTEGER,
+        updated_by_id INTEGER,
         status TEXT NOT NULL DEFAULT 'planning',
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -318,10 +319,28 @@ export async function initializeDatabase(): Promise<boolean> {
         event_id INTEGER,
         cfp_submission_id INTEGER,
         description TEXT,
-        uploaded_at TIMESTAMP NOT NULL DEFAULT NOW()
+        created_by_id INTEGER,
+        updated_by_id INTEGER,
+        uploaded_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
     console.log("✅ Assets table initialized");
+
+    // Create edit history table with IF NOT EXISTS to preserve existing data
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS edit_history (
+        id SERIAL PRIMARY KEY,
+        entity_type TEXT NOT NULL,
+        entity_id INTEGER NOT NULL,
+        edited_by_id INTEGER NOT NULL,
+        edited_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        change_description TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log("✅ Edit history table initialized");
 
     // Create stakeholders table with IF NOT EXISTS to preserve existing data
     await pool.query(`

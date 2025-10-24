@@ -48,6 +48,9 @@ spec:
                 - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
             initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
           readinessProbe:
             exec:
               command:
@@ -56,6 +59,9 @@ spec:
                 - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
             initialDelaySeconds: 5
             periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
       volumes:
         - name: postgres-storage
           persistentVolumeClaim:

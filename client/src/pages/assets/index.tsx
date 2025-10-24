@@ -64,7 +64,7 @@ import { type Asset } from "@shared/schema";
 
 export default function AssetsPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, initialized, authenticated } = useAuth();
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -78,12 +78,10 @@ export default function AssetsPage() {
     isError,
   } = useQuery({
     queryKey: ["/api/assets"],
-  });
+  }) as { data: any[] | undefined; isLoading: boolean; isError: boolean };
 
-  // Fetch all users to display asset owner names
-  const { data: users } = useQuery({
-    queryKey: ["/api/users"],
-  });
+  // Note: We don't need to fetch users separately because the backend
+  // already provides uploadedByName in the assets response
 
   // Delete asset mutation
   const deleteAsset = useMutation({
@@ -184,16 +182,10 @@ export default function AssetsPage() {
     return <File className="h-4 w-4 text-muted-foreground" />;
   };
 
-  // Helper function to get asset owner name by ID
-  const getAssetOwnerName = (userId: number) => {
-    if (!users) {
-      // Fallback when users data is not available
-      if (userId === 4) return "David Simmons"; // Known user from logs
-      if (userId === 1) return "Alex Johnson"; // Known user from logs
-      return `User ${userId}`;
-    }
-    const user = users.find((u: any) => u.id === userId);
-    return user ? user.name : `User ${userId}`;
+  // Helper function to get asset owner name
+  const getAssetOwnerName = (asset: any) => {
+    // The backend already provides uploadedByName in the asset data
+    return asset.uploadedByName || "Unknown User";
   };
 
   // Render loading state
@@ -350,7 +342,7 @@ export default function AssetsPage() {
               <div className="flex items-center mt-3 text-xs">
                 <User className="h-4 w-4 mr-1.5 text-muted-foreground" />
                 <span className="text-muted-foreground">
-                  Owner: {getAssetOwnerName(asset.uploaded_by)}
+                  Owner: {getAssetOwnerName(asset)}
                 </span>
               </div>
             </CardContent>

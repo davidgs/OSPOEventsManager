@@ -38,9 +38,10 @@ show_usage() {
     echo "  --dev          Deploy to development environment"
     echo "  --prod         Deploy to production environment"
     echo "  --help         Show this help message"
-    echo "  --app-only     Deploy only the application"
-    echo "  --keycloak-only Deploy only the keycloak pod"
-    echo "  --ai-only      Deploy only the AI (Ollama) service"
+    echo "  --app          Deploy the application"
+    echo "  --postgres     Deploy the postgres pod"
+    echo "  --keycloak Deploy the keycloak pod"
+    # echo "  --ai-only      Deploy only the AI (Ollama) service"
     echo "  --delete       Delete all pods while preserving data (WARNING: destructive)"
     echo "  --backup       Create a complete backup of all data (users, events, uploads)"
     echo "  --restore -f   Restore data from backup directory (use with -f /path/to/backup)"
@@ -53,17 +54,21 @@ show_usage() {
     echo "Example:"
     echo "  $0 --dev"
     echo "  $0 --prod"
+    echo "  $0 --dev --app --postgres"
+    echo "  $0 --dev --app --postgres --keycloak"
+    echo "  $0 --prod --app --postgres --keycloak"
 }
 
 # Parse command line arguments
-APP_ONLY=""
-KEYCLOAK_ONLY=""
-AI_ONLY=""
-DELETE_ONLY=""
-BACKUP_ONLY=""
-RESTORE_ONLY=""
+APP=""
+KEYCLOAK=""
+POSTGRES=""
+# AI=""
+DELETE=""
+BACKUP=""
+RESTORE=""
 RESTORE_PATH=""
-DESTROY_ONLY=""
+DESTROY=""
 ENVIRONMENT=""
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -79,32 +84,36 @@ while [[ $# -gt 0 ]]; do
             show_usage
             exit 0
             ;;
-        --app-only)
-            APP_ONLY="true"
+        --app)
+            APP="true"
             shift
             ;;
-        --keycloak-only)
-            KEYCLOAK_ONLY="true"
+        --keycloak)
+            KEYCLOAK="true"
             shift
             ;;
-        --ai-only)
-            AI_ONLY="true"
+        --postgres)
+            POSTGRES="true"
             shift
             ;;
+        # --ai-only)
+        #     AI="true"
+        #     shift
+        #     ;;
         --delete)
-            DELETE_ONLY="true"
+            DELETE="true"
             shift
             ;;
         --backup)
-            BACKUP_ONLY="true"
+            BACKUP="true"
             shift
             ;;
         --restore)
-            RESTORE_ONLY="true"
+            RESTORE="true"
             shift
             ;;
         -f)
-            if [[ "$RESTORE_ONLY" == "true" ]]; then
+            if [[ "$RESTORE" == "true" ]]; then
                 RESTORE_PATH="$2"
                 shift 2
             else
@@ -113,7 +122,7 @@ while [[ $# -gt 0 ]]; do
             fi
             ;;
         --destroy)
-            DESTROY_ONLY="true"
+            DESTROY="true"
             shift
             ;;
         *)
@@ -125,14 +134,14 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate arguments (skip for operations that don't need environment)
-if [[ "$DELETE_ONLY" != "true" && "$BACKUP_ONLY" != "true" && "$RESTORE_ONLY" != "true" && "$DESTROY_ONLY" != "true" && -z "$ENVIRONMENT" ]]; then
+if [[ "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" && -z "$ENVIRONMENT" ]]; then
     print_error "Environment not specified. Use --dev or --prod"
     show_usage
     exit 1
 fi
 
 # Validate restore path if restore is specified
-if [[ "$RESTORE_ONLY" == "true" && -z "$RESTORE_PATH" ]]; then
+if [[ "$RESTORE" == "true" && -z "$RESTORE_PATH" ]]; then
     print_error "Restore path must be specified with -f option"
     show_usage
     exit 1
@@ -155,16 +164,19 @@ set +a  # turn off automatic export
 
 # Set environment-specific variables
 if [[ "$ENVIRONMENT" == "dev" ]]; then
-    NAMESPACE="$DEV_NAMESPACE"
-    APP_URL="$DEV_APP_URL"
-    KEYCLOAK_URL="$DEV_KEYCLOAK_URL"
-    VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_DEV"
+    export NAMESPACE="$DEV_NAMESPACE"
+    export APP_URL="$DEV_APP_URL"
+    export KEYCLOAK_URL="$DEV_KEYCLOAK_URL"
+    export VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_DEV"
 else
-    NAMESPACE="$PROD_NAMESPACE"
-    APP_URL="$PROD_APP_URL"
-    KEYCLOAK_URL="$PROD_KEYCLOAK_URL"
-    VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_PROD"
+    export NAMESPACE="$PROD_NAMESPACE"
+    export APP_URL="$PROD_APP_URL"
+    export KEYCLOAK_URL="$PROD_KEYCLOAK_URL"
+    export VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_PROD"
 fi
+
+# Export application configuration variables
+export UPLOADS_DIR="$UPLOADS_DIR"
 
 print_success "Configuration loaded for $ENVIRONMENT environment"
 print_status "Namespace: $NAMESPACE"
@@ -196,7 +208,7 @@ echo ""
 wait_for_deployment() {
     local deployment_name=$1
     local timeout=${2:-300}
-    if [[ "$APP_ONLY" == "true" ]]; then
+    if [[ "$APP" == "true" ]]; then
         print_status "🚀 Skipping wait for $deployment_name to be ready..."
         return 0
     fi
@@ -403,7 +415,9 @@ deploy_app() {
     print_status "📦 Deploying OSPO Events Application..."
 
     # Ensure Docker Hub secret exists for builds
-    create_dockerhub_secret
+    if [[ $APP == "true" ]]; then
+      create_dockerhub_secret
+    fi
 
     # Create keycloak.json configuration dynamically
     cat > /tmp/keycloak.json <<EOF
@@ -1058,31 +1072,31 @@ main() {
     print_status "🚀 Starting deployment process..."
 
     # SAFETY CHECK: Ensure this script is only used for deployments
-    if [[ "$DELETE_ONLY" != "true" && "$BACKUP_ONLY" != "true" && "$RESTORE_ONLY" != "true" && "$DESTROY_ONLY" != "true" ]]; then
+    if [[ "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" ]]; then
         print_status "🔒 SAFETY MODE ENABLED - This script will NOT perform destructive operations"
         print_status "🔒 All data-preserving operations only"
     fi
 
     # Handle backup operation
-    if [[ "$BACKUP_ONLY" == "true" ]]; then
+    if [[ "$BACKUP" == "true" ]]; then
         backup_all_data
         exit 0
     fi
 
     # Handle restore operation
-    if [[ "$RESTORE_ONLY" == "true" ]]; then
+    if [[ "$RESTORE" == "true" ]]; then
         restore_from_backup
         exit 0
     fi
 
     # Handle destroy operation
-    if [[ "$DESTROY_ONLY" == "true" ]]; then
+    if [[ "$DESTROY" == "true" ]]; then
         destroy_all_data
         exit 0
     fi
 
     # Handle delete operation
-    if [[ "$DELETE_ONLY" == "true" ]]; then
+    if [[ "$DELETE" == "true" ]]; then
         if [[ -z "$ENVIRONMENT" ]]; then
             print_error "Environment must be specified for delete operation. Use --dev or --prod"
             show_usage
@@ -1093,71 +1107,105 @@ main() {
         delete_all_pods
         exit 0
     fi
+    # Deploy pods according to flags
+    # Deploy postgres if flag is set
+    if [[ "$POSTGRES" == "true" ]]; then
+        print_status "🚀 Deploying the postgres pod..."
+        oc scale deployment postgres --replicas=0
+        sleep 5
+        deploy_postgres
+        sleep 5
+        oc scale deployment postgres --replicas=1
+        print_success "🎉 Postgres deployed successfully!"
 
-    if [[ "$APP_ONLY" == "true" ]]; then
-        print_status "🚀 Deploying only the application..."
+    fi
+    # Deploy keycloak if flag is set
+    if [[ "$KEYCLOAK" == "true" ]]; then
+        print_status "🚀 Deploying the keycloak pod..."
+        kc_running=$(oc get pods | grep keycloak | wc -l)
+        if [[ $kc_running -eq 0 ]]; then
+          print_status "🚀 Keycloak not running, deploying the keycloak pod..."
+          deploy_keycloak
+          sleep 5
+          print_success "🎉 Keycloak deployed successfully!"
+
+        else
+          oc scale deployment keycloak --replicas=0
+          sleep 5
+          deploy_keycloak
+          sleep 5
+          oc scale deployment keycloak --replicas=1
+          print_success "🎉 Keycloak deployed successfully!"
+        fi
+
+    fi
+    # Deploy application if flag is set
+    if [[ "$APP" == "true" ]]; then
+        print_status "🚀 Deploying the application..."
         deploy_app
         oc scale deployment ospo-app --replicas=0
         sleep 5
         oc scale deployment ospo-app --replicas=1
         print_success "🎉 Application deployed successfully!"
-        if [[ "$KEYCLOAK_ONLY" == "true" ]]; then
-            print_status "🚀 Deploying the keycloak pod..."
-            deploy_keycloak
-            oc scale deployment keycloak --replicas=0
-            sleep 5
-            oc scale deployment keycloak --replicas=1
-            print_success "🎉 Keycloak deployed successfully!"
-            exit 0
-        fi
-        exit 0
     fi
-    if [[ "$KEYCLOAK_ONLY" == "true" ]]; then
-        print_status "🚀 Deploying only the keycloak pod..."
-        deploy_keycloak
-        oc scale deployment keycloak --replicas=0
-        sleep 5
-        oc scale deployment keycloak --replicas=1
-        print_success "🎉 Keycloak deployed successfully!"
-        if [[ "$APP_ONLY" == "true" ]]; then
-            print_status "🚀 Deploying the application..."
-            deploy_app
-            oc scale deployment ospo-app --replicas=0
-            sleep 5
-            oc scale deployment ospo-app --replicas=1
-            print_success "🎉 Application deployed successfully!"
-            exit 0
-        fi
-        exit 0
+    if [[ "$APP" == "true" || "$KEYCLOAK" == "true" || "$POSTGRES" == "true" || "$MINIO" == "true" || "$AI" == "true" ]]; then
+      create_routes
+      print_success "🎉 Deployment completed successfully!"
+      echo ""
+      print_status "📋 Deployment Summary:"
+      if [[ "$APP" == "true" ]]; then
+        echo "   Application Redeployed"
+      fi
+      if [[ "$KEYCLOAK" == "true" ]]; then
+        echo "   Keycloak Redeployed"
+      fi
+      if [[ "$POSTGRES" == "true" ]]; then
+        echo "   PostgreSQL Redeployed"
+      fi
+      if [[ "$MINIO" == "true" ]]; then
+        echo "   MinIO Redeployed"
+      fi
+      if [[ "$AI" == "true" ]]; then
+        echo "   AI Redeployed"
+      fi
+      echo "   Environment: $ENVIRONMENT"
+      echo "   Namespace: $NAMESPACE"
+      echo "   Application URL: $APP_URL"
+      echo "   Keycloak URL: $KEYCLOAK_URL"
+      echo ""
+      print_status "🔍 Checking deployment status..."
+      oc get pods -l app
+      exit 0
     fi
-
-    if [[ "$AI_ONLY" == "true" ]]; then
-        print_status "🚀 Deploying only the AI (Ollama) service..."
-        deploy_ai
-        exit 0
-    fi
+    # Deploy AI if flag is set
+    # if [[ "$AI" == "true" ]]; then
+    #     print_status "🚀 Deploying only the AI (Ollama) service..."
+    #     deploy_ai
+    #     exit 0
+    # fi
 
     # Deploy components in order
-    create_dockerhub_secret
-    deploy_postgres
-    deploy_minio
-    deploy_keycloak
-    deploy_app
-    deploy_ai
-    create_routes
+        create_dockerhub_secret
 
-    print_success "🎉 Deployment completed successfully!"
-    echo ""
-    print_status "📋 Deployment Summary:"
-    echo "   Environment: $ENVIRONMENT"
-    echo "   Namespace: $NAMESPACE"
-    echo "   Application URL: $APP_URL"
-    echo "   Keycloak URL: $KEYCLOAK_URL"
-    echo "   AI Service: ollama-nvidia-gpu (internal)"
-    echo ""
-    print_status "🔍 Checking deployment status..."
-    oc get pods -l app
-    echo ""
+        deploy_postgres
+        deploy_keycloak
+        deploy_app
+        print_success "🎉 Deployment completed successfully!"
+      echo ""
+      print_status "📋 Deployment Summary:"
+      echo "   Environment: $ENVIRONMENT"
+      echo "   Namespace: $NAMESPACE"
+      echo "   Application URL: $APP_URL"
+      echo "   Keycloak URL: $KEYCLOAK_URL"
+      echo ""
+    # if [[ "$MINIO" != "true" ]]; then
+    #     deploy_minio
+    # fi
+    # if [[ "$AI" != "true" ]]; then
+    #     deploy_ai
+    # fi
+
+    # echo "   AI Service: ollama-nvidia-gpu (internal)"
     print_success "✨ OSPO Events Manager is now deployed and ready!"
 }
 
