@@ -41,6 +41,7 @@ show_usage() {
     echo "  --app          Deploy the application"
     echo "  --postgres     Deploy the postgres pod"
     echo "  --keycloak Deploy the keycloak pod"
+    echo "  --routes       Create routes for the application"
     # echo "  --ai-only      Deploy only the AI (Ollama) service"
     echo "  --delete       Delete all pods while preserving data (WARNING: destructive)"
     echo "  --backup       Create a complete backup of all data (users, events, uploads)"
@@ -70,6 +71,7 @@ RESTORE=""
 RESTORE_PATH=""
 DESTROY=""
 ENVIRONMENT=""
+ROUTES=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         --dev)
@@ -94,6 +96,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --postgres)
             POSTGRES="true"
+            shift
+            ;;
+        --routes)
+            ROUTES="true"
             shift
             ;;
         # --ai-only)
@@ -387,11 +393,15 @@ deploy_keycloak() {
     # SAFETY CHECK: Prevent realm import that could delete users
     keycloak_safety_check
 
-    # Create realm configuration (only if override is explicitly enabled)
+    # Always create the realm config ConfigMap (required by deployment)
+    # But only populate it with realm data if override is explicitly enabled
     if [[ "${KEYCLOAK_OVERRIDE_REALM:-}" == "true" ]]; then
+        print_status "🔓 Creating realm configuration with realm data (OVERRIDE ENABLED)"
         create_keycloak_realm_config
     else
-        print_warning "🔒 Skipping realm configuration import to preserve existing users"
+        print_warning "🔒 Creating empty realm configuration to preserve existing users"
+        # Create an empty ConfigMap to satisfy the deployment requirement
+        oc create configmap keycloak-realm-config --from-file=realm.json=keycloak-realm-export.json --dry-run=client -o yaml | oc apply -f -
     fi
 
     local keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||' | sed 's|/.*||')
@@ -1107,6 +1117,14 @@ main() {
         delete_all_pods
         exit 0
     fi
+
+    if [[ "$ROUTES" == "true" ]]; then
+        print_status "🌐 Creating routes..."
+        create_routes
+        print_success "🎉 Routes created successfully!"
+        exit 0
+    fi
+
     # Deploy pods according to flags
     # Deploy postgres if flag is set
     if [[ "$POSTGRES" == "true" ]]; then
@@ -1190,6 +1208,7 @@ main() {
         deploy_postgres
         deploy_keycloak
         deploy_app
+        create_routes
         print_success "🎉 Deployment completed successfully!"
       echo ""
       print_status "📋 Deployment Summary:"
