@@ -27,7 +27,7 @@ export class KeycloakAdminService {
 
   constructor() {
     this.config = {
-      serverUrl: process.env.KEYCLOAK_SERVER_URL || 'https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com/auth',
+      serverUrl: process.env.KEYCLOAK_SERVER_URL || 'https://keycloak-dev.rh-events.org/auth',
       realm: process.env.KEYCLOAK_REALM || 'ospo-events',
       adminUsername: process.env.KEYCLOAK_ADMIN || 'admin',
       adminPassword: process.env.KEYCLOAK_ADMIN_PASSWORD || 'admin',
@@ -38,7 +38,7 @@ export class KeycloakAdminService {
   /**
    * Get admin access token for Keycloak Admin API
    */
-  private async getAdminToken(): Promise<string> {
+  private async getAdminToken(): Promise<string | null> {
     // Check if we have a valid token
     if (this.accessToken && Date.now() < this.tokenExpiry) {
       return this.accessToken;

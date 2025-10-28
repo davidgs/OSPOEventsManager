@@ -40,8 +40,9 @@ show_usage() {
     echo "  --help         Show this help message"
     echo "  --app          Deploy the application"
     echo "  --postgres     Deploy the postgres pod"
-    echo "  --keycloak Deploy the keycloak pod"
+    echo "  --keycloak     Deploy the keycloak pod"
     echo "  --routes       Create routes for the application"
+    echo "  --force        Force rebuild even if version hasn't changed"
     # echo "  --ai-only      Deploy only the AI (Ollama) service"
     echo "  --delete       Delete all pods while preserving data (WARNING: destructive)"
     echo "  --backup       Create a complete backup of all data (users, events, uploads)"
@@ -72,6 +73,7 @@ RESTORE_PATH=""
 DESTROY=""
 ENVIRONMENT=""
 ROUTES=""
+FORCE_BUILD=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         --dev)
@@ -106,6 +108,10 @@ while [[ $# -gt 0 ]]; do
         #     AI="true"
         #     shift
         #     ;;
+        --force)
+            FORCE_BUILD="true"
+            shift
+            ;;
         --delete)
             DELETE="true"
             shift
@@ -141,24 +147,24 @@ done
 
 # Validate arguments (skip for operations that don't need environment)
 if [[ "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" && -z "$ENVIRONMENT" ]]; then
-    print_error "Environment not specified. Use --dev or --prod"
+    print_error "🚨 Environment not specified. Use --dev or --prod"
     show_usage
     exit 1
 fi
 
 # Validate restore path if restore is specified
 if [[ "$RESTORE" == "true" && -z "$RESTORE_PATH" ]]; then
-    print_error "Restore path must be specified with -f option"
+    print_error "🚨 Restore path must be specified with -f option"
     show_usage
     exit 1
 fi
 
 # Check for .env file
 if [[ ! -f .env ]]; then
-    print_error ".env file not found!"
-    echo "Please copy env.template to .env and configure your values:"
-    echo "  cp env.template .env"
-    echo "  # Edit .env with your configuration"
+    print_error "🚨 .env file not found!"
+    echo "🚨 Please copy env.template to .env and configure your values:"
+    echo "🚨   cp env.template .env"
+    echo "🚨   # Edit .env with your configuration"
     exit 1
 fi
 
@@ -267,6 +273,42 @@ safety_check() {
             exit 1
         fi
     done
+}
+
+# Function to get version from package.json
+get_package_version() {
+    if [[ ! -f "package.json" ]]; then
+        print_error "🚨 package.json not found"
+        return 1
+    fi
+    grep '"version"' package.json | head -1 | sed 's/.*"version"//' | sed 's/[",: ]//g'
+}
+
+# Function to get latest version from ImageStream tags
+get_latest_image_version() {
+    local imagestream=$1
+    local tags=$(oc get imagestream "${imagestream}" -o jsonpath='{range .status.tags[*]}{.tag}{"\n"}{end}' 2>/dev/null || echo "")
+
+    if [[ -z "$tags" ]]; then
+        print_status "🔍 No tags found for imagestream $imagestream"
+        echo ""
+        return 0
+    fi
+
+    # Filter for version-like tags (e.g., 0.3.15), excluding 'latest'
+    echo "$tags" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -1
+}
+
+# Function to compare version strings (semantic versioning)
+version_greater() {
+    local version1=$1
+    local version2=$2
+
+    # If version2 is empty, version1 is greater
+    [[ -z "$version2" ]] && return 0
+
+    # Compare versions using sort -V (natural sort for version numbers)
+    [ "$version1" != "$(echo -e "$version1\n$version2" | sort -V | head -1)" ]
 }
 
 # SAFETY FUNCTION: Prevent Keycloak realm override without explicit flag
@@ -424,6 +466,8 @@ deploy_keycloak() {
 deploy_app() {
     print_status "📦 Deploying OSPO Events Application..."
 
+
+
     # Ensure Docker Hub secret exists for builds
     if [[ $APP == "true" ]]; then
       create_dockerhub_secret
@@ -449,25 +493,34 @@ EOF
 
     # Create ImageStream
     if [[ ! -f "k8s/app-imagestream.yaml" ]]; then
-        print_error "App ImageStream file not found: k8s/app-imagestream.yaml"
+        print_error "🚨 App ImageStream file not found: k8s/app-imagestream.yaml"
         exit 1
     fi
     oc apply -f k8s/app-imagestream.yaml
 
     # Create BuildConfig
     if [[ ! -f "k8s/app-buildconfig.yaml" ]]; then
-        print_error "App BuildConfig file not found: k8s/app-buildconfig.yaml"
+        print_error "🚨 App BuildConfig file not found: k8s/app-buildconfig.yaml"
         exit 1
     fi
+
+    # Export version for BuildConfig
+    export APP_VERSION="$current_version"
     envsubst < k8s/app-buildconfig.yaml | oc apply -f -
 
     # Start build
-    print_status "🔨 Starting application build..."
+    print_status "🔨 Starting application build for version $current_version..."
     oc start-build ospo-events-app --from-dir=. --wait
+
+    # Tag the image with the version number in addition to 'latest'
+    print_status "🏷️  Tagging image as version $current_version..."
+    oc tag ospo-events-app:latest ospo-events-app:"$current_version"
+
+    print_success "✅ Built and tagged as ospo-events-app:$current_version and ospo-events-app:latest"
 
     # Create Deployment
     if [[ ! -f "k8s/app-deployment.yaml" ]]; then
-        print_error "App deployment file not found: k8s/app-deployment.yaml"
+        print_error "🚨 App deployment file not found: k8s/app-deployment.yaml"
         exit 1
     fi
     envsubst < k8s/app-deployment.yaml | oc apply -f -
@@ -481,7 +534,7 @@ deploy_ai() {
 
     # Check if Ollama deployment file exists
     if [[ ! -f "k8s/ollama-deployment.yaml" ]]; then
-        print_error "Ollama deployment file not found: k8s/ollama-deployment.yaml"
+        print_error "🚨 Ollama deployment file not found: k8s/ollama-deployment.yaml"
         exit 1
     fi
 
@@ -522,7 +575,12 @@ create_routes() {
     local app_hostname=$(echo "$APP_URL" | sed 's|https://||')
     export keycloak_hostname
     export app_hostname
+    print_status "🔍 keycloak_hostname: $keycloak_hostname"
+    print_status "🔍 app_hostname: $app_hostname"
 
+    oc delete route ospo-app --ignore-not-found=true
+    oc delete route keycloak --ignore-not-found=true
+    # oc delete route ollama-nvidia-gpu --ignore-not-found=true
     # Apply routes with environment variable substitution
     envsubst < k8s/routes.yaml | oc apply -f -
 
@@ -1119,7 +1177,6 @@ main() {
     fi
 
     if [[ "$ROUTES" == "true" ]]; then
-        print_status "🌐 Creating routes..."
         create_routes
         print_success "🎉 Routes created successfully!"
         exit 0
@@ -1160,6 +1217,31 @@ main() {
     # Deploy application if flag is set
     if [[ "$APP" == "true" ]]; then
         print_status "🚀 Deploying the application..."
+        # Get current version from package.json
+        local current_version=$(get_package_version)
+    print_status "🔍 Current version in package.json: $current_version"
+
+    # Check if build is needed (unless --force is specified)
+    if [[ "$FORCE_BUILD" != "true" ]]; then
+        local imagestream_name="ospo-events-app"
+        latest_tagged_version=$(get_latest_image_version "$imagestream_name")
+        print_status "🔍 Latest version in registry: $latest_tagged_version"
+        if [[ -n "$latest_tagged_version" ]]; then
+            print_status "🔍 Latest version in registry: $latest_tagged_version"
+
+            if version_greater "$current_version" "$latest_tagged_version"; then
+                print_status "Version $current_version > $latest_tagged_version, build needed"
+            else
+                print_success "Version $current_version <= $latest_tagged_version, skipping build"
+                print_success "Use --force flag to force a rebuild"
+                return 0
+            fi
+        else
+            print_status "🔍 No previous version found in registry, building first version"
+        fi
+    else
+        print_status "Force build requested, skipping version check"
+    fi
         deploy_app
         oc scale deployment ospo-app --replicas=0
         sleep 5
