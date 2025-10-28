@@ -5,7 +5,9 @@ WORKDIR /app
 
 # Accept build arguments - no default to force explicit configuration
 ARG VITE_KEYCLOAK_URL
+ARG VERSION
 ENV VITE_KEYCLOAK_URL=$VITE_KEYCLOAK_URL
+ENV APP_VERSION=$VERSION
 
 # Copy package files and install dependencies
 COPY package*.json ./
