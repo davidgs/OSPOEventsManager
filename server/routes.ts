@@ -628,7 +628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     res.json({
       realm: keycloakRealm,
-      "auth-server-url": keycloakUrl.replace(/\/auth$/, ''), // Remove trailing /auth if present
+      "auth-server-url": keycloakUrl,
       "ssl-required": "external",
       resource: keycloakClientId,
       "public-client": true,

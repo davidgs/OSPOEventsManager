@@ -108,7 +108,7 @@ export async function initKeycloak(app: Express) {
       console.log('Using Keycloak config from environment variables');
       keycloakConfig = {
         realm: keycloakRealm,
-        "auth-server-url": externalKeycloakUrl.replace(/\/auth$/, ''), // Remove trailing /auth if present
+        "auth-server-url": externalKeycloakUrl,
         "ssl-required": "external",
         resource: keycloakClientId,
         "public-client": true,

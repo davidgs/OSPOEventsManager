@@ -306,7 +306,7 @@ npm run db:push:local
 npm run dev:local
 ```
 
-Access application at `http://localhost:4576`
+Access application at `http://localhost:4576` (admin/admin123)
 
 ### Services
 
