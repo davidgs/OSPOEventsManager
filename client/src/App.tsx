@@ -18,6 +18,7 @@ import DashboardPage from "@/pages/dashboard";
 import AssetsPage from "@/pages/assets/index";
 import StakeholdersPage from "@/pages/stakeholders/index";
 import ApprovalWorkflowsPage from "@/pages/approval-workflows/index";
+import UsersPage from "@/pages/users/index";
 import SettingsPage from "@/pages/settings";
 import UnauthorizedPage from "@/pages/unauthorized";
 // import EventManagementHelp from "@/pages/help/event-management";
@@ -71,6 +72,7 @@ function App() {
                 path="/approval-workflows"
                 component={ApprovalWorkflowsPage}
               />
+              {/* <Route path="/users" component={UsersPage} /> */}
               <Route path="/settings" component={SettingsPage} />
               <Route path="/profile" component={ProfilePage} />
 

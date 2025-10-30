@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +55,7 @@ const navigationItems = [
   { href: "/assets", label: "Assets", icon: FolderOpen },
   { href: "/stakeholders", label: "Stakeholders", icon: UsersIcon },
   { href: "/approval-workflows", label: "Workflows", icon: Workflow },
+  // { href: "/users", label: "Users", icon: UsersIcon },
 ];
 
 export function Header() {
@@ -68,6 +70,26 @@ export function Header() {
       if (!response.ok) throw new Error("Failed to fetch version");
       return response.json();
     },
+  });
+
+  // Fetch user profile data to get headshot
+  const { data: userProfile } = useQuery({
+    queryKey: [`/api/users/${user?.id}`],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      try {
+        const res = await apiRequest("GET", `/api/users/${user.id}`);
+        if (res.ok) {
+          return res.json();
+        }
+        return null;
+      } catch (error) {
+        return null;
+      }
+    },
+    enabled: !!user?.id && authenticated,
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Debug auth state
@@ -185,7 +207,10 @@ export function Header() {
                   className="relative h-8 w-8 rounded-full"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="" alt={user?.name || "User"} />
+                    <AvatarImage
+                      src={userProfile?.headshot || ""}
+                      alt={user?.name || "User"}
+                    />
                     <AvatarFallback className="text-xs">
                       {getInitials(user?.name || "User")}
                     </AvatarFallback>

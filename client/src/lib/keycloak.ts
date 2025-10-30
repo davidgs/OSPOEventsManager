@@ -222,33 +222,19 @@ export const logout = (): Promise<void> => {
       sessionStorage.removeItem('keycloak-token');
       localStorage.removeItem('keycloak-token');
 
-      // Attempt to logout with Keycloak
-      keycloak.logout({
-        redirectUri: window.location.origin
-      })
-        .then(() => {
-          console.log('Logout initiated successfully');
-          resolve();
-        })
-        .catch((error) => {
-          console.error('Logout failed:', error);
+      // Clear Keycloak token if available
+      if (keycloak && keycloak.token) {
+        keycloak.clearToken();
+      }
 
-          // Fallback - direct redirect to logout endpoint
-          try {
-            const logoutUrl = `${keycloak.authServerUrl}/realms/${keycloak.realm}/protocol/openid-connect/logout`;
-            const redirectUri = encodeURIComponent(window.location.origin);
-
-            window.location.href = `${logoutUrl}?redirect_uri=${redirectUri}`;
-            resolve(); // This will resolve but page will redirect
-          } catch (err) {
-            console.error('Fallback logout also failed:', err);
-            reject(err);
-          }
-        });
+      // Direct redirect to our login page
+      console.log('Redirecting to login page...');
+      window.location.replace('/login');
+      resolve(); // This will resolve but page will redirect
     } catch (error) {
       console.error('Unexpected error during logout:', error);
-      // Try to recover by reloading the page
-      window.location.reload();
+      // Fallback redirect to login page
+      window.location.replace('/login');
       resolve();
     }
   });

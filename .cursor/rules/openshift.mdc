@@ -1,0 +1,28 @@
+---
+name: OpenShift
+description: Rules for OpenShift deployment
+alwaysApply: true
+---
+
+## Rules
+
+### 1. Always deploy to openshift
+Always deploy to openshift.
+
+### 2. Always use the latest version of the code
+Always use the latest version of the code.
+
+### 3. Always use the latest version of the dependencies
+Always use the latest version of the dependencies.
+
+### 4. Always use the latest version of the tools
+Always use the latest version of the tools.
+
+### 5. Always use the latest version of the libraries
+Always use the latest version of the libraries.
+
+## 6. always deploy using the deploy.sh script
+Always deploy using the deploy.sh script.
+
+### 7. Never deploy automatically
+Never deploy automatically. Always ask for confirmation.

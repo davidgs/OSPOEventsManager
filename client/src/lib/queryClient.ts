@@ -8,6 +8,9 @@ type ApiRequestOptions = {
   body?: any;
 };
 
+// Track if we're already handling a 401 redirect to prevent multiple redirects
+let isHandling401 = false;
+
 // API request helper (moved before defaultQueryFn to avoid circular dependency)
 export async function apiRequest(
   method: Method,
@@ -46,7 +49,25 @@ export async function apiRequest(
   }
 
   // Make the request
-  return fetch(path, requestOptions);
+  const response = await fetch(path, requestOptions);
+
+  // Handle 401 authentication errors
+  if (response.status === 401 && !isHandling401) {
+    isHandling401 = true;
+    console.log('Authentication failed (401), redirecting to login');
+
+    try {
+      // Import and call logout to clear auth state and redirect
+      const { logout } = await import('../contexts/auth-context');
+      await logout();
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Fallback redirect
+      window.location.replace('/login');
+    }
+  }
+
+  return response;
 }
 
 // Default query function for all queries with authentication

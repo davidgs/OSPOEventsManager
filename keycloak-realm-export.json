@@ -51,13 +51,17 @@
         "http://localhost/*",
         "http://localhost:80/*",
         "http://localhost:4576/*",
-        "https://*.apps.ospo-osci.z3b1.p1.openshiftapps.com/*"
+        "https://*.rh-events.org/*",
+        "https://dev.rh-events.org/*",
+        "https://rh-events.org/*"
       ],
       "webOrigins": [
         "http://localhost",
         "http://localhost:80",
         "http://localhost:4576",
-        "https://*.apps.ospo-osci.z3b1.p1.openshiftapps.com"
+        "https://*.rh-events.org",
+        "https://dev.rh-events.org",
+        "https://rh-events.org"
       ],
       "protocol": "openid-connect",
       "publicClient": true,

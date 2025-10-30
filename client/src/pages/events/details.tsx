@@ -34,6 +34,8 @@ import { useToast } from "@/hooks/use-toast";
 import EditEventModal from "@/components/ui/edit-event-modal";
 import DeleteEventDialog from "@/components/ui/delete-event-dialog";
 import { LinkAssetModal } from "@/components/modals/link-asset-modal";
+import CreatorInfo from "@/components/ui/creator-info";
+import EditHistory from "@/components/ui/edit-history";
 import { z } from "zod";
 
 const EventDetailsPage: FC = () => {
@@ -380,6 +382,19 @@ const EventDetailsPage: FC = () => {
                 {event.name}
               </h1>
 
+              {/* Creator info */}
+              <div className="mb-6">
+                <CreatorInfo
+                  userName={event.createdByName || "Unknown User"}
+                  userAvatar={event.createdByAvatar}
+                  createdAt={event.created_at}
+                  updatedAt={event.updated_at}
+                  hasBeenEdited={
+                    event.updated_at && event.updated_at !== event.created_at
+                  }
+                />
+              </div>
+
               {/* Event details */}
               <div className="space-y-4 mb-6">
                 <div className="flex items-center text-muted-foreground">
@@ -547,7 +562,7 @@ const EventDetailsPage: FC = () => {
 
         {/* Tabs content */}
         <Tabs defaultValue="attendees" className="mb-8">
-          <TabsList className="grid grid-cols-4 mb-8 bg-muted/50 p-1 rounded-lg">
+          <TabsList className="grid grid-cols-5 mb-8 bg-muted/50 p-1 rounded-lg">
             <TabsTrigger
               value="attendees"
               className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
@@ -575,6 +590,13 @@ const EventDetailsPage: FC = () => {
             >
               <File className="mr-2 h-4 w-4" />
               Assets
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              History
             </TabsTrigger>
           </TabsList>
 
@@ -1005,6 +1027,17 @@ const EventDetailsPage: FC = () => {
                     </Link>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <EditHistory entityType="events" entityId={eventId} />
               </CardContent>
             </Card>
           </TabsContent>

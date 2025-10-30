@@ -22,7 +22,7 @@ export const eventTypeSchema = z.enum(eventTypes);
 export type EventType = z.infer<typeof eventTypeSchema>;
 
 // Event goals
-export const eventGoals = ["speaking", "sponsoring", "attending", "exhibiting"] as const;
+export const eventGoals = ["speaking", "sponsoring", "attending", "exhibiting","networking"] as const;
 export const eventGoalSchema = z.enum(eventGoals);
 export const eventGoalsArraySchema = z.array(eventGoalSchema).min(1, "Select at least one goal");
 export type EventGoal = z.infer<typeof eventGoalSchema>;
@@ -74,6 +74,7 @@ export type WorkflowReviewer = typeof schema.workflowReviewers.$inferSelect;
 export type WorkflowStakeholder = typeof schema.workflowStakeholders.$inferSelect;
 export type WorkflowComment = typeof schema.workflowComments.$inferSelect;
 export type WorkflowHistory = typeof schema.workflowHistory.$inferSelect;
+export type EditHistory = typeof schema.editHistory.$inferSelect;
 
 // =============================================================================
 // INSERT TYPES (What goes into the database)
@@ -91,6 +92,7 @@ export type InsertWorkflowReviewer = typeof schema.workflowReviewers.$inferInser
 export type InsertWorkflowStakeholder = typeof schema.workflowStakeholders.$inferInsert;
 export type InsertWorkflowComment = typeof schema.workflowComments.$inferInsert;
 export type InsertWorkflowHistory = typeof schema.workflowHistory.$inferInsert;
+export type InsertEditHistory = typeof schema.editHistory.$inferInsert;
 
 // =============================================================================
 // ZOD VALIDATION SCHEMAS
@@ -166,6 +168,11 @@ export const insertWorkflowHistorySchema = createInsertSchema(schema.workflowHis
   id: true,
 });
 
+export const insertEditHistorySchema = createInsertSchema(schema.editHistory).omit({
+  id: true,
+  created_at: true,
+});
+
 // =============================================================================
 // UPDATE SCHEMAS
 // =============================================================================
@@ -210,6 +217,7 @@ export type WorkflowReviewerResponse = WorkflowReviewer;
 export type WorkflowStakeholderResponse = WorkflowStakeholder;
 export type WorkflowCommentResponse = WorkflowComment;
 export type WorkflowHistoryResponse = WorkflowHistory;
+export type EditHistoryResponse = EditHistory;
 
 // =============================================================================
 // UTILITY TYPES
