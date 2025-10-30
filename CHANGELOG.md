@@ -111,6 +111,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed add/edit/delete event mutations to properly handle API responses
   - EditEventModal now closes automatically on successful update
   - Added proper error handling and success feedback for all event operations
+- **Documentation Endpoint**: Fixed 401 Unauthorized error on documentation access (2025-10-30)
+  - Added `/api/docs/*` to list of public endpoints
+  - Documentation now accessible without authentication
+  - Updated both authenticated and fallback security middleware
 
 ### Security
 - **Keycloak Domain Configuration** (2025-10-30)

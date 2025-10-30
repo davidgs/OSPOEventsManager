@@ -1176,11 +1176,6 @@ main() {
         exit 0
     fi
 
-    if [[ "$ROUTES" == "true" ]]; then
-        create_routes
-        print_success "🎉 Routes created successfully!"
-        exit 0
-    fi
 
     # Deploy pods according to flags
     # Deploy postgres if flag is set
@@ -1247,8 +1242,14 @@ main() {
       oc scale deployment ospo-app --replicas=1
       print_success "🎉 Application deployed successfully!"
     fi
+
+    if [[ "$ROUTES" == "true" ]]; then
+        create_routes
+        print_success "🎉 Routes created successfully!"
+        exit 0
+    fi
+
     if [[ "$APP" == "true" || "$KEYCLOAK" == "true" || "$POSTGRES" == "true" || "$MINIO" == "true" || "$AI" == "true" ]]; then
-      create_routes
       print_success "🎉 Deployment completed successfully!"
       echo ""
       print_status "📋 Deployment Summary:"

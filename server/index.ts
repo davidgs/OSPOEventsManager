@@ -314,8 +314,11 @@ app.get("/version", async (_req: Request, res: Response) => {
     // Protect API routes (except health check and version) with Bearer token support
     const authMiddleware = getAuthMiddleware(keycloak);
     app.use('/api', (req, res, next) => {
-      // Allow health check, version, fix, and keycloak-config endpoints without authentication
-      if (req.path === '/health' || req.path === '/version' || req.path === '/fix-david-asset' || req.path === '/keycloak-config') {
+      // Allow health check, version, fix, keycloak-config, and docs endpoints without authentication
+      if (req.path === '/health' ||
+          req.path === '/version' ||
+          req.path === '/keycloak-config' ||
+          req.path.startsWith('/docs')) {
         return next();
       }
 
@@ -327,8 +330,11 @@ app.get("/version", async (_req: Request, res: Response) => {
 
     // SECURITY: When Keycloak is not available, implement strict fallback security
     app.use('/api', (req, res, next) => {
-      // Allow health check, version, and keycloak-config endpoints without authentication
-      if (req.path === '/health' || req.path === '/version' || req.path === '/keycloak-config') {
+      // Allow health check, version, keycloak-config, and docs endpoints without authentication
+      if (req.path === '/health' ||
+          req.path === '/version' ||
+          req.path === '/keycloak-config' ||
+          req.path.startsWith('/docs')) {
         return next();
       }
 
