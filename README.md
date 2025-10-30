@@ -33,6 +33,7 @@ A comprehensive event management system for Open Source Program Offices (OSPOs),
 - OpenShift CLI (for OpenShift deployment)
 - Access to an OpenShift cluster
 - Docker (for building images)
+- Node.js 20+ (for testing and development)
 
 ### Setup
 
@@ -41,6 +42,9 @@ A comprehensive event management system for Open Source Program Offices (OSPOs),
 git clone <repository-url>
 cd OSPOEventsManager
 
+# Install dependencies
+npm install
+
 # Configure environment variables
 ./configure.sh
 
@@ -48,6 +52,24 @@ cd OSPOEventsManager
 ```
 
 **Note**: This application requires PostgreSQL and Keycloak to function properly. Local development without these dependencies is not currently supported.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run tests with interactive UI
+npm run test:ui
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+See [TESTING.md](./TESTING.md) for comprehensive testing documentation.
 
 ## Deployment
 
