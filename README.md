@@ -300,7 +300,7 @@ npm run kind:start
 
 # Setup local environment
 cp env.local.template .env.local
-npm run db:push
+npm run db:push:local
 
 # Run application with hot reload
 npm run dev:local

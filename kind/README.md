@@ -22,7 +22,7 @@ npm run kind:start
 cp ../env.local.template ../.env.local
 
 # Run migrations
-npm run db:push
+npm run db:push:local
 
 # Start application
 npm run dev:local

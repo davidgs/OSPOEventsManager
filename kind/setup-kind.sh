@@ -318,7 +318,8 @@ show_status() {
     print_info "Next steps:"
     echo "  1. Verify all pods are running: kubectl get pods -n ${NAMESPACE}"
     echo "  2. Set up local environment: cp env.local.template .env.local"
-    echo "  3. Run the application: npm run dev:local"
+    echo "  3. Push database schema: npm run db:push:local"
+    echo "  4. Run the application: npm run dev:local"
 }
 
 # Function to delete cluster
