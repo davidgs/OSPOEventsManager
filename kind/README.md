@@ -42,16 +42,6 @@ npm run dev:local
 ./kind/setup-kind.sh restart-services # Restart services without recreating cluster
 ```
 
-### `port-forward.sh`
-
-Alternative to NodePort if needed:
-```bash
-./kind/port-forward.sh start    # Start port-forwards
-./kind/port-forward.sh stop     # Stop port-forwards
-./kind/port-forward.sh status   # Check status
-./kind/port-forward.sh logs <service>
-```
-
 ## Cluster Configuration
 
 - **Cluster Name**: `ospo-local`
@@ -224,4 +214,3 @@ kubectl cp ospo-local/keycloak-<pod-id>:/tmp/realm.json ./keycloak-realm-export.
 - `keycloak.yaml` - Keycloak with PostgreSQL backend
 - `minio.yaml` - MinIO object storage
 - `setup-kind.sh` - Cluster management script
-- `port-forward.sh` - Port forwarding management

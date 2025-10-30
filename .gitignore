@@ -37,10 +37,7 @@ k8s-tmp/
 *.tmp.yaml
 *.tmp.yml
 
-# KIND local development
-/tmp/ospo-kind-port-forwards/
-
-# logs
+# Logs
 logs/
 *.log
 npm-debug.log*
