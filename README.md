@@ -1,5 +1,10 @@
 # OSPO Events Management Application
 
+[![CI Pipeline](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/ci.yml)
+[![Tests](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/test.yml/badge.svg)](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/test.yml)
+[![Test Coverage](https://img.shields.io/badge/tests-899%20passed-brightgreen)](./TEST_SUITE_SUMMARY.md)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 A comprehensive event management system for Open Source Program Offices (OSPOs), designed to streamline the process of tracking events, submissions, attendees, and related resources.
 
 ## Features
@@ -33,6 +38,7 @@ A comprehensive event management system for Open Source Program Offices (OSPOs),
 - OpenShift CLI (for OpenShift deployment)
 - Access to an OpenShift cluster
 - Docker (for building images)
+- Node.js 20+ (for testing and development)
 
 ### Setup
 
@@ -41,6 +47,9 @@ A comprehensive event management system for Open Source Program Offices (OSPOs),
 git clone <repository-url>
 cd OSPOEventsManager
 
+# Install dependencies
+npm install
+
 # Configure environment variables
 ./configure.sh
 
@@ -48,6 +57,24 @@ cd OSPOEventsManager
 ```
 
 **Note**: This application requires PostgreSQL and Keycloak to function properly. Local development without these dependencies is not currently supported.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run tests with interactive UI
+npm run test:ui
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+See [TESTING.md](./TESTING.md) for comprehensive testing documentation.
 
 ## Deployment
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -33,10 +33,10 @@ export default function LoginPage() {
     try {
       setIsLoggingIn(true);
       setLoginError(null);
-      
+
       // Use the keycloak service from lib/keycloak.ts
       await login();
-      
+
       // If login doesn't redirect, we'll fall through to this code
       setIsLoggingIn(false);
     } catch (error) {
@@ -79,7 +79,7 @@ export default function LoginPage() {
             Sign in to access your event management dashboard
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {loginError && (
             <Alert variant="destructive">
@@ -88,7 +88,7 @@ export default function LoginPage() {
               <AlertDescription>{loginError}</AlertDescription>
             </Alert>
           )}
-          
+
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
               This application uses Keycloak for secure authentication.
@@ -97,17 +97,17 @@ export default function LoginPage() {
               You'll be redirected to the authentication server to complete your login.
             </p>
           </div>
-          
+
           <div className="mt-2 text-xs text-muted-foreground">
             <p>• Secure authentication with Keycloak</p>
             <p>• Two-factor authentication with FreeOTP</p>
             <p>• Role-based access control</p>
           </div>
         </CardContent>
-        
+
         <CardFooter>
-          <Button 
-            className="w-full" 
+          <Button
+            className="w-full"
             onClick={handleLogin}
             disabled={isLoggingIn}
           >
