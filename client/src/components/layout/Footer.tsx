@@ -89,7 +89,7 @@ export function Footer() {
         <div className="mt-4 pt-4 border-t text-center text-xs text-muted-foreground">
           <p>
             © {new Date().getFullYear()} Red Hat, Inc. Built with ❤️ for Open
-            Source Program Offices.
+            Source Program Office.
           </p>
         </div>
       </div>
