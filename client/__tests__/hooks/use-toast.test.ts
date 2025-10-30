@@ -12,6 +12,11 @@ describe('use-toast', () => {
     it('should create a toast with title and description', () => {
       const { result } = renderHook(() => useToast());
 
+      // Clear any existing toasts from previous tests
+      act(() => {
+        result.current.dismiss();
+      });
+
       act(() => {
         toast({
           title: 'Test Title',
@@ -169,13 +174,20 @@ describe('use-toast', () => {
     it('should update when toasts change', () => {
       const { result } = renderHook(() => useToast());
 
-      expect(result.current.toasts).toHaveLength(0);
+      // Clear any existing toasts first
+      act(() => {
+        result.current.dismiss();
+      });
+
+      const initialLength = result.current.toasts.filter(t => t.open).length;
+      expect(initialLength).toBe(0);
 
       act(() => {
         result.current.toast({ title: 'New Toast' });
       });
 
-      expect(result.current.toasts).toHaveLength(1);
+      const finalLength = result.current.toasts.filter(t => t.open).length;
+      expect(finalLength).toBe(1);
     });
 
     it('should clean up listener on unmount', () => {

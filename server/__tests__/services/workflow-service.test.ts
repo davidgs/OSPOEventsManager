@@ -137,7 +137,7 @@ describe('WorkflowService', () => {
   describe('createWorkflow', () => {
     it('should validate priority values', () => {
       const allowedPriorities = ['low', 'medium', 'high'] as const;
-      
+
       expect(allowedPriorities).toContain('low');
       expect(allowedPriorities).toContain('medium');
       expect(allowedPriorities).toContain('high');
@@ -575,7 +575,7 @@ describe('WorkflowService', () => {
   describe('Status Management', () => {
     it('should support multiple status values', () => {
       const statuses = ['pending', 'approved', 'rejected', 'on_hold'];
-      
+
       expect(statuses).toContain('pending');
       expect(statuses).toContain('approved');
       expect(statuses).toContain('rejected');

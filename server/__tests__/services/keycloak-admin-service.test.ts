@@ -390,7 +390,7 @@ describe('KeycloakAdminService', () => {
 
     it('should use valid character set', () => {
       const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-      
+
       expect(charset).toContain('A');
       expect(charset).toContain('a');
       expect(charset).toContain('0');

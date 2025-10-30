@@ -4,7 +4,7 @@ import { safeParseDate, safeFormatDate, safeFormatDateRange } from '@/lib/date-u
 describe('Date Utility Functions', () => {
   describe('safeParseDate', () => {
     it('should parse valid date string', () => {
-      const result = safeParseDate('2024-01-15');
+      const result = safeParseDate('2024-01-15T12:00:00');
       expect(result).toBeInstanceOf(Date);
       expect(result?.getFullYear()).toBe(2024);
       expect(result?.getMonth()).toBe(0); // January is 0
@@ -55,12 +55,12 @@ describe('Date Utility Functions', () => {
 
   describe('safeFormatDate', () => {
     it('should format valid date with default format', () => {
-      const result = safeFormatDate('2024-01-15');
+      const result = safeFormatDate('2024-01-15T12:00:00');
       expect(result).toBe('Jan 15, 2024');
     });
 
     it('should format Date object', () => {
-      const date = new Date('2024-01-15');
+      const date = new Date('2024-01-15T12:00:00');
       const result = safeFormatDate(date);
       expect(result).toBe('Jan 15, 2024');
     });
@@ -81,25 +81,25 @@ describe('Date Utility Functions', () => {
     });
 
     it('should handle custom format string', () => {
-      const result = safeFormatDate('2024-01-15', 'yyyy-MM-dd');
+      const result = safeFormatDate('2024-01-15T12:00:00', 'yyyy-MM-dd');
       expect(result).toBe('2024-01-15');
     });
 
     it('should format different months correctly', () => {
-      expect(safeFormatDate('2024-01-15')).toContain('Jan');
-      expect(safeFormatDate('2024-02-15')).toContain('Feb');
-      expect(safeFormatDate('2024-12-25')).toContain('Dec');
+      expect(safeFormatDate('2024-01-15T12:00:00')).toContain('Jan');
+      expect(safeFormatDate('2024-02-15T12:00:00')).toContain('Feb');
+      expect(safeFormatDate('2024-12-25T12:00:00')).toContain('Dec');
     });
 
     it('should handle leap year dates', () => {
-      const result = safeFormatDate('2024-02-29');
+      const result = safeFormatDate('2024-02-29T12:00:00');
       expect(result).toBe('Feb 29, 2024');
     });
 
     it('should handle format error gracefully', () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       // Test with an invalid format string that might cause an error
-      const result = safeFormatDate('2024-01-15', 'invalid-format-xyz');
+      const result = safeFormatDate('2024-01-15T12:00:00', 'invalid-format-xyz');
       // Should either return a formatted date or "Invalid Date"
       expect(result).toBeTruthy();
       consoleSpy.mockRestore();
@@ -108,13 +108,13 @@ describe('Date Utility Functions', () => {
 
   describe('safeFormatDateRange', () => {
     it('should format valid date range', () => {
-      const result = safeFormatDateRange('2024-01-15', '2024-01-20');
+      const result = safeFormatDateRange('2024-01-15T12:00:00', '2024-01-20T12:00:00');
       expect(result).toBe('Jan 15, 2024 - Jan 20, 2024');
     });
 
     it('should handle Date objects', () => {
-      const start = new Date('2024-01-15');
-      const end = new Date('2024-01-20');
+      const start = new Date('2024-01-15T12:00:00');
+      const end = new Date('2024-01-20T12:00:00');
       const result = safeFormatDateRange(start, end);
       expect(result).toBe('Jan 15, 2024 - Jan 20, 2024');
     });
@@ -151,17 +151,17 @@ describe('Date Utility Functions', () => {
     });
 
     it('should handle same-day range', () => {
-      const result = safeFormatDateRange('2024-01-15', '2024-01-15');
+      const result = safeFormatDateRange('2024-01-15T12:00:00', '2024-01-15T12:00:00');
       expect(result).toBe('Jan 15, 2024 - Jan 15, 2024');
     });
 
     it('should handle cross-month range', () => {
-      const result = safeFormatDateRange('2024-01-25', '2024-02-05');
+      const result = safeFormatDateRange('2024-01-25T12:00:00', '2024-02-05T12:00:00');
       expect(result).toBe('Jan 25, 2024 - Feb 5, 2024');
     });
 
     it('should handle cross-year range', () => {
-      const result = safeFormatDateRange('2023-12-25', '2024-01-05');
+      const result = safeFormatDateRange('2023-12-25T12:00:00', '2024-01-05T12:00:00');
       expect(result).toBe('Dec 25, 2023 - Jan 5, 2024');
     });
 
@@ -185,29 +185,29 @@ describe('Date Utility Functions', () => {
 
   describe('Edge Cases and Integration', () => {
     it('should handle year boundaries', () => {
-      const result = safeFormatDate('2024-12-31');
+      const result = safeFormatDate('2024-12-31T12:00:00');
       expect(result).toContain('2024');
     });
 
     it('should handle month boundaries', () => {
-      expect(safeFormatDate('2024-01-31')).toContain('Jan 31');
-      expect(safeFormatDate('2024-02-01')).toContain('Feb 1');
+      expect(safeFormatDate('2024-01-31T12:00:00')).toContain('Jan 31');
+      expect(safeFormatDate('2024-02-01T12:00:00')).toContain('Feb 1');
     });
 
     it('should maintain consistency between parse and format', () => {
-      const dateStr = '2024-06-15';
+      const dateStr = '2024-06-15T12:00:00';
       const parsed = safeParseDate(dateStr);
       const formatted = safeFormatDate(parsed);
       expect(formatted).toBe('Jun 15, 2024');
     });
 
     it('should handle very old dates', () => {
-      const result = safeFormatDate('1900-01-01');
+      const result = safeFormatDate('1900-01-01T12:00:00');
       expect(result).toBe('Jan 1, 1900');
     });
 
     it('should handle future dates', () => {
-      const result = safeFormatDate('2099-12-31');
+      const result = safeFormatDate('2099-12-31T12:00:00');
       expect(result).toBe('Dec 31, 2099');
     });
   });

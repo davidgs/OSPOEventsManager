@@ -108,7 +108,7 @@ describe('UserService', () => {
 
     it('should return undefined if user not found', () => {
       const user = undefined;
-      
+
       expect(user).toBeUndefined();
     });
 
@@ -131,7 +131,7 @@ describe('UserService', () => {
     it('should update preferences and last_login', () => {
       const userId = 3;
       const preferences = JSON.stringify({ theme: 'dark', language: 'en' });
-      
+
       const updateData = {
         preferences,
         last_login: new Date()
