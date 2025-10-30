@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
+    "dev:local": "NODE_ENV=development tsx --env-file=.env.local server/index.ts",
     "build": "vite build && cp -r server dist/ && cp -r shared dist/",
     "start": "NODE_ENV=production tsx dist/server/index.ts",
     "check": "tsc",
@@ -13,7 +14,18 @@
     "test": "vitest --run",
     "test:ui": "vitest --run --ui",
     "test:coverage": "vitest --run --coverage",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "kind:start": "./kind/setup-kind.sh start",
+    "kind:stop": "./kind/setup-kind.sh stop",
+    "kind:restart": "./kind/setup-kind.sh restart",
+    "kind:delete": "./kind/setup-kind.sh delete",
+    "kind:status": "./kind/setup-kind.sh status",
+    "kind:logs": "./kind/setup-kind.sh logs",
+    "kind:forward": "./kind/port-forward.sh start",
+    "kind:forward-stop": "./kind/port-forward.sh stop",
+    "kind:forward-status": "./kind/port-forward.sh status",
+    "local:setup": "cp env.local.template .env.local && echo 'Local environment file created. Edit .env.local if needed.'",
+    "local:db-console": "psql 'postgres://ospo_user:ospo_password@localhost:5432/ospo_events'"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
