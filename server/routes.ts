@@ -542,6 +542,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Documentation endpoint - serves markdown files
+  app.get("/api/docs/*", async (req: Request, res: Response) => {
+    try {
+      const docPath = req.params[0] || 'index.md';
+      const filePath = path.join(process.cwd(), 'docs', docPath);
+
+      // Security: Prevent directory traversal
+      const normalizedPath = path.normalize(filePath);
+      const docsDir = path.join(process.cwd(), 'docs');
+      if (!normalizedPath.startsWith(docsDir)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Check if file exists
+      if (!fs.existsSync(normalizedPath)) {
+        return res.status(404).json({ message: "Documentation not found" });
+      }
+
+      // Read and return the markdown file
+      const content = fs.readFileSync(normalizedPath, 'utf-8');
+      res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving documentation:", error);
+      res.status(500).json({ message: "Failed to load documentation" });
+    }
+  });
+
   // Health check endpoint for Kubernetes
   app.get("/api/health", async (_req: Request, res: Response) => {
     try {
