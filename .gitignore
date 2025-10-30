@@ -24,7 +24,25 @@ dist
 .env.test.local
 .env.production.local
 
+# Archives
+*.tar.gz
+*.tgz
+*.tar.xz
+*.zip
+*.rar
+*.7z
+
+# Kubernetes temporary files
+k8s-tmp/
+*.tmp.yaml
+*.tmp.yml
+
+# KIND local development
+/tmp/ospo-kind-port-forwards/
+
 # logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -46,6 +64,11 @@ lerna-debug.log*
 !.cursor/rules/
 
 # OS
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # temporary files
@@ -55,6 +78,8 @@ temp/
 
 # uploads (local development)
 uploads/
+public/uploads/
+attached_assets/
 
 # database
 *.db
@@ -78,4 +103,9 @@ secrets/
 
 # Backup files
 *.bak
+*.old
+*.orig
 *.backup
+*-backup.*
+*-old.*
+*-broken.*
