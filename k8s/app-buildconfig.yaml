@@ -14,8 +14,12 @@ spec:
   strategy:
     type: Docker
     dockerStrategy:
+      pullSecret:
+        name: dockerhub-secret
       buildArgs:
         - name: VITE_KEYCLOAK_URL
           value: "${VITE_KEYCLOAK_URL}"
+        - name: VERSION
+          value: "${APP_VERSION}"
   triggers:
     - type: ConfigChange

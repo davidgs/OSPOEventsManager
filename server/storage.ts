@@ -1,15 +1,16 @@
 import {
   users, events, cfpSubmissions, attendees, sponsorships, assets, stakeholders,
-  approvalWorkflows, workflowReviewers, workflowStakeholders, workflowComments, workflowHistory
+  approvalWorkflows, workflowReviewers, workflowStakeholders, workflowComments, workflowHistory,
+  editHistory
 } from "../shared/database-schema.js";
 import {
   type User, type Event, type CFPSubmission, type Attendee, type Sponsorship, type Asset,
   type Stakeholder, type ApprovalWorkflow, type WorkflowReviewer, type WorkflowStakeholder,
-  type WorkflowComment, type WorkflowHistory,
+  type WorkflowComment, type WorkflowHistory, type EditHistory,
   type InsertUser, type InsertEvent, type InsertCFPSubmission, type InsertAttendee,
   type InsertSponsorship, type InsertAsset, type InsertStakeholder, type InsertApprovalWorkflow,
   type InsertWorkflowReviewer, type InsertWorkflowStakeholder, type InsertWorkflowComment,
-  type InsertWorkflowHistory
+  type InsertWorkflowHistory, type InsertEditHistory
 } from "../shared/database-types.js";
 import { db } from "./db";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
@@ -112,6 +113,10 @@ export interface IStorage {
   getWorkflowHistory(): Promise<WorkflowHistory[]>;
   getWorkflowHistoryByWorkflow(workflowId: number): Promise<WorkflowHistory[]>;
   createWorkflowHistory(insertWorkflowHistory: InsertWorkflowHistory): Promise<WorkflowHistory>;
+
+  // Edit history operations
+  getEditHistory(entityType: string, entityId: number): Promise<EditHistory[]>;
+  createEditHistory(insertEditHistory: InsertEditHistory): Promise<EditHistory>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -693,6 +698,25 @@ export class DatabaseStorage implements IStorage {
   async createWorkflowHistory(insertWorkflowHistory: InsertWorkflowHistory): Promise<WorkflowHistory> {
     if (!db) throw new Error("Database not initialized");
     const [history] = await db.insert(workflowHistory).values([insertWorkflowHistory]).returning();
+    return history;
+  }
+
+  // Edit history operations
+  async getEditHistory(entityType: string, entityId: number): Promise<EditHistory[]> {
+    if (!db) throw new Error("Database not initialized");
+    return await db
+      .select()
+      .from(editHistory)
+      .where(and(
+        eq(editHistory.entity_type, entityType),
+        eq(editHistory.entity_id, entityId)
+      ))
+      .orderBy(desc(editHistory.edited_at));
+  }
+
+  async createEditHistory(insertEditHistory: InsertEditHistory): Promise<EditHistory> {
+    if (!db) throw new Error("Database not initialized");
+    const [history] = await db.insert(editHistory).values([insertEditHistory]).returning();
     return history;
   }
 }

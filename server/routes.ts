@@ -23,6 +23,7 @@ import fileUpload from "express-fileupload";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import { UserService } from "./services/user-service";
 
 // Authorization utilities
 interface AuthorizedUser {
@@ -495,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('[FIX DAVID ASSET] Error:', error);
-      res.status(500).json({ message: "Failed to fix asset ownership", error: error.message });
+      res.status(500).json({ message: "Failed to fix asset ownership", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -537,7 +538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('[FIX DAVID ASSET NOW] Error:', error);
-      res.status(500).json({ message: "Failed to fix asset ownership", error: error.message });
+      res.status(500).json({ message: "Failed to fix asset ownership", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -641,6 +642,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: validationError.message });
       }
 
+      // Add the current user's database ID as the creator
+      const userDbId = (req as any).user?.dbId;
+      if (userDbId) {
+        eventData.data.created_by_id = userDbId;
+        console.log('Added created_by_id:', userDbId);
+      } else {
+        console.warn('No user database ID found in request, created_by_id will be null');
+      }
+
       console.log('Parsed event data:', JSON.stringify(eventData.data, null, 2));
 
       const event = await storage.createEvent(eventData.data);
@@ -675,9 +685,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log the parsed data
       console.log('Parsed event data:', eventData.data);
 
+      // Add current user's database ID for edit tracking
+      const userDbId = (req as any).user?.dbId;
+      console.log('User info from request:', {
+        user: (req as any).user,
+        userDbId: userDbId,
+        hasUser: !!(req as any).user,
+        userKeys: (req as any).user ? Object.keys((req as any).user) : []
+      });
+
+      if (userDbId) {
+        eventData.data.updated_by_id = userDbId;
+        console.log('Added updated_by_id:', userDbId);
+      } else {
+        console.log('No userDbId found, skipping edit tracking');
+      }
+
       const event = await storage.updateEvent(id, eventData.data);
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
+      }
+
+      // Log edit history
+      if (userDbId) {
+        try {
+          console.log('Creating edit history entry:', {
+            entity_type: 'events',
+            entity_id: id,
+            edited_by_id: userDbId,
+            change_description: 'Event updated'
+          });
+
+          const historyEntry = await storage.createEditHistory({
+            entity_type: 'events',
+            entity_id: id,
+            edited_by_id: userDbId,
+            change_description: 'Event updated'
+          });
+
+          console.log('Edit history created successfully:', historyEntry);
+        } catch (error) {
+          console.error('Error logging edit history:', error);
+          // Don't fail the request if history logging fails
+        }
+      } else {
+        console.log('Skipping edit history creation - no userDbId');
       }
 
       res.json(event);
@@ -702,6 +754,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
+  // Edit History API routes
+  app.get("/api/edit-history/:entityType/:entityId", async (req: Request, res: Response) => {
+    try {
+      const entityType = req.params.entityType;
+      const entityId = parseInt(req.params.entityId);
+
+      if (isNaN(entityId)) {
+        return res.status(400).json({ message: "Invalid entity ID" });
+      }
+
+      const history = await storage.getEditHistory(entityType, entityId);
+
+      // Enhance with user information
+      const enhancedHistory = await Promise.all(history.map(async (entry) => {
+        const user = await storage.getUser(entry.edited_by_id);
+        return {
+          ...entry,
+          editedByName: user ? user.name : 'Unknown User',
+          editedByAvatar: user ? user.headshot : null
+        };
+      }));
+
+      res.json(enhancedHistory);
+    } catch (error) {
+      console.error("Error fetching edit history:", error);
+      res.status(500).json({ message: "Failed to fetch edit history" });
     }
   });
 
@@ -767,7 +848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`CSV row["${csvColumn}"] value:`, row[csvColumn]);
 
             if (dbColumn && row[csvColumn] !== undefined && row[csvColumn] !== '') {
-              let value = row[csvColumn];
+              let value = row[csvColumn as string];
               console.log(`Mapping value "${value}" from "${csvColumn}" to "${dbColumn}"`);
 
               // Handle special field types
@@ -775,7 +856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Split comma-separated goals into array
                 eventData[dbColumn] = value.split(',').map(g => g.trim()).filter(g => g);
                 console.log(`Converted goals string to array:`, eventData[dbColumn]);
-              } else if (dbColumn.includes('date') && value) {
+              } else if (typeof dbColumn === 'string' && dbColumn.includes('date') && value) {
                 // Ensure dates are properly formatted
                 const date = new Date(value);
                 if (!isNaN(date.getTime())) {
@@ -786,7 +867,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   console.log(`Invalid date "${value}", set to null`);
                 }
               } else {
-                eventData[dbColumn] = value;
+                eventData[dbColumn as string] = value;
                 console.log(`Direct assignment: ${dbColumn} = "${value}"`);
               }
             } else {
@@ -1295,15 +1376,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User profile API routes
   app.get("/api/users", async (req: Request, res: Response) => {
     try {
-      // For now, return a list with dummy users as we don't have a getUsers method yet
-      // In a real application, this would fetch users from the database
-      res.json([
-        { id: 1, name: "Alex Johnson", email: "alex@example.com", role: "admin" },
-        { id: 2, name: "Taylor Garcia", email: "taylor@example.com", role: "reviewer" }
-      ]);
+      console.log("GET /api/users - Fetching users from database");
+
+      // Get users from PostgreSQL database
+      const users = await UserService.getAllUsers();
+
+      console.log(`Found ${users.length} users in database`);
+      console.log("Users data:", JSON.stringify(users, null, 2));
+      res.json(users);
     } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ message: "Failed to fetch users" });
+      console.error("Error fetching users from database:", error instanceof Error ? error.message : String(error));
+      res.status(500).json({ message: "Failed to fetch users from database" });
+    }
+  });
+
+  app.get("/api/users-debug", async (req: Request, res: Response) => {
+    try {
+      console.log("GET /api/users-debug - Fetching users from database");
+
+      // Get users from PostgreSQL database
+      const users = await UserService.getAllUsers();
+
+      console.log(`Found ${users.length} users in database`);
+      console.log("Users data:", JSON.stringify(users, null, 2));
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users from database:", error instanceof Error ? error.message : String(error));
+      res.status(500).json({ message: "Failed to fetch users from database" });
     }
   });
 
@@ -1691,6 +1790,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Move the file to uploads directory
       await file.mv(filePath);
 
+      // Get current user's database ID for creator tracking
+      const userDbId = (req as any).user?.dbId;
+
       // Create asset record
       const assetData = {
         name: sanitizeFilename(name),
@@ -1701,7 +1803,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         uploaded_by: parseInt(uploadedBy as string),
         event_id: eventId ? parseInt(eventId as string) : null,
         cfp_submission_id: cfpSubmissionId ? parseInt(cfpSubmissionId as string) : null,
-        description: description ? sanitizeFilename(description) : null
+        description: description ? sanitizeFilename(description) : null,
+        created_by_id: userDbId || parseInt(uploadedBy as string), // Fallback to uploaded_by if no user ID
+        updated_by_id: userDbId || parseInt(uploadedBy as string)
       };
 
       const asset = await storage.createAsset(assetData);
@@ -2219,7 +2323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('[FIX ASSET OWNERSHIP] Error:', error);
-      res.status(500).json({ message: "Failed to fix asset ownership", error: error.message });
+      res.status(500).json({ message: "Failed to fix asset ownership", error: error instanceof Error ? error.message : String(error) });
     }
   });
 

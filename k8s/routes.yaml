@@ -4,6 +4,8 @@ metadata:
   name: keycloak
   labels:
     app: keycloak
+  annotations:
+    kubernetes.io/tls-acme: "true"
 spec:
   host: ${keycloak_hostname}
   to:
@@ -21,6 +23,8 @@ metadata:
   name: ospo-app
   labels:
     app: ospo-app
+  annotations:
+    kubernetes.io/tls-acme: "true"
 spec:
   host: ${app_hostname}
   to:

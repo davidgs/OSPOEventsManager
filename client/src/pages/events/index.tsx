@@ -227,7 +227,7 @@ const EventsPageContent: FC = () => {
         acc[eventId].push({
           id: asset.id,
           name: asset.name,
-          uploadedByName: asset.uploaded_by_name || "Unknown",
+          uploadedByName: (asset as any).uploadedByName || "Unknown",
         });
 
         return acc;
@@ -246,7 +246,13 @@ const EventsPageContent: FC = () => {
     mutationFn: async (newEvent: any) => {
       // For debugging
       console.log("About to add event with data:", newEvent);
-      return await apiRequest("POST", "/api/events", newEvent);
+      const response = await apiRequest("POST", "/api/events", newEvent);
+
+      if (!response.ok) {
+        throw new Error(`Failed to add event: ${response.status}`);
+      }
+
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
@@ -270,10 +276,21 @@ const EventsPageContent: FC = () => {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       // For debugging
       console.log("About to update event with data:", data);
-      return await apiRequest("PUT", `/api/events/${id}`, data);
+      const response = await apiRequest("PUT", `/api/events/${id}`, data);
+
+      if (!response.ok) {
+        throw new Error(`Failed to update event: ${response.status}`);
+      }
+
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Event update mutation succeeded:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      // Invalidate edit history for this specific event
+      queryClient.invalidateQueries({
+        queryKey: [`/api/edit-history/events/${data.id}`],
+      });
       setIsEditModalOpen(false);
       toast({
         title: "Event Updated",
@@ -281,6 +298,7 @@ const EventsPageContent: FC = () => {
       });
     },
     onError: (error) => {
+      console.log("Event update mutation failed:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to update event",
@@ -292,7 +310,13 @@ const EventsPageContent: FC = () => {
   // Delete event mutation
   const { mutate: deleteEvent, isPending: isDeletingEvent } = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/events/${id}`);
+      const response = await apiRequest("DELETE", `/api/events/${id}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete event: ${response.status}`);
+      }
+
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
@@ -328,6 +352,7 @@ const EventsPageContent: FC = () => {
       "Event data to be submitted:",
       JSON.stringify(eventData, null, 2)
     );
+    console.log("Calling updateEvent mutation with id:", id);
     updateEvent({ id, data: eventData });
   };
 
@@ -458,14 +483,14 @@ const EventsPageContent: FC = () => {
                 <CalendarIcon className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />{" "}
                 <span className="hidden xs:inline">Calendar</span>
               </Button>
-              <Button
+              {/* <Button
                 variant={viewMode === ViewMode.Map ? "secondary" : "ghost"}
                 onClick={() => handleViewModeChange(ViewMode.Map)}
                 className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium h-8 sm:h-auto"
               >
                 <MapPin className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />{" "}
                 <span className="hidden xs:inline">Map</span>
-              </Button>
+              </Button> */}
             </div>
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
               <Select

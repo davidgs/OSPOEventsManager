@@ -1,11 +1,13 @@
 # Build stage for the client
-FROM node:20-alpine AS client-builder
+FROM docker.io/library/node:20-alpine AS client-builder
 
 WORKDIR /app
 
 # Accept build arguments - no default to force explicit configuration
 ARG VITE_KEYCLOAK_URL
+ARG VERSION
 ENV VITE_KEYCLOAK_URL=$VITE_KEYCLOAK_URL
+ENV APP_VERSION=$VERSION
 
 # Copy package files and install dependencies
 COPY package*.json ./
@@ -22,7 +24,7 @@ RUN if [ ! -d "dist/public" ]; then \
   fi
 
 # Production stage
-FROM node:20-alpine
+FROM docker.io/library/node:20-alpine
 
 WORKDIR /app
 

@@ -38,9 +38,12 @@ show_usage() {
     echo "  --dev          Deploy to development environment"
     echo "  --prod         Deploy to production environment"
     echo "  --help         Show this help message"
-    echo "  --app-only     Deploy only the application"
-    echo "  --keycloak-only Deploy only the keycloak pod"
-    echo "  --ai-only      Deploy only the AI (Ollama) service"
+    echo "  --app          Deploy the application"
+    echo "  --postgres     Deploy the postgres pod"
+    echo "  --keycloak     Deploy the keycloak pod"
+    echo "  --routes       Create routes for the application"
+    echo "  --force        Force rebuild even if version hasn't changed"
+    # echo "  --ai-only      Deploy only the AI (Ollama) service"
     echo "  --delete       Delete all pods while preserving data (WARNING: destructive)"
     echo "  --backup       Create a complete backup of all data (users, events, uploads)"
     echo "  --restore -f   Restore data from backup directory (use with -f /path/to/backup)"
@@ -53,18 +56,24 @@ show_usage() {
     echo "Example:"
     echo "  $0 --dev"
     echo "  $0 --prod"
+    echo "  $0 --dev --app --postgres"
+    echo "  $0 --dev --app --postgres --keycloak"
+    echo "  $0 --prod --app --postgres --keycloak"
 }
 
 # Parse command line arguments
-APP_ONLY=""
-KEYCLOAK_ONLY=""
-AI_ONLY=""
-DELETE_ONLY=""
-BACKUP_ONLY=""
-RESTORE_ONLY=""
+APP=""
+KEYCLOAK=""
+POSTGRES=""
+# AI=""
+DELETE=""
+BACKUP=""
+RESTORE=""
 RESTORE_PATH=""
-DESTROY_ONLY=""
+DESTROY=""
 ENVIRONMENT=""
+ROUTES=""
+FORCE_BUILD=""
 while [[ $# -gt 0 ]]; do
     case $1 in
         --dev)
@@ -79,32 +88,44 @@ while [[ $# -gt 0 ]]; do
             show_usage
             exit 0
             ;;
-        --app-only)
-            APP_ONLY="true"
+        --app)
+            APP="true"
             shift
             ;;
-        --keycloak-only)
-            KEYCLOAK_ONLY="true"
+        --keycloak)
+            KEYCLOAK="true"
             shift
             ;;
-        --ai-only)
-            AI_ONLY="true"
+        --postgres)
+            POSTGRES="true"
+            shift
+            ;;
+        --routes)
+            ROUTES="true"
+            shift
+            ;;
+        # --ai-only)
+        #     AI="true"
+        #     shift
+        #     ;;
+        --force)
+            FORCE_BUILD="true"
             shift
             ;;
         --delete)
-            DELETE_ONLY="true"
+            DELETE="true"
             shift
             ;;
         --backup)
-            BACKUP_ONLY="true"
+            BACKUP="true"
             shift
             ;;
         --restore)
-            RESTORE_ONLY="true"
+            RESTORE="true"
             shift
             ;;
         -f)
-            if [[ "$RESTORE_ONLY" == "true" ]]; then
+            if [[ "$RESTORE" == "true" ]]; then
                 RESTORE_PATH="$2"
                 shift 2
             else
@@ -113,7 +134,7 @@ while [[ $# -gt 0 ]]; do
             fi
             ;;
         --destroy)
-            DESTROY_ONLY="true"
+            DESTROY="true"
             shift
             ;;
         *)
@@ -125,25 +146,25 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate arguments (skip for operations that don't need environment)
-if [[ "$DELETE_ONLY" != "true" && "$BACKUP_ONLY" != "true" && "$RESTORE_ONLY" != "true" && "$DESTROY_ONLY" != "true" && -z "$ENVIRONMENT" ]]; then
-    print_error "Environment not specified. Use --dev or --prod"
+if [[ "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" && -z "$ENVIRONMENT" ]]; then
+    print_error "🚨 Environment not specified. Use --dev or --prod"
     show_usage
     exit 1
 fi
 
 # Validate restore path if restore is specified
-if [[ "$RESTORE_ONLY" == "true" && -z "$RESTORE_PATH" ]]; then
-    print_error "Restore path must be specified with -f option"
+if [[ "$RESTORE" == "true" && -z "$RESTORE_PATH" ]]; then
+    print_error "🚨 Restore path must be specified with -f option"
     show_usage
     exit 1
 fi
 
 # Check for .env file
 if [[ ! -f .env ]]; then
-    print_error ".env file not found!"
-    echo "Please copy env.template to .env and configure your values:"
-    echo "  cp env.template .env"
-    echo "  # Edit .env with your configuration"
+    print_error "🚨 .env file not found!"
+    echo "🚨 Please copy env.template to .env and configure your values:"
+    echo "🚨   cp env.template .env"
+    echo "🚨   # Edit .env with your configuration"
     exit 1
 fi
 
@@ -155,16 +176,19 @@ set +a  # turn off automatic export
 
 # Set environment-specific variables
 if [[ "$ENVIRONMENT" == "dev" ]]; then
-    NAMESPACE="$DEV_NAMESPACE"
-    APP_URL="$DEV_APP_URL"
-    KEYCLOAK_URL="$DEV_KEYCLOAK_URL"
-    VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_DEV"
+    export NAMESPACE="$DEV_NAMESPACE"
+    export APP_URL="$DEV_APP_URL"
+    export KEYCLOAK_URL="$DEV_KEYCLOAK_URL"
+    export VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_DEV"
 else
-    NAMESPACE="$PROD_NAMESPACE"
-    APP_URL="$PROD_APP_URL"
-    KEYCLOAK_URL="$PROD_KEYCLOAK_URL"
-    VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_PROD"
+    export NAMESPACE="$PROD_NAMESPACE"
+    export APP_URL="$PROD_APP_URL"
+    export KEYCLOAK_URL="$PROD_KEYCLOAK_URL"
+    export VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_PROD"
 fi
+
+# Export application configuration variables
+export UPLOADS_DIR="$UPLOADS_DIR"
 
 print_success "Configuration loaded for $ENVIRONMENT environment"
 print_status "Namespace: $NAMESPACE"
@@ -196,7 +220,7 @@ echo ""
 wait_for_deployment() {
     local deployment_name=$1
     local timeout=${2:-300}
-    if [[ "$APP_ONLY" == "true" ]]; then
+    if [[ "$APP" == "true" ]]; then
         print_status "🚀 Skipping wait for $deployment_name to be ready..."
         return 0
     fi
@@ -249,6 +273,42 @@ safety_check() {
             exit 1
         fi
     done
+}
+
+# Function to get version from package.json
+get_package_version() {
+    if [[ ! -f "package.json" ]]; then
+        print_error "🚨 package.json not found"
+        return 1
+    fi
+    grep '"version"' package.json | head -1 | sed 's/.*"version"//' | sed 's/[",: ]//g'
+}
+
+# Function to get latest version from ImageStream tags
+get_latest_image_version() {
+    local imagestream=$1
+    local tags=$(oc get imagestream "${imagestream}" -o jsonpath='{range .status.tags[*]}{.tag}{"\n"}{end}' 2>/dev/null || echo "")
+
+    if [[ -z "$tags" ]]; then
+        print_status "🔍 No tags found for imagestream $imagestream"
+        echo ""
+        return 0
+    fi
+
+    # Filter for version-like tags (e.g., 0.3.15), excluding 'latest'
+    echo "$tags" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -1
+}
+
+# Function to compare version strings (semantic versioning)
+version_greater() {
+    local version1=$1
+    local version2=$2
+
+    # If version2 is empty, version1 is greater
+    [[ -z "$version2" ]] && return 0
+
+    # Compare versions using sort -V (natural sort for version numbers)
+    [ "$version1" != "$(echo -e "$version1\n$version2" | sort -V | head -1)" ]
 }
 
 # SAFETY FUNCTION: Prevent Keycloak realm override without explicit flag
@@ -375,11 +435,15 @@ deploy_keycloak() {
     # SAFETY CHECK: Prevent realm import that could delete users
     keycloak_safety_check
 
-    # Create realm configuration (only if override is explicitly enabled)
+    # Always create the realm config ConfigMap (required by deployment)
+    # But only populate it with realm data if override is explicitly enabled
     if [[ "${KEYCLOAK_OVERRIDE_REALM:-}" == "true" ]]; then
+        print_status "🔓 Creating realm configuration with realm data (OVERRIDE ENABLED)"
         create_keycloak_realm_config
     else
-        print_warning "🔒 Skipping realm configuration import to preserve existing users"
+        print_warning "🔒 Creating empty realm configuration to preserve existing users"
+        # Create an empty ConfigMap to satisfy the deployment requirement
+        oc create configmap keycloak-realm-config --from-file=realm.json=keycloak-realm-export.json --dry-run=client -o yaml | oc apply -f -
     fi
 
     local keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||' | sed 's|/.*||')
@@ -402,8 +466,12 @@ deploy_keycloak() {
 deploy_app() {
     print_status "📦 Deploying OSPO Events Application..."
 
+
+
     # Ensure Docker Hub secret exists for builds
-    create_dockerhub_secret
+    if [[ $APP == "true" ]]; then
+      create_dockerhub_secret
+    fi
 
     # Create keycloak.json configuration dynamically
     cat > /tmp/keycloak.json <<EOF
@@ -425,25 +493,34 @@ EOF
 
     # Create ImageStream
     if [[ ! -f "k8s/app-imagestream.yaml" ]]; then
-        print_error "App ImageStream file not found: k8s/app-imagestream.yaml"
+        print_error "🚨 App ImageStream file not found: k8s/app-imagestream.yaml"
         exit 1
     fi
     oc apply -f k8s/app-imagestream.yaml
 
     # Create BuildConfig
     if [[ ! -f "k8s/app-buildconfig.yaml" ]]; then
-        print_error "App BuildConfig file not found: k8s/app-buildconfig.yaml"
+        print_error "🚨 App BuildConfig file not found: k8s/app-buildconfig.yaml"
         exit 1
     fi
+
+    # Export version for BuildConfig
+    export APP_VERSION="$current_version"
     envsubst < k8s/app-buildconfig.yaml | oc apply -f -
 
     # Start build
-    print_status "🔨 Starting application build..."
+    print_status "🔨 Starting application build for version $current_version..."
     oc start-build ospo-events-app --from-dir=. --wait
+
+    # Tag the image with the version number in addition to 'latest'
+    print_status "🏷️  Tagging image as version $current_version..."
+    oc tag ospo-events-app:latest ospo-events-app:"$current_version"
+
+    print_success "✅ Built and tagged as ospo-events-app:$current_version and ospo-events-app:latest"
 
     # Create Deployment
     if [[ ! -f "k8s/app-deployment.yaml" ]]; then
-        print_error "App deployment file not found: k8s/app-deployment.yaml"
+        print_error "🚨 App deployment file not found: k8s/app-deployment.yaml"
         exit 1
     fi
     envsubst < k8s/app-deployment.yaml | oc apply -f -
@@ -457,7 +534,7 @@ deploy_ai() {
 
     # Check if Ollama deployment file exists
     if [[ ! -f "k8s/ollama-deployment.yaml" ]]; then
-        print_error "Ollama deployment file not found: k8s/ollama-deployment.yaml"
+        print_error "🚨 Ollama deployment file not found: k8s/ollama-deployment.yaml"
         exit 1
     fi
 
@@ -489,7 +566,7 @@ create_routes() {
 
     # Check if routes file exists
     if [[ ! -f "k8s/routes.yaml" ]]; then
-        print_error "Routes file not found: k8s/routes.yaml"
+        print_error "🚨 Routes file not found: k8s/routes.yaml"
         exit 1
     fi
 
@@ -498,7 +575,12 @@ create_routes() {
     local app_hostname=$(echo "$APP_URL" | sed 's|https://||')
     export keycloak_hostname
     export app_hostname
+    print_status "🔍 keycloak_hostname: $keycloak_hostname"
+    print_status "🔍 app_hostname: $app_hostname"
 
+    oc delete route ospo-app --ignore-not-found=true
+    oc delete route keycloak --ignore-not-found=true
+    # oc delete route ollama-nvidia-gpu --ignore-not-found=true
     # Apply routes with environment variable substitution
     envsubst < k8s/routes.yaml | oc apply -f -
 
@@ -526,7 +608,7 @@ delete_all_pods() {
     read -p "Are you absolutely sure you want to delete all pods? Type 'DELETE ALL PODS' to confirm: " confirmation
 
     if [[ "$confirmation" != "DELETE ALL PODS" ]]; then
-        print_error "Deletion cancelled. You must type 'DELETE ALL PODS' exactly to confirm."
+        print_error "🚨 Deletion cancelled. You must type 'DELETE ALL PODS' exactly to confirm."
         exit 1
     fi
 
@@ -615,7 +697,7 @@ delete_all_pods() {
 # Function to create a complete backup of all data
 backup_all_data() {
     if [[ -z "$ENVIRONMENT" ]]; then
-        print_error "Environment must be specified for backup operation. Use --dev or --prod"
+        print_error "🚨 Environment must be specified for backup operation. Use --dev or --prod"
         show_usage
         exit 1
     fi
@@ -631,7 +713,7 @@ backup_all_data() {
 
     # Check if PostgreSQL pod is running
     if ! oc get pod -l app=postgres --field-selector=status.phase=Running | grep -q postgres; then
-        print_error "PostgreSQL pod is not running. Cannot backup database data."
+        print_error "❌ PostgreSQL pod is not running. Cannot backup database data."
         print_status "Attempting to start PostgreSQL..."
         oc scale deployment postgres --replicas=1
         print_status "Waiting for PostgreSQL to be ready..."
@@ -1058,31 +1140,31 @@ main() {
     print_status "🚀 Starting deployment process..."
 
     # SAFETY CHECK: Ensure this script is only used for deployments
-    if [[ "$DELETE_ONLY" != "true" && "$BACKUP_ONLY" != "true" && "$RESTORE_ONLY" != "true" && "$DESTROY_ONLY" != "true" ]]; then
+    if [[ "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" ]]; then
         print_status "🔒 SAFETY MODE ENABLED - This script will NOT perform destructive operations"
         print_status "🔒 All data-preserving operations only"
     fi
 
     # Handle backup operation
-    if [[ "$BACKUP_ONLY" == "true" ]]; then
+    if [[ "$BACKUP" == "true" ]]; then
         backup_all_data
         exit 0
     fi
 
     # Handle restore operation
-    if [[ "$RESTORE_ONLY" == "true" ]]; then
+    if [[ "$RESTORE" == "true" ]]; then
         restore_from_backup
         exit 0
     fi
 
     # Handle destroy operation
-    if [[ "$DESTROY_ONLY" == "true" ]]; then
+    if [[ "$DESTROY" == "true" ]]; then
         destroy_all_data
         exit 0
     fi
 
     # Handle delete operation
-    if [[ "$DELETE_ONLY" == "true" ]]; then
+    if [[ "$DELETE" == "true" ]]; then
         if [[ -z "$ENVIRONMENT" ]]; then
             print_error "Environment must be specified for delete operation. Use --dev or --prod"
             show_usage
@@ -1094,70 +1176,135 @@ main() {
         exit 0
     fi
 
-    if [[ "$APP_ONLY" == "true" ]]; then
-        print_status "🚀 Deploying only the application..."
-        deploy_app
-        oc scale deployment ospo-app --replicas=0
-        sleep 5
-        oc scale deployment ospo-app --replicas=1
-        print_success "🎉 Application deployed successfully!"
-        if [[ "$KEYCLOAK_ONLY" == "true" ]]; then
-            print_status "🚀 Deploying the keycloak pod..."
-            deploy_keycloak
-            oc scale deployment keycloak --replicas=0
-            sleep 5
-            oc scale deployment keycloak --replicas=1
-            print_success "🎉 Keycloak deployed successfully!"
-            exit 0
-        fi
-        exit 0
-    fi
-    if [[ "$KEYCLOAK_ONLY" == "true" ]]; then
-        print_status "🚀 Deploying only the keycloak pod..."
-        deploy_keycloak
-        oc scale deployment keycloak --replicas=0
-        sleep 5
-        oc scale deployment keycloak --replicas=1
-        print_success "🎉 Keycloak deployed successfully!"
-        if [[ "$APP_ONLY" == "true" ]]; then
-            print_status "🚀 Deploying the application..."
-            deploy_app
-            oc scale deployment ospo-app --replicas=0
-            sleep 5
-            oc scale deployment ospo-app --replicas=1
-            print_success "🎉 Application deployed successfully!"
-            exit 0
-        fi
+    if [[ "$ROUTES" == "true" ]]; then
+        create_routes
+        print_success "🎉 Routes created successfully!"
         exit 0
     fi
 
-    if [[ "$AI_ONLY" == "true" ]]; then
-        print_status "🚀 Deploying only the AI (Ollama) service..."
-        deploy_ai
-        exit 0
+    # Deploy pods according to flags
+    # Deploy postgres if flag is set
+    if [[ "$POSTGRES" == "true" ]]; then
+        print_status "🚀 Deploying the postgres pod..."
+        oc scale deployment postgres --replicas=0
+        sleep 5
+        deploy_postgres
+        sleep 5
+        oc scale deployment postgres --replicas=1
+        print_success "🎉 Postgres deployed successfully!"
+
     fi
+    # Deploy keycloak if flag is set
+    if [[ "$KEYCLOAK" == "true" ]]; then
+        print_status "🚀 Deploying the keycloak pod..."
+        kc_running=$(oc get pods | grep keycloak | wc -l)
+        if [[ $kc_running -eq 0 ]]; then
+          print_status "🚀 Keycloak not running, deploying the keycloak pod..."
+          deploy_keycloak
+          sleep 5
+          print_success "🎉 Keycloak deployed successfully!"
+
+        else
+          oc scale deployment keycloak --replicas=0
+          sleep 5
+          deploy_keycloak
+          sleep 5
+          oc scale deployment keycloak --replicas=1
+          print_success "🎉 Keycloak deployed successfully!"
+        fi
+
+    fi
+    # Deploy application if flag is set
+    if [[ "$APP" == "true" ]]; then
+      print_status "🚀 Deploying the application..."
+      # Get current version from package.json
+      local current_version=$(get_package_version)
+      print_status "🔍 Current version in package.json: $current_version"
+
+      # Check if build is needed (unless --force is specified)
+      if [[ "$FORCE_BUILD" != "true" ]]; then
+        local imagestream_name="ospo-events-app"
+        latest_tagged_version=$(get_latest_image_version "$imagestream_name")
+        print_status "🔍 Latest version in registry: $latest_tagged_version"
+        if [[ -n "$latest_tagged_version" ]]; then
+          print_status "🔍 Latest version in registry: $latest_tagged_version"
+          if version_greater "$current_version" "$latest_tagged_version"; then
+            print_status "Version $current_version > $latest_tagged_version, build needed"
+          else
+            print_success "Version $current_version <= $latest_tagged_version, skipping build"
+            print_success "Use --force flag to force a rebuild"
+            return 0
+          fi
+        else
+          print_status "🔍 No previous version found in registry, building first version"
+        fi
+      else
+        print_status "Force build requested, skipping version check"
+      fi
+      deploy_app
+      oc scale deployment ospo-app --replicas=0
+      sleep 5
+      oc scale deployment ospo-app --replicas=1
+      print_success "🎉 Application deployed successfully!"
+    fi
+    if [[ "$APP" == "true" || "$KEYCLOAK" == "true" || "$POSTGRES" == "true" || "$MINIO" == "true" || "$AI" == "true" ]]; then
+      create_routes
+      print_success "🎉 Deployment completed successfully!"
+      echo ""
+      print_status "📋 Deployment Summary:"
+      if [[ "$APP" == "true" ]]; then
+        echo "   Application Redeployed"
+      fi
+      if [[ "$KEYCLOAK" == "true" ]]; then
+        echo "   Keycloak Redeployed"
+      fi
+      if [[ "$POSTGRES" == "true" ]]; then
+        echo "   PostgreSQL Redeployed"
+      fi
+      if [[ "$MINIO" == "true" ]]; then
+        echo "   MinIO Redeployed"
+      fi
+      if [[ "$AI" == "true" ]]; then
+        echo "   AI Redeployed"
+      fi
+      echo "   Environment: $ENVIRONMENT"
+      echo "   Namespace: $NAMESPACE"
+      echo "   Application URL: $APP_URL"
+      echo "   Keycloak URL: $KEYCLOAK_URL"
+      echo ""
+      print_status "🔍 Checking deployment status..."
+      oc get pods -l app
+      exit 0
+    fi
+    # Deploy AI if flag is set
+    # if [[ "$AI" == "true" ]]; then
+    #     print_status "🚀 Deploying only the AI (Ollama) service..."
+    #     deploy_ai
+    #     exit 0
+    # fi
 
     # Deploy components in order
-    create_dockerhub_secret
-    deploy_postgres
-    deploy_minio
-    deploy_keycloak
-    deploy_app
-    deploy_ai
-    create_routes
+        create_dockerhub_secret
+        deploy_postgres
+        deploy_keycloak
+        deploy_app
+        create_routes
+        print_success "🎉 Deployment completed successfully!"
+      echo ""
+      print_status "📋 Deployment Summary:"
+      echo "   Environment: $ENVIRONMENT"
+      echo "   Namespace: $NAMESPACE"
+      echo "   Application URL: $APP_URL"
+      echo "   Keycloak URL: $KEYCLOAK_URL"
+      echo ""
+    # if [[ "$MINIO" != "true" ]]; then
+    #     deploy_minio
+    # fi
+    # if [[ "$AI" != "true" ]]; then
+    #     deploy_ai
+    # fi
 
-    print_success "🎉 Deployment completed successfully!"
-    echo ""
-    print_status "📋 Deployment Summary:"
-    echo "   Environment: $ENVIRONMENT"
-    echo "   Namespace: $NAMESPACE"
-    echo "   Application URL: $APP_URL"
-    echo "   Keycloak URL: $KEYCLOAK_URL"
-    echo "   AI Service: ollama-nvidia-gpu (internal)"
-    echo ""
-    print_status "🔍 Checking deployment status..."
-    oc get pods -l app
-    echo ""
+    # echo "   AI Service: ollama-nvidia-gpu (internal)"
     print_success "✨ OSPO Events Manager is now deployed and ready!"
 }
 
