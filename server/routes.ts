@@ -23,6 +23,7 @@ import fileUpload from "express-fileupload";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import rateLimit from "express-rate-limit";
 import { UserService } from "./services/user-service";
 
 // Authorization utilities
@@ -543,7 +544,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Documentation endpoint - serves markdown files
-  app.get("/api/docs/*", async (req: Request, res: Response) => {
+  const docsRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again later.",
+  });
+  app.get("/api/docs/*", docsRateLimiter, async (req: Request, res: Response) => {
     try {
       const docPath = req.params[0] || 'index.md';
       const filePath = path.join(process.cwd(), 'docs', docPath);
