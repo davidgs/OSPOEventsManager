@@ -32,6 +32,7 @@ import {
   Workflow,
   MessageCircle,
   Info,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -163,6 +164,19 @@ export function Header() {
         {/* Right side controls */}
         <div className="flex items-center gap-2 sm:gap-4">
           {/* Feedback button */}
+          {/* Documentation button - always visible */}
+          <Link href="/docs">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden sm:flex items-center gap-2"
+              title="View Documentation"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden md:inline">Docs</span>
+            </Button>
+          </Link>
+
           <Button
             variant="ghost"
             size="sm"
