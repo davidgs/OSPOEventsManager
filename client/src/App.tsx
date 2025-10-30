@@ -21,6 +21,7 @@ import ApprovalWorkflowsPage from "@/pages/approval-workflows/index";
 import UsersPage from "@/pages/users/index";
 import SettingsPage from "@/pages/settings";
 import UnauthorizedPage from "@/pages/unauthorized";
+import DocsPage from "@/pages/docs-page";
 // import EventManagementHelp from "@/pages/help/event-management";
 // import CfpTrackingHelp from "@/pages/help/cfp-tracking";
 // import AttendeeManagementHelp from "@/pages/help/attendee-management";
@@ -43,6 +44,10 @@ function App() {
               <Route path="/auth" component={AuthPage} />
               <Route path="/login" component={AuthPage} />
               <Route path="/unauthorized" component={UnauthorizedPage} />
+
+              {/* Documentation routes - public access */}
+              <Route path="/docs" component={DocsPage} />
+              <Route path="/docs/:rest*" component={DocsPage} />
 
               {/* Help pages - temporarily disabled */}
               {/* <Route

@@ -1,0 +1,15 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 Documentation
+    url: https://rh-events.org/docs
+    about: Check our comprehensive documentation first
+  - name: 💬 Discussion Forum
+    url: https://github.com/your-org/OSPOEventsManager/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 🆘 Support
+    url: https://github.com/your-org/OSPOEventsManager/wiki/Support
+    about: Get help from the support team
+  - name: 🔒 Security (Private)
+    url: mailto:security@your-domain.com
+    about: Report critical security vulnerabilities privately
+
