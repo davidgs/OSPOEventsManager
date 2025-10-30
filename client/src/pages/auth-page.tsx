@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/auth-context';
 import { LoginButton } from '@/components/auth/LoginButton';
@@ -43,18 +43,18 @@ export default function AuthPage() {
                 </span>
               </div>
             </div>
-            <Button 
+            <Button
               variant="outline"
               onClick={() => {
                 // Get base URL, handling relative paths
                 const baseUrl = import.meta.env.VITE_KEYCLOAK_URL || '/auth';
-                const keycloakUrl = baseUrl.startsWith('/') 
-                  ? window.location.origin + baseUrl 
+                const keycloakUrl = baseUrl.startsWith('/')
+                  ? window.location.origin + baseUrl
                   : baseUrl;
-                  
+
                 const redirectUri = encodeURIComponent(window.location.origin);
                 const registrationUrl = `${keycloakUrl}/realms/ospo-events/protocol/openid-connect/auth?client_id=ospo-events-app&redirect_uri=${redirectUri}&response_type=code&scope=openid&kc_action=register`;
-                
+
                 console.log('Registration URL:', registrationUrl);
                 window.location.href = registrationUrl;
               }}

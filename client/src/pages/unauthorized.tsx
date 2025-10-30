@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldAlert, Home } from 'lucide-react';
@@ -18,14 +19,14 @@ export default function UnauthorizedPage() {
             You don't have permission to access this resource
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="text-center">
           <p className="text-sm text-muted-foreground">
-            Your account doesn't have the required permissions to view this page. 
+            Your account doesn't have the required permissions to view this page.
             If you believe this is an error, please contact your administrator.
           </p>
         </CardContent>
-        
+
         <CardFooter className="flex justify-center gap-4">
           <Button variant="outline" onClick={() => window.history.back()}>
             Go Back

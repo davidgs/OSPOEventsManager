@@ -41,7 +41,6 @@ export const eventsRelations = relations(schema.events, ({ one, many }) => ({
   attendees: many(schema.attendees),
   sponsorships: many(schema.sponsorships),
   assets: many(schema.assets),
-  approvalWorkflows: many(schema.approvalWorkflows),
 }));
 
 export const cfpSubmissionsRelations = relations(schema.cfpSubmissions, ({ one, many }) => ({
@@ -97,12 +96,8 @@ export const stakeholdersRelations = relations(schema.stakeholders, ({ one }) =>
 }));
 
 export const approvalWorkflowsRelations = relations(schema.approvalWorkflows, ({ one, many }) => ({
-  event: one(schema.events, {
-    fields: [schema.approvalWorkflows.event_id],
-    references: [schema.events.id],
-  }),
-  createdBy: one(schema.users, {
-    fields: [schema.approvalWorkflows.created_by],
+  requester: one(schema.users, {
+    fields: [schema.approvalWorkflows.requester_id],
     references: [schema.users.id],
   }),
   reviewers: many(schema.workflowReviewers),
@@ -269,6 +264,12 @@ export {
 } from './database-types.js';
 
 // Keep legacy names for backward compatibility
+import {
+  insertCFPSubmissionSchema,
+  updateCFPSubmissionSchema,
+  updateUserProfileSchema,
+} from './database-types.js';
+
 export {
   insertCFPSubmissionSchema as insertCfpSubmissionSchema,
   updateCFPSubmissionSchema as updateCfpSubmissionSchema,

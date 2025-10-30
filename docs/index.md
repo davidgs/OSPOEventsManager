@@ -23,6 +23,7 @@ Welcome to the OSPO Events Manager documentation. This comprehensive guide will 
 
 - [Architecture Overview](developer/architecture.md) - System architecture and design
 - [Development Setup](developer/setup.md) - Setting up your development environment
+- [Testing Guide](developer/testing.md) - Running and writing tests
 - [API Documentation](developer/api.md) - REST API endpoints and usage
 - [Database Schema](developer/database.md) - Database structure and relationships
 - [Deployment Guide](developer/deployment.md) - Deploying to OpenShift
