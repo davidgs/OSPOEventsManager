@@ -23,6 +23,7 @@ import fileUpload from "express-fileupload";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import rateLimit from "express-rate-limit";
 import { UserService } from "./services/user-service";
 
 // Authorization utilities
@@ -539,6 +540,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('[FIX DAVID ASSET NOW] Error:', error);
       res.status(500).json({ message: "Failed to fix asset ownership", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Documentation endpoint - serves markdown files
+  const docsRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again later.",
+  });
+  app.get("/api/docs/*", docsRateLimiter, async (req: Request, res: Response) => {
+    try {
+      const docPath = req.params[0] || 'index.md';
+      const filePath = path.join(process.cwd(), 'docs', docPath);
+
+      // Security: Prevent directory traversal
+      const normalizedPath = path.normalize(filePath);
+      const docsDir = path.join(process.cwd(), 'docs');
+      if (!normalizedPath.startsWith(docsDir)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Check if file exists
+      if (!fs.existsSync(normalizedPath)) {
+        return res.status(404).json({ message: "Documentation not found" });
+      }
+
+      // Read and return the markdown file
+      const content = fs.readFileSync(normalizedPath, 'utf-8');
+      res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving documentation:", error);
+      res.status(500).json({ message: "Failed to load documentation" });
     }
   });
 

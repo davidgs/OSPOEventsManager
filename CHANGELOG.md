@@ -8,6 +8,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Comprehensive Documentation System** (2025-10-30)
+  - Created `/docs` directory with structured documentation
+  - User guides: getting started (250+ lines), managing events (350+ lines), comprehensive FAQ (500+ lines)
+  - Developer documentation: architecture overview (450+ lines), deployment guide
+  - Admin guides: user management, event review, system settings (placeholders)
+  - General documentation: troubleshooting, requirements, support
+  - Documentation viewer React component with sidebar navigation
+  - Backend API endpoint (`/api/docs/*`) to serve markdown files
+  - "Docs" button in application header for easy access
+  - Mobile-responsive documentation interface
+  - Total: 1500+ lines of documentation
+- **Flow Diagram Documentation** (`FLOW_DIAGRAM.md`)
+  - Complete system architecture diagrams
+  - User authentication flow
+  - API request flow with middleware stack
+  - File upload flow
+  - Deployment flow (OpenShift)
+  - Data model relationships
+  - Security architecture (defense in depth)
+  - Environment-specific configurations
+  - Technology stack summary
+- **Environment Configuration Enhancements**
+  - Updated `env.template` with 29 additional configuration variables
+  - Added session configuration options
+  - Added rate limiting configuration
+  - Added CSP (Content Security Policy) configuration
+  - Added Helmet security headers configuration
+  - Added proxy configuration options
+  - Added MinIO connection details for application usage
+  - Added AI configuration (OLLAMA_MODEL)
+  - Added VITE_KEYCLOAK_URL for active environment
+  - Total: 120 configuration variables in template (up from 91)
 - Users page with user management functionality
 - User profile editing capabilities
 - Asset ownership tracking and management
@@ -22,8 +54,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PostgreSQL database integration
 - Docker containerization
 - OpenShift deployment configuration
+- Persistent file storage configuration (10Gi PVCs for uploads and database)
 
 ### Changed
+- **Keycloak Realm Configuration** (2025-10-30)
+  - Updated `keycloak-realm-export.json` to include custom domain redirect URIs
+  - Added `*.rh-events.org`, `dev.rh-events.org`, and `rh-events.org` to valid redirect URIs
+  - Added matching web origins for proper CORS handling
+  - Removed redundant `prod.rh-events.org` (now using root domain)
+  - Removed OpenShift cluster-specific URLs (consolidated to custom domains)
+- **Documentation Integration**
+  - Modified `server/routes.ts` to add documentation endpoint with security
+  - Updated `client/src/App.tsx` to add documentation routes
+  - Enhanced `client/src/components/layout/Header.tsx` with Docs button
+  - Added `react-markdown` dependency for Markdown rendering
+- **Configuration Improvements**
+  - Synchronized all environment variables between `.env` and `env.template`
+  - Documented all 120 configuration options in template
+  - Added comprehensive comments for each configuration section
 - Fixed invalid image reference in deployment configuration
 - Updated Dockerfile to use fully qualified image names
 - Enhanced Content Security Policy configuration
@@ -63,8 +111,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed add/edit/delete event mutations to properly handle API responses
   - EditEventModal now closes automatically on successful update
   - Added proper error handling and success feedback for all event operations
+- **Documentation Endpoint**: Fixed 401 Unauthorized error on documentation access (2025-10-30)
+  - Added `/api/docs/*` to list of public endpoints
+  - Documentation now accessible without authentication
+  - Updated both authenticated and fallback security middleware
 
 ### Security
+- **Keycloak Domain Configuration** (2025-10-30)
+  - Fixed Keycloak hostname misconfiguration preventing login
+  - Ensured `keycloak-prod.rh-events.org` is properly configured
+  - Updated redirect URIs to support custom domains
+  - Enhanced CORS configuration for custom domains
+- **Documentation Endpoint Security**
+  - Implemented path traversal protection in documentation API
+  - Sanitizes file paths to prevent directory traversal attacks
+  - Validates file existence before serving
+  - Proper error handling for security-related failures
 - Implemented comprehensive file upload validation
 - Added rate limiting middleware
 - Enhanced input sanitization
@@ -110,14 +172,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - File upload size limits and type restrictions may need adjustment based on usage
 
 ### Next Steps
+- **Documentation Expansion**
+  - Complete user documentation: CFP submissions, file uploads, user profile, approval workflows
+  - Create admin documentation: user management, event review, system settings, backup/restore procedures
+  - Develop developer documentation: API endpoints, database schema details, local setup, configuration guide, security practices
+  - Add general documentation: system requirements, complete changelog, comprehensive troubleshooting
 - Add more comprehensive user management features
 - Implement bulk operations for events and assets
 - Add advanced search and filtering capabilities
 - Enhance reporting and analytics features
 - Improve mobile responsiveness
 - Add automated testing suite
-- **MinIO Integration**: Replace local file storage with MinIO object storage for better scalability and reliability
-  - Implement MinIO client integration in backend
-  - Update file upload/serving logic to use MinIO endpoints
-  - Migrate existing assets from persistent volume to MinIO
-  - Remove unused MinIO deployment or fully utilize it
+- **MinIO Integration**: Currently not in use - decide to either implement fully or remove
+  - Application uses direct PVC storage at `/app/uploads` (10Gi)
+  - MinIO deployment exists but is not integrated into application code
+  - Options: (1) Implement S3-compatible MinIO storage, or (2) Remove unused MinIO components
+- **Keycloak Custom Domain Route**
+  - Create OpenShift route for `keycloak-prod.rh-events.org` with Let's Encrypt certificate
+  - Run created script: `create-keycloak-prod-route.sh` (if still exists)
+  - Verify DNS configuration points to OpenShift router
