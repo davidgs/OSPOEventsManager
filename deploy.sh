@@ -566,7 +566,7 @@ create_routes() {
 
     # Check if routes file exists
     if [[ ! -f "k8s/routes.yaml" ]]; then
-        print_error "Routes file not found: k8s/routes.yaml"
+        print_error "🚨 Routes file not found: k8s/routes.yaml"
         exit 1
     fi
 
@@ -608,7 +608,7 @@ delete_all_pods() {
     read -p "Are you absolutely sure you want to delete all pods? Type 'DELETE ALL PODS' to confirm: " confirmation
 
     if [[ "$confirmation" != "DELETE ALL PODS" ]]; then
-        print_error "Deletion cancelled. You must type 'DELETE ALL PODS' exactly to confirm."
+        print_error "🚨 Deletion cancelled. You must type 'DELETE ALL PODS' exactly to confirm."
         exit 1
     fi
 
@@ -697,7 +697,7 @@ delete_all_pods() {
 # Function to create a complete backup of all data
 backup_all_data() {
     if [[ -z "$ENVIRONMENT" ]]; then
-        print_error "Environment must be specified for backup operation. Use --dev or --prod"
+        print_error "🚨 Environment must be specified for backup operation. Use --dev or --prod"
         show_usage
         exit 1
     fi
@@ -713,7 +713,7 @@ backup_all_data() {
 
     # Check if PostgreSQL pod is running
     if ! oc get pod -l app=postgres --field-selector=status.phase=Running | grep -q postgres; then
-        print_error "PostgreSQL pod is not running. Cannot backup database data."
+        print_error "❌ PostgreSQL pod is not running. Cannot backup database data."
         print_status "Attempting to start PostgreSQL..."
         oc scale deployment postgres --replicas=1
         print_status "Waiting for PostgreSQL to be ready..."
@@ -1216,37 +1216,36 @@ main() {
     fi
     # Deploy application if flag is set
     if [[ "$APP" == "true" ]]; then
-        print_status "🚀 Deploying the application..."
-        # Get current version from package.json
-        local current_version=$(get_package_version)
-    print_status "🔍 Current version in package.json: $current_version"
+      print_status "🚀 Deploying the application..."
+      # Get current version from package.json
+      local current_version=$(get_package_version)
+      print_status "🔍 Current version in package.json: $current_version"
 
-    # Check if build is needed (unless --force is specified)
-    if [[ "$FORCE_BUILD" != "true" ]]; then
+      # Check if build is needed (unless --force is specified)
+      if [[ "$FORCE_BUILD" != "true" ]]; then
         local imagestream_name="ospo-events-app"
         latest_tagged_version=$(get_latest_image_version "$imagestream_name")
         print_status "🔍 Latest version in registry: $latest_tagged_version"
         if [[ -n "$latest_tagged_version" ]]; then
-            print_status "🔍 Latest version in registry: $latest_tagged_version"
-
-            if version_greater "$current_version" "$latest_tagged_version"; then
-                print_status "Version $current_version > $latest_tagged_version, build needed"
-            else
-                print_success "Version $current_version <= $latest_tagged_version, skipping build"
-                print_success "Use --force flag to force a rebuild"
-                return 0
-            fi
+          print_status "🔍 Latest version in registry: $latest_tagged_version"
+          if version_greater "$current_version" "$latest_tagged_version"; then
+            print_status "Version $current_version > $latest_tagged_version, build needed"
+          else
+            print_success "Version $current_version <= $latest_tagged_version, skipping build"
+            print_success "Use --force flag to force a rebuild"
+            return 0
+          fi
         else
-            print_status "🔍 No previous version found in registry, building first version"
+          print_status "🔍 No previous version found in registry, building first version"
         fi
-    else
+      else
         print_status "Force build requested, skipping version check"
-    fi
-        deploy_app
-        oc scale deployment ospo-app --replicas=0
-        sleep 5
-        oc scale deployment ospo-app --replicas=1
-        print_success "🎉 Application deployed successfully!"
+      fi
+      deploy_app
+      oc scale deployment ospo-app --replicas=0
+      sleep 5
+      oc scale deployment ospo-app --replicas=1
+      print_success "🎉 Application deployed successfully!"
     fi
     if [[ "$APP" == "true" || "$KEYCLOAK" == "true" || "$POSTGRES" == "true" || "$MINIO" == "true" || "$AI" == "true" ]]; then
       create_routes
@@ -1286,7 +1285,6 @@ main() {
 
     # Deploy components in order
         create_dockerhub_secret
-
         deploy_postgres
         deploy_keycloak
         deploy_app
