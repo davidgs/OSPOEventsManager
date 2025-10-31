@@ -9,7 +9,7 @@ import { nanoid } from "nanoid";
 import { createServer as createViteServer } from "vite";
 
 // const viteLogger = createLogger();
-const viteLogger = console;
+const viteLogger: any = console;
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -38,8 +38,12 @@ export async function setupVite(app: Express, server: Server) {
         viteLogger.error(msg, options);
         process.exit(1);
       },
-    },
-    server: serverOptions,
+      warnOnce: viteLogger.warnOnce || ((() => {}) as any),
+      clearScreen: viteLogger.clearScreen || ((() => {}) as any),
+      hasErrorLogged: viteLogger.hasErrorLogged || (() => false),
+      hasWarned: viteLogger.hasWarned || (() => false),
+    } as any,
+    server: serverOptions as any,
     appType: "custom",
   });
 

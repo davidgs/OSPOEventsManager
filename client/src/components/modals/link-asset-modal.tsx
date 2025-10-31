@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import type { Asset } from "@shared/schema";
 
 interface LinkAssetModalProps {
   isOpen: boolean;
@@ -41,7 +42,7 @@ export function LinkAssetModal({
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
 
   // Fetch all unlinked assets (assets that aren't already linked to this event)
-  const { data: assets = [], isLoading: isLoadingAssets } = useQuery({
+  const { data: assets = [], isLoading: isLoadingAssets } = useQuery<Asset[]>({
     queryKey: [`/api/assets?unlinked=${eventId}`],
     enabled: isOpen,
   });
@@ -79,11 +80,8 @@ export function LinkAssetModal({
   const filteredAssets = assets.filter(
     (asset) =>
       safeToLowerCase(asset.name).includes(safeToLowerCase(searchQuery)) ||
-      safeToLowerCase(asset.type).includes(safeToLowerCase(searchQuery)) ||
-      (asset.description &&
-        safeToLowerCase(asset.description).includes(
-          safeToLowerCase(searchQuery)
-        ))
+      safeToLowerCase(asset.type).includes(safeToLowerCase(searchQuery))
+      // Description field removed - not in asset schema
   );
 
   const handleToggleAsset = (assetId: number) => {
@@ -120,9 +118,9 @@ export function LinkAssetModal({
         <div className="w-12 h-12 bg-gray-100 rounded-md overflow-hidden">
           <img
             src={
-              asset.filePath.startsWith("/")
-                ? asset.filePath
-                : `/${asset.filePath}`
+              asset.file_path.startsWith("/")
+                ? asset.file_path
+                : `/${asset.file_path}`
             }
             alt={asset.name}
             className="w-full h-full object-contain"

@@ -69,11 +69,11 @@ const profileFormSchema = z.object({
 });
 
 const notificationFormSchema = z.object({
-  email_notifications: z.boolean().default(true),
-  cfp_deadline_reminders: z.boolean().default(true),
-  cfp_status_updates: z.boolean().default(true),
-  new_cfp_digest: z.boolean().default(false),
-  event_reminders: z.boolean().default(true),
+  email_notifications: z.boolean(),
+  cfp_deadline_reminders: z.boolean(),
+  cfp_status_updates: z.boolean(),
+  new_cfp_digest: z.boolean(),
+  event_reminders: z.boolean(),
 });
 
 const SettingsPage: FC = () => {
@@ -106,13 +106,14 @@ const SettingsPage: FC = () => {
           email: userData.email || "",
           bio: userData.bio || "",
           role: userData.role || "",
-          jobTitle: userData.jobTitle || "",
+          jobTitle: userData.job_title || "",
         }
       : undefined,
   });
 
   // Notifications form
-  const notificationForm = useForm<z.infer<typeof notificationFormSchema>>({
+  type NotificationFormData = z.infer<typeof notificationFormSchema>;
+  const notificationForm = useForm<NotificationFormData>({
     resolver: zodResolver(notificationFormSchema),
     defaultValues: {
       email_notifications: true,
@@ -132,7 +133,7 @@ const SettingsPage: FC = () => {
         job_title: data.jobTitle,
         jobTitle: undefined, // Remove the camelCase version
       };
-      return apiRequest<User>(
+      return apiRequest(
         "PUT",
         `/api/users/${userId}/profile`,
         transformedData
@@ -218,7 +219,7 @@ const SettingsPage: FC = () => {
   // Handle headshot remove
   const handleRemoveHeadshot = async () => {
     try {
-      await apiRequest<User>("PUT", `/api/users/${userId}/profile`, {
+      await apiRequest("PUT", `/api/users/${userId}/profile`, {
         headshot: null,
       });
 

@@ -39,10 +39,10 @@ jobs:
         continue-on-error: true
 
       - name: Run tests
-        run: npm test -- --run
+        run: npm run test
 
       - name: Generate coverage report
-        run: npm run test:coverage -- --run
+        run: npm run test:coverage
         continue-on-error: true
 
       - name: Upload coverage to Codecov

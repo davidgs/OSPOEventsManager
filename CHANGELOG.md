@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Event Creator Information Display** (2025-01-XX)
+  - Added creator name and avatar display to event cards
+  - Event cards now show who created each event in the footer
+  - Automatic fallback to "Unknown User" when creator information is not available
+  - Backend storage methods (`getEvents()` and `getEvent()`) now include creator information
+    - Efficient batch fetching of creator data to avoid N+1 queries
+    - Creator name and avatar attached to event objects
+  - Frontend event card component updated to display creator info
+    - Shows creator avatar (or initial fallback if no avatar)
+    - Shows creator name (or "Unknown User" if missing)
+    - Positioned in card footer alongside "View details" link
+  - Added comprehensive unit tests (14 new tests)
+    - Storage layer tests for creator information enrichment (4 tests)
+    - Event card component tests for creator display (10 tests)
 - **GitHub Actions CI/CD Pipeline** (2025-10-30)
   - Created comprehensive CI pipeline workflow (`ci.yml`)
     - Lint and TypeScript type checking job

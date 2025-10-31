@@ -11,44 +11,44 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  CheckCircle, XCircle, AlertCircle, Clock, ArrowLeft, 
+import {
+  CheckCircle, XCircle, AlertCircle, Clock, ArrowLeft,
   UserCog, MessageSquare, History, ClipboardCheck, MessageCircle
 } from "lucide-react";
 import { approvalStatuses } from "@/lib/constants";
+import type { ApprovalWorkflow } from "@shared/schema";
 
 export default function WorkflowDetailPage() {
   const [_, setLocation] = useLocation();
   const { id } = useParams();
   const { toast } = useToast();
-  const workflowId = parseInt(id);
+  const workflowId = id ? parseInt(id) : NaN;
   const [activeTab, setActiveTab] = useState("details");
   const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
 
   // Fetch workflow with related data
-  const { data: workflow, isLoading, error } = useQuery({
+  type WorkflowWithRelations = ApprovalWorkflow & {
+    reviewers?: any[];
+    comments?: any[];
+    history?: any[];
+    status?: string;
+    metadata?: Record<string, any>;
+  };
+  const { data: workflowData, isLoading, error } = useQuery<WorkflowWithRelations | undefined>({
     queryKey: [`/api/approval-workflows/${workflowId}`],
     enabled: !isNaN(workflowId),
-    onSuccess: (data) => {
-      // Log successful data retrieval
-      console.log("Workflow data received:", data);
-    },
-    onError: (err) => {
-      console.error("Error fetching workflow:", err);
-    }
   });
+
+  const workflow = workflowData as WorkflowWithRelations | undefined;
 
   // Add a new comment
   const createCommentMutation = useMutation({
-    mutationFn: (data: { workflowId: number; userId: number; text: string }) => 
-      apiRequest('/api/workflow-comments', {
-        method: 'POST',
-        data: {
-          workflowId: data.workflowId,
-          userId: data.userId,
-          text: data.text
-        }
+    mutationFn: (data: { workflowId: number; userId: number; text: string }) =>
+      apiRequest('POST', '/api/workflow-comments', {
+        workflow_id: data.workflowId,
+        commenter_id: data.userId,
+        comment: data.text
       }),
     onSuccess: () => {
       toast({
@@ -71,11 +71,8 @@ export default function WorkflowDetailPage() {
 
   // Update workflow status
   const updateStatusMutation = useMutation({
-    mutationFn: (data: { status: string; userId: number }) => 
-      apiRequest(`/api/approval-workflows/${workflowId}/status`, {
-        method: 'PUT',
-        data
-      }),
+    mutationFn: (data: { status: string; userId: number }) =>
+      apiRequest('PUT', `/api/approval-workflows/${workflowId}/status`, data),
     onSuccess: () => {
       toast({
         title: "Status updated",
@@ -122,11 +119,11 @@ export default function WorkflowDetailPage() {
       case "pending":
         return <Badge variant="outline" className="flex items-center gap-1"><Clock className="h-4 w-4" /> Pending</Badge>;
       case "approved":
-        return <Badge variant="success" className="flex items-center gap-1 bg-green-500"><CheckCircle className="h-4 w-4" /> Approved</Badge>;
+        return <Badge variant="default" className="flex items-center gap-1 bg-green-500"><CheckCircle className="h-4 w-4" /> Approved</Badge>;
       case "rejected":
         return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="h-4 w-4" /> Rejected</Badge>;
       case "changes_requested":
-        return <Badge variant="warning" className="flex items-center gap-1 bg-yellow-500"><AlertCircle className="h-4 w-4" /> Changes Requested</Badge>;
+        return <Badge variant="secondary" className="flex items-center gap-1 bg-yellow-500"><AlertCircle className="h-4 w-4" /> Changes Requested</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -134,9 +131,9 @@ export default function WorkflowDetailPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, { 
-      year: 'numeric', 
-      month: 'short', 
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -213,19 +210,19 @@ export default function WorkflowDetailPage() {
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-2xl">{workflow.title}</CardTitle>
+                  <CardTitle className="text-2xl">{workflow?.title || 'Untitled Workflow'}</CardTitle>
                   <CardDescription className="mt-1">
-                    {workflow.itemType && workflow.itemType.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                    {workflow.itemId && (
+                    {workflow?.item_type && workflow.item_type.split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                    {workflow?.item_id && (
                       <span className="ml-1 font-medium">
-                        for Event #{workflow.itemId}
+                        for Event #{workflow.item_id}
                       </span>
                     )}
                   </CardDescription>
                 </div>
                 <div className="flex flex-col gap-2 items-end">
-                  {workflow.status && getStatusBadge(workflow.status)}
-                  {workflow.priority && <Badge variant="outline" className="capitalize">{workflow.priority} Priority</Badge>}
+                  {workflow?.status && getStatusBadge(workflow.status)}
+                  {workflow?.priority && <Badge variant="outline" className="capitalize">{workflow.priority} Priority</Badge>}
                 </div>
               </div>
             </CardHeader>
@@ -240,26 +237,26 @@ export default function WorkflowDetailPage() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">Created:</span>{' '}
-                  {workflow.createdAt ? formatDate(workflow.createdAt) : 'Unknown'}
+                  {workflow.created_at ? formatDate(new Date(workflow.created_at).toISOString()) : 'Unknown'}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Last Updated:</span>{' '}
-                  {workflow.updatedAt ? formatDate(workflow.updatedAt) : 'Unknown'}
+                  {workflow.updated_at ? formatDate(new Date(workflow.updated_at).toISOString()) : 'Unknown'}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Due Date:</span>{' '}
-                  {workflow.dueDate ? formatDate(workflow.dueDate) : 'No due date'}
+                  {workflow.due_date ? formatDate(workflow.due_date) : 'No due date'}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Requester:</span>{' '}
-                  {workflow.requesterId ? `User #${workflow.requesterId}` : 'Unknown'}
+                  {workflow.requester_id ? `User #${workflow.requester_id}` : 'Unknown'}
                 </div>
-                {workflow.estimatedCosts && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground font-medium">Estimated Costs:</span>{' '}
-                    <span className="font-semibold">{workflow.estimatedCosts}</span>
-                  </div>
-                )}
+                  {workflow.estimated_costs && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground font-medium">Estimated Costs:</span>{' '}
+                      <span className="font-semibold">{workflow.estimated_costs}</span>
+                    </div>
+                  )}
               </div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2 border-t pt-4">
@@ -278,7 +275,7 @@ export default function WorkflowDetailPage() {
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4">
-                    <Textarea 
+                    <Textarea
                       placeholder="Enter your comment..."
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
@@ -286,14 +283,14 @@ export default function WorkflowDetailPage() {
                     />
                   </div>
                   <DialogFooter>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setIsCommentDialogOpen(false)}
                       disabled={createCommentMutation.isPending}
                     >
                       Cancel
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleAddComment}
                       disabled={createCommentMutation.isPending}
                     >
@@ -305,7 +302,7 @@ export default function WorkflowDetailPage() {
 
               <div className="flex gap-2">
                 {workflow.status !== "approved" && (
-                  <Button 
+                  <Button
                     className="flex items-center gap-2 bg-green-500 hover:bg-green-600"
                     onClick={() => handleUpdateStatus("approved")}
                     disabled={updateStatusMutation.isPending}
@@ -314,10 +311,10 @@ export default function WorkflowDetailPage() {
                     <span>Approve</span>
                   </Button>
                 )}
-                
+
                 {workflow.status !== "rejected" && (
-                  <Button 
-                    variant="destructive" 
+                  <Button
+                    variant="destructive"
                     className="flex items-center gap-2"
                     onClick={() => handleUpdateStatus("rejected")}
                     disabled={updateStatusMutation.isPending}
@@ -326,9 +323,9 @@ export default function WorkflowDetailPage() {
                     <span>Reject</span>
                   </Button>
                 )}
-                
+
                 {workflow.status !== "changes_requested" && (
-                  <Button 
+                  <Button
                     variant="outline"
                     className="flex items-center gap-2 border-yellow-500 text-yellow-500 hover:bg-yellow-50"
                     onClick={() => handleUpdateStatus("changes_requested")}
@@ -384,7 +381,7 @@ export default function WorkflowDetailPage() {
                         {workflow.description || "No description provided"}
                       </p>
                     </div>
-                    {workflow.metadata && Object.keys(workflow.metadata).length > 0 && (
+                    {workflow?.metadata && typeof workflow.metadata === 'object' && workflow.metadata !== null && Object.keys(workflow.metadata).length > 0 && (
                       <div>
                         <h3 className="text-md font-semibold mb-2">Additional Metadata</h3>
                         <pre className="text-sm bg-gray-50 p-4 rounded-md overflow-auto">
@@ -409,7 +406,7 @@ export default function WorkflowDetailPage() {
                   {(!workflow.reviewers || workflow.reviewers.length === 0) && (
                     <p className="text-muted-foreground">No reviewers assigned</p>
                   )}
-                  
+
                   {workflow.reviewers && workflow.reviewers.length > 0 && (
                     <div className="space-y-4">
                       {workflow.reviewers.map((reviewer: any) => (
@@ -461,8 +458,8 @@ export default function WorkflowDetailPage() {
                     <div className="text-center py-6">
                       <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
                       <p className="mt-2 text-muted-foreground">No comments yet</p>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="mt-4"
                         onClick={() => setIsCommentDialogOpen(true)}
                       >
@@ -470,7 +467,7 @@ export default function WorkflowDetailPage() {
                       </Button>
                     </div>
                   )}
-                  
+
                   {workflow.comments && workflow.comments.length > 0 && (
                     <div className="space-y-4">
                       {workflow.comments.map((comment: any) => (
@@ -482,7 +479,7 @@ export default function WorkflowDetailPage() {
                             <div className="flex justify-between items-start">
                               <h3 className="font-medium">User #{comment.userId}</h3>
                               <span className="text-xs text-muted-foreground">
-                                {formatDate(comment.createdAt)}
+                                {formatDate(comment.created_at)}
                               </span>
                             </div>
                             <p className="mt-1 text-sm">{comment.text}</p>
@@ -493,9 +490,9 @@ export default function WorkflowDetailPage() {
                   )}
                 </CardContent>
                 <CardFooter className="border-t pt-4">
-                  <Button 
+                  <Button
                     className="w-full flex items-center gap-2"
-                    onClick={() => setIsCommentDialogOpen(true)} 
+                    onClick={() => setIsCommentDialogOpen(true)}
                   >
                     <MessageCircle className="h-4 w-4" />
                     <span>Add Comment</span>
@@ -516,7 +513,7 @@ export default function WorkflowDetailPage() {
                   {(!workflow.history || workflow.history.length === 0) && (
                     <p className="text-muted-foreground">No history available</p>
                   )}
-                  
+
                   {workflow.history && workflow.history.length > 0 && (
                     <div className="relative border-l border-gray-200 pl-6 space-y-6 ml-2">
                       {workflow.history.map((item: any, index: number) => (

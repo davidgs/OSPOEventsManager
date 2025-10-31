@@ -18,7 +18,7 @@ const cfpSubmissionSchema = z.object({
   title: z.string().min(1, "Title is required"),
   abstract: z.string().min(10, "Abstract must be at least 10 characters"),
   submitterName: z.string().min(1, "Submitter name is required"),
-  status: z.enum(["draft", "submitted", "accepted", "rejected", "withdrawn"]).default("draft"),
+  status: z.enum(["draft", "submitted", "accepted", "rejected", "withdrawn"]),
   submissionDate: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -160,10 +160,10 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
                 <FormItem>
                   <FormLabel>Abstract</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="Provide a detailed description of your presentation..."
                       rows={6}
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -200,10 +200,10 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
                 <FormItem>
                   <FormLabel>Additional Notes</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="Any additional information or requirements..."
                       rows={3}
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -212,15 +212,15 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
             />
 
             <div className="flex justify-end gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setOpen(false)}
               >
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={createSubmissionMutation.isPending}
               >
                 {createSubmissionMutation.isPending ? (

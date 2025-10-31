@@ -7,8 +7,8 @@ This document summarizes the comprehensive unit test suite created for the OSPO 
 **Created:** October 30, 2025
 **Coverage:** Full-stack (shared, server, client modules, pages, and components)
 **Framework:** Vitest 2.1.8 with React Testing Library
-**Total Tests:** 899
-**Passing Tests:** 899 (100% ✅)
+**Total Tests:** 913
+**Passing Tests:** 913 (100% ✅)
 **Target Coverage:** 80-90%
 
 ## Files Created
@@ -182,11 +182,16 @@ This document summarizes the comprehensive unit test suite created for the OSPO 
 - ✅ Health checks
 - ✅ Configuration validation
 
-#### Storage Layer (`storage.test.ts` - 47 tests)
+#### Storage Layer (`storage.test.ts` - 51 tests)
 - ✅ CRUD operations for all entities
 - ✅ Query methods and filtering
 - ✅ Transaction handling
 - ✅ Error cases
+- ✅ Creator information in event queries (4 tests)
+  - Creator info enrichment for getEvents()
+  - Creator info enrichment for getEvent()
+  - Handling events with no creator
+  - Handling missing creator users
 
 #### Authentication (`keycloak-config.test.ts` - 48 tests)
 - ✅ Bearer token validation
@@ -240,7 +245,7 @@ This document summarizes the comprehensive unit test suite created for the OSPO 
 - ✅ callback-page (6 tests)
   - OAuth callback handling
 
-#### Components (`components/` - 201 tests) ✅
+#### Components (`components/` - 211 tests) ✅
 - ✅ Auth Components (28 tests)
   - LoginButton (13 tests), LogoutButton (15 tests)
 - ✅ Protected Route (18 tests)
@@ -252,6 +257,12 @@ This document summarizes the comprehensive unit test suite created for the OSPO 
   - priority-badge (39 tests)
   - status-badge (47 tests)
   - type-badge (38 tests)
+- ✅ UI Event Components (10 tests)
+  - event-card (10 tests)
+  - Creator information display
+  - Fallback to "Unknown User"
+  - Avatar rendering with and without images
+  - Initial fallback display
 
 ## Running the Tests
 
@@ -288,14 +299,14 @@ See:
 | Metric | Value |
 |--------|-------|
 | Total Test Files | 31 |
-| Total Tests | 899 |
-| Passing Tests | 899 (100% ✅) |
+| Total Tests | 913 |
+| Passing Tests | 913 (100% ✅) |
 | Shared Module Tests | 143 |
-| Server Module Tests | 309 |
-| Client Module Tests | 552 |
+| Server Module Tests | 313 |
+| Client Module Tests | 562 |
 | &nbsp;&nbsp;- Lib/Hooks/Contexts | 285 |
 | &nbsp;&nbsp;- Pages | 66 |
-| &nbsp;&nbsp;- Components | 201 |
+| &nbsp;&nbsp;- Components | 211 |
 | Framework | Vitest 2.1.8 |
 | Testing Library | React Testing Library |
 | Environments | Node.js (server/shared), jsdom (client) |

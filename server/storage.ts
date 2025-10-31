@@ -13,7 +13,7 @@ import {
   type InsertWorkflowHistory, type InsertEditHistory
 } from "../shared/database-types.js";
 import { db } from "./db";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -167,15 +167,55 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Event operations
-  async getEvents(): Promise<Event[]> {
+  async getEvents(): Promise<any[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(events).orderBy(desc(events.start_date));
+
+    // Fetch all events
+    const eventsList = await db.select().from(events).orderBy(desc(events.start_date));
+
+    // Get unique creator IDs
+    const creatorIds = Array.from(new Set(eventsList.map(e => e.created_by_id).filter((id): id is number => id !== null)));
+
+    // Fetch all creators in one query
+    const creators = creatorIds.length > 0
+      ? await db.select().from(users).where(inArray(users.id, creatorIds))
+      : [];
+
+    // Create a map of creator ID to creator info
+    const creatorMap = new Map(
+      creators.map(c => [c.id, { name: c.name, headshot: c.headshot }])
+    );
+
+    // Attach creator info to each event
+    return eventsList.map(event => ({
+      ...event,
+      createdByName: event.created_by_id ? (creatorMap.get(event.created_by_id)?.name || null) : null,
+      createdByAvatar: event.created_by_id ? (creatorMap.get(event.created_by_id)?.headshot || null) : null,
+    }));
   }
 
-  async getEvent(id: number): Promise<Event | undefined> {
+  async getEvent(id: number): Promise<any | undefined> {
     if (!db) throw new Error("Database not initialized");
+
     const [event] = await db.select().from(events).where(eq(events.id, id));
-    return event;
+    if (!event) return undefined;
+
+    // Fetch creator if exists
+    let createdByName = null;
+    let createdByAvatar = null;
+    if (event.created_by_id) {
+      const [creator] = await db.select().from(users).where(eq(users.id, event.created_by_id));
+      if (creator) {
+        createdByName = creator.name;
+        createdByAvatar = creator.headshot;
+      }
+    }
+
+    return {
+      ...event,
+      createdByName,
+      createdByAvatar,
+    };
   }
 
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
@@ -511,7 +551,7 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not initialized");
     const [workflow] = await db
       .update(approvalWorkflows)
-      .set({ current_status: status as any, updated_at: new Date() })
+      .set({ status: status as any, updated_at: new Date() })
       .where(eq(approvalWorkflows.id, id))
       .returning();
     return workflow;
@@ -522,7 +562,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(approvalWorkflows)
-      .where(eq(approvalWorkflows.current_status, status as any))
+      .where(eq(approvalWorkflows.status, status as any))
       .orderBy(desc(approvalWorkflows.created_at));
   }
 
@@ -594,7 +634,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(workflowReviewers)
-      .where(eq(workflowReviewers.user_id, userId));
+      .where(eq(workflowReviewers.reviewer_id, userId));
   }
 
   async updateWorkflowReviewerStatus(id: number, status: string): Promise<WorkflowReviewer | undefined> {
@@ -683,7 +723,7 @@ export class DatabaseStorage implements IStorage {
   // Workflow history operations
   async getWorkflowHistory(): Promise<WorkflowHistory[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(workflowHistory).orderBy(desc(workflowHistory.created_at));
+    return await db.select().from(workflowHistory).orderBy(desc(workflowHistory.performed_at));
   }
 
   async getWorkflowHistoryByWorkflow(workflowId: number): Promise<WorkflowHistory[]> {
@@ -692,7 +732,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(workflowHistory)
       .where(eq(workflowHistory.workflow_id, workflowId))
-      .orderBy(desc(workflowHistory.created_at));
+      .orderBy(desc(workflowHistory.performed_at));
   }
 
   async createWorkflowHistory(insertWorkflowHistory: InsertWorkflowHistory): Promise<WorkflowHistory> {

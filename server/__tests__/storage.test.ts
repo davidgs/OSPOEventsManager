@@ -280,6 +280,98 @@ describe('DatabaseStorage Class', () => {
       expect(updates).toHaveProperty('updated_at');
       expect(updates.updated_at).toBeInstanceOf(Date);
     });
+
+    it('should include creator information when fetching events', () => {
+      const mockEvents = [
+        { id: 1, name: 'Event 1', created_by_id: 1 },
+        { id: 2, name: 'Event 2', created_by_id: 2 },
+        { id: 3, name: 'Event 3', created_by_id: null }
+      ];
+
+      const mockCreators = [
+        { id: 1, name: 'John Doe', headshot: 'avatar1.jpg' },
+        { id: 2, name: 'Jane Smith', headshot: null }
+      ];
+
+      const creatorMap = new Map(
+        mockCreators.map(c => [c.id, { name: c.name, headshot: c.headshot }])
+      );
+
+      const enrichedEvents = mockEvents.map(event => ({
+        ...event,
+        createdByName: event.created_by_id ? (creatorMap.get(event.created_by_id)?.name || null) : null,
+        createdByAvatar: event.created_by_id ? (creatorMap.get(event.created_by_id)?.headshot || null) : null,
+      }));
+
+      expect(enrichedEvents[0]).toHaveProperty('createdByName');
+      expect(enrichedEvents[0].createdByName).toBe('John Doe');
+      expect(enrichedEvents[0].createdByAvatar).toBe('avatar1.jpg');
+
+      expect(enrichedEvents[1]).toHaveProperty('createdByName');
+      expect(enrichedEvents[1].createdByName).toBe('Jane Smith');
+      expect(enrichedEvents[1].createdByAvatar).toBeNull();
+
+      expect(enrichedEvents[2].createdByName).toBeNull();
+      expect(enrichedEvents[2].createdByAvatar).toBeNull();
+    });
+
+    it('should handle events with no creator', () => {
+      const mockEvent = {
+        id: 1,
+        name: 'Event without creator',
+        created_by_id: null
+      };
+
+      const enrichedEvent = {
+        ...mockEvent,
+        createdByName: null,
+        createdByAvatar: null,
+      };
+
+      expect(enrichedEvent.createdByName).toBeNull();
+      expect(enrichedEvent.createdByAvatar).toBeNull();
+    });
+
+    it('should fetch creator information for a single event', () => {
+      const mockEvent = {
+        id: 1,
+        name: 'Single Event',
+        created_by_id: 5
+      };
+
+      const mockCreator = {
+        id: 5,
+        name: 'Event Creator',
+        headshot: 'creator-avatar.jpg'
+      };
+
+      const enrichedEvent = {
+        ...mockEvent,
+        createdByName: mockCreator.name,
+        createdByAvatar: mockCreator.headshot,
+      };
+
+      expect(enrichedEvent).toHaveProperty('createdByName');
+      expect(enrichedEvent.createdByName).toBe('Event Creator');
+      expect(enrichedEvent.createdByAvatar).toBe('creator-avatar.jpg');
+    });
+
+    it('should handle creator lookup when creator does not exist', () => {
+      const mockEvent = {
+        id: 1,
+        name: 'Event with missing creator',
+        created_by_id: 999
+      };
+
+      const enrichedEvent = {
+        ...mockEvent,
+        createdByName: null,
+        createdByAvatar: null,
+      };
+
+      expect(enrichedEvent.createdByName).toBeNull();
+      expect(enrichedEvent.createdByAvatar).toBeNull();
+    });
   });
 
   describe('CFP Submission Operations Implementation', () => {

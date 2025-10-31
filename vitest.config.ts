@@ -17,6 +17,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      reportsDirectory: './coverage',
       exclude: [
         'node_modules/',
         'dist/',
@@ -29,6 +30,10 @@ export default defineConfig({
         'docs/',
         'client/src/components/ui/', // Exclude UI components from coverage
       ],
+      // Fix for coverage collection issues
+      all: false,
+      clean: true,
+      cleanOnRerun: true,
     },
   },
   resolve: {

@@ -22,9 +22,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_FILE_TYPES = [
   "image/jpeg",
-  "image/png", 
-  "image/gif", 
-  "application/pdf", 
+  "image/png",
+  "image/gif",
+  "application/pdf",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   "application/vnd.ms-powerpoint",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -40,7 +40,7 @@ const assetUploadSchema = z.object({
   eventId: z.number().optional(),
   cfpSubmissionId: z.number().optional(),
   content: z.string().optional(),
-  uploadMethod: z.enum(["file", "text"]).default("file"),
+  uploadMethod: z.enum(["file", "text"]),
   file: z
     .instanceof(FileList)
     .optional()
@@ -83,7 +83,7 @@ type NewEventFormValues = z.infer<typeof newEventSchema>;
 export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
   const { toast } = useToast();
   const [showAddEventDialog, setShowAddEventDialog] = useState(false);
-  
+
   // Form setup
   const form = useForm<AssetUploadFormValues>({
     resolver: zodResolver(assetUploadSchema),
@@ -94,7 +94,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
       uploadMethod: "file",
     },
   });
-  
+
   // New event form setup
   const newEventForm = useForm<NewEventFormValues>({
     resolver: zodResolver(newEventSchema),
@@ -110,15 +110,15 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
       goals: ["attending"],
     },
   });
-  
+
   // Fetch events for dropdown
-  const { data: eventsData } = useQuery({ 
+  const { data: eventsData } = useQuery({
     queryKey: ["/api/events"],
   });
-  
+
   // Define proper type for events
   const events = Array.isArray(eventsData) ? eventsData : [];
-  
+
   // Create event mutation
   const createEvent = useMutation({
     mutationFn: async (values: NewEventFormValues) => {
@@ -127,7 +127,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
         ...values,
         goals: JSON.stringify(values.goals),
       };
-      
+
       const response = await fetch("/api/events", {
         method: "POST",
         body: JSON.stringify(formattedValues),
@@ -135,11 +135,11 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
           "Content-Type": "application/json",
         },
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to create event");
       }
-      
+
       return await response.json();
     },
     onSuccess: (data) => {
@@ -148,10 +148,10 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
         title: "Event Created",
         description: "Event has been created successfully",
       });
-      
+
       // Close dialog and select the new event
       setShowAddEventDialog(false);
-      
+
       // Set the event ID in the asset form
       form.setValue("eventId", data.id);
     },
@@ -163,7 +163,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
       });
     },
   });
-  
+
   // Asset upload mutation
   const upload = useMutation({
     mutationFn: async (values: AssetUploadFormValues) => {
@@ -184,11 +184,11 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
             "Content-Type": "application/json",
           },
         });
-        
+
         if (!response.ok) {
           throw new Error("Failed to upload asset");
         }
-        
+
         return response;
       } else {
         // File upload using FormData
@@ -196,19 +196,19 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
         formData.append("name", values.name);
         formData.append("type", values.type);
         formData.append("description", values.description);
-        
+
         if (values.eventId) {
           formData.append("eventId", values.eventId.toString());
         }
-        
+
         if (values.cfpSubmissionId) {
           formData.append("cfpSubmissionId", values.cfpSubmissionId.toString());
         }
-        
+
         if (values.file && values.file.length > 0) {
           formData.append("file", values.file[0]);
         }
-        
+
         return await fetch("/api/assets", {
           method: "POST",
           body: formData,
@@ -231,12 +231,12 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
       });
     },
   });
-  
+
   // Event creation submission handler
   const onSubmitNewEvent = (values: NewEventFormValues) => {
     createEvent.mutate(values);
   };
-  
+
   // Asset submission handler
   const onSubmit = (values: AssetUploadFormValues) => {
     if (values.uploadMethod === "file" && (!values.file || values.file.length === 0)) {
@@ -246,7 +246,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
       });
       return;
     }
-    
+
     if (values.uploadMethod === "text" && (!values.content || values.content.trim() === "")) {
       form.setError("content", {
         type: "manual",
@@ -254,10 +254,10 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
       });
       return;
     }
-    
+
     upload.mutate(values);
   };
-  
+
   // Simple file handling function
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -284,15 +284,15 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="type"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Asset Type</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
+                <Select
+                  onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
@@ -312,7 +312,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="description"
@@ -320,17 +320,17 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea 
+                  <Textarea
                     placeholder="Describe this asset"
                     className="resize-none"
-                    {...field} 
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="eventId"
@@ -338,8 +338,8 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
               <FormItem>
                 <FormLabel>Related Event</FormLabel>
                 <div className="flex gap-2">
-                  <Select 
-                    onValueChange={(value) => field.onChange(parseInt(value))} 
+                  <Select
+                    onValueChange={(value) => field.onChange(parseInt(value))}
                     value={field.value?.toString()}
                   >
                     <FormControl>
@@ -355,8 +355,8 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                  
-                  <Button 
+
+                  <Button
                     type="button"
                     size="icon"
                     onClick={() => setShowAddEventDialog(true)}
@@ -369,13 +369,13 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
               </FormItem>
             )}
           />
-          
+
           <Tabs defaultValue="file" onValueChange={(value) => form.setValue("uploadMethod", value as "file" | "text")}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="file">Upload File</TabsTrigger>
               <TabsTrigger value="text">Enter Text</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="file" className="mt-0">
               <FormField
                 control={form.control}
@@ -401,7 +401,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                             {...rest}
                           />
                         </div>
-                        
+
                         {/* File preview */}
                         {(() => {
                           const files = form.getValues("file");
@@ -434,7 +434,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                 )}
               />
             </TabsContent>
-            
+
             <TabsContent value="text" className="mt-0">
               <FormField
                 control={form.control}
@@ -443,10 +443,10 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                   <FormItem>
                     <FormLabel>Content</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Enter your content here..." 
+                      <Textarea
+                        placeholder="Enter your content here..."
                         className="min-h-[200px]"
-                        {...field} 
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -459,15 +459,15 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
           {/* Fixed position action buttons for better accessibility on mobile/iPad */}
           <div className="sticky bottom-0 left-0 right-0 bg-background pt-4 pb-2 border-t mt-6">
             <div className="flex justify-between sm:justify-end gap-4 px-1">
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 variant="outline"
                 className="flex-1 sm:flex-initial"
                 onClick={onComplete}
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 type="submit"
                 disabled={upload.isPending}
                 className="flex-1 sm:flex-initial"
@@ -485,14 +485,14 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
           </div>
         </form>
       </Form>
-      
+
       {/* Add New Event Dialog */}
       <Dialog open={showAddEventDialog} onOpenChange={setShowAddEventDialog}>
         <DialogContent className="max-w-md pt-8 pb-0 px-4 overflow-hidden">
           <DialogHeader className="pb-4">
             <DialogTitle>Add New Event</DialogTitle>
           </DialogHeader>
-          
+
           <div className="overflow-y-auto max-h-[60vh] pr-2">
             <Form {...newEventForm}>
               <form onSubmit={newEventForm.handleSubmit(onSubmitNewEvent)} className="space-y-4">
@@ -509,7 +509,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={newEventForm.control}
                 name="link"
@@ -523,7 +523,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={newEventForm.control}
@@ -541,7 +541,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={newEventForm.control}
                   name="endDate"
@@ -559,7 +559,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                   )}
                 />
               </div>
-              
+
               <FormField
                 control={newEventForm.control}
                 name="location"
@@ -573,7 +573,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={newEventForm.control}
@@ -581,8 +581,8 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Event Type</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
+                      <Select
+                        onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -602,15 +602,15 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={newEventForm.control}
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Priority</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
+                      <Select
+                        onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -631,7 +631,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                   )}
                 />
               </div>
-              
+
               <FormField
                 control={newEventForm.control}
                 name="goals"
@@ -656,7 +656,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                                   <Checkbox
                                     checked={field.value?.includes(goal)}
                                     onCheckedChange={(checked) => {
-                                      const updatedGoals = checked 
+                                      const updatedGoals = checked
                                         ? [...field.value, goal]
                                         : field.value?.filter((value) => value !== goal);
                                       field.onChange(updatedGoals);
@@ -676,19 +676,19 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                   </FormItem>
                 )}
               />
-              
+
               {/* Fixed position action buttons for better accessibility on iPad */}
               <div className="sticky bottom-0 left-0 right-0 bg-background pt-4 pb-2 border-t mt-6">
                 <div className="flex justify-between sm:justify-end gap-4 px-1">
-                  <Button 
-                    type="button" 
+                  <Button
+                    type="button"
                     variant="outline"
                     className="flex-1 sm:flex-initial"
                     onClick={() => setShowAddEventDialog(false)}
                   >
                     Cancel
                   </Button>
-                  <Button 
+                  <Button
                     type="submit"
                     disabled={createEvent.isPending}
                     className="flex-1 sm:flex-initial"

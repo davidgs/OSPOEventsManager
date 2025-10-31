@@ -25,7 +25,7 @@ export class WorkflowService {
    */
   static async getAllWorkflows(): Promise<ApprovalWorkflow[]> {
     if (!db) throw new Error("Database connection is not initialized.");
-    return await db.select().from(approvalWorkflows).orderBy(desc(approvalWorkflows.createdAt));
+    return await db.select().from(approvalWorkflows).orderBy(desc(approvalWorkflows.created_at));
   }
 
   /**
@@ -37,38 +37,38 @@ export class WorkflowService {
       .select()
       .from(approvalWorkflows)
       .where(eq(approvalWorkflows.status, status))
-      .orderBy(desc(approvalWorkflows.createdAt));
+      .orderBy(desc(approvalWorkflows.created_at));
   }
 
   /**
    * Get workflows filtered by item type
    */
   static async getWorkflowsByItemType(
-    itemType: ApprovalWorkflow["itemType"]
+    itemType: string
   ): Promise<ApprovalWorkflow[]> {
     if (!db) throw new Error("Database connection is not initialized.");
     return await db
       .select()
       .from(approvalWorkflows)
-      .where(eq(approvalWorkflows.itemType, itemType))
-      .orderBy(desc(approvalWorkflows.createdAt));
+      .where(eq(approvalWorkflows.item_type, itemType))
+      .orderBy(desc(approvalWorkflows.created_at));
   }
 
   /**
    * Get workflows for a specific item
    */
-  static async getWorkflowsByItem(itemType: ApprovalWorkflow["itemType"], itemId: number): Promise<ApprovalWorkflow[]> {
+  static async getWorkflowsByItem(itemType: string, itemId: number): Promise<ApprovalWorkflow[]> {
     if (!db) throw new Error("Database connection is not initialized.");
     return await db
       .select()
       .from(approvalWorkflows)
       .where(
         and(
-          eq(approvalWorkflows.itemType, itemType),
-          eq(approvalWorkflows.itemId, itemId)
+          eq(approvalWorkflows.item_type, itemType),
+          eq(approvalWorkflows.item_id, itemId)
         )
       )
-      .orderBy(desc(approvalWorkflows.createdAt));
+      .orderBy(desc(approvalWorkflows.created_at));
   }
 
   /**
@@ -79,8 +79,8 @@ export class WorkflowService {
     return await db
       .select()
       .from(approvalWorkflows)
-      .where(eq(approvalWorkflows.requesterId, requesterId))
-      .orderBy(desc(approvalWorkflows.createdAt));
+      .where(eq(approvalWorkflows.requester_id, requesterId))
+      .orderBy(desc(approvalWorkflows.created_at));
   }
 
   /**
@@ -104,12 +104,12 @@ export class WorkflowService {
     const allowedPriorities = ["low", "medium", "high"] as const;
     const workflowWithDates = {
       ...workflow,
-      itemType: workflow.itemType as ApprovalWorkflow["itemType"],
+      // Ensure item_type is set (it should already be in workflow if InsertApprovalWorkflow)
       priority: allowedPriorities.includes(workflow.priority as any)
         ? (workflow.priority as "low" | "medium" | "high")
         : undefined,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      created_at: new Date(),
+      updated_at: new Date()
     };
 
     const [newWorkflow] = await db
@@ -148,7 +148,7 @@ export class WorkflowService {
       .update(approvalWorkflows)
       .set({
         status,
-        updatedAt: new Date()
+        updated_at: new Date()
       })
       .where(eq(approvalWorkflows.id, id))
       .returning();
@@ -157,8 +157,8 @@ export class WorkflowService {
 
     // Record the status change in workflow history
     await db.insert(workflowHistory).values({
-      workflowId: id,
-      userId,
+      workflow_id: id,
+      performed_by: userId,
       action: `Status changed to ${status}`
     });
 
@@ -171,14 +171,14 @@ export class WorkflowService {
    static async deleteWorkflow(id: number): Promise<boolean> {
     if (!db) throw new Error("Database connection is not initialized.");
     // First delete all related records
-    await db.delete(workflowReviewers).where(eq(workflowReviewers.workflowId, id));
-    await db.delete(workflowStakeholders).where(eq(workflowStakeholders.workflowId, id));
-    await db.delete(workflowComments).where(eq(workflowComments.workflowId, id));
-    await db.delete(workflowHistory).where(eq(workflowHistory.workflowId, id));
+    await db.delete(workflowReviewers).where(eq(workflowReviewers.workflow_id, id));
+    await db.delete(workflowStakeholders).where(eq(workflowStakeholders.workflow_id, id));
+    await db.delete(workflowComments).where(eq(workflowComments.workflow_id, id));
+    await db.delete(workflowHistory).where(eq(workflowHistory.workflow_id, id));
 
     // Then delete the workflow itself
     const result = await db.delete(approvalWorkflows).where(eq(approvalWorkflows.id, id));
-    return result.count > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Reviewer methods
@@ -187,14 +187,14 @@ export class WorkflowService {
     return await db
       .select()
       .from(workflowReviewers)
-      .where(eq(workflowReviewers.workflowId, workflowId));
+      .where(eq(workflowReviewers.workflow_id, workflowId));
   }
 
   static async getWorkflowReviewersByUser(userId: number): Promise<WorkflowReviewer[]> {
     return await db
       .select()
       .from(workflowReviewers)
-      .where(eq(workflowReviewers.reviewerId, userId));
+      .where(eq(workflowReviewers.reviewer_id, userId));
   }
 
   static async getWorkflowReviewer(id: number): Promise<WorkflowReviewer | undefined> {
@@ -230,8 +230,7 @@ export class WorkflowService {
       .update(workflowReviewers)
       .set({
         status,
-        reviewedAt: new Date(),
-        comments: comments || null
+        reviewed_at: new Date(),
       })
       .where(eq(workflowReviewers.id, id))
       .returning();
@@ -241,7 +240,7 @@ export class WorkflowService {
 
   static async deleteWorkflowReviewer(id: number): Promise<boolean> {
     const result = await db.delete(workflowReviewers).where(eq(workflowReviewers.id, id));
-    return result.count > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Workflow comment methods
@@ -250,16 +249,16 @@ export class WorkflowService {
     return await db
       .select()
       .from(workflowComments)
-      .where(eq(workflowComments.workflowId, workflowId))
-      .orderBy(desc(workflowComments.createdAt));
+      .where(eq(workflowComments.workflow_id, workflowId))
+      .orderBy(desc(workflowComments.created_at));
   }
 
   static async getWorkflowCommentsByUser(userId: number): Promise<WorkflowComment[]> {
     return await db
       .select()
       .from(workflowComments)
-      .where(eq(workflowComments.userId, userId))
-      .orderBy(desc(workflowComments.createdAt));
+      .where(eq(workflowComments.commenter_id, userId))
+      .orderBy(desc(workflowComments.created_at));
   }
 
   static async getWorkflowComment(id: number): Promise<WorkflowComment | undefined> {
@@ -274,7 +273,7 @@ export class WorkflowService {
   static async createWorkflowComment(comment: InsertWorkflowComment): Promise<WorkflowComment> {
     const commentWithDate = {
       ...comment,
-      createdAt: new Date()
+      created_at: new Date()
     };
 
     const [newComment] = await db
@@ -297,7 +296,7 @@ export class WorkflowService {
 
   static async deleteWorkflowComment(id: number): Promise<boolean> {
     const result = await db.delete(workflowComments).where(eq(workflowComments.id, id));
-    return result.count > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Workflow history methods
@@ -306,15 +305,15 @@ export class WorkflowService {
     return await db
       .select()
       .from(workflowHistory)
-      .where(eq(workflowHistory.workflowId, workflowId))
-      .orderBy(desc(workflowHistory.createdAt));
+      .where(eq(workflowHistory.workflow_id, workflowId))
+      .orderBy(desc(workflowHistory.performed_at));
   }
 
   static async createWorkflowHistory(history: InsertWorkflowHistory): Promise<WorkflowHistory> {
     if (!db) throw new Error("Database connection is not initialized.");
     const historyWithDate = {
       ...history,
-      createdAt: new Date()
+      created_at: new Date()
     };
 
     const [newHistory] = await db
