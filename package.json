@@ -11,8 +11,8 @@
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "test": "vitest --run",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
+    "test:ui": "vitest --run --ui",
+    "test:coverage": "vitest  --run --coverage",
     "test:watch": "vitest"
   },
   "dependencies": {
