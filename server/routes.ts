@@ -616,13 +616,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Keycloak configuration endpoint
   app.get("/api/keycloak-config", (req: Request, res: Response) => {
-    const keycloakUrl = process.env.KEYCLOAK_CLIENT_URL || process.env.VITE_KEYCLOAK_URL || "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com/auth";
+    // Priority 1: Environment variables (local development)
+    // Priority 2: Production defaults (if env vars not set)
+    // This matches the server-side keycloak-config.ts behavior
+    const keycloakRealm = process.env.KEYCLOAK_REALM || 'ospo-events';
+    const keycloakClientId = process.env.KEYCLOAK_CLIENT_ID || 'ospo-events-app';
+    const keycloakUrl = process.env.KEYCLOAK_URL || 
+                        process.env.KEYCLOAK_CLIENT_URL || 
+                        process.env.VITE_KEYCLOAK_URL || 
+                        "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com/auth";
 
     res.json({
-      realm: "ospo-events",
+      realm: keycloakRealm,
       "auth-server-url": keycloakUrl,
       "ssl-required": "external",
-      resource: "ospo-events-app",
+      resource: keycloakClientId,
       "public-client": true,
       "confidential-port": 0,
       "verify-token-audience": false,

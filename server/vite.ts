@@ -1,12 +1,18 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 // import {  createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
 // @ts-ignore - Vite createServer import issue
 import { createServer as createViteServer } from "vite";
+
+// ES modules compatibility for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // const viteLogger = createLogger();
 const viteLogger: any = console;

@@ -1,0 +1,125 @@
+---
+# ConfigMap will be created by setup script from keycloak-realm-export.json
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: ospo-local
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres -p 5432 -U keycloak_user; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+          env:
+            - name: PGPASSWORD
+              value: "keycloak_pass"
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:23.0.6
+          args:
+            - start-dev
+            - --http-port=8080
+            - --hostname-strict=false
+            - --hostname-strict-https=false
+            - --proxy=edge
+            - --import-realm
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: "admin"
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: "admin"
+            - name: KC_DB
+              value: "postgres"
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://postgres:5432/keycloak"
+            - name: KC_DB_USERNAME
+              value: "keycloak_user"
+            - name: KC_DB_PASSWORD
+              value: "keycloak_pass"
+            - name: KC_HOSTNAME
+              value: "localhost"
+            - name: KC_HOSTNAME_PORT
+              value: "8080"
+            - name: KC_HOSTNAME_ADMIN
+              value: "localhost"
+            - name: KC_HOSTNAME_ADMIN_PORT
+              value: "8080"
+            - name: KC_HTTP_RELATIVE_PATH
+              value: "/auth"
+          volumeMounts:
+            - name: realm-config
+              mountPath: /opt/keycloak/data/import
+              readOnly: true
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /auth
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /auth
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+          startupProbe:
+            httpGet:
+              path: /auth
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 30
+      volumes:
+        - name: realm-config
+          configMap:
+            name: keycloak-realm-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: ospo-local
+  labels:
+    app: keycloak
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app: keycloak
+
+

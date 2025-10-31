@@ -94,16 +94,42 @@ export async function initKeycloak(app: Express) {
   );
 
   try {
-    // Load Keycloak configuration
-    const keycloakConfigPath = path.join(process.cwd(), 'keycloak.json');
-    console.log(`Loading Keycloak config from: ${keycloakConfigPath}`);
+    let keycloakConfig;
 
-    if (!fs.existsSync(keycloakConfigPath)) {
-      throw new Error(`Keycloak config file not found at: ${keycloakConfigPath}`);
+    // Strategy 1: Try environment variables first (for local development)
+    const keycloakRealm = process.env.KEYCLOAK_REALM;
+    const keycloakClientId = process.env.KEYCLOAK_CLIENT_ID;
+    const externalKeycloakUrl = process.env.KEYCLOAK_URL || 
+                                process.env.KEYCLOAK_CLIENT_URL || 
+                                process.env.VITE_KEYCLOAK_URL;
+    
+    if (keycloakRealm && keycloakClientId && externalKeycloakUrl) {
+      // Build config from environment variables (local development)
+      console.log('Using Keycloak config from environment variables');
+      keycloakConfig = {
+        realm: keycloakRealm,
+        "auth-server-url": externalKeycloakUrl,
+        "ssl-required": "external",
+        resource: keycloakClientId,
+        "public-client": true,
+        "confidential-port": 0,
+        "verify-token-audience": false,
+        "use-resource-role-mappings": true,
+        "enable-cors": true
+      };
+    } else {
+      // Strategy 2: Fall back to keycloak.json file (production deployment)
+      console.log('Environment variables incomplete, falling back to keycloak.json file');
+      const keycloakConfigPath = path.join(process.cwd(), 'keycloak.json');
+      console.log(`Loading Keycloak config from: ${keycloakConfigPath}`);
+
+      if (!fs.existsSync(keycloakConfigPath)) {
+        throw new Error(`Keycloak config not found in environment or at: ${keycloakConfigPath}`);
+      }
+
+      keycloakConfig = JSON.parse(fs.readFileSync(keycloakConfigPath, 'utf8'));
+      console.log(`Keycloak config loaded from file:`, keycloakConfig);
     }
-
-    const keycloakConfig = JSON.parse(fs.readFileSync(keycloakConfigPath, 'utf8'));
-    console.log(`Keycloak config loaded successfully:`, keycloakConfig);
 
     // Override the auth-server-url for server-side communication
     // The server needs to use the internal Docker network URL
