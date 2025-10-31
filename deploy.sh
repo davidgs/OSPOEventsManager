@@ -30,34 +30,43 @@ print_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+print_info() {
+    echo -e "${BLUE}ℹ️  $1${NC}"
+}
+
 # Function to show usage
 show_usage() {
-    echo "Usage: $0 [--dev|--prod] [options]"
+    echo "Usage: $0 [--dev|--prod|--local] [options]"
     echo ""
     echo "Options:"
     echo "  --dev          Deploy to development environment"
     echo "  --prod         Deploy to production environment"
+    echo "  --local        Deploy to local KIND cluster"
     echo "  --help         Show this help message"
     echo "  --app          Deploy the application"
     echo "  --postgres     Deploy the postgres pod"
     echo "  --keycloak     Deploy the keycloak pod"
+    echo "  --minio        Deploy the minio pod (local only)"
     echo "  --routes       Create routes for the application"
     echo "  --force        Force rebuild even if version hasn't changed"
     # echo "  --ai-only      Deploy only the AI (Ollama) service"
     echo "  --delete       Delete all pods while preserving data (WARNING: destructive)"
+    echo "  --delete-local Delete local KIND cluster and all data (local only)"
     echo "  --backup       Create a complete backup of all data (users, events, uploads)"
     echo "  --restore -f   Restore data from backup directory (use with -f /path/to/backup)"
     echo "  --destroy      DESTROY ALL DATA - Remove pods and all PVCs (CATASTROPHIC)"
     echo ""
     echo "Requirements:"
-    echo "  - .env file must exist with configuration"
-    echo "  - OpenShift CLI (oc) must be installed and authenticated"
+    echo "  - For --dev/--prod: .env file must exist, OpenShift CLI (oc) installed"
+    echo "  - For --local: .env.local file must exist, kubectl, kind, and podman installed"
     echo ""
     echo "Example:"
     echo "  $0 --dev"
     echo "  $0 --prod"
+    echo "  $0 --local"
+    echo "  $0 --delete-local"
     echo "  $0 --dev --app --postgres"
-    echo "  $0 --dev --app --postgres --keycloak"
+    echo "  $0 --local --postgres --keycloak --minio"
     echo "  $0 --prod --app --postgres --keycloak"
 }
 
@@ -65,8 +74,10 @@ show_usage() {
 APP=""
 KEYCLOAK=""
 POSTGRES=""
+MINIO=""
 # AI=""
 DELETE=""
+DELETE_LOCAL=""
 BACKUP=""
 RESTORE=""
 RESTORE_PATH=""
@@ -82,6 +93,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --prod)
             ENVIRONMENT="prod"
+            shift
+            ;;
+        --local)
+            ENVIRONMENT="local"
             shift
             ;;
         --help)
@@ -100,6 +115,10 @@ while [[ $# -gt 0 ]]; do
             POSTGRES="true"
             shift
             ;;
+        --minio)
+            MINIO="true"
+            shift
+            ;;
         --routes)
             ROUTES="true"
             shift
@@ -114,6 +133,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --delete)
             DELETE="true"
+            shift
+            ;;
+        --delete-local)
+            DELETE_LOCAL="true"
             shift
             ;;
         --backup)
@@ -146,8 +169,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate arguments (skip for operations that don't need environment)
-if [[ "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" && -z "$ENVIRONMENT" ]]; then
-    print_error "🚨 Environment not specified. Use --dev or --prod"
+if [[ "$DELETE" != "true" && "$DELETE_LOCAL" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" && -z "$ENVIRONMENT" ]]; then
+    print_error "🚨 Environment not specified. Use --dev, --prod, or --local"
     show_usage
     exit 1
 fi
@@ -159,62 +182,354 @@ if [[ "$RESTORE" == "true" && -z "$RESTORE_PATH" ]]; then
     exit 1
 fi
 
-# Check for .env file
-if [[ ! -f .env ]]; then
-    print_error "🚨 .env file not found!"
-    echo "🚨 Please copy env.template to .env and configure your values:"
-    echo "🚨   cp env.template .env"
-    echo "🚨   # Edit .env with your configuration"
-    exit 1
+# Skip environment loading for operations that don't need it
+if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" ]]; then
+    # Check for appropriate .env file based on environment
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+        if [[ ! -f .env.local ]]; then
+            print_error "🚨 .env.local file not found!"
+            echo "🚨 Please run the configuration script to create .env.local:"
+            echo "🚨   ./configure.sh --local"
+            echo "🚨 Or manually copy env.local.template to .env.local:"
+            echo "🚨   cp env.local.template .env.local"
+            exit 1
+        fi
+        ENV_FILE=".env.local"
+    else
+        if [[ ! -f .env ]]; then
+            print_error "🚨 .env file not found!"
+            echo "🚨 Please copy env.template to .env and configure your values:"
+            echo "🚨   cp env.template .env"
+            echo "🚨   # Edit .env with your configuration"
+            exit 1
+        fi
+        ENV_FILE=".env"
+    fi
+
+    # Load environment variables
+    print_status "Loading configuration from $ENV_FILE file..."
+    set -a  # automatically export all variables
+    source "$ENV_FILE"
+    set +a  # turn off automatic export
 fi
 
-# Load environment variables
-print_status "Loading configuration from .env file..."
-set -a  # automatically export all variables
-source .env
-set +a  # turn off automatic export
+# Set environment-specific variables (skip for standalone operations)
+if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" ]]; then
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+        export NAMESPACE="ospo-local"
+        export APP_URL="http://localhost:4576"
+        export KEYCLOAK_URL="http://localhost:8080/auth"
+        export VITE_KEYCLOAK_URL="http://localhost:8080/auth"
+        export CLUSTER_NAME="ospo-local"
+        export CLI_CMD="kubectl"
+    elif [[ "$ENVIRONMENT" == "dev" ]]; then
+        export NAMESPACE="$DEV_NAMESPACE"
+        export APP_URL="$DEV_APP_URL"
+        export KEYCLOAK_URL="$DEV_KEYCLOAK_URL"
+        export VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_DEV"
+        export CLI_CMD="oc"
+    else
+        export NAMESPACE="$PROD_NAMESPACE"
+        export APP_URL="$PROD_APP_URL"
+        export KEYCLOAK_URL="$PROD_KEYCLOAK_URL"
+        export VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_PROD"
+        export CLI_CMD="oc"
+    fi
 
-# Set environment-specific variables
-if [[ "$ENVIRONMENT" == "dev" ]]; then
-    export NAMESPACE="$DEV_NAMESPACE"
-    export APP_URL="$DEV_APP_URL"
-    export KEYCLOAK_URL="$DEV_KEYCLOAK_URL"
-    export VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_DEV"
-else
-    export NAMESPACE="$PROD_NAMESPACE"
-    export APP_URL="$PROD_APP_URL"
-    export KEYCLOAK_URL="$PROD_KEYCLOAK_URL"
-    export VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_PROD"
+    # Export application configuration variables
+    export UPLOADS_DIR="$UPLOADS_DIR"
+
+    print_success "Configuration loaded for $ENVIRONMENT environment"
+    print_status "Namespace: $NAMESPACE"
+    print_status "App URL: $APP_URL"
+    print_status "Keycloak URL: $KEYCLOAK_URL"
 fi
 
-# Export application configuration variables
-export UPLOADS_DIR="$UPLOADS_DIR"
+# =============================================================================
+# KIND CLUSTER FUNCTIONS (Local Development)
+# =============================================================================
 
-print_success "Configuration loaded for $ENVIRONMENT environment"
-print_status "Namespace: $NAMESPACE"
-print_status "App URL: $APP_URL"
-print_status "Keycloak URL: $KEYCLOAK_URL"
-
-# Check OpenShift connection
-print_status "Checking OpenShift connection..."
-if ! oc whoami &>/dev/null; then
-    print_error "Not logged into OpenShift!"
-    echo "Please login first:"
-    echo "  oc login --token=\$OPENSHIFT_TOKEN --server=\$OPENSHIFT_SERVER"
-    exit 1
-fi
-
-# Switch to correct namespace
-print_status "Switching to namespace: $NAMESPACE"
-oc project "$NAMESPACE" || {
-    print_error "Failed to switch to namespace $NAMESPACE"
-    print_warning "Make sure the namespace exists or create it with:"
-    echo "  oc new-project $NAMESPACE"
-    exit 1
+# Function to setup KIND cluster
+setup_kind_cluster() {
+    print_status "Creating KIND cluster '${CLUSTER_NAME}'..."
+    
+    # Create KIND cluster with Podman provider
+    cat <<EOF | KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster --name "${CLUSTER_NAME}" --config=-
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      # PostgreSQL
+      - containerPort: 30432
+        hostPort: 5432
+        protocol: TCP
+      # Keycloak
+      - containerPort: 30080
+        hostPort: 8080
+        protocol: TCP
+      # MinIO API
+      - containerPort: 30900
+        hostPort: 9000
+        protocol: TCP
+      # MinIO Console
+      - containerPort: 30901
+        hostPort: 9001
+        protocol: TCP
+EOF
+    
+    if [ $? -eq 0 ]; then
+        print_success "KIND cluster created successfully"
+    else
+        print_error "Failed to create KIND cluster"
+        exit 1
+    fi
+    
+    # Wait for cluster to be ready
+    print_status "Waiting for cluster to be ready..."
+    kubectl wait --for=condition=Ready nodes --all --timeout=120s
+    print_success "Cluster is ready"
+    
+    # Create namespace
+    print_status "Creating namespace '${NAMESPACE}'..."
+    kubectl apply -f kind/namespace.yaml
+    print_success "Namespace created"
+    
+    # Create NodePort services for external access
+    create_nodeport_services_local
 }
 
-print_success "🚀 Starting OSPO Events deployment to $ENVIRONMENT environment"
-echo ""
+# Function to create NodePort services for local KIND cluster
+create_nodeport_services_local() {
+    print_status "Creating NodePort services for external access..."
+    
+    cat <<EOF | kubectl apply -f -
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-nodeport
+  namespace: ${NAMESPACE}
+spec:
+  type: NodePort
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+      nodePort: 30432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-nodeport
+  namespace: ${NAMESPACE}
+spec:
+  type: NodePort
+  selector:
+    app: keycloak
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-nodeport-api
+  namespace: ${NAMESPACE}
+spec:
+  type: NodePort
+  selector:
+    app: minio
+  ports:
+    - name: api
+      port: 9000
+      targetPort: 9000
+      nodePort: 30900
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-nodeport-console
+  namespace: ${NAMESPACE}
+spec:
+  type: NodePort
+  selector:
+    app: minio
+  ports:
+    - name: console
+      port: 9001
+      targetPort: 9001
+      nodePort: 30901
+EOF
+    
+    print_success "NodePort services created"
+}
+
+# Function to deploy PostgreSQL to local KIND cluster
+deploy_postgres_local() {
+    print_status "📦 Deploying PostgreSQL to local KIND cluster..."
+    
+    if [[ ! -f "kind/postgres.yaml" ]]; then
+        print_error "PostgreSQL deployment file not found: kind/postgres.yaml"
+        exit 1
+    fi
+    
+    kubectl apply -f kind/postgres.yaml
+    
+    print_status "Waiting for PostgreSQL to be ready..."
+    kubectl wait --for=condition=Ready pod -l app=postgres -n "${NAMESPACE}" --timeout=180s || {
+        print_warning "PostgreSQL pod didn't become ready in time. Checking status..."
+        kubectl get pods -n "${NAMESPACE}" -l app=postgres
+        kubectl describe pod -n "${NAMESPACE}" -l app=postgres
+    }
+    
+    print_success "PostgreSQL deployed successfully"
+}
+
+# Function to deploy Keycloak to local KIND cluster
+deploy_keycloak_local() {
+    print_status "📦 Deploying Keycloak to local KIND cluster..."
+    
+    # Load Keycloak realm configuration
+    local realm_file="keycloak-realm-export.json"
+    
+    if [ -f "$realm_file" ]; then
+        print_status "Loading Keycloak realm configuration..."
+        kubectl create configmap keycloak-realm-config \
+            --from-file=realm.json="$realm_file" \
+            --namespace="${NAMESPACE}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+        print_success "Keycloak realm configuration loaded"
+    else
+        print_warning "Keycloak realm export file not found"
+        print_info "Creating empty configmap..."
+        kubectl create configmap keycloak-realm-config \
+            --from-literal=realm.json='{}' \
+            --namespace="${NAMESPACE}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+    fi
+    
+    if [[ ! -f "kind/keycloak.yaml" ]]; then
+        print_error "Keycloak deployment file not found: kind/keycloak.yaml"
+        exit 1
+    fi
+    
+    kubectl apply -f kind/keycloak.yaml
+    
+    print_status "Waiting for Keycloak to be ready (this may take a few minutes)..."
+    kubectl wait --for=condition=Ready pod -l app=keycloak -n "${NAMESPACE}" --timeout=300s || {
+        print_warning "Keycloak pod didn't become ready in time. Checking status..."
+        kubectl get pods -n "${NAMESPACE}" -l app=keycloak
+        kubectl describe pod -n "${NAMESPACE}" -l app=keycloak
+    }
+    
+    print_success "Keycloak deployed successfully"
+}
+
+# Function to deploy MinIO to local KIND cluster
+deploy_minio_local() {
+    print_status "📦 Deploying MinIO to local KIND cluster..."
+    
+    if [[ ! -f "kind/minio.yaml" ]]; then
+        print_error "MinIO deployment file not found: kind/minio.yaml"
+        exit 1
+    fi
+    
+    kubectl apply -f kind/minio.yaml
+    
+    print_status "Waiting for MinIO to be ready..."
+    kubectl wait --for=condition=Ready pod -l app=minio -n "${NAMESPACE}" --timeout=180s || {
+        print_warning "MinIO pod didn't become ready in time. Checking status..."
+        kubectl get pods -n "${NAMESPACE}" -l app=minio
+        kubectl describe pod -n "${NAMESPACE}" -l app=minio
+    }
+    
+    print_success "MinIO deployed successfully"
+}
+
+# Check CLI tool and connection based on environment (skip for standalone operations)
+if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" ]]; then
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+        print_status "Checking local Kubernetes (KIND) prerequisites..."
+        
+        # Check for required tools
+        if ! command -v kubectl &>/dev/null; then
+            print_error "kubectl is required but not installed!"
+            echo "Installation instructions:"
+            echo "  brew install kubectl"
+            exit 1
+        fi
+        
+        if ! command -v kind &>/dev/null; then
+            print_error "kind is required but not installed!"
+            echo "Installation instructions:"
+            echo "  brew install kind"
+            exit 1
+        fi
+        
+        if ! command -v podman &>/dev/null; then
+            print_error "podman is required but not installed!"
+            echo "Installation instructions:"
+            echo "  brew install podman"
+            exit 1
+        fi
+        
+        # Check if Podman machine is running
+        if ! podman machine list | grep -q "Currently running"; then
+            print_warning "Podman machine is not running. Starting it now..."
+            podman machine start || {
+                print_error "Failed to start Podman machine"
+                print_info "Try initializing Podman: podman machine init"
+                exit 1
+            }
+            print_success "Podman machine started"
+            sleep 5  # Give Podman a moment to stabilize
+        fi
+        
+        # Check if KIND cluster exists
+        if ! kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
+            print_warning "KIND cluster '${CLUSTER_NAME}' does not exist"
+            print_info "Creating KIND cluster..."
+            setup_kind_cluster
+        else
+            print_success "KIND cluster '${CLUSTER_NAME}' exists"
+        fi
+        
+        # Switch context to KIND cluster
+        kubectl config use-context "kind-${CLUSTER_NAME}" &>/dev/null || {
+            print_error "Failed to switch to KIND cluster context"
+            exit 1
+        }
+        
+    else
+        # OpenShift connection check
+        print_status "Checking OpenShift connection..."
+        if ! oc whoami &>/dev/null; then
+            print_error "Not logged into OpenShift!"
+            echo "Please login first:"
+            echo "  oc login --token=\$OPENSHIFT_TOKEN --server=\$OPENSHIFT_SERVER"
+            exit 1
+        fi
+
+        # Switch to correct namespace
+        print_status "Switching to namespace: $NAMESPACE"
+        oc project "$NAMESPACE" || {
+            print_error "Failed to switch to namespace $NAMESPACE"
+            print_warning "Make sure the namespace exists or create it with:"
+            echo "  oc new-project $NAMESPACE"
+            exit 1
+        }
+    fi
+
+    print_success "🚀 Starting OSPO Events deployment to $ENVIRONMENT environment"
+    echo ""
+fi
+
+# =============================================================================
+# COMMON DEPLOYMENT FUNCTIONS
+# =============================================================================
 
 # Function to wait for deployment
 wait_for_deployment() {
@@ -225,7 +540,7 @@ wait_for_deployment() {
         return 0
     fi
     print_status "Waiting for $deployment_name to be ready..."
-    if oc wait --for=condition=available deployment/"$deployment_name" --timeout="${timeout}s"; then
+    if $CLI_CMD wait --for=condition=available deployment/"$deployment_name" --timeout="${timeout}s" -n "${NAMESPACE}"; then
         print_success "$deployment_name is ready"
     else
         print_error "$deployment_name failed to become ready within ${timeout} seconds"
@@ -1135,6 +1450,62 @@ destroy_all_data() {
     print_error "⚠️  To start fresh, run: ./deploy.sh --${ENVIRONMENT}"
 }
 
+# Function to delete local KIND cluster
+delete_local_cluster() {
+    # Check if kind is installed
+    if ! command -v kind &>/dev/null; then
+        print_error "kind is required but not installed!"
+        echo "Installation instructions:"
+        echo "  brew install kind"
+        exit 1
+    fi
+    
+    print_warning "⚠️  WARNING: This will delete the local KIND cluster!"
+    print_warning "⚠️  This action will:"
+    print_warning "   - Delete the entire 'ospo-local' KIND cluster"
+    print_warning "   - Remove all data (PostgreSQL, Keycloak, MinIO)"
+    print_warning "   - Remove all pods, services, and persistent volumes"
+    print_warning ""
+    print_warning "⚠️  ALL LOCAL DEVELOPMENT DATA WILL BE LOST!"
+    echo ""
+    
+    # Check if cluster exists
+    if ! kind get clusters 2>/dev/null | grep -q "^ospo-local$"; then
+        print_warning "KIND cluster 'ospo-local' does not exist"
+        print_info "Nothing to delete"
+        exit 0
+    fi
+    
+    # Require explicit confirmation
+    read -p "Are you sure you want to delete the local KIND cluster? Type 'DELETE LOCAL CLUSTER' to confirm: " confirmation
+    
+    if [[ "$confirmation" != "DELETE LOCAL CLUSTER" ]]; then
+        print_error "Deletion cancelled. You must type 'DELETE LOCAL CLUSTER' exactly to confirm."
+        exit 1
+    fi
+    
+    print_status "🗑️  Deleting local KIND cluster 'ospo-local'..."
+    
+    # Delete the KIND cluster
+    KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster --name ospo-local
+    
+    if [ $? -eq 0 ]; then
+        print_success "✅ Local KIND cluster deleted successfully!"
+        echo ""
+        print_info "📋 What was deleted:"
+        echo "   - KIND cluster 'ospo-local'"
+        echo "   - All pods (PostgreSQL, Keycloak, MinIO)"
+        echo "   - All persistent volumes and data"
+        echo "   - All services and network configuration"
+        echo ""
+        print_info "💡 To recreate the local development environment:"
+        echo "   ./deploy.sh --local"
+    else
+        print_error "❌ Failed to delete KIND cluster"
+        exit 1
+    fi
+}
+
 # Main deployment function
 main() {
     print_status "🚀 Starting deployment process..."
@@ -1163,6 +1534,12 @@ main() {
         exit 0
     fi
 
+    # Handle delete local cluster operation
+    if [[ "$DELETE_LOCAL" == "true" ]]; then
+        delete_local_cluster
+        exit 0
+    fi
+
     # Handle delete operation
     if [[ "$DELETE" == "true" ]]; then
         if [[ -z "$ENVIRONMENT" ]]; then
@@ -1177,7 +1554,88 @@ main() {
     fi
 
 
-    # Deploy pods according to flags
+    # Handle local KIND cluster deployment
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+        # Deploy individual components if flags are set
+        if [[ "$POSTGRES" == "true" ]]; then
+            deploy_postgres_local
+        fi
+        
+        if [[ "$KEYCLOAK" == "true" ]]; then
+            deploy_keycloak_local
+        fi
+        
+        if [[ "$MINIO" == "true" ]]; then
+            deploy_minio_local
+        fi
+        
+        # If specific components were deployed, show summary and exit
+        if [[ "$POSTGRES" == "true" || "$KEYCLOAK" == "true" || "$MINIO" == "true" ]]; then
+            print_success "🎉 Deployment completed successfully!"
+            echo ""
+            print_status "📋 Deployment Summary:"
+            if [[ "$POSTGRES" == "true" ]]; then
+                echo "   ✅ PostgreSQL Deployed"
+            fi
+            if [[ "$KEYCLOAK" == "true" ]]; then
+                echo "   ✅ Keycloak Deployed"
+            fi
+            if [[ "$MINIO" == "true" ]]; then
+                echo "   ✅ MinIO Deployed"
+            fi
+            echo "   Environment: $ENVIRONMENT"
+            echo "   Namespace: $NAMESPACE"
+            echo ""
+            print_info "Service Access URLs (from localhost):"
+            echo "  PostgreSQL:     localhost:5432 (ospo_user/ospo_password)"
+            echo "  Keycloak:       http://localhost:8080/auth (admin/admin)"
+            echo "  MinIO API:      http://localhost:9000 (minioadmin/minioadmin)"
+            echo "  MinIO Console:  http://localhost:9001"
+            echo ""
+            print_status "🔍 Checking deployment status..."
+            kubectl get pods -n "$NAMESPACE"
+            echo ""
+            print_info "🚀 To run application locally with hot reload:"
+            echo "  npm run dev:local"
+            echo ""
+            print_info "Application will run on your machine and connect to services in KIND."
+            exit 0
+        fi
+        
+        # If no specific components were requested, deploy all
+        print_status "🚀 Deploying all services to local KIND cluster..."
+        deploy_postgres_local
+        deploy_keycloak_local
+        deploy_minio_local
+        
+        print_success "🎉 All services deployed successfully!"
+        echo ""
+        print_status "📋 Deployment Summary:"
+        echo "   Environment: $ENVIRONMENT"
+        echo "   Namespace: $NAMESPACE"
+        echo "   ✅ PostgreSQL Deployed to KIND"
+        echo "   ✅ Keycloak Deployed to KIND"
+        echo "   ✅ MinIO Deployed to KIND"
+        echo ""
+        print_info "Service Access URLs (from localhost):"
+        echo "  PostgreSQL:     localhost:5432 (ospo_user/ospo_password)"
+        echo "  Keycloak:       http://localhost:8080/auth (admin/admin)"
+        echo "  MinIO API:      http://localhost:9000 (minioadmin/minioadmin)"
+        echo "  MinIO Console:  http://localhost:9001"
+        echo ""
+        print_status "🔍 Checking deployment status..."
+        kubectl get pods -n "$NAMESPACE"
+        echo ""
+        print_warning "⚡ IMPORTANT: Services are deployed, but application is NOT deployed yet."
+        print_info "🚀 Next steps to run application locally with hot reload:"
+        echo "  1. Push database schema:    npm run db:push:local"
+        echo "  2. Run application locally:  npm run dev:local"
+        echo ""
+        print_success "✨ Local development stack is ready! Run 'npm run dev:local' to start developing."
+        exit 0
+    fi
+
+    # Handle OpenShift (dev/prod) deployment
     # Deploy postgres if flag is set
     if [[ "$POSTGRES" == "true" ]]; then
         print_status "🚀 Deploying the postgres pod..."
@@ -1187,8 +1645,8 @@ main() {
         sleep 5
         oc scale deployment postgres --replicas=1
         print_success "🎉 Postgres deployed successfully!"
-
     fi
+    
     # Deploy keycloak if flag is set
     if [[ "$KEYCLOAK" == "true" ]]; then
         print_status "🚀 Deploying the keycloak pod..."
@@ -1198,7 +1656,6 @@ main() {
           deploy_keycloak
           sleep 5
           print_success "🎉 Keycloak deployed successfully!"
-
         else
           oc scale deployment keycloak --replicas=0
           sleep 5
@@ -1207,8 +1664,8 @@ main() {
           oc scale deployment keycloak --replicas=1
           print_success "🎉 Keycloak deployed successfully!"
         fi
-
     fi
+    
     # Deploy application if flag is set
     if [[ "$APP" == "true" ]]; then
       print_status "🚀 Deploying the application..."
@@ -1277,35 +1734,21 @@ main() {
       oc get pods -l app
       exit 0
     fi
-    # Deploy AI if flag is set
-    # if [[ "$AI" == "true" ]]; then
-    #     print_status "🚀 Deploying only the AI (Ollama) service..."
-    #     deploy_ai
-    #     exit 0
-    # fi
 
-    # Deploy components in order
-        create_dockerhub_secret
-        deploy_postgres
-        deploy_keycloak
-        deploy_app
-        create_routes
-        print_success "🎉 Deployment completed successfully!"
-      echo ""
-      print_status "📋 Deployment Summary:"
-      echo "   Environment: $ENVIRONMENT"
-      echo "   Namespace: $NAMESPACE"
-      echo "   Application URL: $APP_URL"
-      echo "   Keycloak URL: $KEYCLOAK_URL"
-      echo ""
-    # if [[ "$MINIO" != "true" ]]; then
-    #     deploy_minio
-    # fi
-    # if [[ "$AI" != "true" ]]; then
-    #     deploy_ai
-    # fi
-
-    # echo "   AI Service: ollama-nvidia-gpu (internal)"
+    # Deploy all components in order (default behavior)
+    create_dockerhub_secret
+    deploy_postgres
+    deploy_keycloak
+    deploy_app
+    create_routes
+    print_success "🎉 Deployment completed successfully!"
+    echo ""
+    print_status "📋 Deployment Summary:"
+    echo "   Environment: $ENVIRONMENT"
+    echo "   Namespace: $NAMESPACE"
+    echo "   Application URL: $APP_URL"
+    echo "   Keycloak URL: $KEYCLOAK_URL"
+    echo ""
     print_success "✨ OSPO Events Manager is now deployed and ready!"
 }
 
