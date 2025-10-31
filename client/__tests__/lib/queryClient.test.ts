@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { queryClient, apiRequest, getQueryFn } from '@/lib/queryClient';
+import { queryClient, apiRequest, getQueryFn, reset401Handling } from '@/lib/queryClient';
 
 // Mock keycloak module
 vi.mock('@/lib/keycloak', () => ({
@@ -18,6 +18,7 @@ describe('queryClient', () => {
     originalFetch = global.fetch;
     global.fetch = vi.fn();
     vi.clearAllMocks();
+    reset401Handling(); // Reset 401 handling flag between tests
   });
 
   afterEach(() => {
@@ -143,26 +144,39 @@ describe('queryClient', () => {
       );
     });
 
-    it('should handle 401 response and trigger logout', async () => {
+    it('should handle 401 response and redirect to login', async () => {
       const mockResponse = { ok: false, status: 401 };
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
-      const { logout } = await import('@/contexts/auth-context');
+      // Mock window.location.replace
+      const mockReplace = vi.fn();
+      Object.defineProperty(window, 'location', {
+        value: {
+          replace: mockReplace,
+        },
+        writable: true,
+      });
 
       await apiRequest('GET', '/api/test');
 
-      // Give time for async logout to be called
-      await new Promise(resolve => setTimeout(resolve, 0));
+      // Give time for async redirect to be called
+      await new Promise(resolve => setTimeout(resolve, 10));
 
-      expect(logout).toHaveBeenCalled();
+      expect(mockReplace).toHaveBeenCalledWith('/login');
     });
 
     it('should not trigger multiple 401 redirects', async () => {
       const mockResponse = { ok: false, status: 401 };
       (global.fetch as any).mockResolvedValue(mockResponse);
 
-      const { logout } = await import('@/contexts/auth-context');
-      (logout as any).mockClear();
+      // Mock window.location.replace
+      const mockReplace = vi.fn();
+      Object.defineProperty(window, 'location', {
+        value: {
+          replace: mockReplace,
+        },
+        writable: true,
+      });
 
       // Make multiple requests
       await Promise.all([
@@ -174,8 +188,8 @@ describe('queryClient', () => {
       // Give time for async operations
       await new Promise(resolve => setTimeout(resolve, 10));
 
-      // Logout should only be called once due to isHandling401 flag
-      expect((logout as any).mock.calls.length).toBeLessThanOrEqual(1);
+      // Redirect should only be called once due to isHandling401 flag
+      expect(mockReplace).toHaveBeenCalledTimes(1);
     });
 
     it('should return response for successful request', async () => {

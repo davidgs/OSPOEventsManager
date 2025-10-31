@@ -254,46 +254,5 @@ export type DatabaseResult<T> = {
 // EXPORT ALL TYPES
 // =============================================================================
 
-export type {
-  // Base types
-  User,
-  Event,
-  CFPSubmission,
-  Attendee,
-  Sponsorship,
-  Asset,
-  Stakeholder,
-  ApprovalWorkflow,
-  WorkflowReviewer,
-  WorkflowStakeholder,
-  WorkflowComment,
-  WorkflowHistory,
-
-  // Insert types
-  InsertUser,
-  InsertEvent,
-  InsertCFPSubmission,
-  InsertAttendee,
-  InsertSponsorship,
-  InsertAsset,
-  InsertStakeholder,
-  InsertApprovalWorkflow,
-  InsertWorkflowReviewer,
-  InsertWorkflowStakeholder,
-  InsertWorkflowComment,
-  InsertWorkflowHistory,
-
-  // Response types
-  UserResponse,
-  EventResponse,
-  CFPSubmissionResponse,
-  AttendeeResponse,
-  SponsorshipResponse,
-  AssetResponse,
-  StakeholderResponse,
-  ApprovalWorkflowResponse,
-  WorkflowReviewerResponse,
-  WorkflowStakeholderResponse,
-  WorkflowCommentResponse,
-  WorkflowHistoryResponse,
-};
+// All types are already exported above individually
+// This section is kept for documentation purposes only

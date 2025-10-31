@@ -277,14 +277,7 @@ const EventsCompactList: FC<EventsCompactListProps> = ({
                     >
                       {event.name || "Untitled Event"}
                     </div>
-                    {event.description && (
-                      <div
-                        className="text-xs text-muted-foreground max-w-[200px] truncate"
-                        title={event.description}
-                      >
-                        {event.description}
-                      </div>
-                    )}
+                    {/* Description field removed - not in event schema */}
                   </div>
                 </td>
                 <td className="px-3 py-4 whitespace-nowrap">

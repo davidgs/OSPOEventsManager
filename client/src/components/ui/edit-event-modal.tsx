@@ -52,7 +52,7 @@ import { safeParseDate } from "@/lib/date-utils";
 interface EditEventModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (id: number, data: z.infer<typeof formSchema>) => void;
+  onSubmit: (id: number, data: any) => void;
   event: Event | null;
   isSubmitting: boolean;
 }
@@ -145,13 +145,13 @@ const EditEventModal: FC<EditEventModalProps> = ({
         name: event.name,
         link: event.link,
         location: event.location,
-        priority: event.priority,
-        type: event.type,
+        priority: event.priority as "essential" | "high" | "medium" | "low" | "nice to have",
+        type: event.type as "conference" | "meetup" | "webinar" | "workshop" | "hackathon",
         goals: eventGoalsArray,
-        startDate: safeParseDate(event.startDate) || new Date(),
-        endDate: safeParseDate(event.endDate) || new Date(),
-        cfpDeadline: safeParseDate(event.cfpDeadline),
-        notes: event.notes || "",
+        startDate: safeParseDate(event.start_date) || new Date(),
+        endDate: safeParseDate(event.end_date) || new Date(),
+        cfpDeadline: safeParseDate(event.cfp_deadline) || undefined,
+        notes: event.notes || undefined,
       });
     }
   }, [event, form]);
@@ -171,7 +171,7 @@ const EditEventModal: FC<EditEventModalProps> = ({
         end_date: data.endDate.toISOString().split("T")[0], // Format as YYYY-MM-DD
         cfp_deadline: data.cfpDeadline
           ? data.cfpDeadline.toISOString().split("T")[0]
-          : null, // Format as YYYY-MM-DD if exists
+          : undefined, // Format as YYYY-MM-DD if exists
         notes: data.notes,
       };
 
@@ -284,7 +284,7 @@ const EditEventModal: FC<EditEventModalProps> = ({
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value}
+                              selected={field.value || undefined}
                               onSelect={field.onChange}
                               initialFocus
                             />
@@ -326,7 +326,7 @@ const EditEventModal: FC<EditEventModalProps> = ({
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value}
+                              selected={field.value || undefined}
                               onSelect={field.onChange}
                               initialFocus
                             />
@@ -510,7 +510,7 @@ const EditEventModal: FC<EditEventModalProps> = ({
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value}
+                              selected={field.value || undefined}
                               onSelect={field.onChange}
                               initialFocus
                             />
@@ -536,7 +536,11 @@ const EditEventModal: FC<EditEventModalProps> = ({
                         <Textarea
                           placeholder="Add any additional details or notes about the event"
                           className="min-h-[100px]"
-                          {...field}
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
                         />
                       </FormControl>
                       <FormDescription>

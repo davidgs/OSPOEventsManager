@@ -45,9 +45,11 @@ const UsersPage: FC = () => {
     error,
   } = useQuery<User[]>({
     queryKey: ["/api/users"],
-    queryFn: () => {
+    queryFn: async () => {
       console.log("[USERS PAGE] Making API request to /api/users");
-      return apiRequest("GET", "/api/users");
+      const response = await apiRequest("GET", "/api/users");
+      if (!response.ok) throw new Error("Failed to fetch users");
+      return response.json();
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: initialized && authenticated, // Only fetch when authenticated
@@ -259,8 +261,8 @@ const UsersPage: FC = () => {
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold">{user.name}</h3>
                       {getStatusBadge(user)}
-                      <Badge variant={getRoleBadgeVariant(user.role)}>
-                        {user.role}
+                      <Badge variant={getRoleBadgeVariant(user.role || "")}>
+                        {user.role || "No role"}
                       </Badge>
                     </div>
 

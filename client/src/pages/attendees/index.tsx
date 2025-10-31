@@ -93,14 +93,14 @@ const AttendeesPage: FC = () => {
   });
 
   // Fetch events for dropdown
-  const { data: events = [], isLoading: isLoadingEvents } = useQuery({
+  const { data: events = [], isLoading: isLoadingEvents } = useQuery<Array<{ id: number; name: string }>>({
     queryKey: ["/api/events"],
   });
 
   // Extract unique roles for filter
   const roles = Array.from(
     new Set(attendees.map((attendee: any) => attendee.role).filter(Boolean))
-  );
+  ) as string[];
 
   // Add attendee mutation
   const { mutate: addAttendee, isPending: isAddingAttendee } = useMutation({
@@ -606,7 +606,11 @@ const AttendeesPage: FC = () => {
                     <FormControl>
                       <Textarea
                         placeholder="Any additional notes about this attendee"
-                        {...field}
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
                       />
                     </FormControl>
                     <FormDescription>
