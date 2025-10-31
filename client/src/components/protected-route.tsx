@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from "react";
+import React, { ReactNode, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
