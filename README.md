@@ -278,6 +278,52 @@ npm run type-check
 npm run build
 ```
 
+## Local Development with KIND
+
+For local development, run the application on your machine with dependencies (PostgreSQL, Keycloak, MinIO) in a KIND cluster.
+
+### Prerequisites
+
+```bash
+brew install podman kind kubectl node
+```
+
+### Setup
+
+```bash
+# Initialize Podman
+podman machine init
+podman machine start
+
+# Create KIND cluster with dependencies
+npm run kind:start
+
+# Setup local environment
+cp env.local.template .env.local
+npm run db:push:local
+
+# Run application with hot reload
+npm run dev:local
+```
+
+Access application at `http://localhost:4576` (admin/admin123)
+
+### Services
+
+- PostgreSQL: `localhost:5432` (ospo_user/ospo_password)
+- Keycloak: `http://localhost:8080/auth` (admin/admin)
+- MinIO: `http://localhost:9001` (minioadmin/minioadmin)
+
+### Management
+
+```bash
+npm run kind:status          # Check status
+npm run kind:logs <service>  # View logs
+npm run kind:delete          # Delete cluster
+```
+
+See [kind/README.md](kind/README.md) for troubleshooting and advanced configuration.
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
