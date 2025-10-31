@@ -54,7 +54,11 @@ function hasPermission(user: AuthorizedUser, resource: string, action: string): 
   return false;
 }
 
-function requireAuth(req: Request, res: Response, next: NextFunction) {
+interface AuthenticatedRequest extends Request {
+  user?: any;
+}
+
+function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({ error: "Authentication required" });
   }
@@ -62,7 +66,7 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 function requirePermission(resource: string, action: string) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const user = req.user as AuthorizedUser;
 
     if (!user) {
@@ -80,8 +84,8 @@ function requirePermission(resource: string, action: string) {
   };
 }
 
-function requireOwnership(getResourceOwnerId: (req: Request) => Promise<number | null>) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+function requireOwnership(getResourceOwnerId: (req: AuthenticatedRequest) => Promise<number | null>) {
+  return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const user = req.user as AuthorizedUser;
 
     if (!user) {

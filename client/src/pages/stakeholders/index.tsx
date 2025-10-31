@@ -55,13 +55,13 @@ export default function StakeholdersPage() {
     data: stakeholders,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<Array<any>>({
     queryKey: ["/api/stakeholders"],
     enabled: activeTab === "all",
   });
 
   // Fetch stakeholders by role
-  const { data: filteredStakeholders } = useQuery({
+  const { data: filteredStakeholders = [] } = useQuery<Array<any>>({
     queryKey: [`/api/stakeholders/role/${activeTab}`],
     enabled: activeTab !== "all",
   });
@@ -69,10 +69,7 @@ export default function StakeholdersPage() {
   // Create a new stakeholder
   const createStakeholderMutation = useMutation({
     mutationFn: (stakeholder: any) =>
-      apiRequest("/api/stakeholders", {
-        method: "POST",
-        data: stakeholder,
-      }),
+      apiRequest("POST", "/api/stakeholders", stakeholder),
     onSuccess: () => {
       toast({
         title: "Stakeholder added",

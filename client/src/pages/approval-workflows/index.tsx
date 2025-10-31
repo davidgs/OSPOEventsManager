@@ -73,7 +73,7 @@ export default function ApprovalWorkflowsPage() {
     data: workflows,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<Array<any>>({
     queryKey: [
       "/api/approval-workflows",
       activeTab !== "all" ? { status: activeTab } : {},
@@ -99,7 +99,7 @@ export default function ApprovalWorkflowsPage() {
   });
 
   // Fetch users for reviewers selection
-  const { data: users } = useQuery({
+  const { data: users = [] } = useQuery<Array<{ id: number; name: string }>>({
     queryKey: ["/api/users"],
   });
 
@@ -109,7 +109,7 @@ export default function ApprovalWorkflowsPage() {
   });
 
   // Fetch events for item selection when type is "event"
-  const { data: events } = useQuery({
+  const { data: events = [] } = useQuery<Array<{ id: number; name: string }>>({
     queryKey: ["/api/events"],
   });
 
@@ -157,7 +157,7 @@ export default function ApprovalWorkflowsPage() {
     setNewWorkflow((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: string, value: string | string[]) => {
+  const handleSelectChange = (name: string, value: string | string[] | number[]) => {
     setNewWorkflow((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -239,7 +239,7 @@ export default function ApprovalWorkflowsPage() {
             <CardDescription className="flex items-center gap-1 capitalize">
               {workflow.itemType
                 .split("_")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(" ")}
               {events && (
                 <span className="ml-1 font-medium">
@@ -452,7 +452,7 @@ export default function ApprovalWorkflowsPage() {
                   </Label>
                   <Select
                     onValueChange={(value) =>
-                      handleSelectChange("reviewerIds", [parseInt(value)])
+                      handleSelectChange("reviewerIds", [parseInt(value, 10)])
                     }
                   >
                     <SelectTrigger id="reviewerIds">

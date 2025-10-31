@@ -102,7 +102,7 @@ const CfpSubmissionsPage: FC = () => {
   });
 
   // Fetch events for dropdown
-  const { data: events = [], isLoading: isLoadingEvents } = useQuery({
+  const { data: events = [], isLoading: isLoadingEvents } = useQuery<Array<{ id: number; name: string }>>({
     queryKey: ["/api/events"],
   });
 
@@ -182,13 +182,14 @@ const CfpSubmissionsPage: FC = () => {
     });
 
   // Form for adding a new submission
-  const form = useForm<z.infer<typeof formSchema>>({
+  type FormData = z.infer<typeof formSchema>;
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      eventId: eventId || undefined,
+      event_id: eventId || undefined,
       title: "",
       abstract: "",
-      submitterName: "Alex Johnson", // Default to current user
+      submitter_name: "Alex Johnson", // Default to current user
       status: "draft",
       notes: "",
     },
@@ -226,7 +227,7 @@ const CfpSubmissionsPage: FC = () => {
         comparison = a.title.localeCompare(b.title);
         break;
       case "submitterName":
-        comparison = a.submitterName.localeCompare(b.submitterName);
+        comparison = (a.submitter_name || "").localeCompare(b.submitter_name || "");
         break;
       case "submissionDate":
         const dateA = a.submissionDate
@@ -269,7 +270,7 @@ const CfpSubmissionsPage: FC = () => {
         !safeToLowerCase(submission.title).includes(
           safeToLowerCase(searchTerm)
         ) &&
-        !safeToLowerCase(submission.submitterName).includes(
+        !safeToLowerCase(submission.submitter_name || "").includes(
           safeToLowerCase(searchTerm)
         )
       ) {
@@ -485,7 +486,7 @@ const CfpSubmissionsPage: FC = () => {
                       )}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">
-                          {submission.submitterName}
+                          {submission.submitter_name}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
@@ -561,7 +562,7 @@ const CfpSubmissionsPage: FC = () => {
                 {!eventId && (
                   <FormField
                     control={form.control}
-                    name="eventId"
+                    name="event_id"
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
                         <FormLabel>
@@ -636,14 +637,21 @@ const CfpSubmissionsPage: FC = () => {
                 {/* Submitter Name */}
                 <FormField
                   control={form.control}
-                  name="submitterName"
+                  name="submitter_name"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
                         Submitter Name <span className="text-red-500">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter submitter name" {...field} />
+                        <Input
+                          placeholder="Enter submitter name"
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -691,7 +699,11 @@ const CfpSubmissionsPage: FC = () => {
                       <FormControl>
                         <Textarea
                           placeholder="Any additional notes about this submission"
-                          {...field}
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
                         />
                       </FormControl>
                       <FormDescription>

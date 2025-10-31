@@ -174,7 +174,7 @@ export class DatabaseStorage implements IStorage {
     const eventsList = await db.select().from(events).orderBy(desc(events.start_date));
 
     // Get unique creator IDs
-    const creatorIds = [...new Set(eventsList.map(e => e.created_by_id).filter(Boolean))];
+    const creatorIds = Array.from(new Set(eventsList.map(e => e.created_by_id).filter((id): id is number => id !== null)));
 
     // Fetch all creators in one query
     const creators = creatorIds.length > 0
@@ -551,7 +551,7 @@ export class DatabaseStorage implements IStorage {
     if (!db) throw new Error("Database not initialized");
     const [workflow] = await db
       .update(approvalWorkflows)
-      .set({ current_status: status as any, updated_at: new Date() })
+      .set({ status: status as any, updated_at: new Date() })
       .where(eq(approvalWorkflows.id, id))
       .returning();
     return workflow;
@@ -562,7 +562,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(approvalWorkflows)
-      .where(eq(approvalWorkflows.current_status, status as any))
+      .where(eq(approvalWorkflows.status, status as any))
       .orderBy(desc(approvalWorkflows.created_at));
   }
 
@@ -634,7 +634,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(workflowReviewers)
-      .where(eq(workflowReviewers.user_id, userId));
+      .where(eq(workflowReviewers.reviewer_id, userId));
   }
 
   async updateWorkflowReviewerStatus(id: number, status: string): Promise<WorkflowReviewer | undefined> {
@@ -723,7 +723,7 @@ export class DatabaseStorage implements IStorage {
   // Workflow history operations
   async getWorkflowHistory(): Promise<WorkflowHistory[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(workflowHistory).orderBy(desc(workflowHistory.created_at));
+    return await db.select().from(workflowHistory).orderBy(desc(workflowHistory.performed_at));
   }
 
   async getWorkflowHistoryByWorkflow(workflowId: number): Promise<WorkflowHistory[]> {
@@ -732,7 +732,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(workflowHistory)
       .where(eq(workflowHistory.workflow_id, workflowId))
-      .orderBy(desc(workflowHistory.created_at));
+      .orderBy(desc(workflowHistory.performed_at));
   }
 
   async createWorkflowHistory(insertWorkflowHistory: InsertWorkflowHistory): Promise<WorkflowHistory> {

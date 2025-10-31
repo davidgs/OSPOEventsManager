@@ -57,9 +57,8 @@ export async function apiRequest(
     console.log('Authentication failed (401), redirecting to login');
 
     try {
-      // Import and call logout to clear auth state and redirect
-      const { logout } = await import('../contexts/auth-context');
-      await logout();
+      // Simply redirect to login - logout will be handled by the auth context
+      window.location.replace('/login');
     } catch (error) {
       console.error('Error during logout:', error);
       // Fallback redirect

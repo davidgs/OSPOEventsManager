@@ -56,29 +56,28 @@ export function AssetPreviewModal({
   const [rotation, setRotation] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");
-  const [editedDescription, setEditedDescription] = useState("");
+  // Description removed - not in asset schema
   const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (asset) {
       setEditedName(asset.name);
-      setEditedDescription(asset.description || "");
       setZoom(100);
       setRotation(0);
     }
   }, [asset]);
 
   const downloadAsset = () => {
-    window.open(asset.file_path, "_blank");
+    if (asset) {
+      window.open(asset.file_path, "_blank");
+    }
   };
 
   // Update asset mutation
   const updateAsset = useMutation({
     mutationFn: async (updatedAsset: Partial<Asset>) => {
-      return apiRequest(`/api/assets/${asset.id}`, {
-        method: "PUT",
-        body: JSON.stringify(updatedAsset),
-      });
+      if (!asset) throw new Error("Asset is required");
+      return apiRequest("PUT", `/api/assets/${asset.id}`, updatedAsset);
     },
     onSuccess: () => {
       toast({
@@ -102,13 +101,12 @@ export function AssetPreviewModal({
 
     updateAsset.mutate({
       name: editedName,
-      description: editedDescription,
+      // Description field removed - not in asset schema
     });
   };
 
   const handleCancel = () => {
     setEditedName(asset?.name || "");
-    setEditedDescription(asset?.description || "");
     setIsEditing(false);
   };
 
@@ -218,22 +216,7 @@ export function AssetPreviewModal({
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="asset-description">Description</Label>
-              {isEditing ? (
-                <Textarea
-                  id="asset-description"
-                  value={editedDescription}
-                  onChange={(e) => setEditedDescription(e.target.value)}
-                  className="mt-1"
-                  rows={3}
-                />
-              ) : (
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {asset.description || "No description provided"}
-                </p>
-              )}
-            </div>
+            {/* Description section removed - not in asset schema */}
 
             {isEditing && (
               <div className="flex justify-end space-x-2">

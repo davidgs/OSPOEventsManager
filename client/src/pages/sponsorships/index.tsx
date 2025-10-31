@@ -95,16 +95,16 @@ const SponsorshipsPage: FC = () => {
   });
 
   // Fetch events for dropdown
-  const { data: events = [], isLoading: isLoadingEvents } = useQuery({
+  const { data: events = [], isLoading: isLoadingEvents } = useQuery<Array<{ id: number; name: string }>>({
     queryKey: ["/api/events"],
   });
 
   // Extract unique tiers and statuses for filters
   const tiers = Array.from(
-    new Set(sponsorships.map((sponsorship: any) => sponsorship.tier))
+    new Set(sponsorships.map((sponsorship: any) => sponsorship.tier).filter(Boolean) as string[])
   );
   const statuses = Array.from(
-    new Set(sponsorships.map((sponsorship: any) => sponsorship.status))
+    new Set(sponsorships.map((sponsorship: any) => sponsorship.status).filter(Boolean) as string[])
   );
 
   // Add sponsorship mutation

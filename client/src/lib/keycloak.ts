@@ -1,3 +1,4 @@
+// @ts-ignore - keycloak-js types may not be available
 import Keycloak from 'keycloak-js';
 
 // Determine the Keycloak URL based on the environment
@@ -109,7 +110,7 @@ const setupTokenRefresh = () => {
  */
 const refreshToken = () => {
   keycloak.updateToken(30)
-    .then((refreshed) => {
+    .then((refreshed: boolean) => {
       if (refreshed) {
         console.log('Token refreshed successfully');
       }
@@ -141,7 +142,7 @@ export const login = (): Promise<void> => {
           console.log('Login initiated successfully');
           resolve();
         })
-        .catch((error) => {
+        .catch((error: any) => {
           console.error('Login failed:', error);
 
           // Try direct redirect as fallback with explicit realm
@@ -186,7 +187,7 @@ export const register = (): Promise<void> => {
           console.log('Registration initiated successfully');
           resolve();
         })
-        .catch((error) => {
+        .catch((error: any) => {
           console.error('Registration failed:', error);
 
           // Try direct redirect as fallback

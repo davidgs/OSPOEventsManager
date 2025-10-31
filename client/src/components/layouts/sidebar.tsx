@@ -106,7 +106,7 @@ const SidebarContent: FC = () => {
 
   // Determine display name (from Keycloak user or fallback to local user data)
   const displayName = user?.name || userData?.name || "User";
-  const displayJobTitle = userData?.jobTitle || "Community Member";
+  const displayJobTitle = userData?.job_title || "Community Member";
   const userInitials = getInitials(displayName);
 
   return (

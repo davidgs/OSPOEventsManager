@@ -53,10 +53,10 @@ jobs:
         run: npm ci
 
       - name: Run all tests
-        run: npm test -- --run --reporter=verbose
+        run: npm test --reporter=verbose
 
       - name: Generate coverage report
-        run: npm run test:coverage -- --run
+        run: npm run test:coverage
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
