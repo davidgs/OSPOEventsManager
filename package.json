@@ -12,7 +12,7 @@
     "db:push": "drizzle-kit push",
     "test": "vitest --run",
     "test:ui": "vitest --run --ui",
-    "test:coverage": "vitest  --run --coverage",
+    "test:coverage": "vitest --run --coverage",
     "test:watch": "vitest"
   },
   "dependencies": {

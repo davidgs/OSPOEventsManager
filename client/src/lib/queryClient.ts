@@ -11,6 +11,11 @@ type ApiRequestOptions = {
 // Track if we're already handling a 401 redirect to prevent multiple redirects
 let isHandling401 = false;
 
+// Reset function for testing
+export function reset401Handling() {
+  isHandling401 = false;
+}
+
 // API request helper (moved before defaultQueryFn to avoid circular dependency)
 export async function apiRequest(
   method: Method,
