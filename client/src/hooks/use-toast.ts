@@ -188,4 +188,12 @@ function useToast() {
   }
 }
 
+// Export cleanup function for testing
+export function clearAllToastTimeouts() {
+  toastTimeouts.forEach((timeout) => {
+    clearTimeout(timeout);
+  });
+  toastTimeouts.clear();
+}
+
 export { useToast, toast }
