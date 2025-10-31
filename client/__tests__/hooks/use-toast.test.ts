@@ -1,11 +1,17 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useToast, toast, reducer } from '@/hooks/use-toast';
+import { useToast, toast, reducer, clearAllToastTimeouts } from '@/hooks/use-toast';
 
 describe('use-toast', () => {
   beforeEach(() => {
     // Clear any existing toasts before each test
     vi.clearAllMocks();
+    clearAllToastTimeouts();
+  });
+
+  afterEach(() => {
+    // Clean up any remaining toast timeouts after each test
+    clearAllToastTimeouts();
   });
 
   describe('toast function', () => {

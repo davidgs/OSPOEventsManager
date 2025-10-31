@@ -14,6 +14,22 @@ export default defineConfig({
     include: ['**/__tests__/**/*.test.{ts,tsx}', '**/*.test.{ts,tsx}'],
     exclude: ['node_modules', 'dist', 'build', '.cursor'],
     setupFiles: ['./vitest.setup.ts'],
+    // Ensure tests exit properly
+    teardownTimeout: 10000,
+    testTimeout: 10000,
+    hookTimeout: 10000,
+    // Force exit after tests complete (prevents hanging)
+    forceRerunTriggers: [],
+    // Limit workers to avoid resource exhaustion
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: false,
+        isolate: true,
+        maxThreads: 4,
+        minThreads: 1,
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
