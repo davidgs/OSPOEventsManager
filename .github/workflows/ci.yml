@@ -53,7 +53,7 @@ jobs:
         run: npm ci
 
       - name: Run all tests
-        run: npm test --reporter=verbose
+        run: npm run test --reporter=verbose
 
       - name: Generate coverage report
         run: npm run test:coverage
