@@ -1,6 +1,6 @@
 {
   "name": "ospo-events-manager",
-  "version": "0.3.16",
+  "version": "0.3.17",
   "description": "OSPO Events Management System - A comprehensive platform for managing events, CFP submissions, attendees, and workflows",
   "type": "module",
   "license": "MIT",
@@ -10,9 +10,10 @@
     "start": "NODE_ENV=production tsx dist/server/index.ts",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "test": "vitest",
+    "test": "vitest --run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

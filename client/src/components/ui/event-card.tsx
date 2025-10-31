@@ -1,4 +1,4 @@
-import { FC } from "react";
+import React, { FC } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PriorityBadge } from "@/components/ui/priority-badge";
@@ -321,11 +321,33 @@ const EventCard: FC<EventCardProps> = ({
         </div>
       </CardContent>
 
-      <CardFooter className="bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700 px-3 sm:px-5 py-2 sm:py-3 flex justify-end">
+      <CardFooter className="bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700 px-3 sm:px-5 py-2 sm:py-3 flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-shrink-0">
+              {(event as any).createdByAvatar ? (
+                <img
+                  src={(event as any).createdByAvatar}
+                  alt={(event as any).createdByName || "Unknown User"}
+                  className="h-6 w-6 rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
+                  {((event as any).createdByName || "Unknown User")
+                    .charAt(0)
+                    .toUpperCase()}
+                </div>
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground truncate">
+              {(event as any).createdByName || "Unknown User"}
+            </span>
+          </div>
+        </div>
         <Link href={`/events/${event.id}`}>
           <Button
             variant="link"
-            className="text-sm sm:text-base font-medium text-primary hover:text-primary/80 dark:text-blue-400 dark:hover:text-blue-300 p-0 h-auto"
+            className="text-sm sm:text-base font-medium text-primary hover:text-primary/80 dark:text-blue-400 dark:hover:text-blue-300 p-0 h-auto flex-shrink-0"
           >
             View details →
           </Button>

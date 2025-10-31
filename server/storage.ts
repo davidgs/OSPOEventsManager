@@ -13,7 +13,7 @@ import {
   type InsertWorkflowHistory, type InsertEditHistory
 } from "../shared/database-types.js";
 import { db } from "./db";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -167,15 +167,55 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Event operations
-  async getEvents(): Promise<Event[]> {
+  async getEvents(): Promise<any[]> {
     if (!db) throw new Error("Database not initialized");
-    return await db.select().from(events).orderBy(desc(events.start_date));
+
+    // Fetch all events
+    const eventsList = await db.select().from(events).orderBy(desc(events.start_date));
+
+    // Get unique creator IDs
+    const creatorIds = [...new Set(eventsList.map(e => e.created_by_id).filter(Boolean))];
+
+    // Fetch all creators in one query
+    const creators = creatorIds.length > 0
+      ? await db.select().from(users).where(inArray(users.id, creatorIds))
+      : [];
+
+    // Create a map of creator ID to creator info
+    const creatorMap = new Map(
+      creators.map(c => [c.id, { name: c.name, headshot: c.headshot }])
+    );
+
+    // Attach creator info to each event
+    return eventsList.map(event => ({
+      ...event,
+      createdByName: event.created_by_id ? (creatorMap.get(event.created_by_id)?.name || null) : null,
+      createdByAvatar: event.created_by_id ? (creatorMap.get(event.created_by_id)?.headshot || null) : null,
+    }));
   }
 
-  async getEvent(id: number): Promise<Event | undefined> {
+  async getEvent(id: number): Promise<any | undefined> {
     if (!db) throw new Error("Database not initialized");
+
     const [event] = await db.select().from(events).where(eq(events.id, id));
-    return event;
+    if (!event) return undefined;
+
+    // Fetch creator if exists
+    let createdByName = null;
+    let createdByAvatar = null;
+    if (event.created_by_id) {
+      const [creator] = await db.select().from(users).where(eq(users.id, event.created_by_id));
+      if (creator) {
+        createdByName = creator.name;
+        createdByAvatar = creator.headshot;
+      }
+    }
+
+    return {
+      ...event,
+      createdByName,
+      createdByAvatar,
+    };
   }
 
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
