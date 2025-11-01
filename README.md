@@ -35,8 +35,8 @@ A comprehensive event management system for Open Source Program Offices (OSPOs),
 
 ### Prerequisites
 
-- For local development: kubectl, KIND, Podman (see [kind/README.md](kind/README.md))
-- For production: OpenShift CLI (oc) and cluster access
+- For local development: Node.js 20+, kubectl, KIND, Podman (see [kind/README.md](kind/README.md))
+- For production: OpenShift CLI (oc), cluster access, Docker
 
 ### Local Development Setup
 
