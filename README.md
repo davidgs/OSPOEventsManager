@@ -1,7 +1,7 @@
 # OSPO Events Management Application
 
-[![CI Pipeline](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/ci.yml)
-[![Tests](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/test.yml/badge.svg)](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/test.yml)
+[![CI Pipeline](https://github.com/davidgs/OSPOEventsManager/actions/workflows/ci.yml/badge.svg)](https://github.com/davidgs/OSPOEventsManager/actions/workflows/ci.yml)
+[![Tests](https://github.com/davidgs/OSPOEventsManager/actions/workflows/test.yml/badge.svg)](https://github.com/davidgs/OSPOEventsManager/actions/workflows/test.yml)
 [![Test Coverage](https://img.shields.io/badge/tests-899%20passed-brightgreen)](./TEST_SUITE_SUMMARY.md)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
