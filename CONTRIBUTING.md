@@ -4,7 +4,7 @@ Thank you for your interest in contributing to the OSPO Events Manager! This doc
 
 ## Table of Contents
 
-- [Code of Conduct](#code-of-conduct)
+- [Code of Conduct](./CODE_OF_CONDUCT.md)
 - [Getting Started](#getting-started)
 - [Development Workflow](#development-workflow)
 - [Testing](#testing)
@@ -15,7 +15,7 @@ Thank you for your interest in contributing to the OSPO Events Manager! This doc
 
 ## Code of Conduct
 
-This project follows a Code of Conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
+This project follows a [Code of Conduct](./CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
 
 ## Getting Started
 
