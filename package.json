@@ -16,15 +16,7 @@
     "test:run": "vitest --run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "kind:start": "./kind/setup-kind.sh start",
-    "kind:stop": "./kind/setup-kind.sh stop",
-    "kind:restart": "./kind/setup-kind.sh restart",
-    "kind:delete": "./kind/setup-kind.sh delete",
-    "kind:status": "./kind/setup-kind.sh status",
-    "kind:logs": "./kind/setup-kind.sh logs",
-    "local:setup": "cp env.local.template .env.local && echo 'Local environment file created. Edit .env.local if needed.'",
-    "local:db-console": "psql 'postgres://ospo_user:ospo_password@localhost:5432/ospo_events'"
+    "test:coverage": "vitest --coverage"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
