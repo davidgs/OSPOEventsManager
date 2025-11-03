@@ -143,6 +143,7 @@ show_usage() {
     echo "  --interactive  Run in interactive mode (default)"
     echo "  --quick        Quick setup with auto-generated values"
     echo "  --env-only     Only configure environment (dev/prod)"
+    echo "  --local        Setup local development environment (copies env.local.template to .env.local)"
     echo "  -o FILE        Output file (default: stdout)"
     echo ""
     echo "This script will:"
@@ -154,6 +155,7 @@ show_usage() {
     echo "Examples:"
     echo "  $0                    # Interactive mode, output to .env"
     echo "  $0 --quick            # Quick setup, output to .env"
+    echo "  $0 --local            # Setup local development environment"
     echo "  $0 -o config.env      # Interactive mode, output to config.env"
     echo "  $0 --quick -o -       # Quick setup, output to stdout"
     echo ""
@@ -517,10 +519,56 @@ validate_and_summarize() {
     fi
 }
 
+# Function to setup local development environment
+setup_local_env() {
+    print_header "Local Development Environment Setup"
+    print_info "Setting up local KIND cluster environment"
+    echo ""
+
+    # Check if env.local.template exists
+    if [[ ! -f "env.local.template" ]]; then
+        print_error "env.local.template file not found!"
+        print_info "Please run this script from the project root directory."
+        exit 1
+    fi
+
+    # Check if .env.local already exists
+    if [[ -f ".env.local" ]]; then
+        print_warning "A .env.local file already exists!"
+        if ! ask_yes_no "Do you want to overwrite it?" "n"; then
+            print_info "Configuration cancelled."
+            exit 0
+        fi
+        print_info "Backing up existing .env.local to .env.local.backup"
+        cp .env.local .env.local.backup
+    fi
+
+    # Copy template to .env.local
+    cp env.local.template .env.local
+    print_success ".env.local created from env.local.template"
+    echo ""
+
+    print_info "Local development environment is ready!"
+    echo ""
+    print_info "Service Access URLs:"
+    echo "  PostgreSQL:     localhost:5432 (ospo_user/ospo_password)"
+    echo "  Keycloak:       http://localhost:8080/auth (admin/admin)"
+    echo "  MinIO API:      http://localhost:9000 (minioadmin/minioadmin)"
+    echo "  MinIO Console:  http://localhost:9001"
+    echo "  Application:    http://localhost:4576"
+    echo ""
+    print_info "Next steps:"
+    echo "  1. Start KIND cluster: ./deploy.sh --local"
+    echo "  2. Push database schema: npm run db:push:local"
+    echo "  3. Run the application: npm run dev:local"
+    echo ""
+}
+
 # Global variables
 MODE="interactive"
 OUTPUT_FILE=".env"
 TEMP_ENV_FILE=""
+LOCAL_MODE=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -540,6 +588,10 @@ while [[ $# -gt 0 ]]; do
             MODE="env-only"
             shift
             ;;
+        --local)
+            LOCAL_MODE=true
+            shift
+            ;;
         -o)
             OUTPUT_FILE="$2"
             shift 2
@@ -551,6 +603,12 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Handle local mode
+if [[ "$LOCAL_MODE" == "true" ]]; then
+    setup_local_env
+    exit 0
+fi
 
 # Check dependencies
 if ! command -v openssl &> /dev/null; then
