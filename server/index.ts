@@ -37,27 +37,42 @@ console.log(`🔐 VITE_KEYCLOAK_URL: ${process.env.VITE_KEYCLOAK_URL}`);
 const additionalConnectSrc = process.env.CSP_CONNECT_SRC ? process.env.CSP_CONNECT_SRC.split(',') : [];
 const additionalFrameSrc = process.env.CSP_FRAME_SRC ? process.env.CSP_FRAME_SRC.split(',') : [];
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", ...(process.env.CSP_STYLE_SRC || "https://fonts.googleapis.com").split(',')],
-      scriptSrc: ["'self'", ...(process.env.CSP_SCRIPT_SRC || "").split(',').filter(Boolean)],
-      imgSrc: ["'self'", "data:", "https:", ...(process.env.CSP_IMG_SRC || "").split(',').filter(Boolean)],
-      connectSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalConnectSrc],
-      fontSrc: ["'self'", ...(process.env.CSP_FONT_SRC || "https://fonts.gstatic.com").split(',')],
-      objectSrc: [process.env.CSP_OBJECT_SRC || "none"],
-      mediaSrc: ["'self'", ...(process.env.CSP_MEDIA_SRC || "").split(',').filter(Boolean)],
-      frameSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalFrameSrc],
+// In development mode, use relaxed security headers for Vite HMR to work
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+if (isDevelopment) {
+  // Minimal helmet config for development - allows Vite HMR
+  app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP in development to allow Vite
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
+    hsts: false
+  }));
+} else {
+  // Production security headers
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", ...(process.env.CSP_STYLE_SRC || "https://fonts.googleapis.com").split(',')],
+        scriptSrc: ["'self'", ...(process.env.CSP_SCRIPT_SRC || "").split(',').filter(Boolean)],
+        imgSrc: ["'self'", "data:", "https:", ...(process.env.CSP_IMG_SRC || "").split(',').filter(Boolean)],
+        connectSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalConnectSrc],
+        fontSrc: ["'self'", ...(process.env.CSP_FONT_SRC || "https://fonts.gstatic.com").split(',')],
+        objectSrc: [(process.env.CSP_OBJECT_SRC && process.env.CSP_OBJECT_SRC !== 'none') ? process.env.CSP_OBJECT_SRC : "'none'"],
+        mediaSrc: ["'self'", ...(process.env.CSP_MEDIA_SRC || "").split(',').filter(Boolean)],
+        frameSrc: ["'self'", keycloakUrl, keycloakBaseUrl, ...additionalFrameSrc],
+      },
     },
-  },
-  crossOriginEmbedderPolicy: process.env.HELMET_COEP !== 'true',
-  hsts: {
-    maxAge: parseInt(process.env.HELMET_HSTS_MAX_AGE || '31536000'),
-    includeSubDomains: process.env.HELMET_HSTS_INCLUDE_SUBDOMAINS !== 'false',
-    preload: process.env.HELMET_HSTS_PRELOAD !== 'false'
-  }
-}));
+    crossOriginEmbedderPolicy: process.env.HELMET_COEP === 'true',
+    hsts: {
+      maxAge: parseInt(process.env.HELMET_HSTS_MAX_AGE || '31536000'),
+      includeSubDomains: process.env.HELMET_HSTS_INCLUDE_SUBDOMAINS !== 'false',
+      preload: process.env.HELMET_HSTS_PRELOAD !== 'false'
+    }
+  }));
+}
 
 // Rate limiting - exclude health endpoints
 const limiter = rateLimit({

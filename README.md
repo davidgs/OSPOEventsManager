@@ -1,7 +1,7 @@
 # OSPO Events Management Application
 
-[![CI Pipeline](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/ci.yml)
-[![Tests](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/test.yml/badge.svg)](https://github.com/YOUR_USERNAME/OSPOEventsManager/actions/workflows/test.yml)
+[![CI Pipeline](https://github.com/davidgs/OSPOEventsManager/actions/workflows/ci.yml/badge.svg)](https://github.com/davidgs/OSPOEventsManager/actions/workflows/ci.yml)
+[![Tests](https://github.com/davidgs/OSPOEventsManager/actions/workflows/test.yml/badge.svg)](https://github.com/davidgs/OSPOEventsManager/actions/workflows/test.yml)
 [![Test Coverage](https://img.shields.io/badge/tests-899%20passed-brightgreen)](./TEST_SUITE_SUMMARY.md)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
@@ -35,28 +35,41 @@ A comprehensive event management system for Open Source Program Offices (OSPOs),
 
 ### Prerequisites
 
-- OpenShift CLI (for OpenShift deployment)
-- Access to an OpenShift cluster
-- Docker (for building images)
-- Node.js 20+ (for testing and development)
+- For local development: Node.js 20+, kubectl, KIND, Podman (see [kind/README.md](kind/README.md))
+- For production: OpenShift CLI (oc), cluster access, Docker
 
-### Setup
+### Local Development Setup
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone <repository-url>
 cd OSPOEventsManager
-
-# Install dependencies
 npm install
 
-# Configure environment variables
-./configure.sh
+# Configure and deploy services to KIND cluster
+./configure.sh --local
+./deploy.sh --local
+npm run db:push:local
 
-# Follow the prompts to set up your environment
+# Run application locally (NOT in cluster - enables hot reload)
+npm run dev:local
 ```
 
-**Note**: This application requires PostgreSQL and Keycloak to function properly. Local development without these dependencies is not currently supported.
+Application runs at `http://localhost:4576` with services at localhost:5432 (PostgreSQL), localhost:8080 (Keycloak), localhost:9000/9001 (MinIO).
+
+See [kind/README.md](kind/README.md) for detailed setup and troubleshooting.
+
+### Production Deployment Setup
+
+```bash
+# Clone and install
+git clone <repository-url>
+cd OSPOEventsManager
+npm install
+
+# Configure environment
+./configure.sh
+```
 
 ### Running Tests
 
@@ -78,19 +91,13 @@ See [TESTING.md](./TESTING.md) for comprehensive testing documentation.
 
 ## Deployment
 
-### OpenShift Deployment (Only Supported Method)
-
-This application is designed to run on OpenShift and requires PostgreSQL and Keycloak dependencies. The only supported deployment method is:
+### Local (KIND)
 
 ```bash
-# Deploy to development environment
-./deploy.sh --dev
-
-# Deploy to production environment
-./deploy.sh --prod
-
-# Deploy app only (for updates)
-./deploy.sh --dev --app-only
+./deploy.sh --local                    # Deploy all services
+./deploy.sh --local --postgres         # Deploy specific service
+./deploy.sh --local --keycloak --minio # Deploy multiple services
+./deploy.sh --delete-local             # Delete cluster and all data
 ```
 
 This deployment includes:
@@ -100,11 +107,20 @@ This deployment includes:
 - Application server with auto-scaling
 - Secure networking and ingress
 
-**Note**: Other deployment methods (local Docker, standard Kubernetes) are not currently supported or tested.
+### Production (OpenShift)
+
+```bash
+./deploy.sh --dev                      # Deploy to development
+./deploy.sh --prod                     # Deploy to production
+./deploy.sh --dev --app --postgres     # Deploy specific components
+```
 
 ## Configuration
 
-### Environment Configuration
+```bash
+./configure.sh --local  # Local development (creates .env.local)
+./configure.sh          # Production (interactive setup for .env)
+```
 
 The application uses the `configure.sh` script to set up environment variables. This script will:
 
@@ -135,6 +151,10 @@ The application uses PostgreSQL with Drizzle ORM. Key tables include:
 To update the database schema:
 
 ```bash
+# For local development
+npm run db:push:local
+
+# For production/OpenShift
 npm run db:push
 ```
 
@@ -256,27 +276,23 @@ Enable debug logging by setting `NODE_ENV=development` in your environment.
 3. Make your changes with proper tests
 4. Submit a pull request
 
-### Development Setup
-
-**Note**: Local development requires a full OpenShift environment with PostgreSQL and Keycloak. For development work:
-
-1. Use the OpenShift development environment
-2. Deploy with `./deploy.sh --dev`
-3. Make code changes and rebuild/redeploy as needed
+### Local Development Workflow
 
 ```bash
-# Install dependencies
+# One-time setup (services in KIND cluster)
 npm install
+./configure.sh --local
+./deploy.sh --local
+npm run db:push:local
 
-# Run linting
-npm run lint
-
-# Run type checking
-npm run type-check
-
-# Build the application
-npm run build
+# Daily development (app runs locally for hot reload)
+npm run dev:local  # Starts app at http://localhost:4576 with hot reload
+npm run lint       # Code quality checks
+npm run type-check # TypeScript validation
+npm test          # Run test suite
 ```
+
+**Key Point:** Application runs on your machine (not in cluster) for instant hot reload. Services run in KIND cluster and are accessible via localhost ports.
 
 ## License
 

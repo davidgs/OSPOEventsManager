@@ -40,6 +40,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added AI configuration (OLLAMA_MODEL)
   - Added VITE_KEYCLOAK_URL for active environment
   - Total: 120 configuration variables in template (up from 91)
+- **Standardized Local Development with KIND** (2025-10-31)
+  - Added `--local` flag to `configure.sh` for local environment setup
+    - Automatically copies `env.local.template` to `.env.local`
+    - Pre-configured with localhost settings for all services
+    - No manual configuration needed for local development
+  - Added `--local` flag to `deploy.sh` for KIND cluster deployment
+    - Creates and manages local KIND (Kubernetes in Docker) cluster
+    - Deploys PostgreSQL, Keycloak, and MinIO to local cluster
+    - Uses NodePort services for localhost access (5432, 8080, 9000, 9001)
+    - Individual service deployment support (`--postgres`, `--keycloak`, `--minio`)
+    - Follows same deployment patterns as production (dev/prod)
+  - Integrated KIND cluster management into `deploy.sh`
+    - `setup_kind_cluster()` - Creates cluster with Podman provider
+    - `deploy_postgres_local()` - Deploys PostgreSQL with persistent storage
+    - `deploy_keycloak_local()` - Deploys Keycloak with realm configuration
+    - `deploy_minio_local()` - Deploys MinIO object storage
+    - `create_nodeport_services_local()` - Sets up localhost access via NodePort
+    - `delete_local_cluster()` - Removes KIND cluster and all data
+  - Added prerequisite checking for local development
+    - Validates kubectl, kind, and podman installation
+    - Checks and starts Podman machine automatically
+    - Verifies KIND cluster exists or creates it
+  - Updated `kind/README.md` with comprehensive local development guide
+    - Quick setup instructions using standardized scripts
+    - Prerequisites and Podman initialization
+    - Service access URLs and default credentials
+    - Troubleshooting section for common issues
+    - Development workflow best practices
+  - Updated README with local vs production deployment sections
+    - Clear prerequisites for local vs production deployment
+    - Separate setup instructions for each environment
+    - Service access information
+  - Simplified npm scripts (removed separate KIND management scripts)
+    - Removed `kind:start`, `kind:stop`, `kind:restart`, `kind:delete`, `kind:status`, `kind:logs`
+    - Removed `local:setup`, `local:db-console`
+    - All KIND management now through standardized `deploy.sh --local`
+  - Updated `env.local.template` with correct localhost service URLs
+  - Benefits:
+    - Single unified deployment script for all environments
+    - Consistent deployment process across local and production
+    - No need for separate cluster management scripts
+    - Automated prerequisite checks and validation
+    - Easy switching between local and production deployments
+  - Usage:
+    ```bash
+    ./configure.sh --local           # Setup local environment
+    ./deploy.sh --local              # Deploy all services
+    ./deploy.sh --local --postgres   # Deploy specific service
+    ./deploy.sh --delete-local       # Delete KIND cluster
+    npm run dev:local                # Run application
+    ```
 - **Event Creator Information Display** (2025-01-XX)
   - Added creator name and avatar display to event cards
   - Event cards now show who created each event in the footer
