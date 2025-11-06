@@ -277,7 +277,23 @@ fi
 setup_kind_cluster() {
     print_status "Creating KIND cluster '${CLUSTER_NAME}'..."
     
+    # Configure Podman to use only its own configuration (ignore Docker config entirely)
+    # Note: This project uses Podman exclusively for local development, so Docker config files are ignored
+    export REGISTRY_AUTH_FILE="${HOME}/.config/containers/auth.json"
+    export CONTAINERS_AUTH_FILE="${HOME}/.config/containers/auth.json"
+    # Explicitly unset Docker config to ensure Podman doesn't try to use Docker's credential helpers
+    unset DOCKER_CONFIG
+    # Create Podman auth directory if it doesn't exist
+    mkdir -p "${HOME}/.config/containers"
+    
+    # Create a minimal Podman auth file if it doesn't exist (empty JSON object)
+    # This ensures Podman has its own auth file and won't try to use Docker's config
+    if [[ ! -f "${HOME}/.config/containers/auth.json" ]]; then
+        echo '{}' > "${HOME}/.config/containers/auth.json"
+    fi
+    
     # Create KIND cluster with Podman provider
+    # Note: Podman is configured above to use only its own auth file, ignoring Docker config entirely
     cat <<EOF | KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster --name "${CLUSTER_NAME}" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
