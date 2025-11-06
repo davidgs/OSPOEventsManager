@@ -8,6 +8,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Comprehensive Documentation System** (2025-10-30)
+  - Created `/docs` directory with structured documentation
+  - User guides: getting started (250+ lines), managing events (350+ lines), comprehensive FAQ (500+ lines)
+  - Developer documentation: architecture overview (450+ lines), deployment guide
+  - Admin guides: user management, event review, system settings (placeholders)
+  - General documentation: troubleshooting, requirements, support
+  - Documentation viewer React component with sidebar navigation
+  - Backend API endpoint (`/api/docs/*`) to serve markdown files
+  - "Docs" button in application header for easy access
+  - Mobile-responsive documentation interface
+  - Total: 1500+ lines of documentation
+- **Flow Diagram Documentation** (`FLOW_DIAGRAM.md`)
+  - Complete system architecture diagrams
+  - User authentication flow
+  - API request flow with middleware stack
+  - File upload flow
+  - Deployment flow (OpenShift)
+  - Data model relationships
+  - Security architecture (defense in depth)
+  - Environment-specific configurations
+  - Technology stack summary
+- **Environment Configuration Enhancements**
+  - Updated `env.template` with 29 additional configuration variables
+  - Added session configuration options
+  - Added rate limiting configuration
+  - Added CSP (Content Security Policy) configuration
+  - Added Helmet security headers configuration
+  - Added proxy configuration options
+  - Added MinIO connection details for application usage
+  - Added AI configuration (OLLAMA_MODEL)
+  - Added VITE_KEYCLOAK_URL for active environment
+  - Total: 120 configuration variables in template (up from 91)
 - **Standardized Local Development with KIND** (2025-10-31)
   - Added `--local` flag to `configure.sh` for local environment setup
     - Automatically copies `env.local.template` to `.env.local`
@@ -93,8 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Features:
     - Automatic testing on all pushes and PRs
     - Node.js 20.x environment
-    - NPM caching for faster builds
     - Artifact archival (test results, build outputs)
+    - NPM caching for faster builds
     - Optional Codecov integration
     - Optional Snyk security scanning
     - PR comments with detailed test results
@@ -162,38 +194,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added React imports to page and component files for test compatibility
   - Fixed all async test failures with proper mocking strategies
   - **Total: 899 tests across shared, server, and client modules (899 passing, 100% pass rate ✅)**
-- **Comprehensive Documentation System** (2025-10-30)
-  - Created `/docs` directory with structured documentation
-  - User guides: getting started (250+ lines), managing events (350+ lines), comprehensive FAQ (500+ lines)
-  - Developer documentation: architecture overview (450+ lines), deployment guide
-  - Admin guides: user management, event review, system settings (placeholders)
-  - General documentation: troubleshooting, requirements, support
-  - Documentation viewer React component with sidebar navigation
-  - Backend API endpoint (`/api/docs/*`) to serve markdown files
-  - "Docs" button in application header for easy access
-  - Mobile-responsive documentation interface
-  - Total: 1500+ lines of documentation
-- **Flow Diagram Documentation** (`FLOW_DIAGRAM.md`)
-  - Complete system architecture diagrams
-  - User authentication flow
-  - API request flow with middleware stack
-  - File upload flow
-  - Deployment flow (OpenShift)
-  - Data model relationships
-  - Security architecture (defense in depth)
-  - Environment-specific configurations
-  - Technology stack summary
-- **Environment Configuration Enhancements**
-  - Updated `env.template` with 29 additional configuration variables
-  - Added session configuration options
-  - Added rate limiting configuration
-  - Added CSP (Content Security Policy) configuration
-  - Added Helmet security headers configuration
-  - Added proxy configuration options
-  - Added MinIO connection details for application usage
-  - Added AI configuration (OLLAMA_MODEL)
-  - Added VITE_KEYCLOAK_URL for active environment
-  - Total: 120 configuration variables in template (up from 91)
 - Users page with user management functionality
 - User profile editing capabilities
 - Asset ownership tracking and management

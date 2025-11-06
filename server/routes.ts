@@ -1,3 +1,26 @@
+/* The MIT License (MIT)
+ *
+ * Copyright (c) 2022-present David G. Simmons
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -553,9 +576,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     max: 100, // limit each IP to 100 requests per windowMs
     message: "Too many requests from this IP, please try again later.",
   });
+
+  // Handle /api/docs (root docs path)
+  app.get("/api/docs", docsRateLimiter, async (_req: Request, res: Response) => {
+    try {
+      const filePath = path.join(process.cwd(), 'docs', 'index.md');
+
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: "Documentation not found" });
+      }
+
+      // Read and return the markdown file
+      const content = fs.readFileSync(filePath, 'utf-8');
+      res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving documentation:", error);
+      res.status(500).json({ message: "Failed to load documentation" });
+    }
+  });
+
+  // Handle /api/docs/* (all other docs paths)
   app.get("/api/docs/*", docsRateLimiter, async (req: Request, res: Response) => {
     try {
-      const docPath = req.params[0] || 'index.md';
+      // Extract the path after /api/docs/
+      // req.path will be something like "/api/docs/index.md" or "/api/docs/user/getting-started.md"
+      const fullPath = req.path;
+      let docPath = fullPath.replace(/^\/api\/docs\/?/, ''); // Remove /api/docs/ or /api/docs
+
+      // Handle empty path or trailing slash - default to index.md
+      if (!docPath || docPath === '') {
+        docPath = 'index.md';
+      }
+
       const filePath = path.join(process.cwd(), 'docs', docPath);
 
       // Security: Prevent directory traversal
@@ -621,9 +675,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // This matches the server-side keycloak-config.ts behavior
     const keycloakRealm = process.env.KEYCLOAK_REALM || 'ospo-events';
     const keycloakClientId = process.env.KEYCLOAK_CLIENT_ID || 'ospo-events-app';
-    const keycloakUrl = process.env.KEYCLOAK_URL || 
-                        process.env.KEYCLOAK_CLIENT_URL || 
-                        process.env.VITE_KEYCLOAK_URL || 
+    const keycloakUrl = process.env.KEYCLOAK_URL ||
+                        process.env.KEYCLOAK_CLIENT_URL ||
+                        process.env.VITE_KEYCLOAK_URL ||
                         "https://keycloak-dev-rh-events-org.apps.ospo-osci.z3b1.p1.openshiftapps.com/auth";
 
     res.json({
