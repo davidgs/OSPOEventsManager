@@ -98,8 +98,8 @@ export default function HomePage() {
                   </p>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    Learn More
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/docs/user/managing-events">Learn More</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -121,8 +121,8 @@ export default function HomePage() {
                   </p>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    Learn More
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/docs/user/cfp-submissions">Learn More</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -142,8 +142,8 @@ export default function HomePage() {
                   </p>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    Learn More
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/docs/user/attendee-management">Learn More</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -165,8 +165,8 @@ export default function HomePage() {
                   </p>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    Learn More
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/docs/user/sponsorship-management">Learn More</Link>
                   </Button>
                 </CardFooter>
               </Card>
