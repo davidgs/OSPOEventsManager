@@ -7,6 +7,8 @@ Welcome to the OSPO Events Manager documentation. This comprehensive guide will 
 - [Getting Started](user/getting-started.md) - Learn how to access and navigate the application
 - [Managing Events](user/managing-events.md) - Create, edit, and track events
 - [CFP Submissions](user/cfp-submissions.md) - Submit and manage call for papers
+- [Attendee Management](user/attendee-management.md) - Track and manage event participants
+- [Sponsorship Management](user/sponsorship-management.md) - Manage sponsorships and budgets
 - [File Uploads](user/file-uploads.md) - Upload and manage assets and documents
 - [User Profile](user/user-profile.md) - Manage your user profile and preferences
 - [Approval Workflows](user/approval-workflows.md) - Understanding the approval process

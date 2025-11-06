@@ -50,6 +50,8 @@ const docStructure: DocSection[] = [
       { title: 'Getting Started', path: '/docs/user/getting-started' },
       { title: 'Managing Events', path: '/docs/user/managing-events' },
       { title: 'CFP Submissions', path: '/docs/user/cfp-submissions' },
+      { title: 'Attendee Management', path: '/docs/user/attendee-management' },
+      { title: 'Sponsorship Management', path: '/docs/user/sponsorship-management' },
       { title: 'File Uploads', path: '/docs/user/file-uploads' },
       { title: 'User Profile', path: '/docs/user/user-profile' },
       { title: 'Approval Workflows', path: '/docs/user/approval-workflows' },
