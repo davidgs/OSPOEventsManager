@@ -162,10 +162,10 @@ describe('HomePage', () => {
       expect(screen.getByText(/Track sponsorships and budgets/)).toBeInTheDocument();
     });
 
-    it('should render all Learn More buttons', () => {
+    it('should render all Learn More links', () => {
       render(<HomePage />);
-      const learnMoreButtons = screen.getAllByRole('button', { name: /learn more/i });
-      expect(learnMoreButtons).toHaveLength(4);
+      const learnMoreLinks = screen.getAllByRole('link', { name: /learn more/i });
+      expect(learnMoreLinks).toHaveLength(4);
     });
   });
 
