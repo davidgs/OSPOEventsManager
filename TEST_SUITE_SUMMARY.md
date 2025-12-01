@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document summarizes the comprehensive unit test suite created for the OSPO Events Manager application.
+This document summarizes the comprehensive unit test suite created for the Events Manager application.
 
 **Created:** October 30, 2025
 **Coverage:** Full-stack (shared, server, client modules, pages, and components)
@@ -389,5 +389,5 @@ For questions or issues:
 
 **Test Suite Version:** 1.0.0
 **Last Updated:** October 30, 2025
-**Maintainer:** OSPO Events Manager Development Team
+**Maintainer:** Events Manager Development Team
 

@@ -1746,6 +1746,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Language preference endpoints
+  app.get("/api/users/:id/preferences/language", async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      let user;
+
+      // Handle both numeric IDs and Keycloak UUIDs
+      if (/^[0-9]+$/.test(id)) {
+        user = await storage.getUser(parseInt(id));
+      } else {
+        user = await storage.getUserByKeycloakId(id);
+      }
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Parse preferences JSON
+      let preferences = {};
+      if (user.preferences) {
+        try {
+          preferences = JSON.parse(user.preferences);
+        } catch (e) {
+          console.error("Failed to parse user preferences:", e);
+        }
+      }
+
+      const language = (preferences as any)?.language || "en";
+      res.json({ language });
+    } catch (error) {
+      console.error(`[GET /api/users/:id/preferences/language] Error:`, error);
+      res.status(500).json({ message: "Failed to get language preference" });
+    }
+  });
+
+  app.put("/api/users/:id/preferences/language", async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      const { language } = req.body;
+
+      if (!language || typeof language !== "string") {
+        return res.status(400).json({ message: "Language is required and must be a string" });
+      }
+
+      let user;
+      let actualUserId: number;
+
+      // Handle both numeric IDs and Keycloak UUIDs
+      if (/^[0-9]+$/.test(id)) {
+        user = await storage.getUser(parseInt(id));
+        actualUserId = parseInt(id);
+      } else {
+        user = await storage.getUserByKeycloakId(id);
+        if (user) {
+          actualUserId = user.id;
+        } else {
+          return res.status(404).json({ message: "User not found" });
+        }
+      }
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Parse existing preferences or create new object
+      let preferences: any = {};
+      if (user.preferences) {
+        try {
+          preferences = JSON.parse(user.preferences);
+        } catch (e) {
+          console.error("Failed to parse existing preferences:", e);
+        }
+      }
+
+      // Update language preference
+      preferences.language = language;
+
+      // Update user preferences
+      const updatedUser = await storage.updateUserProfile(actualUserId, {
+        preferences: JSON.stringify(preferences),
+      });
+
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update language preference" });
+      }
+
+      res.json({ language, message: "Language preference updated successfully" });
+    } catch (error) {
+      console.error(`[PUT /api/users/:id/preferences/language] Error:`, error);
+      res.status(500).json({ message: "Failed to update language preference" });
+    }
+  });
+
   // Assets API routes
   app.get("/api/assets", async (req: Request, res: Response) => {
     try {

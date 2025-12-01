@@ -22,6 +22,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { safeToLowerCase } from "@/lib/utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -60,6 +61,7 @@ export function LinkAssetModal({
   onClose,
   eventId,
 }: LinkAssetModalProps) {
+  const { t } = useTranslation(["modals", "assets", "common", "forms"]);
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
@@ -84,16 +86,16 @@ export function LinkAssetModal({
         queryKey: ["/api/assets", "event", eventId],
       });
       toast({
-        title: "Assets Linked",
-        description: `Successfully linked ${selectedAssets.length} asset(s) to the event.`,
+        title: t("modals.linkAsset.linked"),
+        description: t("modals.linkAsset.linkedDescription", { count: selectedAssets.length }),
       });
       onClose();
       setSelectedAssets([]);
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to link assets to event",
+        title: t("common.error"),
+        description: error.message || t("modals.linkAsset.linkFailed"),
         variant: "destructive",
       });
     },
@@ -118,8 +120,8 @@ export function LinkAssetModal({
   const handleLinkAssets = () => {
     if (selectedAssets.length === 0) {
       toast({
-        title: "No Assets Selected",
-        description: "Please select at least one asset to link to the event.",
+        title: t("modals.linkAsset.noAssetsSelected"),
+        description: t("modals.linkAsset.noAssetsSelectedDescription"),
         variant: "destructive",
       });
       return;
@@ -167,17 +169,16 @@ export function LinkAssetModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Link Existing Assets</DialogTitle>
+          <DialogTitle>{t("modals.linkAsset.title")}</DialogTitle>
           <DialogDescription>
-            Select assets to link to this event. You can search by name, type,
-            or description.
+            {t("modals.linkAsset.description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="relative mb-4">
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Search assets..."
+            placeholder={t("modals.linkAsset.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-8"
@@ -186,7 +187,7 @@ export function LinkAssetModal({
             <button
               onClick={() => setSearchQuery("")}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600"
-              aria-label="Clear search"
+              aria-label={t("common.clearSearch", "Clear search")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -202,12 +203,12 @@ export function LinkAssetModal({
             <div className="text-center py-8">
               <File className="mx-auto h-12 w-12 text-gray-300" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">
-                No Assets Found
+                {t("modals.linkAsset.noAssetsFound")}
               </h3>
               <p className="mt-1 text-sm text-gray-500">
                 {searchQuery
-                  ? "No assets match your search criteria"
-                  : "There are no unlinked assets available"}
+                  ? t("modals.linkAsset.noMatch")
+                  : t("modals.linkAsset.noUnlinkedAssets")}
               </p>
             </div>
           ) : (
@@ -244,7 +245,7 @@ export function LinkAssetModal({
                       </p>
                     )}
                     <p className="mt-1 text-xs text-gray-500">
-                      Uploaded by {asset.uploadedByName || "Unknown"} •{" "}
+                      {t("modals.linkAsset.uploadedBy", { name: asset.uploadedByName || t("common.unknown") })} •{" "}
                       {(asset.fileSize / 1024).toFixed(0)} KB
                     </p>
                   </div>
@@ -260,11 +261,11 @@ export function LinkAssetModal({
         <DialogFooter className="mt-4">
           <div className="flex items-center mr-auto">
             <span className="text-sm text-gray-500">
-              {selectedAssets.length} asset(s) selected
+              {t("modals.linkAsset.selectedCount", { count: selectedAssets.length })}
             </span>
           </div>
           <Button variant="outline" onClick={onClose} disabled={isLinking}>
-            Cancel
+            {t("forms.buttons.cancel")}
           </Button>
           <Button
             onClick={handleLinkAssets}
@@ -273,12 +274,12 @@ export function LinkAssetModal({
             {isLinking ? (
               <>
                 <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                Linking...
+                {t("modals.linkAsset.linking")}
               </>
             ) : (
               <>
                 <Upload className="mr-2 h-4 w-4" />
-                Link Assets
+                {t("modals.linkAsset.linkButton")}
               </>
             )}
           </Button>

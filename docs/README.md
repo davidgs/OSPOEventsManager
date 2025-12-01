@@ -1,6 +1,6 @@
-# OSPO Events Manager Documentation
+# Events Manager Documentation
 
-Welcome to the comprehensive documentation for OSPO Events Manager!
+Welcome to the comprehensive documentation for Events Manager!
 
 ## Accessing the Documentation
 
@@ -124,5 +124,5 @@ If you can't find what you're looking for:
 
 **Documentation Version**: 1.0.0
 **Last Updated**: 2025-10-30
-**Maintained by**: OSPO Events Manager Team
+**Maintained by**: Events Manager Team
 

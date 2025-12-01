@@ -22,6 +22,7 @@
  */
 
 import { FC } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,19 +50,20 @@ const DeleteEventDialog: FC<DeleteEventDialogProps> = ({
   event,
   isDeleting,
 }) => {
+  const { t } = useTranslation(["events", "modals", "common"]);
   if (!event) return null;
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure you want to delete this event?</AlertDialogTitle>
+          <AlertDialogTitle>{t("modals.deleteEvent.title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete <strong>{event.name}</strong> and all associated data including CFP submissions, attendees, and sponsorships. This action cannot be undone.
+            {t("modals.deleteEvent.description", { name: event.name })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>{t("forms.buttons.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
@@ -70,7 +72,7 @@ const DeleteEventDialog: FC<DeleteEventDialogProps> = ({
             className="bg-red-500 hover:bg-red-600"
             disabled={isDeleting}
           >
-            {isDeleting ? "Deleting..." : "Delete Event"}
+            {isDeleting ? t("common.deleting", "Deleting...") : t("events.deleteEvent")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -23,10 +23,12 @@
 
 import React, { useState } from "react";
 import { Link } from "wouter";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/auth-context";
 import { LoginButton } from "@/components/auth/LoginButton";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { LanguageSelector } from "@/components/i18n/language-selector";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
@@ -69,21 +71,22 @@ const getInitials = (name: string): string => {
     .substring(0, 2);
 };
 
-// Navigation items for authenticated users
+// Navigation items for authenticated users - labels will be translated
 const navigationItems = [
-  { href: "/dashboard", label: "Dashboard", icon: BarChart2 },
-  { href: "/events", label: "Events", icon: Calendar },
-  { href: "/cfp-submissions", label: "CFP Submissions", icon: FileText },
-  { href: "/attendees", label: "Attendees", icon: UserCheck },
-  { href: "/sponsorships", label: "Sponsorships", icon: Building2 },
-  { href: "/assets", label: "Assets", icon: FolderOpen },
-  { href: "/stakeholders", label: "Stakeholders", icon: UsersIcon },
-  { href: "/approval-workflows", label: "Workflows", icon: Workflow },
-  // { href: "/users", label: "Users", icon: UsersIcon },
+  { href: "/dashboard", labelKey: "navigation.dashboard", icon: BarChart2 },
+  { href: "/events", labelKey: "navigation.events", icon: Calendar },
+  { href: "/cfp-submissions", labelKey: "navigation.cfpSubmissions", icon: FileText },
+  { href: "/attendees", labelKey: "navigation.attendees", icon: UserCheck },
+  { href: "/sponsorships", labelKey: "navigation.sponsorships", icon: Building2 },
+  { href: "/assets", labelKey: "navigation.assets", icon: FolderOpen },
+  { href: "/stakeholders", labelKey: "navigation.stakeholders", icon: UsersIcon },
+  { href: "/approval-workflows", labelKey: "navigation.workflows", icon: Workflow },
+  // { href: "/users", labelKey: "navigation.users", icon: UsersIcon },
 ];
 
 export function Header() {
   const { initialized, authenticated, user, logout } = useAuth();
+  const { t } = useTranslation(["common", "navigation"]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Fetch version information
@@ -134,14 +137,14 @@ export function Header() {
 
   // Function to open feedback email
   const openFeedbackEmail = () => {
-    const subject = encodeURIComponent("OSPO Events Manager Feedback");
+    const subject = encodeURIComponent("Events Manager Feedback");
     const body = encodeURIComponent(
-      `Hi David,\n\nI have feedback about the OSPO Events Manager application:\n\n[Please share your feedback here]\n\n---\nVersion: ${
-        versionInfo?.version || "Unknown"
-      }\nEnvironment: ${versionInfo?.environment || "Unknown"}\nURL: ${
+      `Hi David,\n\nI have feedback about the Events Manager application:\n\n[Please share your feedback here]\n\n---\nVersion: ${
+        versionInfo?.version || t("common.unknown")
+      }\nEnvironment: ${versionInfo?.environment || t("common.unknown")}\nURL: ${
         window.location.href
       }\nUser: ${
-        user?.email || "Anonymous"
+        user?.email || t("common.anonymous")
       }\nTimestamp: ${new Date().toISOString()}`
     );
     const mailtoUrl = `mailto:davidgs@redhat.com?subject=${subject}&body=${body}`;
@@ -158,8 +161,8 @@ export function Header() {
             className="flex items-center gap-2 font-bold text-lg sm:text-xl"
           >
             <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
-            <span className="hidden xs:inline">OSPO Events</span>
-            <span className="xs:hidden">OSPO</span>
+            <span className="hidden xs:inline">{t("common.appName")}</span>
+            <span className="xs:hidden">{t("common.appNameShort")}</span>
           </Link>
           {/* Version badge - hidden on mobile */}
           {versionInfo && (
@@ -178,7 +181,7 @@ export function Header() {
                 href={item.href}
                 className="text-sm font-medium transition-colors hover:text-primary whitespace-nowrap"
               >
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
           </nav>
@@ -193,10 +196,10 @@ export function Header() {
               variant="ghost"
               size="sm"
               className="hidden sm:flex items-center gap-2"
-              title="View Documentation"
+              title={t("common.viewDocumentation")}
             >
               <BookOpen className="h-4 w-4" />
-              <span className="hidden md:inline">Docs</span>
+              <span className="hidden md:inline">{t("common.docs")}</span>
             </Button>
           </Link>
 
@@ -205,11 +208,16 @@ export function Header() {
             size="sm"
             onClick={openFeedbackEmail}
             className="hidden sm:flex items-center gap-2"
-            title="Send feedback to David Simmons"
+            title={t("common.sendFeedback")}
           >
             <MessageCircle className="h-4 w-4" />
-            <span className="hidden md:inline">Feedback</span>
+            <span className="hidden md:inline">{t("common.sendFeedback")}</span>
           </Button>
+
+          {/* Language selector */}
+          <div className="hidden xs:block">
+            <LanguageSelector size="sm" />
+          </div>
 
           {/* Theme toggle - hidden on very small screens */}
           <div className="hidden xs:block">
@@ -272,7 +280,7 @@ export function Header() {
                     className="flex cursor-pointer items-center"
                   >
                     <BarChart2 className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
+                    <span>{t("navigation.dashboard")}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -281,7 +289,7 @@ export function Header() {
                     className="flex cursor-pointer items-center"
                   >
                     <Users className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                    <span>{t("navigation.profile")}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -290,7 +298,7 @@ export function Header() {
                     className="flex cursor-pointer items-center"
                   >
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                    <span>{t("navigation.settings")}</span>
                   </Link>
                 </DropdownMenuItem>
                 {/* Feedback in user menu for mobile */}
@@ -299,13 +307,21 @@ export function Header() {
                   onClick={openFeedbackEmail}
                 >
                   <MessageCircle className="mr-2 h-4 w-4" />
-                  <span>Send Feedback</span>
+                  <span>{t("common.sendFeedback")}</span>
+                </DropdownMenuItem>
+                {/* Language selector in mobile user menu */}
+                <DropdownMenuItem className="xs:hidden" asChild>
+                  <div className="flex cursor-pointer items-center px-2 py-1.5">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span className="mr-auto">{t("common.language")}</span>
+                    <LanguageSelector size="sm" />
+                  </div>
                 </DropdownMenuItem>
                 {/* Theme toggle in mobile user menu */}
                 <DropdownMenuItem className="xs:hidden" asChild>
                   <div className="flex cursor-pointer items-center px-2 py-1.5">
                     <Settings className="mr-2 h-4 w-4" />
-                    <span className="mr-auto">Theme</span>
+                    <span className="mr-auto">{t("common.theme")}</span>
                     <ThemeToggle />
                   </div>
                 </DropdownMenuItem>
@@ -319,7 +335,7 @@ export function Header() {
                     >
                       <Info className="mr-2 h-3 w-3" />
                       <div className="flex flex-col">
-                        <span>Version {versionInfo.version}</span>
+                        <span>{t("common.version")} {versionInfo.version}</span>
                         <span className="text-xs">
                           {versionInfo.environment}
                         </span>
@@ -357,7 +373,7 @@ export function Header() {
                     onClick={closeMobileMenu}
                   >
                     <Icon className="h-4 w-4" />
-                    {item.label}
+                    {t(item.labelKey)}
                   </Link>
                 );
               })}
@@ -370,7 +386,7 @@ export function Header() {
                 className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground text-left"
               >
                 <MessageCircle className="h-4 w-4" />
-                Send Feedback
+                {t("common.sendFeedback")}
               </button>
             </div>
           </nav>

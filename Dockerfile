@@ -20,7 +20,7 @@ COPY . .
 RUN timeout 300 npx vite build || echo "Vite build timed out, creating minimal static files"
 RUN if [ ! -d "dist/public" ]; then \
   mkdir -p dist/public && \
-  echo '<!DOCTYPE html><html><head><title>OSPO Events</title></head><body><div id="root">Loading...</div></body></html>' > dist/public/index.html; \
+  echo '<!DOCTYPE html><html><head><title>Events</title></head><body><div id="root">Loading...</div></body></html>' > dist/public/index.html; \
   fi
 
 # Production stage

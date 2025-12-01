@@ -22,6 +22,7 @@
  */
 
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { type Asset } from "@shared/schema";
@@ -74,6 +75,7 @@ export function AssetPreviewModal({
   onClose,
   userName,
 }: AssetPreviewModalProps) {
+  const { t } = useTranslation(["modals", "assets", "common", "forms"]);
   const { toast } = useToast();
   const [zoom, setZoom] = useState(100);
   const [rotation, setRotation] = useState(0);
@@ -104,16 +106,16 @@ export function AssetPreviewModal({
     },
     onSuccess: () => {
       toast({
-        title: "Asset updated",
-        description: "The asset has been successfully updated.",
+        title: t("modals.assetPreview.updated"),
+        description: t("modals.assetPreview.updatedDescription"),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
       setIsEditing(false);
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to update asset: ${error.message}`,
+        title: t("common.error"),
+        description: t("modals.assetPreview.updateFailed", { error: error.message }),
         variant: "destructive",
       });
     },
@@ -190,7 +192,7 @@ export function AssetPreviewModal({
                 <DialogTitle className="text-lg">{asset.name}</DialogTitle>
                 <DialogDescription className="text-sm">
                   {formatBytes(asset.file_size)} •{" "}
-                  {asset.mime_type.split("/")[1].toUpperCase()} • Uploaded{" "}
+                  {asset.mime_type.split("/")[1].toUpperCase()} • {t("modals.assetPreview.uploaded")}{" "}
                   {formatDate(asset.uploaded_at)}
                 </DialogDescription>
               </div>
@@ -202,11 +204,11 @@ export function AssetPreviewModal({
                 onClick={() => setIsEditing(!isEditing)}
               >
                 <Edit className="h-4 w-4 mr-2" />
-                {isEditing ? "Cancel" : "Edit"}
+                {isEditing ? t("forms.buttons.cancel") : t("common.edit")}
               </Button>
               <Button variant="outline" size="sm" onClick={downloadAsset}>
                 <Download className="h-4 w-4 mr-2" />
-                Download
+                {t("common.download")}
               </Button>
             </div>
           </div>
@@ -219,7 +221,7 @@ export function AssetPreviewModal({
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="asset-name">Name</Label>
+                <Label htmlFor="asset-name">{t("assets.fields.name")}</Label>
                 {isEditing ? (
                   <Input
                     id="asset-name"
@@ -232,7 +234,7 @@ export function AssetPreviewModal({
                 )}
               </div>
               <div>
-                <Label>Type</Label>
+                <Label>{t("assets.fields.type")}</Label>
                 <Badge variant="secondary" className="mt-1">
                   {asset.type.replace("_", " ").toUpperCase()}
                 </Badge>
@@ -245,11 +247,11 @@ export function AssetPreviewModal({
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={handleCancel}>
                   <X className="h-4 w-4 mr-2" />
-                  Cancel
+                  {t("forms.buttons.cancel")}
                 </Button>
                 <Button onClick={handleSave} disabled={updateAsset.isPending}>
                   <Save className="h-4 w-4 mr-2" />
-                  {updateAsset.isPending ? "Saving..." : "Save"}
+                  {updateAsset.isPending ? t("common.saving") : t("forms.buttons.save")}
                 </Button>
               </div>
             )}
@@ -260,7 +262,7 @@ export function AssetPreviewModal({
           {/* Preview Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Preview</h3>
+              <h3 className="text-lg font-semibold">{t("modals.assetPreview.preview")}</h3>
               {asset.mime_type.startsWith("image/") && (
                 <div className="flex items-center space-x-2">
                   <Button
@@ -322,10 +324,10 @@ export function AssetPreviewModal({
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     {getFileIcon(asset.mime_type)}
                     <p className="mt-4 text-sm text-muted-foreground">
-                      Preview not available for this file type
+                      {t("modals.assetPreview.previewNotAvailable")}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Click download to view the file
+                      {t("modals.assetPreview.clickDownloadToView")}
                     </p>
                   </div>
                 )}

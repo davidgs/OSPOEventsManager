@@ -81,7 +81,7 @@ export default function LoginPage() {
       <div className="flex min-h-screen items-center justify-center">
         <Card className="w-[350px] shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">OSPO Events</CardTitle>
+            <CardTitle className="text-2xl">Events</CardTitle>
             <CardDescription>Initializing authentication...</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center p-6">
@@ -97,7 +97,7 @@ export default function LoginPage() {
       <Card className="w-[350px] shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-foreground text-transparent bg-clip-text">
-            OSPO Events
+            Events
           </CardTitle>
           <CardDescription>
             Sign in to access your event management dashboard

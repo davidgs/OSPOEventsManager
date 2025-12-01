@@ -1,6 +1,6 @@
 # Sponsorship Management
 
-This guide covers everything you need to know about managing sponsorships and budgets for events in OSPO Events Manager.
+This guide covers everything you need to know about managing sponsorships and budgets for events in Events Manager.
 
 ## Overview
 

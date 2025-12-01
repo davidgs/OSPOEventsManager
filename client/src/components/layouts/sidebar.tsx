@@ -22,6 +22,7 @@
  */
 
 import { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -50,58 +51,60 @@ interface SidebarProps {
   className?: string;
 }
 
-const navItems = [
+const createNavItems = (t: (key: string) => string) => [
   {
-    title: "Events",
+    title: t("navigation.events"),
     href: "/events",
     icon: Calendar,
   },
   {
-    title: "CFP Submissions",
+    title: t("navigation.cfp_submissions"),
     href: "/cfp-submissions",
     icon: FileText,
   },
   {
-    title: "Attendees",
+    title: t("navigation.attendees"),
     href: "/attendees",
     icon: Users,
   },
   {
-    title: "Sponsorships",
+    title: t("navigation.sponsorships"),
     href: "/sponsorships",
     icon: DollarSign,
   },
   {
-    title: "Assets",
+    title: t("navigation.assets"),
     href: "/assets",
     icon: File,
   },
   {
-    title: "Stakeholders",
+    title: t("navigation.stakeholders"),
     href: "/stakeholders",
     icon: UserCog,
   },
   {
-    title: "Approvals",
+    title: t("navigation.workflows"),
     href: "/approval-workflows",
     icon: ClipboardList,
   },
   {
-    title: "Users",
+    title: t("navigation.users"),
     href: "/users",
     icon: Users,
   },
   {
-    title: "Settings",
+    title: t("navigation.settings"),
     href: "/settings",
     icon: Settings,
   },
 ];
 
 const SidebarContent: FC = () => {
+  const { t } = useTranslation(["navigation", "common"]);
   const [location] = useLocation();
   const userId = 2; // Using demo_user's ID
   const { logout, user } = useAuth();
+  const navItems = createNavItems(t);
 
   // Query to fetch user data
   const { data: userData } = useQuery<User>({
@@ -128,14 +131,14 @@ const SidebarContent: FC = () => {
   };
 
   // Determine display name (from Keycloak user or fallback to local user data)
-  const displayName = user?.name || userData?.name || "User";
-  const displayJobTitle = userData?.job_title || "Community Member";
+  const displayName = user?.name || userData?.name || t("common.user");
+  const displayJobTitle = userData?.job_title || t("common.communityMember", "Community Member");
   const userInitials = getInitials(displayName);
 
   return (
     <div className="flex flex-col h-full bg-gray-800">
       <div className="flex items-center justify-center h-16 px-4 bg-gray-900">
-        <h1 className="text-xl font-semibold text-white">OSPO Events</h1>
+        <h1 className="text-xl font-semibold text-white">{t("common.appName")}</h1>
       </div>
       <div className="flex flex-col flex-grow px-4 pt-5 pb-4 overflow-y-auto">
         <nav className="flex-1 space-y-2">
@@ -169,7 +172,7 @@ const SidebarContent: FC = () => {
             onClick={handleLogout}
           >
             <LogOut className="mr-3 h-5 w-5" />
-            Logout
+            {t("common.logout")}
           </Button>
         </nav>
       </div>
@@ -204,6 +207,7 @@ const SidebarContent: FC = () => {
 };
 
 const Sidebar: FC<SidebarProps> = ({ className }) => {
+  const { t } = useTranslation(["common"]);
   const isMobile = useMobile();
   const { user } = useAuth();
 
@@ -224,7 +228,7 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
   };
 
   // Determine display name (from Keycloak user or fallback to local user data)
-  const displayName = user?.name || userData?.name || "User";
+  const displayName = user?.name || userData?.name || t("common.user");
   const userInitials = getInitials(displayName);
 
   if (isMobile) {
@@ -240,7 +244,7 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
             <SidebarContent />
           </SheetContent>
         </Sheet>
-        <h1 className="text-lg font-semibold">OSPO Events</h1>
+        <h1 className="text-lg font-semibold">{t("common.appName")}</h1>
         <Link href="/settings">
           <Avatar className="h-8 w-8 cursor-pointer">
             {userData?.headshot ? (

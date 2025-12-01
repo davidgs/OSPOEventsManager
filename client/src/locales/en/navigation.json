@@ -1,0 +1,20 @@
+{
+  "dashboard": "Dashboard",
+  "events": "Events",
+  "cfp_submissions": "CFP Submissions",
+  "attendees": "Attendees",
+  "sponsorships": "Sponsorships",
+  "assets": "Assets",
+  "stakeholders": "Stakeholders",
+  "workflows": "Workflows",
+  "users": "Users",
+  "profile": "Profile",
+  "settings": "Settings",
+  "documentation": "Documentation",
+  "feedback": "Feedback",
+  "send_feedback": "Send Feedback",
+  "home": "Home",
+  "about": "About",
+  "contact": "Contact"
+}
+

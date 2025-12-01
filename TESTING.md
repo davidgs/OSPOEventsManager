@@ -1,6 +1,6 @@
 # Testing Documentation
 
-This document describes the testing strategy and practices for the OSPO Events Manager application.
+This document describes the testing strategy and practices for the Events Manager application.
 
 ## Overview
 

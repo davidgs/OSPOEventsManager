@@ -1,6 +1,6 @@
 # K8s Directory - OpenShift Deployment Manifests
 
-This directory contains all the Kubernetes/OpenShift YAML manifests required for deploying the OSPO Events Manager application. These files are used by the `deploy.sh` script to create and manage the application infrastructure.
+This directory contains all the Kubernetes/OpenShift YAML manifests required for deploying the Events Manager application. These files are used by the `deploy.sh` script to create and manage the application infrastructure.
 
 ## Directory Structure
 

@@ -1,0 +1,100 @@
+{
+  "labels": {
+    "name": "Full Name",
+    "email": "Email",
+    "bio": "Bio",
+    "role": "Role",
+    "jobTitle": "Job Title",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "phone": "Phone",
+    "company": "Company",
+    "website": "Website",
+    "location": "Location",
+    "timezone": "Timezone",
+    "language": "Language",
+    "theme": "Theme"
+  },
+  "placeholders": {
+    "name": "Your name",
+    "email": "Your email address",
+    "bio": "Tell us a little about yourself",
+    "jobTitle": "Your job title",
+    "selectRole": "Select your role",
+    "search": "Search...",
+    "select": "Select...",
+    "enter": "Enter...",
+    "type": "Type..."
+  },
+  "descriptions": {
+    "name": "This is your public display name.",
+    "email": "Your email address will be used for notifications.",
+    "bio": "A brief description about yourself and your work.",
+    "role": "Your role in the organization.",
+    "jobTitle": "Your professional title or position.",
+    "profilePhoto": "Your profile photo will be displayed on your profile and in attendee lists.",
+    "language": "Select your preferred language for the interface."
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "minLength": "Must be at least {{min}} characters",
+    "maxLength": "Must be no more than {{max}} characters",
+    "passwordMatch": "Passwords do not match",
+    "invalidFormat": "Invalid format",
+    "tooShort": "Too short",
+    "tooLong": "Too long"
+  },
+  "buttons": {
+    "save": "Save",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "reset": "Reset",
+    "clear": "Clear",
+    "upload": "Upload",
+    "uploadNewPhoto": "Upload New Photo",
+    "remove": "Remove",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "close": "Close"
+  },
+  "fileUpload": {
+    "maxSize": "Max size {{size}}",
+    "allowedTypes": "JPG, PNG or GIF. Max size {{size}}.",
+    "uploading": "Uploading...",
+    "uploaded": "Uploaded successfully",
+    "failed": "Upload failed",
+    "fileTooLarge": "File size exceeds the {{size}} limit.",
+    "invalidType": "Only JPG, PNG, and GIF images are allowed."
+  },
+  "events": {
+    "created": "Event created",
+    "createdDescription": "The event has been created successfully.",
+    "creationFailed": "Event creation failed",
+    "creationFailedDescription": "There was an error creating the event: {{error}}",
+    "required": "Event required",
+    "requiredDescription": "Please select an event or create a new one for this asset type."
+  },
+  "assets": {
+    "uploaded": "Asset uploaded successfully",
+    "uploadedDescription": "Your file has been uploaded and is now available in the assets library.",
+    "uploadFailed": "Upload failed",
+    "uploadFailedDescription": "There was an error uploading your file: {{error}}"
+  },
+  "cfp": {
+    "created": "CFP submission created",
+    "createdDescription": "Your call for proposal submission has been saved.",
+    "submissionFailed": "Submission failed"
+  },
+  "attendance": {
+    "registered": "Attendance registered",
+    "registeredDescription": "Your attendance has been successfully registered.",
+    "registrationFailed": "Registration failed"
+  }
+}
+

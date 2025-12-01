@@ -32,7 +32,7 @@ For the complete and detailed changelog, please see the [main CHANGELOG.md](../.
 See [CHANGELOG.md](../../CHANGELOG.md) for complete unreleased changes.
 
 ### [1.0.0] - 2024-01-XX
-Initial release of OSPO Events Manager
+Initial release of Events Manager
 
 ---
 

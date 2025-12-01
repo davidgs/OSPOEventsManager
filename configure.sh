@@ -24,7 +24,7 @@
 #
 
 
-# OSPO Events Manager - Configuration Script
+# Events Manager - Configuration Script
 # This script helps configure the .env file from env.template
 
 set -e
@@ -158,7 +158,7 @@ ask_yes_no() {
 
 # Function to show usage
 show_usage() {
-    echo "OSPO Events Manager Configuration Script"
+    echo "Events Manager Configuration Script"
     echo ""
     echo "Usage: $0 [options]"
     echo ""
@@ -189,7 +189,7 @@ show_usage() {
 configure_env() {
     local mode=${1:-interactive}
 
-    print_header "OSPO Events Manager Configuration"
+    print_header "Events Manager Configuration"
     echo ""
     print_info "This script will help you configure your environment file from env.template"
     echo ""

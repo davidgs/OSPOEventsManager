@@ -1,8 +1,8 @@
-# OSPO Events Management System
+# Events Management System
 
 ## Overview
 
-The OSPO Events Management System is a comprehensive event management application designed for Open Source Program Offices (OSPOs). It provides tools for managing events, call-for-papers submissions, attendees, assets, and approval workflows. The system features a modern React frontend with a Node.js/Express backend, using PostgreSQL for data persistence and Keycloak for authentication.
+The Events Management System is a comprehensive event management application designed for Open Source Program Offices (OSPOs). It provides tools for managing events, call-for-papers submissions, attendees, assets, and approval workflows. The system features a modern React frontend with a Node.js/Express backend, using PostgreSQL for data persistence and Keycloak for authentication.
 
 ## System Architecture
 
@@ -31,7 +31,7 @@ The OSPO Events Management System is a comprehensive event management applicatio
 ## Key Components
 
 ### Core Domain Models
-- **Events**: Central entity for tracking OSPO events with status, dates, and metadata
+- **Events**: Central entity for tracking events with status, dates, and metadata
 - **Users**: Application users with Keycloak integration for authentication
 - **CFP Submissions**: Call-for-papers tracking with approval workflows
 - **Attendees**: Event participant management

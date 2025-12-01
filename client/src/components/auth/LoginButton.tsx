@@ -22,11 +22,13 @@
  */
 
 import React from 'react';
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { login } from '@/lib/keycloak';
 
 export function LoginButton() {
+  const { t } = useTranslation(["common", "forms"]);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -38,8 +40,8 @@ export function LoginButton() {
     } catch (error) {
       console.error('Login error:', error);
       toast({
-        title: "Login Failed",
-        description: "There was a problem connecting to the authentication server.",
+        title: t("common.loginFailed", "Login Failed"),
+        description: t("common.loginFailedDescription", "There was a problem connecting to the authentication server."),
         variant: "destructive",
       });
     } finally {
@@ -48,13 +50,13 @@ export function LoginButton() {
   };
 
   return (
-    <Button 
-      variant="default" 
-      onClick={handleLogin} 
+    <Button
+      variant="default"
+      onClick={handleLogin}
       disabled={isLoading}
       className="w-full"
     >
-      {isLoading ? "Connecting..." : "Log In"}
+      {isLoading ? t("common.connecting", "Connecting...") : t("common.login")}
     </Button>
   );
 }

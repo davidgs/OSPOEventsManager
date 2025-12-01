@@ -1,6 +1,6 @@
 # GitHub Issue Templates Guide
 
-This directory contains standardized issue templates for the OSPO Events Manager project.
+This directory contains standardized issue templates for the Events Manager project.
 
 ## Available Templates
 

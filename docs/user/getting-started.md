@@ -1,10 +1,10 @@
-# Getting Started with OSPO Events Manager
+# Getting Started with Events Manager
 
-Welcome to OSPO Events Manager! This guide will help you get started with the application.
+Welcome to Events Manager! This guide will help you get started with the application.
 
 ## Accessing the Application
 
-1. Navigate to your organization's OSPO Events Manager URL (e.g., `https://rh-events.org`)
+1. Navigate to your organization's Events Manager URL (e.g., `https://rh-events.org`)
 2. Click the **Login** button in the header
 3. Enter your credentials or register for a new account
 
@@ -43,6 +43,8 @@ Manage your user profile:
 - Update your name and contact information
 - Add a profile photo
 - Set your job title and bio
+- Change your language preference
+- Customize theme (light/dark/system)
 - View your activity history
 
 ### ⚙️ Admin (if you have admin privileges)

@@ -24,7 +24,7 @@
 #
 
 
-# OSPO Events Manager - Production-Ready Deployment Script
+# Events Manager - Production-Ready Deployment Script
 # Supports both dev and prod environments with .env configuration
 # Usage: ./deploy.sh --dev OR ./deploy.sh --prod
 
@@ -207,6 +207,7 @@ if [[ "$RESTORE" == "true" && -z "$RESTORE_PATH" ]]; then
 fi
 
 # Skip environment loading for operations that don't need it
+# Note: BACKUP and RESTORE need environment variables, so we load them
 if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" ]]; then
     # Check for appropriate .env file based on environment
     if [[ "$ENVIRONMENT" == "local" ]]; then
@@ -235,9 +236,31 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
     set -a  # automatically export all variables
     source "$ENV_FILE"
     set +a  # turn off automatic export
+elif [[ "$BACKUP" == "true" || "$RESTORE" == "true" ]]; then
+    # Backup and restore operations need environment variables
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+        if [[ ! -f .env.local ]]; then
+            print_error "🚨 .env.local file not found!"
+            exit 1
+        fi
+        ENV_FILE=".env.local"
+    else
+        if [[ ! -f .env ]]; then
+            print_error "🚨 .env file not found!"
+            exit 1
+        fi
+        ENV_FILE=".env"
+    fi
+
+    # Load environment variables
+    print_status "Loading configuration from $ENV_FILE file..."
+    set -a  # automatically export all variables
+    source "$ENV_FILE"
+    set +a  # turn off automatic export
 fi
 
 # Set environment-specific variables (skip for standalone operations)
+# Note: BACKUP and RESTORE need NAMESPACE and other env-specific vars
 if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" ]]; then
     if [[ "$ENVIRONMENT" == "local" ]]; then
         export NAMESPACE="ospo-local"
@@ -267,6 +290,21 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
     print_status "Namespace: $NAMESPACE"
     print_status "App URL: $APP_URL"
     print_status "Keycloak URL: $KEYCLOAK_URL"
+elif [[ "$BACKUP" == "true" || "$RESTORE" == "true" ]]; then
+    # Set environment-specific variables for backup/restore operations
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+        export NAMESPACE="ospo-local"
+        export CLI_CMD="kubectl"
+    elif [[ "$ENVIRONMENT" == "dev" ]]; then
+        export NAMESPACE="$DEV_NAMESPACE"
+        export CLI_CMD="oc"
+    else
+        export NAMESPACE="$PROD_NAMESPACE"
+        export CLI_CMD="oc"
+    fi
+
+    print_success "Configuration loaded for $ENVIRONMENT environment"
+    print_status "Namespace: $NAMESPACE"
 fi
 
 # =============================================================================
@@ -276,8 +314,24 @@ fi
 # Function to setup KIND cluster
 setup_kind_cluster() {
     print_status "Creating KIND cluster '${CLUSTER_NAME}'..."
-    
+
+    # Configure Podman to use only its own configuration (ignore Docker config entirely)
+    # Note: This project uses Podman exclusively for local development, so Docker config files are ignored
+    export REGISTRY_AUTH_FILE="${HOME}/.config/containers/auth.json"
+    export CONTAINERS_AUTH_FILE="${HOME}/.config/containers/auth.json"
+    # Explicitly unset Docker config to ensure Podman doesn't try to use Docker's credential helpers
+    unset DOCKER_CONFIG
+    # Create Podman auth directory if it doesn't exist
+    mkdir -p "${HOME}/.config/containers"
+
+    # Create a minimal Podman auth file if it doesn't exist (empty JSON object)
+    # This ensures Podman has its own auth file and won't try to use Docker's config
+    if [[ ! -f "${HOME}/.config/containers/auth.json" ]]; then
+        echo '{}' > "${HOME}/.config/containers/auth.json"
+    fi
+
     # Create KIND cluster with Podman provider
+    # Note: Podman is configured above to use only its own auth file, ignoring Docker config entirely
     cat <<EOF | KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster --name "${CLUSTER_NAME}" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -301,24 +355,24 @@ nodes:
         hostPort: 9001
         protocol: TCP
 EOF
-    
+
     if [ $? -eq 0 ]; then
         print_success "KIND cluster created successfully"
     else
         print_error "Failed to create KIND cluster"
         exit 1
     fi
-    
+
     # Wait for cluster to be ready
     print_status "Waiting for cluster to be ready..."
     kubectl wait --for=condition=Ready nodes --all --timeout=120s
     print_success "Cluster is ready"
-    
+
     # Create namespace
     print_status "Creating namespace '${NAMESPACE}'..."
     kubectl apply -f kind/namespace.yaml
     print_success "Namespace created"
-    
+
     # Create NodePort services for external access
     create_nodeport_services_local
 }
@@ -326,7 +380,7 @@ EOF
 # Function to create NodePort services for local KIND cluster
 create_nodeport_services_local() {
     print_status "Creating NodePort services for external access..."
-    
+
     cat <<EOF | kubectl apply -f -
 ---
 apiVersion: v1
@@ -387,38 +441,38 @@ spec:
       targetPort: 9001
       nodePort: 30901
 EOF
-    
+
     print_success "NodePort services created"
 }
 
 # Function to deploy PostgreSQL to local KIND cluster
 deploy_postgres_local() {
     print_status "📦 Deploying PostgreSQL to local KIND cluster..."
-    
+
     if [[ ! -f "kind/postgres.yaml" ]]; then
         print_error "PostgreSQL deployment file not found: kind/postgres.yaml"
         exit 1
     fi
-    
+
     kubectl apply -f kind/postgres.yaml
-    
+
     print_status "Waiting for PostgreSQL to be ready..."
     kubectl wait --for=condition=Ready pod -l app=postgres -n "${NAMESPACE}" --timeout=180s || {
         print_warning "PostgreSQL pod didn't become ready in time. Checking status..."
         kubectl get pods -n "${NAMESPACE}" -l app=postgres
         kubectl describe pod -n "${NAMESPACE}" -l app=postgres
     }
-    
+
     print_success "PostgreSQL deployed successfully"
 }
 
 # Function to deploy Keycloak to local KIND cluster
 deploy_keycloak_local() {
     print_status "📦 Deploying Keycloak to local KIND cluster..."
-    
+
     # Load Keycloak realm configuration
     local realm_file="keycloak-realm-export.json"
-    
+
     if [ -f "$realm_file" ]; then
         print_status "Loading Keycloak realm configuration..."
         kubectl create configmap keycloak-realm-config \
@@ -434,50 +488,51 @@ deploy_keycloak_local() {
             --namespace="${NAMESPACE}" \
             --dry-run=client -o yaml | kubectl apply -f -
     fi
-    
+
     if [[ ! -f "kind/keycloak.yaml" ]]; then
         print_error "Keycloak deployment file not found: kind/keycloak.yaml"
         exit 1
     fi
-    
+
     kubectl apply -f kind/keycloak.yaml
-    
+
     print_status "Waiting for Keycloak to be ready (this may take a few minutes)..."
     kubectl wait --for=condition=Ready pod -l app=keycloak -n "${NAMESPACE}" --timeout=300s || {
         print_warning "Keycloak pod didn't become ready in time. Checking status..."
         kubectl get pods -n "${NAMESPACE}" -l app=keycloak
         kubectl describe pod -n "${NAMESPACE}" -l app=keycloak
     }
-    
+
     print_success "Keycloak deployed successfully"
 }
 
 # Function to deploy MinIO to local KIND cluster
 deploy_minio_local() {
     print_status "📦 Deploying MinIO to local KIND cluster..."
-    
+
     if [[ ! -f "kind/minio.yaml" ]]; then
         print_error "MinIO deployment file not found: kind/minio.yaml"
         exit 1
     fi
-    
+
     kubectl apply -f kind/minio.yaml
-    
+
     print_status "Waiting for MinIO to be ready..."
     kubectl wait --for=condition=Ready pod -l app=minio -n "${NAMESPACE}" --timeout=180s || {
         print_warning "MinIO pod didn't become ready in time. Checking status..."
         kubectl get pods -n "${NAMESPACE}" -l app=minio
         kubectl describe pod -n "${NAMESPACE}" -l app=minio
     }
-    
+
     print_success "MinIO deployed successfully"
 }
 
 # Check CLI tool and connection based on environment (skip for standalone operations)
+# Note: BACKUP and RESTORE need CLI connection for OpenShift operations
 if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" ]]; then
     if [[ "$ENVIRONMENT" == "local" ]]; then
         print_status "Checking local Kubernetes (KIND) prerequisites..."
-        
+
         # Check for required tools
         if ! command -v kubectl &>/dev/null; then
             print_error "kubectl is required but not installed!"
@@ -485,21 +540,21 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
             echo "  brew install kubectl"
             exit 1
         fi
-        
+
         if ! command -v kind &>/dev/null; then
             print_error "kind is required but not installed!"
             echo "Installation instructions:"
             echo "  brew install kind"
             exit 1
         fi
-        
+
         if ! command -v podman &>/dev/null; then
             print_error "podman is required but not installed!"
             echo "Installation instructions:"
             echo "  brew install podman"
             exit 1
         fi
-        
+
         # Check if Podman machine is running
         if ! podman machine list | grep -q "Currently running"; then
             print_warning "Podman machine is not running. Starting it now..."
@@ -511,7 +566,7 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
             print_success "Podman machine started"
             sleep 5  # Give Podman a moment to stabilize
         fi
-        
+
         # Check if KIND cluster exists
         if ! kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
             print_warning "KIND cluster '${CLUSTER_NAME}' does not exist"
@@ -520,13 +575,13 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
         else
             print_success "KIND cluster '${CLUSTER_NAME}' exists"
         fi
-        
+
         # Switch context to KIND cluster
         kubectl config use-context "kind-${CLUSTER_NAME}" &>/dev/null || {
             print_error "Failed to switch to KIND cluster context"
             exit 1
         }
-        
+
     else
         # OpenShift connection check
         print_status "Checking OpenShift connection..."
@@ -547,8 +602,29 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
         }
     fi
 
-    print_success "🚀 Starting OSPO Events deployment to $ENVIRONMENT environment"
+    print_success "🚀 Starting Events deployment to $ENVIRONMENT environment"
     echo ""
+elif [[ "$BACKUP" == "true" || "$RESTORE" == "true" ]]; then
+    # For backup/restore operations, we need CLI connection for OpenShift
+    if [[ "$ENVIRONMENT" != "local" ]]; then
+        # OpenShift connection check
+        print_status "Checking OpenShift connection..."
+        if ! oc whoami &>/dev/null; then
+            print_error "Not logged into OpenShift!"
+            echo "Please login first:"
+            echo "  oc login --token=\$OPENSHIFT_TOKEN --server=\$OPENSHIFT_SERVER"
+            exit 1
+        fi
+
+        # Switch to correct namespace
+        print_status "Switching to namespace: $NAMESPACE"
+        oc project "$NAMESPACE" || {
+            print_error "Failed to switch to namespace $NAMESPACE"
+            print_warning "Make sure the namespace exists or create it with:"
+            echo "  oc new-project $NAMESPACE"
+            exit 1
+        }
+    fi
 fi
 
 # =============================================================================
@@ -715,7 +791,7 @@ create_keycloak_realm_config() {
 {
   "id": "ospo-events",
   "realm": "ospo-events",
-  "displayName": "OSPO Events",
+  "displayName": "Events",
   "enabled": true,
   "sslRequired": "external",
   "registrationAllowed": true,
@@ -728,7 +804,7 @@ create_keycloak_realm_config() {
     {
       "id": "ospo-events-app",
       "clientId": "ospo-events-app",
-      "name": "OSPO Events Application",
+      "name": "Events Application",
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
@@ -803,7 +879,7 @@ deploy_keycloak() {
 
 # Function to create application build and deployment
 deploy_app() {
-    print_status "📦 Deploying OSPO Events Application..."
+    print_status "📦 Deploying Events Application..."
 
 
 
@@ -1171,7 +1247,7 @@ backup_all_data() {
     # Create backup metadata
     print_status "📋 Creating backup metadata..."
     cat > "$BACKUP_DIR/backup_metadata.txt" <<EOF
-OSPO Events Manager Backup
+Events Manager Backup
 =========================
 Backup Date: $(date)
 Environment: $ENVIRONMENT
@@ -1483,7 +1559,7 @@ delete_local_cluster() {
         echo "  brew install kind"
         exit 1
     fi
-    
+
     print_warning "⚠️  WARNING: This will delete the local KIND cluster!"
     print_warning "⚠️  This action will:"
     print_warning "   - Delete the entire 'ospo-local' KIND cluster"
@@ -1492,27 +1568,27 @@ delete_local_cluster() {
     print_warning ""
     print_warning "⚠️  ALL LOCAL DEVELOPMENT DATA WILL BE LOST!"
     echo ""
-    
+
     # Check if cluster exists
     if ! kind get clusters 2>/dev/null | grep -q "^ospo-local$"; then
         print_warning "KIND cluster 'ospo-local' does not exist"
         print_info "Nothing to delete"
         exit 0
     fi
-    
+
     # Require explicit confirmation
     read -p "Are you sure you want to delete the local KIND cluster? Type 'DELETE LOCAL CLUSTER' to confirm: " confirmation
-    
+
     if [[ "$confirmation" != "DELETE LOCAL CLUSTER" ]]; then
         print_error "Deletion cancelled. You must type 'DELETE LOCAL CLUSTER' exactly to confirm."
         exit 1
     fi
-    
+
     print_status "🗑️  Deleting local KIND cluster 'ospo-local'..."
-    
+
     # Delete the KIND cluster
     KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster --name ospo-local
-    
+
     if [ $? -eq 0 ]; then
         print_success "✅ Local KIND cluster deleted successfully!"
         echo ""
@@ -1584,15 +1660,15 @@ main() {
         if [[ "$POSTGRES" == "true" ]]; then
             deploy_postgres_local
         fi
-        
+
         if [[ "$KEYCLOAK" == "true" ]]; then
             deploy_keycloak_local
         fi
-        
+
         if [[ "$MINIO" == "true" ]]; then
             deploy_minio_local
         fi
-        
+
         # If specific components were deployed, show summary and exit
         if [[ "$POSTGRES" == "true" || "$KEYCLOAK" == "true" || "$MINIO" == "true" ]]; then
             print_success "🎉 Deployment completed successfully!"
@@ -1625,13 +1701,13 @@ main() {
             print_info "Application will run on your machine and connect to services in KIND."
             exit 0
         fi
-        
+
         # If no specific components were requested, deploy all
         print_status "🚀 Deploying all services to local KIND cluster..."
         deploy_postgres_local
         deploy_keycloak_local
         deploy_minio_local
-        
+
         print_success "🎉 All services deployed successfully!"
         echo ""
         print_status "📋 Deployment Summary:"
@@ -1670,7 +1746,7 @@ main() {
         oc scale deployment postgres --replicas=1
         print_success "🎉 Postgres deployed successfully!"
     fi
-    
+
     # Deploy keycloak if flag is set
     if [[ "$KEYCLOAK" == "true" ]]; then
         print_status "🚀 Deploying the keycloak pod..."
@@ -1689,7 +1765,7 @@ main() {
           print_success "🎉 Keycloak deployed successfully!"
         fi
     fi
-    
+
     # Deploy application if flag is set
     if [[ "$APP" == "true" ]]; then
       print_status "🚀 Deploying the application..."
@@ -1773,7 +1849,7 @@ main() {
     echo "   Application URL: $APP_URL"
     echo "   Keycloak URL: $KEYCLOAK_URL"
     echo ""
-    print_success "✨ OSPO Events Manager is now deployed and ready!"
+    print_success "✨ Events Manager is now deployed and ready!"
 }
 
 # Run main function

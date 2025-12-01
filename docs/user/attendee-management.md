@@ -1,6 +1,6 @@
 # Attendee Management
 
-This guide covers everything you need to know about managing attendees for events in OSPO Events Manager.
+This guide covers everything you need to know about managing attendees for events in Events Manager.
 
 ## Overview
 

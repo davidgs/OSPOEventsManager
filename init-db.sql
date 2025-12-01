@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS "workflow_history" (
 -- Demo users
 INSERT INTO "users" ("id", "keycloak_id", "username", "name", "email", "job_title")
 VALUES
-  (1, 'user-1', 'admin', 'Alex Johnson', 'alex@example.com', 'OSPO Manager'),
+  (1, 'user-1', 'admin', 'Alex Johnson', 'alex@example.com', 'Manager'),
   (2, 'user-2', 'demo', 'David G. Simmons', 'david@example.com', 'AI Community Architect')
 ON CONFLICT (id) DO NOTHING;
 
@@ -173,7 +173,7 @@ VALUES
   (7, 'Open Source Summit North America', 'The premier event for open source developers and communities', 'Seattle, WA', '2025-04-15', '2025-04-18', 'https://events.linuxfoundation.org/open-source-summit-north-america/', 'conference', '{"thought_leadership", "networking"}', 'confirmed'),
   (8, 'DevOps Days Seattle', 'Local DevOps community conference', 'Seattle, WA', '2025-05-12', '2025-05-13', 'https://devopsdays.org/seattle', 'conference', '{"community_growth"}', 'planned'),
   (9, 'CNCF AI Summit', 'Cloud Native AI Solutions', 'San Francisco, CA', '2025-06-24', '2025-06-25', 'https://www.cncf.io/events/', 'summit', '{"thought_leadership", "community_growth"}', 'planned'),
-  (10, 'OSPO Con Europe', 'Conference for Open Source Program Offices', 'London, UK', '2025-09-10', '2025-09-12', 'https://ospocon.org', 'conference', '{"thought_leadership", "networking"}', 'tentative')
+  (10, 'Con Europe', 'Conference for Open Source Program Offices', 'London, UK', '2025-09-10', '2025-09-12', 'https://ospocon.org', 'conference', '{"thought_leadership", "networking"}', 'tentative')
 ON CONFLICT (id) DO NOTHING;
 
 -- CFP Submissions
@@ -193,7 +193,7 @@ VALUES
   (7, 6, 'Sam Smith', 'sam@example.com', 'Product Manager', NULL, 'Attending workshops'),
   (8, 6, 'Robin Patel', 'robin@example.com', 'Developer', NULL, 'Interested in service mesh talks'),
   (9, 7, 'Alex Johnson', 'alex@example.com', 'Developer', 2, 'Giving a lightning talk'),
-  (10, 7, 'Jordan Lee', 'jordan@example.com', 'CTO', NULL, 'Interested in OSPO formation discussions')
+  (10, 7, 'Jordan Lee', 'jordan@example.com', 'CTO', NULL, 'Interested in formation discussions')
 ON CONFLICT (id) DO NOTHING;
 
 -- Sponsorships

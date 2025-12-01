@@ -1,6 +1,6 @@
-# OSPO Events Manager - Environment Variables
+# Events Manager - Environment Variables
 
-This document lists all environment variables used by the OSPO Events Manager application.
+This document lists all environment variables used by the Events Manager application.
 
 ## 🚀 Application Settings
 
