@@ -122,6 +122,31 @@ This deployment includes:
 ./deploy.sh --dev --app --postgres     # Deploy specific components
 ```
 
+### Google Kubernetes Engine (GKE)
+
+```bash
+# Prerequisites:
+# - gcloud CLI installed and authenticated
+# - GKE cluster created
+# - .env file configured with GKE settings
+
+./deploy.sh --gke                      # Deploy all components
+./deploy.sh --gke --app --postgres     # Deploy specific components
+```
+
+### Amazon Elastic Kubernetes Service (EKS)
+
+```bash
+# Prerequisites:
+# - AWS CLI installed and configured
+# - EKS cluster created
+# - ECR repository created (or use Docker Hub)
+# - .env file configured with EKS settings
+
+./deploy.sh --eks                      # Deploy all components
+./deploy.sh --eks --app --postgres     # Deploy specific components
+```
+
 ## Configuration
 
 ```bash

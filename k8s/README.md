@@ -1,41 +1,39 @@
-# K8s Directory - OpenShift Deployment Manifests
+# K8s Directory - Multi-Platform Deployment Manifests
 
-This directory contains all the Kubernetes/OpenShift YAML manifests required for deploying the Events Manager application. These files are used by the `deploy.sh` script to create and manage the application infrastructure.
+This directory contains all the Kubernetes YAML manifests required for deploying the Events Manager application across multiple platforms: OpenShift, GKE, EKS, and local KIND. These files are used by the `deploy.sh` script to create and manage the application infrastructure.
 
 ## Directory Structure
 
 ```
 k8s/
 ├── README.md                    # This file
-├── app-buildconfig.yaml         # Build configuration for the application
-├── app-deployment.yaml          # Application deployment and service
-├── app-imagestream.yaml         # OpenShift ImageStream for the application
-├── keycloak-deployment.yaml     # Keycloak authentication service
-├── minio-deployment.yaml        # MinIO object storage for file uploads
-├── ollama-deployment.yaml       # Ollama AI service with GPU support
-├── postgres-deployment.yaml     # PostgreSQL database
-└── routes.yaml                  # OpenShift routes for external access
+├── common/                      # Shared manifests (all platforms)
+│   ├── app-deployment.yaml      # Application deployment and service
+│   ├── postgres-deployment.yaml # PostgreSQL database
+│   ├── keycloak-deployment.yaml # Keycloak authentication service
+│   └── minio-deployment.yaml    # MinIO object storage
+├── openshift/                   # OpenShift-specific manifests
+│   ├── routes.yaml              # OpenShift routes for external access
+│   ├── app-imagestream.yaml     # OpenShift ImageStream
+│   └── app-buildconfig.yaml     # OpenShift BuildConfig
+├── gke/                         # Google Kubernetes Engine manifests
+│   └── ingress.yaml             # GKE Ingress with GCE annotations
+└── eks/                         # Amazon EKS manifests
+    └── ingress.yaml             # EKS Ingress with ALB annotations
 ```
+
+## Platform Support
+
+The deployment system supports four platforms:
+
+1. **OpenShift** - Uses Routes, ImageStreams, and BuildConfigs
+2. **GKE** - Uses Ingress with GCE annotations, external image registry (GCR)
+3. **EKS** - Uses Ingress with ALB annotations, external image registry (ECR)
+4. **Local/KIND** - Uses NodePort services, local image builds
 
 ## File Descriptions
 
-### Core Application Files
-
-#### `app-buildconfig.yaml`
-- **Purpose**: Defines the OpenShift BuildConfig for building the application Docker image
-- **Features**:
-  - Source-to-image (S2I) build strategy
-  - Node.js 20 runtime
-  - Environment variable injection during build
-  - Docker Hub authentication for base images
-- **Used by**: `deploy_app()` function in deploy.sh
-
-#### `app-imagestream.yaml`
-- **Purpose**: Defines the OpenShift ImageStream for the application image
-- **Features**:
-  - Tracks built application images
-  - Supports image versioning and tagging
-- **Used by**: `deploy_app()` function in deploy.sh
+### Common Manifests (`common/`)
 
 #### `app-deployment.yaml`
 - **Purpose**: Defines the main application deployment, service, and PVC
@@ -45,7 +43,86 @@ k8s/
   - Persistent volume for uploads (`/app/uploads`)
   - Health checks and resource limits
   - ClusterIP service for internal communication
-- **Used by**: `deploy_app()` function in deploy.sh
+  - Platform-agnostic image references using `${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}`
+- **Used by**: All platforms via `deploy_app()` function
+
+#### `postgres-deployment.yaml`
+- **Purpose**: PostgreSQL database deployment
+- **Features**:
+  - PostgreSQL 16 container
+  - Two separate databases: events and keycloak
+  - Persistent volume for data storage
+  - Database initialization scripts
+  - Resource limits and health checks
+  - Optional storage class support
+- **Used by**: All platforms via `deploy_postgres()` function
+
+#### `keycloak-deployment.yaml`
+- **Purpose**: Keycloak authentication service deployment
+- **Features**:
+  - Keycloak container with PostgreSQL backend
+  - Realm and client configuration via ConfigMaps
+  - Health checks and startup probes
+  - Resource limits and scaling
+- **Used by**: All platforms via `deploy_keycloak()` function
+
+#### `minio-deployment.yaml`
+- **Purpose**: MinIO object storage for file uploads
+- **Features**:
+  - MinIO S3-compatible storage
+  - Persistent volume for file storage
+  - Default credentials configuration
+  - Health checks and resource limits
+  - Optional storage class support
+- **Used by**: All platforms via `deploy_minio()` function
+
+### OpenShift-Specific (`openshift/`)
+
+#### `app-buildconfig.yaml`
+- **Purpose**: Defines the OpenShift BuildConfig for building the application Docker image
+- **Features**:
+  - Source-to-image (S2I) build strategy
+  - Node.js 20 runtime
+  - Environment variable injection during build
+  - Docker Hub authentication for base images
+- **Used by**: OpenShift deployments only
+
+#### `app-imagestream.yaml`
+- **Purpose**: Defines the OpenShift ImageStream for the application image
+- **Features**:
+  - Tracks built application images
+  - Supports image versioning and tagging
+- **Used by**: OpenShift deployments only
+
+#### `routes.yaml`
+- **Purpose**: OpenShift routes for external access to services
+- **Features**:
+  - Application route with TLS termination
+  - Keycloak authentication route
+  - Edge TLS termination with redirect
+- **Used by**: OpenShift deployments only
+
+### GKE-Specific (`gke/`)
+
+#### `ingress.yaml`
+- **Purpose**: GKE Ingress for external access
+- **Features**:
+  - GCE Ingress Controller annotations
+  - Static IP support
+  - Google-managed SSL certificates
+  - TLS termination
+- **Used by**: GKE deployments only
+
+### EKS-Specific (`eks/`)
+
+#### `ingress.yaml`
+- **Purpose**: EKS Ingress with AWS ALB
+- **Features**:
+  - AWS ALB Ingress Controller annotations
+  - ACM certificate integration
+  - TLS termination
+  - Health check configuration
+- **Used by**: EKS deployments only
 
 ### Database Files
 

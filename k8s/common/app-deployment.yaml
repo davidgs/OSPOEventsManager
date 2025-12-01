@@ -1,0 +1,165 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ospo-app
+  labels:
+    app: ospo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ospo-app
+  template:
+    metadata:
+      labels:
+        app: ospo-app
+    spec:
+      containers:
+        - name: ospo-app
+          image: ${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+          ports:
+            - containerPort: 4576
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: DATABASE_URL
+              value: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+            - name: KEYCLOAK_URL
+              value: "http://keycloak:8080"
+            - name: KEYCLOAK_REALM
+              value: "${KEYCLOAK_REALM}"
+            - name: KEYCLOAK_CLIENT_ID
+              value: "${KEYCLOAK_CLIENT_ID}"
+            - name: KEYCLOAK_CLIENT_URL
+              value: "${VITE_KEYCLOAK_URL}"
+            - name: VITE_KEYCLOAK_URL
+              value: "${VITE_KEYCLOAK_URL}"
+            - name: KEYCLOAK_SERVER_URL
+              value: "${KEYCLOAK_URL}/auth"
+            - name: KEYCLOAK_ADMIN
+              value: "${KEYCLOAK_ADMIN}"
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: "${KEYCLOAK_ADMIN_PASSWORD}"
+            - name: MINIO_ENDPOINT
+              value: "minio:9000"
+            - name: MINIO_ACCESS_KEY
+              value: "${MINIO_ROOT_USER}"
+            - name: MINIO_SECRET_KEY
+              value: "${MINIO_ROOT_PASSWORD}"
+            - name: MINIO_BUCKET
+              value: "${MINIO_BUCKET_NAME}"
+            - name: JWT_SECRET
+              value: "${JWT_SECRET}"
+            - name: SESSION_SECRET
+              value: "${SESSION_SECRET}"
+            - name: SESSION_RESAVE
+              value: "${SESSION_RESAVE}"
+            - name: SESSION_SAVE_UNINITIALIZED
+              value: "${SESSION_SAVE_UNINITIALIZED}"
+            - name: SESSION_SECURE
+              value: "${SESSION_SECURE}"
+            - name: SESSION_HTTP_ONLY
+              value: "${SESSION_HTTP_ONLY}"
+            - name: SESSION_MAX_AGE
+              value: "${SESSION_MAX_AGE}"
+            - name: SESSION_SAME_SITE
+              value: "${SESSION_SAME_SITE}"
+            - name: SESSION_NAME
+              value: "${SESSION_NAME}"
+            - name: RATE_LIMIT_WINDOW_MS
+              value: "${RATE_LIMIT_WINDOW_MS}"
+            - name: RATE_LIMIT_MAX
+              value: "${RATE_LIMIT_MAX}"
+            - name: RATE_LIMIT_MESSAGE
+              value: "${RATE_LIMIT_MESSAGE}"
+            - name: RATE_LIMIT_RETRY_AFTER
+              value: "${RATE_LIMIT_RETRY_AFTER}"
+            - name: RATE_LIMIT_STANDARD_HEADERS
+              value: "${RATE_LIMIT_STANDARD_HEADERS}"
+            - name: RATE_LIMIT_LEGACY_HEADERS
+              value: "${RATE_LIMIT_LEGACY_HEADERS}"
+            - name: RATE_LIMIT_SKIP_PATHS
+              value: "${RATE_LIMIT_SKIP_PATHS}"
+            - name: CSP_STYLE_SRC
+              value: "${CSP_STYLE_SRC}"
+            - name: CSP_FONT_SRC
+              value: "${CSP_FONT_SRC}"
+            - name: CSP_OBJECT_SRC
+              value: "${CSP_OBJECT_SRC}"
+            - name: HELMET_COEP
+              value: "${HELMET_COEP}"
+            - name: HELMET_HSTS_MAX_AGE
+              value: "${HELMET_HSTS_MAX_AGE}"
+            - name: HELMET_HSTS_INCLUDE_SUBDOMAINS
+              value: "${HELMET_HSTS_INCLUDE_SUBDOMAINS}"
+            - name: HELMET_HSTS_PRELOAD
+              value: "${HELMET_HSTS_PRELOAD}"
+            - name: PROXY_FORWARDED_PROTO
+              value: "${PROXY_FORWARDED_PROTO}"
+            - name: PROXY_REDIRECT_PATTERN
+              value: "${PROXY_REDIRECT_PATTERN}"
+            - name: PROXY_TIMEOUT_MS
+              value: "${PROXY_TIMEOUT_MS}"
+            - name: UPLOADS_DIR
+              value: "${UPLOADS_DIR}"
+          volumeMounts:
+            - name: keycloak-config
+              mountPath: /app/keycloak.json
+              subPath: keycloak.json
+            - name: keycloak-config
+              mountPath: /app/public/keycloak.json
+              subPath: keycloak.json
+            - name: uploads
+              mountPath: /app/uploads
+          resources:
+            requests:
+              cpu: "${APP_CPU_REQUEST}"
+              memory: "${APP_MEMORY_REQUEST}"
+            limits:
+              cpu: "${APP_CPU_LIMIT}"
+              memory: "${APP_MEMORY_LIMIT}"
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 4576
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 4576
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: keycloak-config
+          configMap:
+            name: keycloak-client-config
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: ospo-uploads-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ospo-app
+  labels:
+    app: ospo-app
+spec:
+  ports:
+    - port: 4576
+      targetPort: 4576
+  selector:
+    app: ospo-app
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ospo-uploads-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  ${STORAGE_CLASS:+storageClassName: ${STORAGE_CLASS}}
+
