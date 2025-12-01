@@ -38,6 +38,24 @@ vi.mock('@/contexts/auth-context', () => ({
   useAuth: () => ({ logout: mockLogout }),
 }));
 
+// Mock react-i18next
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, params?: Record<string, any>) => {
+      const translations: Record<string, string> = {
+        'common.signOut': 'Sign Out',
+        'common.signingOut': 'Signing out...',
+        'common.logoutFailed': 'Logout Failed',
+        'common.logoutFailedDescription': 'There was a problem signing out. Please try again.',
+      };
+      return translations[key] || key;
+    },
+    i18n: {
+      language: 'en',
+    },
+  }),
+}));
+
 describe('LogoutButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -147,11 +165,13 @@ describe('LogoutButton', () => {
       fireEvent.click(button);
 
       await waitFor(() => {
-        expect(mockToast).toHaveBeenCalledWith({
-          title: 'Logout Failed',
-          description: 'There was a problem signing out. Please try again.',
-          variant: 'destructive',
-        });
+        expect(mockToast).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: 'Logout Failed',
+            description: 'There was a problem signing out. Please try again.',
+            variant: 'destructive',
+          })
+        );
       });
     });
 

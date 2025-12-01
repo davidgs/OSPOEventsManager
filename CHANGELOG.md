@@ -8,6 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Internationalization (i18n) Support** (2025-01-21)
+  - Comprehensive internationalization infrastructure using react-i18next
+  - Language selection UI component in Header and Settings page
+  - Dual storage for language preferences (database + localStorage)
+  - Locale-aware date, number, and currency formatting utilities
+  - Translation files organized by namespace (common, navigation, forms, pages, events, assets, cfp, attendees, modals)
+  - API endpoints for user language preference management (`GET/PUT /api/users/:id/language`)
+  - Full translation support across all application components:
+    - **Layout Components**: Header, Footer, Sidebar, MainLayout, ProtectedRoute
+    - **Page Components**: HomePage, Settings
+    - **Form Components**: AssetUploadForm, CFPSubmissionForm, AttendanceForm, SimpleFileUploadForm, SimpleFileUploader
+    - **Modal Components**: AddEventModal, DeleteEventDialog, LinkAssetModal, AssetPreviewModal
+    - **UI Components**: ThemeToggle, LanguageSelector
+    - **Auth Components**: LoginButton, LogoutButton
+  - Translation namespaces:
+    - `common`: Common UI strings (buttons, labels, messages)
+    - `navigation`: Navigation menu items
+    - `forms`: Form labels, placeholders, validation messages
+    - `pages`: Page-specific content
+    - `events`: Event-related strings
+    - `assets`: Asset management strings
+    - `cfp`: CFP submission strings
+    - `attendees`: Attendee management strings
+    - `modals`: Modal dialog strings
+  - Language detection order: database preference → localStorage → browser → 'en'
+  - Support for adding additional languages in the future (infrastructure ready for es, fr, de, ja, zh-CN)
+  - Initial language support: English (en)
+  - Locale-aware formatting:
+    - Dates formatted using date-fns with locale support
+    - Numbers and currency formatted using Intl.NumberFormat
+    - All user-facing strings use translation keys
 - **Comprehensive Documentation System** (2025-10-30)
   - Created `/docs` directory with structured documentation
   - User guides: getting started (250+ lines), managing events (350+ lines), comprehensive FAQ (500+ lines)
@@ -291,7 +322,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2024-01-XX
 
 ### Added
-- Initial release of OSPO Events Manager
+- Initial release of Events Manager
 - Basic event management functionality
 - User authentication system
 - Database schema and migrations

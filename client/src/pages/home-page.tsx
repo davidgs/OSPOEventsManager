@@ -22,6 +22,7 @@
  */
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +38,7 @@ import { Calendar, Users, FileText, Award } from "lucide-react";
 
 export default function HomePage() {
   const { authenticated, user, initialized } = useAuth();
+  const { t } = useTranslation(["common", "pages"]);
 
   // Debug logging to understand authentication state mismatch
   console.log("HomePage auth state:", {
@@ -54,23 +56,22 @@ export default function HomePage() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl">
-                  OSPO Event Management System
+                  {t("pages.home.title")}
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Track and manage your open source program office events,
-                  submissions, and collaborations.
+                  {t("pages.home.subtitle")}
                 </p>
               </div>
               {!authenticated ? (
                 <div className="space-x-4">
                   <Button asChild size="lg">
-                    <Link href="/auth">Sign In</Link>
+                    <Link href="/auth">{t("pages.home.signIn")}</Link>
                   </Button>
                 </div>
               ) : (
                 <div className="space-x-4">
                   <Button asChild size="lg">
-                    <Link href="/events">View Events</Link>
+                    <Link href="/events">{t("pages.home.viewEvents")}</Link>
                   </Button>
                 </div>
               )}
@@ -85,21 +86,20 @@ export default function HomePage() {
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl flex items-center gap-2">
                     <Calendar className="h-5 w-5" />
-                    Event Management
+                    {t("pages.home.features.eventManagement.title")}
                   </CardTitle>
                   <CardDescription>
-                    Track conferences, meetups, and workshops
+                    {t("pages.home.features.eventManagement.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Manage all your events in one place with powerful filtering
-                    and calendar views.
+                    {t("pages.home.features.eventManagement.details")}
                   </p>
                 </CardContent>
                 <CardFooter>
                   <Button variant="outline" className="w-full" asChild>
-                    <Link href="/docs/user/managing-events">Learn More</Link>
+                    <Link href="/docs/user/managing-events">{t("common.learnMore")}</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -108,21 +108,20 @@ export default function HomePage() {
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    CFP Tracking
+                    {t("pages.home.features.cfpTracking.title")}
                   </CardTitle>
                   <CardDescription>
-                    Submit and manage call for papers
+                    {t("pages.home.features.cfpTracking.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Keep track of all your CFP submissions, their statuses, and
-                    deadlines in one central location.
+                    {t("pages.home.features.cfpTracking.details")}
                   </p>
                 </CardContent>
                 <CardFooter>
                   <Button variant="outline" className="w-full" asChild>
-                    <Link href="/docs/user/cfp-submissions">Learn More</Link>
+                    <Link href="/docs/user/cfp-submissions">{t("common.learnMore")}</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -131,19 +130,20 @@ export default function HomePage() {
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl flex items-center gap-2">
                     <Users className="h-5 w-5" />
-                    Attendee Management
+                    {t("pages.home.features.attendeeManagement.title")}
                   </CardTitle>
-                  <CardDescription>Manage event participants</CardDescription>
+                  <CardDescription>
+                    {t("pages.home.features.attendeeManagement.description")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Track attendees, speakers, and their roles in various events
-                    to facilitate better collaboration.
+                    {t("pages.home.features.attendeeManagement.details")}
                   </p>
                 </CardContent>
                 <CardFooter>
                   <Button variant="outline" className="w-full" asChild>
-                    <Link href="/docs/user/attendee-management">Learn More</Link>
+                    <Link href="/docs/user/attendee-management">{t("common.learnMore")}</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -152,21 +152,20 @@ export default function HomePage() {
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-2xl flex items-center gap-2">
                     <Award className="h-5 w-5" />
-                    Sponsorship Management
+                    {t("pages.home.features.sponsorshipManagement.title")}
                   </CardTitle>
                   <CardDescription>
-                    Track sponsorships and budgets
+                    {t("pages.home.features.sponsorshipManagement.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Manage event sponsorships, track budget allocations, and
-                    monitor sponsorship benefits.
+                    {t("pages.home.features.sponsorshipManagement.details")}
                   </p>
                 </CardContent>
                 <CardFooter>
                   <Button variant="outline" className="w-full" asChild>
-                    <Link href="/docs/user/sponsorship-management">Learn More</Link>
+                    <Link href="/docs/user/sponsorship-management">{t("common.learnMore")}</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -178,7 +177,7 @@ export default function HomePage() {
       <footer className="border-t py-6 md:py-0">
         <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
           <p className="text-center text-sm text-muted-foreground md:text-left">
-            &copy; {new Date().getFullYear()} OSPO Events. All rights reserved.
+            {t("pages.home.copyright", { year: new Date().getFullYear() })}
           </p>
         </div>
       </footer>

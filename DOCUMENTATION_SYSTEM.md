@@ -2,7 +2,7 @@
 
 ## Overview
 
-A comprehensive documentation system has been created and integrated into the OSPO Events Manager application. Users can access documentation directly from the application header, and the docs will open in the current window or a new tab.
+A comprehensive documentation system has been created and integrated into the Events Manager application. Users can access documentation directly from the application header, and the docs will open in the current window or a new tab.
 
 ## What Was Created
 

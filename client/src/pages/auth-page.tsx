@@ -21,13 +21,20 @@
  * SOFTWARE.
  */
 
-import React, { useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/contexts/auth-context';
-import { LoginButton } from '@/components/auth/LoginButton';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar } from 'lucide-react';
+import React, { useEffect } from "react";
+import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/auth-context";
+import { LoginButton } from "@/components/auth/LoginButton";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Calendar } from "lucide-react";
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
@@ -36,7 +43,7 @@ export default function AuthPage() {
   // Redirect to home if already authenticated
   useEffect(() => {
     if (initialized && authenticated) {
-      setLocation('/');
+      setLocation("/");
     }
   }, [initialized, authenticated, setLocation]);
 
@@ -49,7 +56,7 @@ export default function AuthPage() {
             <div className="flex justify-center mb-4">
               <Calendar className="h-10 w-10 text-primary" />
             </div>
-            <CardTitle className="text-2xl font-bold">OSPO Events</CardTitle>
+            <CardTitle className="text-2xl font-bold">Events</CardTitle>
             <CardDescription>
               Sign in to your account to access the event management system
             </CardDescription>
@@ -70,15 +77,15 @@ export default function AuthPage() {
               variant="outline"
               onClick={() => {
                 // Get base URL, handling relative paths
-                const baseUrl = import.meta.env.VITE_KEYCLOAK_URL || '/auth';
-                const keycloakUrl = baseUrl.startsWith('/')
+                const baseUrl = import.meta.env.VITE_KEYCLOAK_URL || "/auth";
+                const keycloakUrl = baseUrl.startsWith("/")
                   ? window.location.origin + baseUrl
                   : baseUrl;
 
                 const redirectUri = encodeURIComponent(window.location.origin);
                 const registrationUrl = `${keycloakUrl}/realms/ospo-events/protocol/openid-connect/auth?client_id=ospo-events-app&redirect_uri=${redirectUri}&response_type=code&scope=openid&kc_action=register`;
 
-                console.log('Registration URL:', registrationUrl);
+                console.log("Registration URL:", registrationUrl);
                 window.location.href = registrationUrl;
               }}
               className="w-full"
@@ -88,7 +95,8 @@ export default function AuthPage() {
           </CardContent>
           <CardFooter className="flex flex-wrap items-center justify-center gap-2 pt-0">
             <p className="text-xs text-muted-foreground">
-              By signing up, you agree to our Terms of Service and Privacy Policy
+              By signing up, you agree to our Terms of Service and Privacy
+              Policy
             </p>
           </CardFooter>
         </Card>
@@ -96,26 +104,79 @@ export default function AuthPage() {
         {/* Hero content */}
         <div className="hidden lg:flex lg:flex-col lg:justify-center space-y-6 p-8">
           <h1 className="text-4xl font-bold tracking-tight">
-            Streamline Your OSPO Event Management
+            Streamline Your Event Management
           </h1>
           <p className="text-muted-foreground text-lg">
-            Track conferences, manage CFP submissions, organize attendees, and handle sponsorships all in one place.
+            Track conferences, manage CFP submissions, organize attendees, and
+            handle sponsorships all in one place.
           </p>
           <ul className="space-y-2">
             <li className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-primary"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5 text-primary"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
               Centralize all event information
             </li>
             <li className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-primary"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5 text-primary"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
               Streamline approval workflows
             </li>
             <li className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-primary"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5 text-primary"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
               Manage attendees and stakeholders
             </li>
             <li className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-primary"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5 text-primary"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
               Track CFP submissions and sponsorships
             </li>
           </ul>

@@ -22,6 +22,7 @@
  */
 
 import { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -46,26 +47,28 @@ interface AddEventModalProps {
   isSubmitting: boolean;
 }
 
-// Form schema matching the backend expectations
-const formSchema = z.object({
-  name: z.string().min(1, "Event name is required"),
-  link: z.string().url("Must be a valid URL"),
-  location: z.string().min(1, "Location is required"),
+// Form schema will be created with translations
+const createFormSchema = (t: (key: string, params?: any) => string) => z.object({
+  name: z.string().min(1, t("events.validation.nameRequired")),
+  link: z.string().url(t("events.validation.linkInvalid")),
+  location: z.string().min(1, t("events.validation.locationRequired")),
   priority: z.enum(eventPriorities),
   type: z.enum(eventTypes),
-  goal: z.array(z.enum(eventGoals)).min(1, "Select at least one goal"),
-  start_date: z.date({ required_error: "Start date is required" }),
-  end_date: z.date({ required_error: "End date is required" }),
+  goal: z.array(z.enum(eventGoals)).min(1, t("events.validation.goalRequired")),
+  start_date: z.date({ required_error: t("events.validation.startDateRequired") }),
+  end_date: z.date({ required_error: t("events.validation.endDateRequired") }),
   cfp_deadline: z.date().optional().nullable(),
   notes: z.string().optional(),
 });
 
-const AddEventModal: FC<AddEventModalProps> = ({ 
-  isOpen, 
-  onClose, 
+const AddEventModal: FC<AddEventModalProps> = ({
+  isOpen,
+  onClose,
   onSubmit,
   isSubmitting
 }) => {
+  const { t } = useTranslation(["events", "modals", "forms", "common"]);
+  const formSchema = createFormSchema(t);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -87,7 +90,7 @@ const AddEventModal: FC<AddEventModalProps> = ({
       end_date: data.end_date.toISOString().split('T')[0],
       cfp_deadline: data.cfp_deadline ? data.cfp_deadline.toISOString().split('T')[0] : null,
     };
-    
+
     onSubmit(formattedData);
   };
 
@@ -95,12 +98,12 @@ const AddEventModal: FC<AddEventModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 flex-shrink-0">
-          <DialogTitle>Add New Event</DialogTitle>
+          <DialogTitle>{t("modals.addEvent.title")}</DialogTitle>
           <DialogDescription>
-            Enter the details of the event you want to add to the system.
+            {t("modals.addEvent.description")}
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col flex-1 min-h-0">
             <div className="flex-1 overflow-y-auto px-6 space-y-6">
@@ -111,37 +114,37 @@ const AddEventModal: FC<AddEventModalProps> = ({
                 name="name"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>Event Name <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("events.fields.name")} <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter event name" {...field} />
+                      <Input placeholder={t("events.placeholders.name")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               {/* Event Website */}
               <FormField
                 control={form.control}
                 name="link"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>Event Website <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("events.fields.website")} <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="https://example.com" {...field} />
+                      <Input placeholder={t("events.placeholders.link")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               {/* Start Date */}
               <FormField
                 control={form.control}
                 name="start_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Date <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("events.fields.startDate")} <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -156,7 +159,7 @@ const AddEventModal: FC<AddEventModalProps> = ({
                             {field.value ? (
                               format(field.value, "PPP")
                             ) : (
-                              <span>Select date</span>
+                              <span>{t("common.selectDate")}</span>
                             )}
                           </Button>
                         </PopoverTrigger>
@@ -174,14 +177,14 @@ const AddEventModal: FC<AddEventModalProps> = ({
                   </FormItem>
                 )}
               />
-              
+
               {/* End Date */}
               <FormField
                 control={form.control}
                 name="end_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>End Date <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("events.fields.endDate")} <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -196,7 +199,7 @@ const AddEventModal: FC<AddEventModalProps> = ({
                             {field.value ? (
                               format(field.value, "PPP")
                             ) : (
-                              <span>Select date</span>
+                              <span>{t("common.selectDate")}</span>
                             )}
                           </Button>
                         </PopoverTrigger>
@@ -214,33 +217,33 @@ const AddEventModal: FC<AddEventModalProps> = ({
                   </FormItem>
                 )}
               />
-              
+
               {/* Location */}
               <FormField
                 control={form.control}
                 name="location"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>Location <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("events.fields.location")} <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="City, Country or Virtual" {...field} />
+                      <Input placeholder={t("events.placeholders.location")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               {/* Priority */}
               <FormField
                 control={form.control}
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Priority <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("events.fields.priority")} <span className="text-red-500">*</span></FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select priority" />
+                          <SelectValue placeholder={t("events.placeholders.selectPriority")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -255,18 +258,18 @@ const AddEventModal: FC<AddEventModalProps> = ({
                   </FormItem>
                 )}
               />
-              
+
               {/* Event Type */}
               <FormField
                 control={form.control}
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Event Type <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("events.fields.type")} <span className="text-red-500">*</span></FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue placeholder={t("events.placeholders.selectType")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -281,14 +284,14 @@ const AddEventModal: FC<AddEventModalProps> = ({
                   </FormItem>
                 )}
               />
-              
+
               {/* Event Goals - using checkboxes for multiple selection */}
               <FormField
                 control={form.control}
                 name="goal"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>Event Goals <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>{t("events.fields.goals")} <span className="text-red-500">*</span></FormLabel>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       {eventGoals.map((goal) => (
                         <FormItem key={goal} className="flex flex-row items-start space-x-3 space-y-0">
@@ -316,20 +319,20 @@ const AddEventModal: FC<AddEventModalProps> = ({
                       ))}
                     </div>
                     <FormDescription>
-                      Select all goals that apply to this event
+                      {t("common.selectAllThatApply")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               {/* CFP Deadline */}
               <FormField
                 control={form.control}
                 name="cfp_deadline"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>CFP Deadline</FormLabel>
+                    <FormLabel>{t("events.fields.cfpDeadline")}</FormLabel>
                     <FormControl>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -344,7 +347,7 @@ const AddEventModal: FC<AddEventModalProps> = ({
                             {field.value ? (
                               format(field.value, "PPP")
                             ) : (
-                              <span>Select date (optional)</span>
+                              <span>{t("common.selectDate")} ({t("common.optional")})</span>
                             )}
                           </Button>
                         </PopoverTrigger>
@@ -359,29 +362,29 @@ const AddEventModal: FC<AddEventModalProps> = ({
                       </Popover>
                     </FormControl>
                     <FormDescription>
-                      The deadline for Call for Proposals submissions
+                      {t("events.fields.cfpDeadline")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               {/* Notes */}
               <FormField
                 control={form.control}
                 name="notes"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>Notes</FormLabel>
+                    <FormLabel>{t("events.fields.notes")}</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Add any additional details or notes about the event" 
-                        className="min-h-[100px]" 
-                        {...field} 
+                      <Textarea
+                        placeholder={t("events.placeholders.notes")}
+                        className="min-h-[100px]"
+                        {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Optional: Add any important notes or context about this event
+                      {t("common.optional")}: {t("events.placeholders.notes")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -389,13 +392,13 @@ const AddEventModal: FC<AddEventModalProps> = ({
               />
               </div>
             </div>
-            
+
             <DialogFooter className="px-6 pt-4 pb-6 flex-shrink-0 border-t">
               <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
+                {t("forms.buttons.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save Event"}
+                {isSubmitting ? t("common.saving") : t("events.addEvent")}
               </Button>
             </DialogFooter>
           </form>

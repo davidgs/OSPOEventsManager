@@ -22,6 +22,7 @@
  */
 
 import { FC, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -29,37 +30,69 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { Plus, UserPlus } from "lucide-react";
 
-const attendanceSchema = z.object({
-  eventId: z.number().min(1, "Please select an event"),
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Valid email is required").optional().or(z.literal("")),
-  role: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-type AttendanceFormData = z.infer<typeof attendanceSchema>;
+const createAttendanceSchema = (t: (key: string, params?: any) => string) =>
+  z.object({
+    eventId: z
+      .number()
+      .min(
+        1,
+        t("attendees.validation.eventRequired", "Please select an event")
+      ),
+    name: z
+      .string()
+      .min(1, t("forms.validation.nameRequired", "Name is required")),
+    email: z
+      .string()
+      .email(t("forms.validation.email"))
+      .optional()
+      .or(z.literal("")),
+    role: z.string().optional(),
+    notes: z.string().optional(),
+  });
 
 interface AttendanceFormProps {
   onSuccess?: () => void;
 }
 
 export const AttendanceForm: FC<AttendanceFormProps> = ({ onSuccess }) => {
+  const { t } = useTranslation(["attendees", "forms", "common"]);
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const attendanceSchema = createAttendanceSchema(t);
+  type AttendanceFormData = z.infer<typeof attendanceSchema>;
 
   // Fetch events for dropdown
   const { data: events = [] } = useQuery({
-    queryKey: ['/api/events'],
+    queryKey: ["/api/events"],
     queryFn: async () => {
-      const response = await fetch('/api/events');
-      if (!response.ok) throw new Error('Failed to load events');
+      const response = await fetch("/api/events");
+      if (!response.ok) throw new Error("Failed to load events");
       return response.json();
     },
   });
@@ -80,18 +113,18 @@ export const AttendanceForm: FC<AttendanceFormProps> = ({ onSuccess }) => {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/attendees'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/attendees"] });
       form.reset();
       setOpen(false);
       toast({
-        title: "Attendance registered",
-        description: "Your attendance has been successfully registered.",
+        title: t("attendees.messages.registered"),
+        description: t("attendees.messages.registeredDescription"),
       });
       onSuccess?.();
     },
     onError: (error: Error) => {
       toast({
-        title: "Registration failed",
+        title: t("attendees.messages.registrationFailed"),
         description: error.message,
         variant: "destructive",
       });
@@ -103,12 +136,12 @@ export const AttendanceForm: FC<AttendanceFormProps> = ({ onSuccess }) => {
   };
 
   const roleOptions = [
-    { value: "attendee", label: "Attendee" },
-    { value: "speaker", label: "Speaker" },
-    { value: "sponsor", label: "Sponsor" },
-    { value: "organizer", label: "Organizer" },
-    { value: "volunteer", label: "Volunteer" },
-    { value: "media", label: "Media" },
+    { value: "attendee", label: t("attendees.roles.attendee") },
+    { value: "speaker", label: t("attendees.roles.speaker") },
+    { value: "sponsor", label: t("attendees.roles.sponsor") },
+    { value: "organizer", label: t("attendees.roles.organizer") },
+    { value: "volunteer", label: t("attendees.roles.volunteer") },
+    { value: "media", label: t("attendees.roles.media") },
   ];
 
   return (
@@ -116,12 +149,12 @@ export const AttendanceForm: FC<AttendanceFormProps> = ({ onSuccess }) => {
       <DialogTrigger asChild>
         <Button className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
-          Register Attendance
+          {t("attendees.registerAttendance")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Register Event Attendance</DialogTitle>
+          <DialogTitle>{t("attendees.registerAttendance")}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -130,11 +163,16 @@ export const AttendanceForm: FC<AttendanceFormProps> = ({ onSuccess }) => {
               name="eventId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Event</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                  <FormLabel>{t("attendees.fields.event")}</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    value={field.value?.toString()}
+                  >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select an event" />
+                        <SelectValue
+                          placeholder={t("attendees.placeholders.selectEvent")}
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -155,9 +193,12 @@ export const AttendanceForm: FC<AttendanceFormProps> = ({ onSuccess }) => {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>{t("attendees.fields.name")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your full name" {...field} />
+                    <Input
+                      placeholder={t("attendees.placeholders.name")}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -169,12 +210,12 @@ export const AttendanceForm: FC<AttendanceFormProps> = ({ onSuccess }) => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Address</FormLabel>
+                  <FormLabel>{t("attendees.fields.email")}</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="email" 
-                      placeholder="Enter your email address" 
-                      {...field} 
+                    <Input
+                      type="email"
+                      placeholder={t("attendees.placeholders.email")}
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -187,11 +228,13 @@ export const AttendanceForm: FC<AttendanceFormProps> = ({ onSuccess }) => {
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role/Capacity</FormLabel>
+                  <FormLabel>{t("attendees.fields.role")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your role" />
+                        <SelectValue
+                          placeholder={t("attendees.placeholders.selectRole")}
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -212,12 +255,12 @@ export const AttendanceForm: FC<AttendanceFormProps> = ({ onSuccess }) => {
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
+                  <FormLabel>{t("attendees.fields.notes")}</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Any special requirements, dietary restrictions, etc..."
+                    <Textarea
+                      placeholder={t("attendees.placeholders.notes")}
                       rows={3}
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -226,23 +269,23 @@ export const AttendanceForm: FC<AttendanceFormProps> = ({ onSuccess }) => {
             />
 
             <div className="flex justify-end gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setOpen(false)}
               >
-                Cancel
+                {t("forms.buttons.cancel")}
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={createAttendanceMutation.isPending}
               >
                 {createAttendanceMutation.isPending ? (
-                  "Registering..."
+                  t("common.registering", "Registering...")
                 ) : (
                   <>
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Register Attendance
+                    {t("attendees.registerAttendance")}
                   </>
                 )}
               </Button>

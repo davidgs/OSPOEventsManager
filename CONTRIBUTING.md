@@ -1,6 +1,6 @@
-# Contributing to OSPO Events Manager
+# Contributing to Events Manager
 
-Thank you for your interest in contributing to the OSPO Events Manager! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to the Events Manager! This document provides guidelines and instructions for contributing to the project.
 
 ## Table of Contents
 
@@ -397,7 +397,7 @@ Contributors will be recognized in:
 
 ---
 
-**Thank you for contributing to OSPO Events Manager!** 🎉
+**Thank you for contributing to Events Manager!** 🎉
 
 If you have questions or need help, don't hesitate to ask in issues or discussions.
 

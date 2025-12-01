@@ -1,10 +1,10 @@
 # Architecture Overview
 
-This document provides a comprehensive overview of the OSPO Events Manager architecture.
+This document provides a comprehensive overview of the Events Manager architecture.
 
 ## System Architecture
 
-OSPO Events Manager is a full-stack web application deployed on OpenShift with the following architecture:
+Events Manager is a full-stack web application deployed on OpenShift with the following architecture:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -145,7 +145,7 @@ approval_workflows -- Approval processes
 ### Unauthenticated Request
 ```
 1. Browser → OpenShift Route (HTTPS)
-2. Route → OSPO App Pod
+2. Route → App Pod
 3. Express Middleware Stack:
    - Helmet (security headers)
    - Rate Limiter
@@ -159,7 +159,7 @@ approval_workflows -- Approval processes
 1. Browser → OpenShift Route (HTTPS)
    Headers: Authorization: Bearer <token>
 
-2. Route → OSPO App Pod
+2. Route → App Pod
 
 3. Express Middleware Stack:
    - Helmet (security headers)

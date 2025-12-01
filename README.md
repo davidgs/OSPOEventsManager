@@ -1,4 +1,4 @@
-# OSPO Events Management Application
+# Events Management Application
 
 [![CI Pipeline](https://github.com/davidgs/OSPOEventsManager/actions/workflows/ci.yml/badge.svg)](https://github.com/davidgs/OSPOEventsManager/actions/workflows/ci.yml)
 [![Tests](https://github.com/davidgs/OSPOEventsManager/actions/workflows/test.yml/badge.svg)](https://github.com/davidgs/OSPOEventsManager/actions/workflows/test.yml)
@@ -9,7 +9,7 @@ A comprehensive event management system for Open Source Program Offices (OSPOs),
 
 ## Features
 
-- **Event Management**: Create, update, and track OSPO events with comprehensive metadata
+- **Event Management**: Create, update, and track events with comprehensive metadata
 - **CFP Submission Tracking**: Manage call for papers submissions with status updates and file attachments
 - **Attendee Management**: Track attendees for each event with contact information
 - **Asset Management**: Store and organize files such as abstracts, trip reports, headshots, and documents
@@ -20,6 +20,13 @@ A comprehensive event management system for Open Source Program Offices (OSPOs),
 - **CSV Import**: Bulk import events from CSV files with intelligent deduplication
 - **Authentication**: Secure access with Keycloak integration and role-based permissions
 - **File Upload Security**: Comprehensive file validation, sanitization, and secure storage
+- **Internationalization (i18n)**: Comprehensive multi-language support with:
+  - Language selection UI in Header and Settings
+  - Persistent language preferences (database + localStorage)
+  - Locale-aware date, number, and currency formatting
+  - Translation support across all components (forms, modals, pages, UI)
+  - Organized translation files by namespace
+  - Initial support for English (en), infrastructure ready for additional languages
 
 ## Technical Stack
 

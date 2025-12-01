@@ -1,6 +1,6 @@
-# OSPO Events Manager Documentation
+# Events Manager Documentation
 
-Welcome to the OSPO Events Manager documentation. This comprehensive guide will help you get started with the application and make the most of its features.
+Welcome to the Events Manager documentation. This comprehensive guide will help you get started with the application and make the most of its features.
 
 ## For Users
 

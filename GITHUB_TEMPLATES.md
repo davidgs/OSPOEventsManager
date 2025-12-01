@@ -2,7 +2,7 @@
 
 ## Overview
 
-Comprehensive GitHub issue templates have been created for the OSPO Events Manager project to streamline issue reporting and improve collaboration.
+Comprehensive GitHub issue templates have been created for the Events Manager project to streamline issue reporting and improve collaboration.
 
 ## Templates Created
 

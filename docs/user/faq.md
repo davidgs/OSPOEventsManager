@@ -2,9 +2,9 @@
 
 ## General Questions
 
-### What is OSPO Events Manager?
+### What is Events Manager?
 
-OSPO Events Manager is a comprehensive event management system designed for Open Source Program Offices. It helps track events, manage CFP submissions, coordinate attendees, and organize related files and documents.
+Events Manager is a comprehensive event management system designed for Open Source Program Offices. It helps track events, manage CFP submissions, coordinate attendees, and organize related files and documents.
 
 ### Who can use this application?
 
@@ -229,6 +229,46 @@ Check:
 - Email spam/junk folder
 - Browser notification permissions
 - Account email is correct
+
+---
+
+## Preferences & Settings
+
+### How do I change the language?
+
+You can change the application language in two ways:
+
+**From the Header:**
+1. Click the **Globe** icon (🌐) in the header
+2. Select your preferred language from the dropdown
+
+**From Settings:**
+1. Navigate to **Settings**
+2. Find the **Language** section
+3. Select your preferred language
+
+Your language preference is saved to your profile and will persist across devices and sessions.
+
+### What languages are supported?
+
+Currently, **English (en)** is fully supported. Additional languages (Spanish, French, German, Japanese, Chinese Simplified) are planned for future releases.
+
+### How do I change the theme (light/dark mode)?
+
+1. Navigate to **Settings**
+2. Find the **Theme** section
+3. Choose from:
+   - **Light** - Light color scheme
+   - **Dark** - Dark color scheme (default)
+   - **System** - Follows your operating system preference
+
+### Why isn't my language preference saving?
+
+Make sure you're logged in. Language preferences are saved to your user profile, so they only persist when you're authenticated. If you're not logged in, the preference is stored in your browser's localStorage.
+
+### Can I use the application in multiple languages?
+
+Currently, the application supports one language at a time. You can switch languages at any time, and all interface text will update immediately.
 
 ---
 
