@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Multi-Platform Kubernetes Deployment Support** (2025-01-21)
+  - Added Google Kubernetes Engine (GKE) deployment support
+    - GKE-specific Ingress with GCE annotations
+    - Support for Google Container Registry (GCR) and Docker Hub
+    - Automatic authentication and cluster configuration
+    - Static IP and managed certificate support
+  - Added Amazon Elastic Kubernetes Service (EKS) deployment support
+    - EKS-specific Ingress with AWS ALB annotations
+    - Support for Amazon ECR and Docker Hub
+    - Automatic authentication and cluster configuration
+    - ACM certificate integration
+  - Refactored deployment manifests into platform-specific directories
+    - `k8s/common/` - Shared manifests for all platforms
+    - `k8s/openshift/` - OpenShift-specific manifests (Routes, ImageStreams, BuildConfigs)
+    - `k8s/gke/` - GKE-specific manifests (Ingress)
+    - `k8s/eks/` - EKS-specific manifests (Ingress)
+  - Enhanced `deploy.sh` script with multi-platform support
+    - Added `--gke` and `--eks` flags
+    - Platform detection and automatic CLI command selection
+    - External image registry build and push functionality
+    - Platform-specific ingress/routes creation
+  - Updated `env.template` with GKE and EKS configuration variables
+    - GKE: Project ID, cluster name, region, image registry settings
+    - EKS: Cluster name, region, account ID, ECR settings, certificate ARN
+    - Storage class configuration for cloud providers
+  - Maintained full backward compatibility with existing OpenShift deployments
+  - All four deployment environments now supported: OpenShift, GKE, EKS, Local/KIND
 - **Internationalization (i18n) Support** (2025-01-21)
   - Comprehensive internationalization infrastructure using react-i18next
   - Language selection UI component in Header and Settings page

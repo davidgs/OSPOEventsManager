@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      imagePullSecrets:
+        - name: dockerhub-secret
+      initContainers:
+        - name: wait-for-db
+          image: postgres:16
+          command: ["sh", "-c"]
+          args:
+            - |
+              until pg_isready -h ${KEYCLOAK_DB_HOST} -p ${KEYCLOAK_DB_PORT} -U ${KEYCLOAK_DB_USER}; do
+                echo "Waiting for database..."
+                sleep 2
+              done
+          env:
+            - name: PGPASSWORD
+              value: "${KEYCLOAK_DB_PASSWORD}"
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:23.0.6
+          args:
+            - start-dev
+            - --http-port=8080
+            - --hostname-strict=false
+            - --hostname-strict-https=false
+            - --proxy=edge
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: "${KEYCLOAK_ADMIN}"
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: "${KEYCLOAK_ADMIN_PASSWORD}"
+            - name: KC_DB
+              value: postgres
+            - name: KC_DB_URL
+              value: jdbc:postgresql://${KEYCLOAK_DB_HOST}:${KEYCLOAK_DB_PORT}/${KEYCLOAK_DB_NAME}
+            - name: KC_DB_USERNAME
+              value: "${KEYCLOAK_DB_USER}"
+            - name: KC_DB_PASSWORD
+              value: "${KEYCLOAK_DB_PASSWORD}"
+            - name: KC_HOSTNAME
+              value: "${keycloak_hostname}"
+            - name: KC_HOSTNAME_ADMIN
+              value: "${keycloak_hostname}"
+            - name: KC_HTTP_RELATIVE_PATH
+              value: "/auth"
+          volumeMounts:
+            - name: realm-config
+              mountPath: /opt/keycloak/data/import
+              readOnly: true
+          resources:
+            requests:
+              cpu: "${KEYCLOAK_CPU_REQUEST}"
+              memory: "${KEYCLOAK_MEMORY_REQUEST}"
+            limits:
+              cpu: "${KEYCLOAK_CPU_LIMIT}"
+              memory: "${KEYCLOAK_MEMORY_LIMIT}"
+          livenessProbe:
+            httpGet:
+              path: /auth
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /auth
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+          startupProbe:
+            httpGet:
+              path: /auth
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 30
+      volumes:
+        - name: realm-config
+          configMap:
+            name: keycloak-realm-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: keycloak
