@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ospo-events-ingress
+  labels:
+    app: ospo-app
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "${GKE_STATIC_IP_NAME}"
+    networking.gke.io/managed-certificates: "${GKE_MANAGED_CERT}"
+    kubernetes.io/ingress.allow-http: "false"
+spec:
+  rules:
+    - host: ${APP_HOSTNAME}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ospo-app
+                port:
+                  number: 4576
+    - host: ${KEYCLOAK_HOSTNAME}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+  ${GKE_TLS_SECRET:+tls:
+    - hosts:
+        - ${APP_HOSTNAME}
+        - ${KEYCLOAK_HOSTNAME}
+      secretName: ${GKE_TLS_SECRET}}
+
