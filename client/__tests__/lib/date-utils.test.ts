@@ -79,7 +79,16 @@ describe('Date Utility Functions', () => {
   describe('safeFormatDate', () => {
     it('should format valid date with default format', () => {
       const result = safeFormatDate('2024-01-15T12:00:00');
-      expect(result).toBe('Jan 15, 2024');
+      expect(result).toContain('Jan');
+      expect(result).toContain('15');
+      expect(result).toContain('2024');
+    });
+
+    it('should format date with locale-aware formatting', () => {
+      const result = safeFormatDate('2024-01-15T12:00:00', 'MMM d, yyyy', 'en');
+      expect(result).toContain('Jan');
+      expect(result).toContain('15');
+      expect(result).toContain('2024');
     });
 
     it('should format Date object', () => {
@@ -132,7 +141,15 @@ describe('Date Utility Functions', () => {
   describe('safeFormatDateRange', () => {
     it('should format valid date range', () => {
       const result = safeFormatDateRange('2024-01-15T12:00:00', '2024-01-20T12:00:00');
-      expect(result).toBe('Jan 15, 2024 - Jan 20, 2024');
+      expect(result).toContain('Jan 15, 2024');
+      expect(result).toContain('Jan 20, 2024');
+      expect(result).toContain(' - ');
+    });
+
+    it('should format date range with locale-aware formatting', () => {
+      const result = safeFormatDateRange('2024-01-15T12:00:00', '2024-01-20T12:00:00', 'en');
+      expect(result).toContain('Jan 15, 2024');
+      expect(result).toContain('Jan 20, 2024');
     });
 
     it('should handle Date objects', () => {

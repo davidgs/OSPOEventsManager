@@ -22,6 +22,7 @@
  */
 
 import { FC, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Card,
   CardContent,
@@ -31,6 +32,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LanguageSelector } from "@/components/i18n/language-selector";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import {
   Form,
   FormControl,
@@ -101,6 +104,8 @@ const notificationFormSchema = z.object({
 
 const SettingsPage: FC = () => {
   const { toast } = useToast();
+  const { t } = useTranslation(["common", "pages", "forms"]);
+  const { language } = useI18n();
   const [activeTab, setActiveTab] = useState("profile");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -278,10 +283,10 @@ const SettingsPage: FC = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold leading-7 text-gray-900">
-              Settings
+              {t("common.settings")}
             </h2>
             <p className="mt-1 text-sm text-gray-500">
-              Manage your account settings and preferences
+              {t("pages.settings.subtitle")}
             </p>
           </div>
         </div>
@@ -294,14 +299,18 @@ const SettingsPage: FC = () => {
               onValueChange={setActiveTab}
               className="w-full"
             >
-              <TabsList className="grid grid-cols-2">
+              <TabsList className="grid grid-cols-3">
                 <TabsTrigger value="profile" className="text-sm">
                   <UserRound className="h-4 w-4 mr-2" />
-                  Profile
+                  {t("pages.settings.tabs.profile")}
                 </TabsTrigger>
                 <TabsTrigger value="notifications" className="text-sm">
                   <Bell className="h-4 w-4 mr-2" />
-                  Notifications
+                  {t("pages.settings.tabs.notifications")}
+                </TabsTrigger>
+                <TabsTrigger value="preferences" className="text-sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  {t("pages.settings.tabs.preferences")}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -313,7 +322,7 @@ const SettingsPage: FC = () => {
                 <div className="space-y-2">
                   <h3 className="text-lg font-medium flex items-center text-gray-900">
                     <Settings className="mr-2 h-5 w-5" />
-                    Settings
+                    {t("common.settings")}
                   </h3>
                   <Separator />
                 </div>
@@ -324,7 +333,7 @@ const SettingsPage: FC = () => {
                     onClick={() => setActiveTab("profile")}
                   >
                     <UserRound className="mr-2 h-5 w-5" />
-                    Profile
+                    {t("pages.settings.tabs.profile")}
                   </Button>
                   <Button
                     variant={
@@ -334,7 +343,15 @@ const SettingsPage: FC = () => {
                     onClick={() => setActiveTab("notifications")}
                   >
                     <Bell className="mr-2 h-5 w-5" />
-                    Notifications
+                    {t("pages.settings.tabs.notifications")}
+                  </Button>
+                  <Button
+                    variant={activeTab === "preferences" ? "secondary" : "ghost"}
+                    className="w-full justify-start text-base"
+                    onClick={() => setActiveTab("preferences")}
+                  >
+                    <Settings className="mr-2 h-5 w-5" />
+                    {t("pages.settings.tabs.preferences")}
                   </Button>
                   <Button
                     variant={activeTab === "security" ? "secondary" : "ghost"}
@@ -342,7 +359,7 @@ const SettingsPage: FC = () => {
                     onClick={() => setActiveTab("security")}
                   >
                     <ShieldCheck className="mr-2 h-5 w-5" />
-                    Security
+                    {t("pages.settings.tabs.security")}
                   </Button>
                 </div>
 
@@ -373,9 +390,9 @@ const SettingsPage: FC = () => {
             {activeTab === "profile" && (
               <Card className="w-full">
                 <CardHeader>
-                  <CardTitle>Profile Settings</CardTitle>
+                  <CardTitle>{t("pages.settings.profile.title")}</CardTitle>
                   <CardDescription>
-                    Manage your personal information and account settings
+                    {t("pages.settings.profile.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -454,7 +471,7 @@ const SettingsPage: FC = () => {
                                     Community Manager
                                   </SelectItem>
                                   <SelectItem value="ospo_lead">
-                                    OSPO Lead
+                                    Lead
                                   </SelectItem>
                                   <SelectItem value="other">Other</SelectItem>
                                 </SelectContent>
@@ -610,12 +627,38 @@ const SettingsPage: FC = () => {
               </Card>
             )}
 
+            {activeTab === "preferences" && (
+              <Card className="w-full">
+                <CardHeader>
+                  <CardTitle>{t("pages.settings.preferences.title")}</CardTitle>
+                  <CardDescription>
+                    {t("pages.settings.preferences.description")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <label className="text-base font-medium">
+                          {t("pages.settings.preferences.language")}
+                        </label>
+                        <p className="text-sm text-muted-foreground">
+                          {t("pages.settings.preferences.languageDesc")}
+                        </p>
+                      </div>
+                      <LanguageSelector />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {activeTab === "notifications" && (
               <Card className="w-full">
                 <CardHeader>
-                  <CardTitle>Notification Settings</CardTitle>
+                  <CardTitle>{t("pages.settings.notifications.title")}</CardTitle>
                   <CardDescription>
-                    Configure how and when you receive notifications
+                    {t("pages.settings.notifications.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -759,9 +802,9 @@ const SettingsPage: FC = () => {
             {activeTab === "security" && (
               <Card className="w-full">
                 <CardHeader>
-                  <CardTitle>Security Settings</CardTitle>
+                  <CardTitle>{t("pages.settings.security.title")}</CardTitle>
                   <CardDescription>
-                    Manage your account security and authentication
+                    {t("pages.settings.security.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

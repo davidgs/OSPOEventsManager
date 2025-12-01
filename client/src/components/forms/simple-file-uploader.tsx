@@ -22,6 +22,7 @@
  */
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -55,11 +56,11 @@ const ACCEPTED_FILE_TYPES = [
   "application/zip"
 ];
 
-// Schemas for validation
-const assetUploadSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
+// Schemas will be created with translations
+const createAssetUploadSchema = (t: (key: string, params?: any) => string) => z.object({
+  name: z.string().min(3, t("assets.validation.nameRequired")),
   type: z.enum(assetTypes as unknown as [string, ...string[]]),
-  description: z.string().min(10, "Description must be at least 10 characters"),
+  description: z.string().min(10, t("forms.validation.minLength", { min: 10 })),
   eventId: z.number().optional(),
   cfpSubmissionId: z.number().optional(),
   content: z.string().optional(),
@@ -72,37 +73,40 @@ const assetUploadSchema = z.object({
         return files[0].size <= MAX_FILE_SIZE;
       }
       return true;
-    }, `Max file size is ${formatBytes(MAX_FILE_SIZE)}`)
+    }, t("assets.validation.fileSizeExceeded", { size: formatBytes(MAX_FILE_SIZE) }))
     .refine((files) => {
       if (files && files.length > 0) {
         return ACCEPTED_FILE_TYPES.includes(files[0].type);
       }
       return true;
-    }, "File type not supported"),
+    }, t("assets.validation.fileTypeNotSupported")),
 });
 
-const newEventSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  link: z.string().url("Please enter a valid URL"),
-  startDate: z.string().min(1, "Start date is required"),
-  endDate: z.string().min(1, "End date is required"),
+const createNewEventSchema = (t: (key: string, params?: any) => string) => z.object({
+  name: z.string().min(3, t("events.validation.nameRequired")),
+  link: z.string().url(t("events.validation.linkInvalid")),
+  startDate: z.string().min(1, t("events.validation.startDateRequired")),
+  endDate: z.string().min(1, t("events.validation.endDateRequired")),
   cfpDeadline: z.string().optional(),
-  location: z.string().min(3, "Location must be at least 3 characters"),
+  location: z.string().min(3, t("events.validation.locationRequired")),
   type: z.enum(eventTypes as unknown as [string, ...string[]]),
   priority: z.enum(eventPriorities as unknown as [string, ...string[]]),
-  goals: z.array(z.string()).min(1, "Select at least one goal"),
+  goals: z.array(z.string()).min(1, t("events.validation.goalRequired")),
 });
 
 type AssetUploadFormProps = {
   onComplete: () => void;
 };
 
-type AssetUploadFormValues = z.infer<typeof assetUploadSchema>;
-type NewEventFormValues = z.infer<typeof newEventSchema>;
-
 export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
+  const { t } = useTranslation(["assets", "events", "forms", "common", "modals"]);
   const { toast } = useToast();
   const [showAddEventDialog, setShowAddEventDialog] = useState(false);
+
+  const assetUploadSchema = createAssetUploadSchema(t);
+  const newEventSchema = createNewEventSchema(t);
+  type AssetUploadFormValues = z.infer<typeof assetUploadSchema>;
+  type NewEventFormValues = z.infer<typeof newEventSchema>;
 
   // Form setup
   const form = useForm<AssetUploadFormValues>({
@@ -165,8 +169,8 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       toast({
-        title: "Event Created",
-        description: "Event has been created successfully",
+        title: t("forms.events.created"),
+        description: t("forms.events.createdDescription"),
       });
 
       // Close dialog and select the new event
@@ -177,8 +181,8 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: "Failed to create event. Please try again.",
+        title: t("common.error"),
+        description: t("forms.events.creationFailedDescription", { error: error.message }),
         variant: "destructive",
       });
     },
@@ -238,15 +242,15 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
       toast({
-        title: "Success",
-        description: "Asset uploaded successfully",
+        title: t("assets.messages.uploaded"),
+        description: t("assets.messages.uploadedDescription"),
       });
       onComplete();
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: "Failed to upload asset. Please try again.",
+        title: t("assets.messages.uploadFailed"),
+        description: t("assets.messages.uploadFailedDescription", { error: error.message }),
         variant: "destructive",
       });
     },
@@ -262,7 +266,7 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
     if (values.uploadMethod === "file" && (!values.file || values.file.length === 0)) {
       form.setError("file", {
         type: "manual",
-        message: "Please select a file",
+        message: t("assets.validation.fileSelectRequired"),
       });
       return;
     }
@@ -270,7 +274,7 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
     if (values.uploadMethod === "text" && (!values.content || values.content.trim() === "")) {
       form.setError("content", {
         type: "manual",
-        message: "Content cannot be empty",
+        message: t("assets.validation.contentRequired"),
       });
       return;
     }
@@ -296,9 +300,9 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Asset Name</FormLabel>
+                <FormLabel>{t("assets.fields.name")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter a name for this asset" {...field} />
+                  <Input placeholder={t("assets.placeholders.name")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -310,14 +314,14 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Asset Type</FormLabel>
+                <FormLabel>{t("assets.fields.type")}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder={t("assets.placeholders.selectType")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -338,10 +342,10 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>{t("assets.fields.description")}</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Describe this asset"
+                    placeholder={t("assets.placeholders.description")}
                     className="resize-none"
                     {...field}
                   />
@@ -356,7 +360,7 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
             name="eventId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Related Event</FormLabel>
+                <FormLabel>{t("assets.fields.event")}</FormLabel>
                 <div className="flex gap-2">
                   <Select
                     onValueChange={(value) => field.onChange(parseInt(value))}
@@ -364,7 +368,7 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                   >
                     <FormControl>
                       <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select event (optional)" />
+                        <SelectValue placeholder={`${t("assets.placeholders.selectEvent")} (${t("common.optional")})`} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -380,7 +384,7 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                     type="button"
                     size="icon"
                     onClick={() => setShowAddEventDialog(true)}
-                    title="Add New Event"
+                    title={t("modals.addEvent.title")}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
@@ -392,8 +396,8 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
 
           <Tabs defaultValue="file" onValueChange={(value) => form.setValue("uploadMethod", value as "file" | "text")}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="file">Upload File</TabsTrigger>
-              <TabsTrigger value="text">Enter Text</TabsTrigger>
+              <TabsTrigger value="file">{t("assets.uploadFile")}</TabsTrigger>
+              <TabsTrigger value="text">{t("assets.enterText")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="file" className="mt-0">
@@ -402,15 +406,15 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                 name="file"
                 render={({ field: { onChange, value, ...rest } }) => (
                   <FormItem>
-                    <FormLabel>File</FormLabel>
+                    <FormLabel>{t("assets.fields.file")}</FormLabel>
                     <FormControl>
                       <div className="space-y-4">
                         {/* Simplified file upload button */}
                         <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                           <label htmlFor="simple-file-upload" className="block w-full h-full cursor-pointer">
                             <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                            <p className="text-sm font-medium">Click to select a file</p>
-                            <p className="text-xs text-gray-500">Maximum size: {formatBytes(MAX_FILE_SIZE)}</p>
+                            <p className="text-sm font-medium">{t("assets.selectFile")}</p>
+                            <p className="text-xs text-gray-500">{t("assets.filesUpTo", { size: formatBytes(MAX_FILE_SIZE) })}</p>
                           </label>
                           <input
                             id="simple-file-upload"
@@ -440,7 +444,7 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                                     form.trigger("file");
                                   }}
                                 >
-                                  Remove
+                                  {t("assets.messages.remove")}
                                 </Button>
                               </div>
                             );
@@ -461,10 +465,10 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                 name="content"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Content</FormLabel>
+                    <FormLabel>{t("assets.fields.content")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Enter your content here..."
+                        placeholder={t("assets.placeholders.content")}
                         className="min-h-[200px]"
                         {...field}
                       />
@@ -485,7 +489,7 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                 className="flex-1 sm:flex-initial"
                 onClick={onComplete}
               >
-                Cancel
+                {t("forms.buttons.cancel")}
               </Button>
               <Button
                 type="submit"
@@ -495,10 +499,10 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                 {upload.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
+                    {t("assets.uploading")}
                   </>
                 ) : (
-                  "Upload Asset"
+                  t("assets.uploadAsset")
                 )}
               </Button>
             </div>
@@ -510,7 +514,7 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
       <Dialog open={showAddEventDialog} onOpenChange={setShowAddEventDialog}>
         <DialogContent className="max-w-md pt-6 px-4 overflow-auto max-h-[90vh]">
           <DialogHeader className="mb-4">
-            <DialogTitle>Add New Event</DialogTitle>
+            <DialogTitle>{t("modals.addEvent.title")}</DialogTitle>
           </DialogHeader>
 
           <Form {...newEventForm}>
@@ -520,9 +524,9 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Event Name</FormLabel>
+                    <FormLabel>{t("events.fields.name")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Event name" {...field} />
+                      <Input placeholder={t("events.placeholders.name")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -534,9 +538,9 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                 name="link"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Event URL</FormLabel>
+                    <FormLabel>{t("events.fields.website")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://example.com" {...field} />
+                      <Input placeholder={t("events.placeholders.link")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -549,7 +553,7 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                   name="startDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Date</FormLabel>
+                      <FormLabel>{t("events.fields.startDate")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -566,7 +570,7 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                   name="endDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>End Date</FormLabel>
+                      <FormLabel>{t("events.fields.endDate")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -584,9 +588,9 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>{t("events.fields.location")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="City, Country" {...field} />
+                      <Input placeholder={t("events.placeholders.location")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -599,14 +603,14 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Event Type</FormLabel>
+                      <FormLabel>{t("events.fields.type")}</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
+                            <SelectValue placeholder={t("events.placeholders.selectType")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -627,14 +631,14 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                      <FormLabel>{t("events.fields.priority")}</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
+                            <SelectValue placeholder={t("events.placeholders.selectPriority")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -657,9 +661,9 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                 render={() => (
                   <FormItem>
                     <div className="mb-2">
-                      <FormLabel>Goals</FormLabel>
+                      <FormLabel>{t("events.fields.goals")}</FormLabel>
                       <FormDescription>
-                        Select all that apply
+                        {t("common.selectAllThatApply")}
                       </FormDescription>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -705,7 +709,7 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                     className="flex-1 sm:flex-initial"
                     onClick={() => setShowAddEventDialog(false)}
                   >
-                    Cancel
+                    {t("forms.buttons.cancel")}
                   </Button>
                   <Button
                     type="submit"
@@ -715,10 +719,10 @@ export function SimpleFileUploader({ onComplete }: AssetUploadFormProps) {
                     {createEvent.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating...
+                        {t("common.creating")}
                       </>
                     ) : (
-                      "Add Event"
+                      t("events.addEvent")
                     )}
                   </Button>
                 </div>

@@ -1,4 +1,4 @@
-# OSPO Events Manager - Application Flow Diagram
+# Events Manager - Application Flow Diagram
 
 ## System Architecture Overview
 
@@ -25,7 +25,7 @@
 │  │  │                  Application Layer                           │   │    │
 │  │  │                                                              │   │    │
 │  │  │  ┌──────────────────────────┐    ┌──────────────────────┐    │   │    │
-│  │  │  │   OSPO App Service       │    │  Keycloak Service    │    │   │    │
+│  │  │  │   App Service       │    │  Keycloak Service    │    │   │    │
 │  │  │  │   (ospo-app)             │    │  (keycloak)          │    │   │    │
 │  │  │  │   Port: 4576             │    │  Port: 8080          │    │   │    │
 │  │  │  │                          │    │  /auth context       │    │   │    │
@@ -60,7 +60,7 @@
       │ 1. Access Application
       ▼
 ┌─────────────────────────────────────┐
-│  OSPO App Frontend (React/Vite)     │
+│  App Frontend (React/Vite)     │
 │  - React Router                     │
 │  - Keycloak JS Client               │
 └─────┬───────────────────────────────┘

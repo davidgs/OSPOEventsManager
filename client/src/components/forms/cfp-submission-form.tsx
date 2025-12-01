@@ -22,6 +22,7 @@
  */
 
 import { FC, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -36,25 +37,27 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { Plus, Send } from "lucide-react";
 
-const cfpSubmissionSchema = z.object({
-  eventId: z.number().min(1, "Please select an event"),
-  title: z.string().min(1, "Title is required"),
-  abstract: z.string().min(10, "Abstract must be at least 10 characters"),
-  submitterName: z.string().min(1, "Submitter name is required"),
+const createCfpSubmissionSchema = (t: (key: string, params?: any) => string) => z.object({
+  eventId: z.number().min(1, t("cfp.validation.eventRequired")),
+  title: z.string().min(1, t("cfp.validation.titleRequired")),
+  abstract: z.string().min(10, t("cfp.validation.abstractRequired")),
+  submitterName: z.string().min(1, t("cfp.validation.submitterNameRequired")),
   status: z.enum(["draft", "submitted", "accepted", "rejected", "withdrawn"]),
   submissionDate: z.string().optional(),
   notes: z.string().optional(),
 });
-
-type CfpSubmissionFormData = z.infer<typeof cfpSubmissionSchema>;
 
 interface CfpSubmissionFormProps {
   onSuccess?: () => void;
 }
 
 export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => {
+  const { t } = useTranslation(["cfp", "forms", "common"]);
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+
+  const cfpSubmissionSchema = createCfpSubmissionSchema(t);
+  type CfpSubmissionFormData = z.infer<typeof cfpSubmissionSchema>;
 
   // Fetch events for dropdown
   const { data: events = [] } = useQuery({
@@ -91,14 +94,14 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
       form.reset();
       setOpen(false);
       toast({
-        title: "CFP submission created",
-        description: "Your call for proposal submission has been saved.",
+        title: t("cfp.messages.created"),
+        description: t("cfp.messages.createdDescription"),
       });
       onSuccess?.();
     },
     onError: (error: Error) => {
       toast({
-        title: "Submission failed",
+        title: t("cfp.messages.submissionFailed"),
         description: error.message,
         variant: "destructive",
       });
@@ -114,12 +117,12 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
       <DialogTrigger asChild>
         <Button className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
-          Submit CFP
+          {t("cfp.submitCfp")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Submit Call for Proposal</DialogTitle>
+          <DialogTitle>{t("cfp.submissionTitle")}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -128,11 +131,11 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
               name="eventId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Event</FormLabel>
+                  <FormLabel>{t("cfp.fields.event")}</FormLabel>
                   <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select an event" />
+                        <SelectValue placeholder={t("cfp.placeholders.selectEvent")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -153,9 +156,9 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Presentation Title</FormLabel>
+                  <FormLabel>{t("cfp.fields.title")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your presentation title" {...field} />
+                    <Input placeholder={t("cfp.placeholders.title")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -167,9 +170,9 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
               name="submitterName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Your Name</FormLabel>
+                  <FormLabel>{t("cfp.fields.submitterName")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your full name" {...field} />
+                    <Input placeholder={t("cfp.placeholders.submitterName")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -181,10 +184,10 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
               name="abstract"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Abstract</FormLabel>
+                  <FormLabel>{t("cfp.fields.abstract")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Provide a detailed description of your presentation..."
+                      placeholder={t("cfp.placeholders.abstract")}
                       rows={6}
                       {...field}
                     />
@@ -199,16 +202,16 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
               name="status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Status</FormLabel>
+                  <FormLabel>{t("cfp.fields.status")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder={t("cfp.placeholders.selectStatus")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="submitted">Submit Now</SelectItem>
+                      <SelectItem value="draft">{t("cfp.statuses.draft")}</SelectItem>
+                      <SelectItem value="submitted">{t("cfp.statuses.submitted")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -221,10 +224,10 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
+                  <FormLabel>{t("cfp.fields.notes")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Any additional information or requirements..."
+                      placeholder={t("cfp.placeholders.notes")}
                       rows={3}
                       {...field}
                     />
@@ -240,18 +243,18 @@ export const CfpSubmissionForm: FC<CfpSubmissionFormProps> = ({ onSuccess }) => 
                 variant="outline"
                 onClick={() => setOpen(false)}
               >
-                Cancel
+                {t("forms.buttons.cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={createSubmissionMutation.isPending}
               >
                 {createSubmissionMutation.isPending ? (
-                  "Saving..."
+                  t("common.saving")
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    {form.watch("status") === "submitted" ? "Submit CFP" : "Save Draft"}
+                    {form.watch("status") === "submitted" ? t("cfp.submitCfp") : t("common.saveDraft", "Save Draft")}
                   </>
                 )}
               </Button>

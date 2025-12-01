@@ -25,6 +25,7 @@ import { Route, Switch } from "wouter";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { withAuthProtection } from "@/contexts/auth-context";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { I18nProvider } from "@/components/i18n/i18n-provider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProtectedRoute } from "@/components/protected-route";
@@ -56,11 +57,12 @@ function App() {
   console.log("App rendering, current location:", window.location.href);
 
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="ospo-ui-theme">
-      <TooltipProvider>
-        <div className="min-h-screen bg-background flex flex-col">
-          <Header />
-          <main className="flex-1">
+    <I18nProvider>
+      <ThemeProvider defaultTheme="dark" storageKey="ospo-ui-theme">
+        <TooltipProvider>
+          <div className="min-h-screen bg-background flex flex-col">
+            <Header />
+            <main className="flex-1">
             <Switch>
               {/* Public routes */}
               <Route path="/" component={HomePage} />
@@ -112,6 +114,7 @@ function App() {
         </div>
       </TooltipProvider>
     </ThemeProvider>
+    </I18nProvider>
   );
 }
 

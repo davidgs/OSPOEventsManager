@@ -22,6 +22,7 @@
  */
 
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -30,14 +31,34 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { assetTypes, eventTypes, eventPriorities } from "@shared/schema";
 import { formatBytes } from "@/lib/utils";
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Plus, Calendar } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogHeader,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -57,83 +78,103 @@ const ACCEPTED_FILE_TYPES = [
   "text/plain",
   "application/zip",
   "application/prf",
-  "application/x-prf"
+  "application/x-prf",
 ];
 
 type AssetUploadFormProps = {
   onComplete: () => void;
 };
 
-const assetUploadSchema = z.object({
-  name: z.string().min(1, "Asset name is required"),
-  type: z.enum(assetTypes as unknown as [string, ...string[]]),
-  description: z.string().optional(),
-  eventId: z.string().optional(),
-  cfpSubmissionId: z.string().optional(),
-  content: z.string().optional(),
-  uploadMethod: z.enum(["file", "text"]),
-  file: z.instanceof(FileList).optional()
-    .superRefine((files, ctx) => {
-      // File validation is handled at form level based on uploadMethod
+// Schema will be created with translations in component
+const createAssetUploadSchema = (t: (key: string, params?: any) => string) =>
+  z.object({
+    name: z.string().min(1, t("assets.validation.nameRequired")),
+    type: z.enum(assetTypes as unknown as [string, ...string[]]),
+    description: z.string().optional(),
+    eventId: z.string().optional(),
+    cfpSubmissionId: z.string().optional(),
+    content: z.string().optional(),
+    uploadMethod: z.enum(["file", "text"]),
+    file: z
+      .instanceof(FileList)
+      .optional()
+      .superRefine((files, ctx) => {
+        // File validation is handled at form level based on uploadMethod
 
-      if (files && files.length === 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "File is required",
-        });
-        return;
-      }
-
-      if (files && files.length > 0) {
-        if (files[0].size > MAX_FILE_SIZE) {
+        if (files && files.length === 0) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `File size must be less than ${formatBytes(MAX_FILE_SIZE)}`,
+            message: t("assets.validation.fileRequired"),
           });
+          return;
         }
 
-        if (!ACCEPTED_FILE_TYPES.includes(files[0].type)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "File type not supported",
-          });
+        if (files && files.length > 0) {
+          if (files[0].size > MAX_FILE_SIZE) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: t("assets.validation.fileSizeExceeded", {
+                size: formatBytes(MAX_FILE_SIZE),
+              }),
+            });
+          }
+
+          if (!ACCEPTED_FILE_TYPES.includes(files[0].type)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: t("assets.validation.fileTypeNotSupported"),
+            });
+          }
         }
-      }
-    }),
-});
+      }),
+  });
 
-// Schema for the new event form
-const newEventSchema = z.object({
-  name: z.string().min(1, "Event name is required"),
-  link: z.string().url("Please enter a valid URL"),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
-  location: z.string().min(1, "Location is required"),
-  priority: z.enum(eventPriorities as unknown as [string, ...string[]]),
-  type: z.enum(eventTypes as unknown as [string, ...string[]]),
-  goals: z.array(z.string()).min(1, "At least one goal is required"),
-  cfpDeadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format").optional().nullable(),
-  notes: z.string().optional(),
-});
-
-type AssetUploadFormValues = z.infer<typeof assetUploadSchema>;
-type NewEventFormValues = z.infer<typeof newEventSchema>;
+// Schema for the new event form - will be created with translations
+const createNewEventSchema = (t: (key: string, params?: any) => string) =>
+  z.object({
+    name: z.string().min(1, t("events.validation.nameRequired")),
+    link: z.string().url(t("events.validation.linkInvalid")),
+    startDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, t("events.validation.dateFormat")),
+    endDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, t("events.validation.dateFormat")),
+    location: z.string().min(1, t("events.validation.locationRequired")),
+    priority: z.enum(eventPriorities as unknown as [string, ...string[]]),
+    type: z.enum(eventTypes as unknown as [string, ...string[]]),
+    goals: z.array(z.string()).min(1, t("events.validation.goalRequired")),
+    cfpDeadline: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, t("events.validation.dateFormat"))
+      .optional()
+      .nullable(),
+    notes: z.string().optional(),
+  });
 
 export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
+  const { t } = useTranslation(["forms", "assets", "events", "common"]);
   const { toast } = useToast();
   const [dragActive, setDragActive] = useState(false);
   const [showAddEventDialog, setShowAddEventDialog] = useState(false);
   const [showEventSelection, setShowEventSelection] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Create schemas with translations
+  const assetUploadSchema = createAssetUploadSchema(t);
+  const newEventSchema = createNewEventSchema(t);
+
+  type AssetUploadFormValues = z.infer<typeof assetUploadSchema>;
+  type NewEventFormValues = z.infer<typeof newEventSchema>;
+
   // Fetch current user
   const { data: currentUser } = useQuery<{ id: number } | undefined>({
-    queryKey: ["/api/users/2"]
+    queryKey: ["/api/users/2"],
   });
 
   // Fetch events for dropdown
   const { data: events = [] } = useQuery<Array<{ id: number; name: string }>>({
-    queryKey: ["/api/events"]
+    queryKey: ["/api/events"],
   });
 
   const form = useForm<AssetUploadFormValues>({
@@ -145,7 +186,7 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
       eventId: "",
       cfpSubmissionId: "",
       uploadMethod: "file",
-      content: ""
+      content: "",
     },
   });
 
@@ -155,8 +196,8 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
     defaultValues: {
       name: "",
       link: "",
-      startDate: new Date().toISOString().split('T')[0], // Today
-      endDate: new Date().toISOString().split('T')[0], // Today
+      startDate: new Date().toISOString().split("T")[0], // Today
+      endDate: new Date().toISOString().split("T")[0], // Today
       location: "",
       priority: "medium",
       type: "conference",
@@ -170,14 +211,22 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
   useEffect(() => {
     const assetType = form.watch("type");
     // Show event selection for these asset types
-    if (assetType === "abstract" || assetType === "trip_report" || assetType === "presentation") {
+    if (
+      assetType === "abstract" ||
+      assetType === "trip_report" ||
+      assetType === "presentation"
+    ) {
       setShowEventSelection(true);
     } else {
       setShowEventSelection(false);
     }
 
     // Set default upload method to text for these asset types
-    if (assetType === "abstract" || assetType === "trip_report" || assetType === "bio") {
+    if (
+      assetType === "abstract" ||
+      assetType === "trip_report" ||
+      assetType === "bio"
+    ) {
       form.setValue("uploadMethod", "text");
     } else {
       form.setValue("uploadMethod", "file");
@@ -195,21 +244,23 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
     },
     onSuccess: (data) => {
       toast({
-        title: "Event created",
-        description: "The event has been created successfully.",
+        title: t("forms.events.created"),
+        description: t("forms.events.createdDescription"),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       setShowAddEventDialog(false);
 
       // Set the new event ID in the asset form
-      if (data && typeof data === 'object' && 'id' in data) {
+      if (data && typeof data === "object" && "id" in data) {
         form.setValue("eventId", data.id.toString());
       }
     },
     onError: (error) => {
       toast({
-        title: "Event creation failed",
-        description: `There was an error creating the event: ${error.message}`,
+        title: t("forms.events.creationFailed"),
+        description: t("forms.events.creationFailedDescription", {
+          error: error.message,
+        }),
         variant: "destructive",
       });
     },
@@ -245,9 +296,15 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
 
         // Create a text file from the content
         const textBlob = new Blob([values.content], { type: "text/plain" });
-        const textFile = new File([textBlob], `${values.name}.txt`, { type: "text/plain" });
+        const textFile = new File([textBlob], `${values.name}.txt`, {
+          type: "text/plain",
+        });
         formData.append("file", textFile);
-      } else if (values.uploadMethod === "file" && values.file && values.file.length > 0) {
+      } else if (
+        values.uploadMethod === "file" &&
+        values.file &&
+        values.file.length > 0
+      ) {
         // Add the file
         formData.append("file", values.file[0]);
       }
@@ -261,16 +318,18 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Asset uploaded successfully",
-        description: "Your file has been uploaded and is now available in the assets library.",
+        title: t("assets.messages.uploaded"),
+        description: t("assets.messages.uploadedDescription"),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
       onComplete();
     },
     onError: (error) => {
       toast({
-        title: "Upload failed",
-        description: `There was an error uploading your file: ${error.message}`,
+        title: t("assets.messages.uploadFailed"),
+        description: t("assets.messages.uploadFailedDescription", {
+          error: error.message,
+        }),
         variant: "destructive",
       });
     },
@@ -278,21 +337,31 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
 
   const onSubmit = (values: AssetUploadFormValues) => {
     // Validate that file or content is provided
-    if (values.uploadMethod === "file" && (!values.file || values.file.length === 0)) {
-      form.setError("file", { message: "Please select a file to upload" });
+    if (
+      values.uploadMethod === "file" &&
+      (!values.file || values.file.length === 0)
+    ) {
+      form.setError("file", {
+        message: t("assets.validation.fileSelectRequired"),
+      });
       return;
     }
 
-    if (values.uploadMethod === "text" && (!values.content || values.content.trim() === "")) {
-      form.setError("content", { message: "Please enter content for the asset" });
+    if (
+      values.uploadMethod === "text" &&
+      (!values.content || values.content.trim() === "")
+    ) {
+      form.setError("content", {
+        message: t("assets.validation.contentRequired"),
+      });
       return;
     }
 
     // Check if event is required but not selected
     if (showEventSelection && !values.eventId) {
       toast({
-        title: "Event required",
-        description: "Please select an event or create a new one for this asset type.",
+        title: t("forms.events.required"),
+        description: t("forms.events.requiredDescription"),
         variant: "destructive",
       });
       return;
@@ -354,9 +423,12 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Asset Name</FormLabel>
+                <FormLabel>{t("assets.fields.name")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter a name for this asset" {...field} />
+                  <Input
+                    placeholder={t("assets.placeholders.name")}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -368,7 +440,7 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Asset Type</FormLabel>
+                <FormLabel>{t("assets.fields.type")}</FormLabel>
                 <Select
                   onValueChange={(value) => {
                     field.onChange(value);
@@ -381,13 +453,16 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select asset type" />
+                      <SelectValue
+                        placeholder={t("assets.placeholders.selectType")}
+                      />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {assetTypes.map((type) => (
                       <SelectItem key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1).replace("_", " ")}
+                        {type.charAt(0).toUpperCase() +
+                          type.slice(1).replace("_", " ")}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -403,20 +478,22 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
               name="eventId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Event</FormLabel>
+                  <FormLabel>{t("assets.fields.event")}</FormLabel>
                   <div className="flex space-x-2">
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Select an event" />
+                          <SelectValue
+                            placeholder={t("assets.placeholders.selectEvent")}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {events?.map((event) => (
-                          <SelectItem key={event.id} value={event.id.toString()}>
+                          <SelectItem
+                            key={event.id}
+                            value={event.id.toString()}
+                          >
                             {event.name}
                           </SelectItem>
                         ))}
@@ -431,7 +508,7 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                     </Button>
                   </div>
                   <FormDescription>
-                    This asset must be linked to an event. If the event isn't listed, click the + button to create it.
+                    {t("assets.descriptions.eventRequired")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -444,10 +521,12 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description (Optional)</FormLabel>
+                <FormLabel>
+                  {t("assets.descriptions.descriptionOptional")}
+                </FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Add details about this asset"
+                    placeholder={t("assets.placeholders.description")}
                     {...field}
                   />
                 </FormControl>
@@ -456,13 +535,15 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
             )}
           />
 
-          {(form.watch("type") === "abstract" || form.watch("type") === "trip_report" || form.watch("type") === "bio") && (
+          {(form.watch("type") === "abstract" ||
+            form.watch("type") === "trip_report" ||
+            form.watch("type") === "bio") && (
             <FormField
               control={form.control}
               name="uploadMethod"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Upload Method</FormLabel>
+                  <FormLabel>{t("assets.fields.uploadMethod")}</FormLabel>
                   <FormControl>
                     <RadioGroup
                       defaultValue={field.value}
@@ -471,11 +552,11 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="text" id="text" />
-                        <Label htmlFor="text">Enter Text</Label>
+                        <Label htmlFor="text">{t("assets.enterText")}</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="file" id="file" />
-                        <Label htmlFor="file">Upload File</Label>
+                        <Label htmlFor="file">{t("assets.uploadFile")}</Label>
                       </div>
                     </RadioGroup>
                   </FormControl>
@@ -487,12 +568,14 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
 
           <Tabs
             value={form.watch("uploadMethod")}
-            onValueChange={(value) => form.setValue("uploadMethod", value as "file" | "text")}
+            onValueChange={(value) =>
+              form.setValue("uploadMethod", value as "file" | "text")
+            }
             className="w-full"
           >
             <TabsList className="hidden">
-              <TabsTrigger value="file">File</TabsTrigger>
-              <TabsTrigger value="text">Text</TabsTrigger>
+              <TabsTrigger value="file">{t("assets.tabs.file")}</TabsTrigger>
+              <TabsTrigger value="text">{t("assets.tabs.text")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="file" className="mt-0">
@@ -501,7 +584,7 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                 name="file"
                 render={({ field: { onChange, value, ...rest } }) => (
                   <FormItem>
-                    <FormLabel>File</FormLabel>
+                    <FormLabel>{t("assets.fields.file")}</FormLabel>
                     <FormControl>
                       <div className="space-y-4">
                         {/* iOS-compatible file upload approach */}
@@ -522,9 +605,13 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                               <div className="flex items-center w-full">
                                 <Upload className="h-6 w-6 mr-2 text-muted-foreground" />
                                 <div className="text-left">
-                                  <p className="font-medium">Select a file to upload</p>
+                                  <p className="font-medium">
+                                    {t("assets.selectFile")}
+                                  </p>
                                   <p className="text-muted-foreground text-sm">
-                                    Files up to {formatBytes(MAX_FILE_SIZE)}
+                                    {t("assets.filesUpTo", {
+                                      size: formatBytes(MAX_FILE_SIZE),
+                                    })}
                                   </p>
                                 </div>
                               </div>
@@ -561,7 +648,7 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                                     form.trigger("file");
                                   }}
                                 >
-                                  Remove
+                                  {t("assets.messages.remove")}
                                 </Button>
                               </div>
                             );
@@ -582,10 +669,10 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                 name="content"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Content</FormLabel>
+                    <FormLabel>{t("assets.fields.content")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Enter your content here..."
+                        placeholder={t("assets.placeholders.content")}
                         className="min-h-[200px]"
                         {...field}
                       />
@@ -604,19 +691,16 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
               className="mr-2"
               onClick={onComplete}
             >
-              Cancel
+              {t("forms.buttons.cancel")}
             </Button>
-            <Button
-              type="submit"
-              disabled={upload.isPending}
-            >
+            <Button type="submit" disabled={upload.isPending}>
               {upload.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
+                  {t("assets.uploading")}
                 </>
               ) : (
-                "Upload Asset"
+                t("assets.uploadAsset")
               )}
             </Button>
           </div>
@@ -627,19 +711,25 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
       <Dialog open={showAddEventDialog} onOpenChange={setShowAddEventDialog}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add New Event</DialogTitle>
+            <DialogTitle>{t("modals.addEvent.title")}</DialogTitle>
           </DialogHeader>
 
           <Form {...newEventForm}>
-            <form onSubmit={newEventForm.handleSubmit(onSubmitNewEvent)} className="space-y-4">
+            <form
+              onSubmit={newEventForm.handleSubmit(onSubmitNewEvent)}
+              className="space-y-4"
+            >
               <FormField
                 control={newEventForm.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Event Name</FormLabel>
+                    <FormLabel>{t("events.fields.name")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Event name" {...field} />
+                      <Input
+                        placeholder={t("events.placeholders.name")}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -651,9 +741,12 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                 name="link"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Event URL</FormLabel>
+                    <FormLabel>{t("events.fields.website")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://example.com" {...field} />
+                      <Input
+                        placeholder={t("events.placeholders.link")}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -666,7 +759,7 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                   name="startDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Date</FormLabel>
+                      <FormLabel>{t("events.fields.startDate")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -683,7 +776,7 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                   name="endDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>End Date</FormLabel>
+                      <FormLabel>{t("events.fields.endDate")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -701,9 +794,12 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>{t("events.fields.location")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="City, Country" {...field} />
+                      <Input
+                        placeholder={t("events.placeholders.location")}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -716,14 +812,16 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Event Type</FormLabel>
+                      <FormLabel>{t("events.fields.type")}</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
+                            <SelectValue
+                              placeholder={t("events.placeholders.selectType")}
+                            />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -744,20 +842,25 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                      <FormLabel>{t("events.fields.priority")}</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
+                            <SelectValue
+                              placeholder={t(
+                                "events.placeholders.selectPriority"
+                              )}
+                            />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {eventPriorities.map((priority) => (
                             <SelectItem key={priority} value={priority}>
-                              {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                              {priority.charAt(0).toUpperCase() +
+                                priority.slice(1)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -774,9 +877,12 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                 render={() => (
                   <FormItem>
                     <div className="mb-2">
-                      <FormLabel>Goals</FormLabel>
+                      <FormLabel>{t("events.fields.goals")}</FormLabel>
                       <FormDescription>
-                        Select all that apply
+                        {t(
+                          "common.selectAllThatApply",
+                          "Select all that apply"
+                        )}
                       </FormDescription>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -792,7 +898,9 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                                   onCheckedChange={(checked) => {
                                     const updatedGoals = checked
                                       ? [...field.value, "speaking"]
-                                      : field.value?.filter((value) => value !== "speaking");
+                                      : field.value?.filter(
+                                          (value) => value !== "speaking"
+                                        );
                                     field.onChange(updatedGoals);
                                   }}
                                 />
@@ -816,7 +924,9 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                                   onCheckedChange={(checked) => {
                                     const updatedGoals = checked
                                       ? [...field.value, "sponsoring"]
-                                      : field.value?.filter((value) => value !== "sponsoring");
+                                      : field.value?.filter(
+                                          (value) => value !== "sponsoring"
+                                        );
                                     field.onChange(updatedGoals);
                                   }}
                                 />
@@ -840,7 +950,9 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                                   onCheckedChange={(checked) => {
                                     const updatedGoals = checked
                                       ? [...field.value, "attending"]
-                                      : field.value?.filter((value) => value !== "attending");
+                                      : field.value?.filter(
+                                          (value) => value !== "attending"
+                                        );
                                     field.onChange(updatedGoals);
                                   }}
                                 />
@@ -864,7 +976,9 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                                   onCheckedChange={(checked) => {
                                     const updatedGoals = checked
                                       ? [...field.value, "exhibiting"]
-                                      : field.value?.filter((value) => value !== "exhibiting");
+                                      : field.value?.filter(
+                                          (value) => value !== "exhibiting"
+                                        );
                                     field.onChange(updatedGoals);
                                   }}
                                 />
@@ -895,7 +1009,9 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                           type="date"
                           className="pl-10"
                           value={field.value || ""}
-                          onChange={(e) => field.onChange(e.target.value || null)}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
                         />
                       </div>
                     </FormControl>
@@ -909,10 +1025,13 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notes (Optional)</FormLabel>
+                    <FormLabel>
+                      {t("events.fields.notes")} (
+                      {t("common.optional", "Optional")})
+                    </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Additional notes about this event"
+                        placeholder={t("events.placeholders.notes")}
                         {...field}
                       />
                     </FormControl>
@@ -927,19 +1046,16 @@ export function AssetUploadForm({ onComplete }: AssetUploadFormProps) {
                   variant="outline"
                   onClick={() => setShowAddEventDialog(false)}
                 >
-                  Cancel
+                  {t("forms.buttons.cancel")}
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={createEvent.isPending}
-                >
+                <Button type="submit" disabled={createEvent.isPending}>
                   {createEvent.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Event...
+                      {t("common.creating", "Creating Event...")}
                     </>
                   ) : (
-                    "Create Event"
+                    t("events.addEvent")
                   )}
                 </Button>
               </DialogFooter>

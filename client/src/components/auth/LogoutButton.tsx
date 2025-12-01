@@ -22,12 +22,14 @@
  */
 
 import React from 'react';
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/auth-context';
 import { LogOut } from 'lucide-react';
 
 export function LogoutButton() {
+  const { t } = useTranslation(["common"]);
   const { toast } = useToast();
   const { logout } = useAuth();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -40,8 +42,8 @@ export function LogoutButton() {
     } catch (error) {
       console.error('Logout error:', error);
       toast({
-        title: "Logout Failed",
-        description: "There was a problem signing out. Please try again.",
+        title: t("common.logoutFailed", "Logout Failed"),
+        description: t("common.logoutFailedDescription", "There was a problem signing out. Please try again."),
         variant: "destructive",
       });
       setIsLoading(false);
@@ -49,15 +51,15 @@ export function LogoutButton() {
   };
 
   return (
-    <Button 
-      variant="ghost" 
-      onClick={handleLogout} 
+    <Button
+      variant="ghost"
+      onClick={handleLogout}
       disabled={isLoading}
       className="flex items-center gap-2"
       size="sm"
     >
       <LogOut className="h-4 w-4" />
-      {isLoading ? "Signing out..." : "Sign Out"}
+      {isLoading ? t("common.signingOut", "Signing out...") : t("common.signOut", "Sign Out")}
     </Button>
   );
 }

@@ -1,0 +1,81 @@
+{
+  "title": "Events",
+  "addEvent": "Add Event",
+  "editEvent": "Edit Event",
+  "deleteEvent": "Delete Event",
+  "importEvents": "Import Events",
+  "exportEvents": "Export Events",
+  "searchEvents": "Search events...",
+  "filterByType": "Filter by type",
+  "filterByPriority": "Filter by priority",
+  "allTypes": "All Types",
+  "allPriorities": "All Priorities",
+  "viewMode": {
+    "list": "List View",
+    "compact": "Compact View",
+    "calendar": "Calendar View",
+    "map": "Map View"
+  },
+  "fields": {
+    "name": "Event Name",
+    "link": "Event Link",
+    "website": "Event Website",
+    "url": "Event URL",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "location": "Location",
+    "priority": "Priority",
+    "type": "Event Type",
+    "goal": "Goals",
+    "goals": "Goals",
+    "cfpDeadline": "CFP Deadline",
+    "earlyBirdDeadline": "Early Bird Registration Deadline",
+    "status": "Status",
+    "source": "Source",
+    "notes": "Notes",
+    "description": "Description"
+  },
+  "placeholders": {
+    "name": "Enter event name",
+    "link": "https://example.com",
+    "selectDate": "Select date",
+    "location": "Enter location",
+    "selectType": "Select event type",
+    "selectPriority": "Select priority",
+    "selectStatus": "Select status",
+    "selectSource": "Select source",
+    "notes": "Enter notes"
+  },
+  "validation": {
+    "nameRequired": "Event name is required",
+    "linkRequired": "Event link is required",
+    "linkInvalid": "Must be a valid URL",
+    "locationRequired": "Location is required",
+    "startDateRequired": "Start date is required",
+    "endDateRequired": "End date is required",
+    "dateFormat": "Date must be in YYYY-MM-DD format",
+    "goalRequired": "Select at least one goal",
+    "atLeastOneGoal": "At least one goal is required"
+  },
+  "messages": {
+    "added": "Event Added",
+    "addedDescription": "The event has been added successfully.",
+    "updated": "Event Updated",
+    "updatedDescription": "The event has been updated successfully.",
+    "deleted": "Event Deleted",
+    "deletedDescription": "The event has been deleted successfully.",
+    "loadFailed": "Failed to load events",
+    "addFailed": "Failed to add event",
+    "updateFailed": "Failed to update event",
+    "deleteFailed": "Failed to delete event",
+    "deleteConfirm": "Are you sure you want to delete this event?",
+    "deleteWarning": "This action cannot be undone."
+  },
+  "sources": {
+    "manual": "Manual",
+    "csvImport": "CSV Import",
+    "apiImport": "API Import",
+    "suggested": "Suggested",
+    "externalSync": "External Sync"
+  }
+}

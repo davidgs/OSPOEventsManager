@@ -1,0 +1,35 @@
+{
+  "title": "Attendees",
+  "registerAttendance": "Register Attendance",
+  "fields": {
+    "event": "Event",
+    "name": "Full Name",
+    "email": "Email Address",
+    "role": "Role/Capacity",
+    "notes": "Additional Notes"
+  },
+  "placeholders": {
+    "selectEvent": "Select an event",
+    "name": "Enter your full name",
+    "email": "Enter your email address",
+    "selectRole": "Select your role",
+    "notes": "Any special requirements, dietary restrictions, etc..."
+  },
+  "validation": {
+    "eventRequired": "Please select an event",
+    "nameRequired": "Name is required"
+  },
+  "roles": {
+    "attendee": "Attendee",
+    "speaker": "Speaker",
+    "sponsor": "Sponsor",
+    "organizer": "Organizer",
+    "volunteer": "Volunteer",
+    "media": "Media"
+  },
+  "messages": {
+    "registered": "Attendance registered",
+    "registeredDescription": "Your attendance has been successfully registered.",
+    "registrationFailed": "Registration failed"
+  }
+}

@@ -24,7 +24,7 @@
 #
 
 
-# OSPO Events Manager - KIND Cluster Setup Script
+# Events Manager - KIND Cluster Setup Script
 # This script manages a local KIND (Kubernetes in Docker) cluster for development
 # Uses Podman as the container runtime
 
@@ -68,21 +68,21 @@ command_exists() {
 # Function to check prerequisites
 check_prerequisites() {
     print_info "Checking prerequisites..."
-    
+
     local missing_deps=()
-    
+
     if ! command_exists kind; then
         missing_deps+=("kind")
     fi
-    
+
     if ! command_exists kubectl; then
         missing_deps+=("kubectl")
     fi
-    
+
     if ! command_exists podman; then
         missing_deps+=("podman")
     fi
-    
+
     if [ ${#missing_deps[@]} -ne 0 ]; then
         print_error "Missing required dependencies: ${missing_deps[*]}"
         echo ""
@@ -97,14 +97,14 @@ check_prerequisites() {
         echo "  - Podman: https://podman.io/getting-started/installation"
         exit 1
     fi
-    
+
     print_success "All prerequisites are installed"
 }
 
 # Function to check if Podman machine is running
 check_podman_machine() {
     print_info "Checking Podman machine status..."
-    
+
     if ! podman machine list | grep -q "Currently running"; then
         print_warning "Podman machine is not running. Starting it now..."
         podman machine start || {
@@ -123,7 +123,7 @@ check_podman_machine() {
 # Function to create KIND cluster
 create_cluster() {
     print_info "Creating KIND cluster '${CLUSTER_NAME}'..."
-    
+
     # Check if cluster already exists
     if kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
         print_warning "Cluster '${CLUSTER_NAME}' already exists"
@@ -136,9 +136,25 @@ create_cluster() {
             return 0
         fi
     fi
-    
+
+    # Configure Podman to use only its own configuration (ignore Docker config entirely)
+    # Note: This project uses Podman exclusively for local development, so Docker config files are ignored
+    export REGISTRY_AUTH_FILE="${HOME}/.config/containers/auth.json"
+    export CONTAINERS_AUTH_FILE="${HOME}/.config/containers/auth.json"
+    # Explicitly unset Docker config to ensure Podman doesn't try to use Docker's credential helpers
+    unset DOCKER_CONFIG
+    # Create Podman auth directory if it doesn't exist
+    mkdir -p "${HOME}/.config/containers"
+
+    # Create a minimal Podman auth file if it doesn't exist (empty JSON object)
+    # This ensures Podman has its own auth file and won't try to use Docker's config
+    if [[ ! -f "${HOME}/.config/containers/auth.json" ]]; then
+        echo '{}' > "${HOME}/.config/containers/auth.json"
+    fi
+
     # Create KIND cluster with Podman provider
     # Note: We expose ports for services to be accessible from host
+    # Podman is configured above to use only its own auth file, ignoring Docker config entirely
     cat <<EOF | KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster --name "${CLUSTER_NAME}" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -162,14 +178,14 @@ nodes:
         hostPort: 9001
         protocol: TCP
 EOF
-    
+
     if [ $? -eq 0 ]; then
         print_success "KIND cluster created successfully"
     else
         print_error "Failed to create KIND cluster"
         exit 1
     fi
-    
+
     # Wait for cluster to be ready
     print_info "Waiting for cluster to be ready..."
     kubectl wait --for=condition=Ready nodes --all --timeout=120s
@@ -186,67 +202,67 @@ create_namespace() {
 # Function to load Keycloak realm configuration
 load_keycloak_config() {
     print_info "Loading Keycloak realm configuration..."
-    
+
     local realm_file="${PROJECT_ROOT}/keycloak-realm-export.json"
-    
+
     if [ ! -f "$realm_file" ]; then
         print_warning "Keycloak realm export file not found at: $realm_file"
         print_info "Keycloak will start without a preconfigured realm"
         print_info "You'll need to manually configure the realm after deployment"
         return 0
     fi
-    
+
     # Create ConfigMap from realm file
     kubectl create configmap keycloak-realm-config \
         --from-file=realm.json="$realm_file" \
         --namespace="${NAMESPACE}" \
         --dry-run=client -o yaml | kubectl apply -f -
-    
+
     print_success "Keycloak realm configuration loaded"
 }
 
 # Function to deploy services
 deploy_services() {
     print_info "Deploying services to KIND cluster..."
-    
+
     # Deploy in order: PostgreSQL -> Keycloak -> MinIO
     print_info "Deploying PostgreSQL..."
     kubectl apply -f "${SCRIPT_DIR}/postgres.yaml"
-    
+
     print_info "Waiting for PostgreSQL to be ready..."
     kubectl wait --for=condition=Ready pod -l app=postgres -n "${NAMESPACE}" --timeout=180s || {
         print_warning "PostgreSQL pod didn't become ready in time. Checking status..."
         kubectl get pods -n "${NAMESPACE}" -l app=postgres
         kubectl describe pod -n "${NAMESPACE}" -l app=postgres
     }
-    
+
     print_info "Deploying Keycloak..."
     kubectl apply -f "${SCRIPT_DIR}/keycloak.yaml"
-    
+
     print_info "Waiting for Keycloak to be ready (this may take a few minutes)..."
     kubectl wait --for=condition=Ready pod -l app=keycloak -n "${NAMESPACE}" --timeout=300s || {
         print_warning "Keycloak pod didn't become ready in time. Checking status..."
         kubectl get pods -n "${NAMESPACE}" -l app=keycloak
         kubectl describe pod -n "${NAMESPACE}" -l app=keycloak
     }
-    
+
     print_info "Deploying MinIO..."
     kubectl apply -f "${SCRIPT_DIR}/minio.yaml"
-    
+
     print_info "Waiting for MinIO to be ready..."
     kubectl wait --for=condition=Ready pod -l app=minio -n "${NAMESPACE}" --timeout=180s || {
         print_warning "MinIO pod didn't become ready in time. Checking status..."
         kubectl get pods -n "${NAMESPACE}" -l app=minio
         kubectl describe pod -n "${NAMESPACE}" -l app=minio
     }
-    
+
     print_success "All services deployed"
 }
 
 # Function to create NodePort services for external access
 create_nodeport_services() {
     print_info "Creating NodePort services for external access..."
-    
+
     cat <<EOF | kubectl apply -f -
 ---
 apiVersion: v1
@@ -307,7 +323,7 @@ spec:
       targetPort: 9001
       nodePort: 30901
 EOF
-    
+
     print_success "NodePort services created"
 }
 
@@ -315,23 +331,23 @@ EOF
 show_status() {
     print_info "Cluster Status:"
     echo ""
-    
+
     if ! kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
         print_warning "Cluster '${CLUSTER_NAME}' does not exist"
         return 0
     fi
-    
+
     print_info "Cluster: ${CLUSTER_NAME}"
     kubectl cluster-info --context "kind-${CLUSTER_NAME}" | head -n 1
-    
+
     echo ""
     print_info "Pods:"
     kubectl get pods -n "${NAMESPACE}" 2>/dev/null || print_warning "Namespace '${NAMESPACE}' not found"
-    
+
     echo ""
     print_info "Services:"
     kubectl get svc -n "${NAMESPACE}" 2>/dev/null || print_warning "Namespace '${NAMESPACE}' not found"
-    
+
     echo ""
     print_info "Service Access URLs:"
     echo "  PostgreSQL:     localhost:5432 (ospo_user/ospo_password)"
@@ -349,12 +365,12 @@ show_status() {
 # Function to delete cluster
 delete_cluster() {
     print_info "Deleting KIND cluster '${CLUSTER_NAME}'..."
-    
+
     if ! kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
         print_warning "Cluster '${CLUSTER_NAME}' does not exist"
         return 0
     fi
-    
+
     KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster --name "${CLUSTER_NAME}"
     print_success "Cluster deleted"
 }
@@ -362,7 +378,7 @@ delete_cluster() {
 # Function to start cluster (if stopped)
 start_cluster() {
     check_podman_machine
-    
+
     if ! kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
         print_warning "Cluster does not exist. Creating it..."
         create_cluster
@@ -373,7 +389,7 @@ start_cluster() {
     else
         print_success "Cluster '${CLUSTER_NAME}' exists"
     fi
-    
+
     show_status
 }
 
@@ -388,12 +404,12 @@ stop_cluster() {
 # Function to show logs
 show_logs() {
     local service="$1"
-    
+
     if [ -z "$service" ]; then
         print_error "Please specify a service: postgres, keycloak, or minio"
         exit 1
     fi
-    
+
     print_info "Showing logs for ${service}..."
     kubectl logs -n "${NAMESPACE}" -l "app=${service}" --tail=100 -f
 }
@@ -408,7 +424,7 @@ restart_services() {
 # Main script
 main() {
     local command="${1:-help}"
-    
+
     case "$command" in
         start)
             check_prerequisites
@@ -436,7 +452,7 @@ main() {
             restart_services
             ;;
         help|*)
-            echo "OSPO Events Manager - KIND Cluster Management"
+            echo "Events Manager - KIND Cluster Management"
             echo ""
             echo "Usage: $0 {start|stop|restart|delete|status|logs|restart-services|help}"
             echo ""

@@ -21,17 +21,17 @@
  * SOFTWARE.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import React from 'react';
-import LoginPage from '@/pages/login';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import React from "react";
+import LoginPage from "@/pages/login";
 
 // Mock dependencies
 const mockLogin = vi.fn();
 const mockSetLocation = vi.fn();
 const mockToast = vi.fn();
 
-vi.mock('@/contexts/auth-context', () => ({
+vi.mock("@/contexts/auth-context", () => ({
   useAuth: () => ({
     isAuthenticated: false,
     isLoading: false,
@@ -39,59 +39,69 @@ vi.mock('@/contexts/auth-context', () => ({
   }),
 }));
 
-vi.mock('wouter', () => ({
+vi.mock("wouter", () => ({
   useLocation: () => [null, mockSetLocation],
   useRouter: () => ({}),
 }));
 
-vi.mock('@/hooks/use-toast', () => ({
+vi.mock("@/hooks/use-toast", () => ({
   useToast: () => ({ toast: mockToast }),
 }));
 
-describe('LoginPage', () => {
+describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('Initial Render', () => {
-    it('should render page title', () => {
+  describe("Initial Render", () => {
+    it("should render page title", () => {
       render(<LoginPage />);
-      expect(screen.getByText('OSPO Events')).toBeInTheDocument();
+      expect(screen.getByText("Events")).toBeInTheDocument();
     });
 
-    it('should render description', () => {
+    it("should render description", () => {
       render(<LoginPage />);
       expect(
         screen.getByText(/Sign in to access your event management dashboard/)
       ).toBeInTheDocument();
     });
 
-    it('should render Keycloak information', () => {
+    it("should render Keycloak information", () => {
       render(<LoginPage />);
       expect(
-        screen.getByText(/This application uses Keycloak for secure authentication/)
+        screen.getByText(
+          /This application uses Keycloak for secure authentication/
+        )
       ).toBeInTheDocument();
     });
 
-    it('should render Sign in button', () => {
+    it("should render Sign in button", () => {
       render(<LoginPage />);
-      expect(screen.getByRole('button', { name: /sign in with keycloak/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /sign in with keycloak/i })
+      ).toBeInTheDocument();
     });
 
-    it('should render security features list', () => {
+    it("should render security features list", () => {
       render(<LoginPage />);
-      expect(screen.getByText(/Secure authentication with Keycloak/)).toBeInTheDocument();
-      expect(screen.getByText(/Two-factor authentication with FreeOTP/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Secure authentication with Keycloak/)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Two-factor authentication with FreeOTP/)
+      ).toBeInTheDocument();
       expect(screen.getByText(/Role-based access control/)).toBeInTheDocument();
     });
   });
 
-  describe('Login Button Interaction', () => {
-    it('should call login function when button is clicked', async () => {
+  describe("Login Button Interaction", () => {
+    it("should call login function when button is clicked", async () => {
       mockLogin.mockResolvedValueOnce(undefined);
 
       render(<LoginPage />);
-      const loginButton = screen.getByRole('button', { name: /sign in with keycloak/i });
+      const loginButton = screen.getByRole("button", {
+        name: /sign in with keycloak/i,
+      });
 
       fireEvent.click(loginButton);
 
@@ -100,13 +110,15 @@ describe('LoginPage', () => {
       });
     });
 
-    it('should disable button while logging in', async () => {
+    it("should disable button while logging in", async () => {
       mockLogin.mockImplementationOnce(
-        () => new Promise(resolve => setTimeout(resolve, 100))
+        () => new Promise((resolve) => setTimeout(resolve, 100))
       );
 
       render(<LoginPage />);
-      const loginButton = screen.getByRole('button', { name: /sign in with keycloak/i });
+      const loginButton = screen.getByRole("button", {
+        name: /sign in with keycloak/i,
+      });
 
       fireEvent.click(loginButton);
 
@@ -115,13 +127,15 @@ describe('LoginPage', () => {
       });
     });
 
-    it('should show loading state while logging in', async () => {
+    it("should show loading state while logging in", async () => {
       mockLogin.mockImplementationOnce(
-        () => new Promise(resolve => setTimeout(resolve, 100))
+        () => new Promise((resolve) => setTimeout(resolve, 100))
       );
 
       render(<LoginPage />);
-      const loginButton = screen.getByRole('button', { name: /sign in with keycloak/i });
+      const loginButton = screen.getByRole("button", {
+        name: /sign in with keycloak/i,
+      });
 
       fireEvent.click(loginButton);
 
@@ -130,11 +144,13 @@ describe('LoginPage', () => {
       });
     });
 
-    it('should show error message on login failure', async () => {
-      mockLogin.mockRejectedValueOnce(new Error('Login failed'));
+    it("should show error message on login failure", async () => {
+      mockLogin.mockRejectedValueOnce(new Error("Login failed"));
 
       render(<LoginPage />);
-      const loginButton = screen.getByRole('button', { name: /sign in with keycloak/i });
+      const loginButton = screen.getByRole("button", {
+        name: /sign in with keycloak/i,
+      });
 
       fireEvent.click(loginButton);
 
@@ -143,27 +159,29 @@ describe('LoginPage', () => {
       });
     });
 
-    it('should show toast notification on login failure', async () => {
-      mockLogin.mockRejectedValueOnce(new Error('Login failed'));
+    it("should show toast notification on login failure", async () => {
+      mockLogin.mockRejectedValueOnce(new Error("Login failed"));
 
       render(<LoginPage />);
-      const loginButton = screen.getByRole('button', { name: /sign in with keycloak/i });
+      const loginButton = screen.getByRole("button", {
+        name: /sign in with keycloak/i,
+      });
 
       fireEvent.click(loginButton);
 
       await waitFor(() => {
         expect(mockToast).toHaveBeenCalledWith({
-          variant: 'destructive',
-          title: 'Authentication failed',
-          description: 'There was a problem signing in with Keycloak.',
+          variant: "destructive",
+          title: "Authentication failed",
+          description: "There was a problem signing in with Keycloak.",
         });
       });
     });
   });
 
-  describe('Loading State', () => {
-    it('should show loading spinner when initializing', () => {
-      vi.doMock('@/contexts/auth-context', () => ({
+  describe("Loading State", () => {
+    it("should show loading spinner when initializing", () => {
+      vi.doMock("@/contexts/auth-context", () => ({
         useAuth: () => ({
           isAuthenticated: false,
           isLoading: true,
@@ -178,12 +196,11 @@ describe('LoginPage', () => {
     });
   });
 
-  describe('Already Authenticated', () => {
-    it('should redirect if already authenticated', () => {
+  describe("Already Authenticated", () => {
+    it("should redirect if already authenticated", () => {
       // This would require a more complex setup with React hooks
       // and is typically tested at integration level
       expect(true).toBe(true);
     });
   });
 });
-

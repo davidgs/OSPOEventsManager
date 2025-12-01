@@ -38,6 +38,24 @@ vi.mock('@/lib/keycloak', () => ({
   login: () => mockLogin(),
 }));
 
+// Mock react-i18next
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, params?: Record<string, any>) => {
+      const translations: Record<string, string> = {
+        'common.login': 'Log In',
+        'common.loginFailed': 'Login Failed',
+        'common.loginFailedDescription': 'There was a problem connecting to the authentication server.',
+        'common.connecting': 'Connecting...',
+      };
+      return translations[key] || key;
+    },
+    i18n: {
+      language: 'en',
+    },
+  }),
+}));
+
 describe('LoginButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -141,11 +159,13 @@ describe('LoginButton', () => {
       fireEvent.click(button);
 
       await waitFor(() => {
-        expect(mockToast).toHaveBeenCalledWith({
-          title: 'Login Failed',
-          description: 'There was a problem connecting to the authentication server.',
-          variant: 'destructive',
-        });
+        expect(mockToast).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: 'Login Failed',
+            description: 'There was a problem connecting to the authentication server.',
+            variant: 'destructive',
+          })
+        );
       });
     });
 
