@@ -371,7 +371,7 @@ export function SimpleFileUploadForm({ onComplete }: AssetUploadFormProps) {
                   >
                     <FormControl>
                       <SelectTrigger className="flex-1">
-                        <SelectValue placeholder={t("assets.placeholders.selectEvent")} ({t("common.optional")})" />
+                        <SelectValue placeholder={`${t("assets.placeholders.selectEvent")} (${t("common.optional")})`} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

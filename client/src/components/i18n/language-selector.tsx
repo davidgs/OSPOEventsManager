@@ -43,7 +43,7 @@ const languages = [
 
 type LanguageSelectorProps = {
   variant?: "select" | "button";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "lg" | "default";
   className?: string;
 };
 
@@ -64,7 +64,7 @@ export function LanguageSelector({
     return (
       <Button
         variant="ghost"
-        size={size}
+        size={size || "sm"}
         className={className}
         disabled={isLoading}
         title={`Current language: ${currentLanguage.nativeName}`}
@@ -77,7 +77,7 @@ export function LanguageSelector({
 
   return (
     <Select value={language} onValueChange={handleLanguageChange} disabled={isLoading}>
-      <SelectTrigger className={className} size={size === "sm" ? "sm" : "default"}>
+      <SelectTrigger className={className}>
         <div className="flex items-center gap-2">
           <Languages className="h-4 w-4" />
           <SelectValue>
