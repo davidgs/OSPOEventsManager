@@ -136,7 +136,7 @@ create_cluster() {
             return 0
         fi
     fi
-
+    
     # Configure Podman to use only its own configuration (ignore Docker config entirely)
     # Note: This project uses Podman exclusively for local development, so Docker config files are ignored
     export REGISTRY_AUTH_FILE="${HOME}/.config/containers/auth.json"
@@ -145,13 +145,13 @@ create_cluster() {
     unset DOCKER_CONFIG
     # Create Podman auth directory if it doesn't exist
     mkdir -p "${HOME}/.config/containers"
-
+    
     # Create a minimal Podman auth file if it doesn't exist (empty JSON object)
     # This ensures Podman has its own auth file and won't try to use Docker's config
     if [[ ! -f "${HOME}/.config/containers/auth.json" ]]; then
         echo '{}' > "${HOME}/.config/containers/auth.json"
     fi
-
+    
     # Create KIND cluster with Podman provider
     # Note: We expose ports for services to be accessible from host
     # Podman is configured above to use only its own auth file, ignoring Docker config entirely

@@ -363,7 +363,7 @@ fi
 # Function to setup KIND cluster
 setup_kind_cluster() {
     print_status "Creating KIND cluster '${CLUSTER_NAME}'..."
-
+    
     # Configure Podman to use only its own configuration (ignore Docker config entirely)
     # Note: This project uses Podman exclusively for local development, so Docker config files are ignored
     export REGISTRY_AUTH_FILE="${HOME}/.config/containers/auth.json"
