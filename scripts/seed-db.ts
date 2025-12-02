@@ -32,14 +32,14 @@ async function seedDatabase() {
     // Check if data already exists - don't clear if it does
     const existingUsers = await db.select().from(users).limit(1);
     const userCount = existingUsers.length;
-    
+
     if (userCount > 0) {
       console.log(`Found ${userCount} existing users, skipping seed operation to preserve data`);
       return;
     }
-    
+
     console.log("No existing data found, proceeding with database seeding...");
-    
+
     // Create demo user for Keycloak integration - note the required keycloakId field
     console.log("Creating demo user...");
     const [user] = await db.insert(users)
@@ -53,9 +53,9 @@ async function seedDatabase() {
         jobTitle: "Senior Developer Advocate"
       })
       .returning();
-    
+
     console.log(`Created user with ID: ${user.id}`);
-    
+
     // Create sample events
     console.log("Creating sample events...");
     const [event1] = await db.insert(events)
@@ -74,7 +74,7 @@ async function seedDatabase() {
         createdById: user.id
       })
       .returning();
-    
+
     const [event2] = await db.insert(events)
       .values({
         name: "Open Source Summit North America",
@@ -91,7 +91,7 @@ async function seedDatabase() {
         createdById: user.id
       })
       .returning();
-    
+
     const [event3] = await db.insert(events)
       .values({
         name: "DevOps Days Seattle",
@@ -108,7 +108,7 @@ async function seedDatabase() {
         createdById: user.id
       })
       .returning();
-    
+
     const [event4] = await db.insert(events)
       .values({
         name: "DockerCon 2023",
@@ -125,7 +125,7 @@ async function seedDatabase() {
         createdById: user.id
       })
       .returning();
-    
+
     const [event5] = await db.insert(events)
       .values({
         name: "JSConf EU",
@@ -141,9 +141,9 @@ async function seedDatabase() {
         createdById: user.id
       })
       .returning();
-    
+
     console.log("Created events with IDs:", event1.id, event2.id, event3.id, event4.id, event5.id);
-    
+
     // Add CFP submissions
     console.log("Creating CFP submissions...");
     await db.insert(cfpSubmissions)
@@ -199,7 +199,7 @@ async function seedDatabase() {
           notes: "Rejected due to similar accepted talks"
         }
       ]);
-    
+
     // Add Attendees
     console.log("Creating attendees...");
     await db.insert(attendees)
@@ -239,10 +239,10 @@ async function seedDatabase() {
           name: "Jordan Lee",
           email: "jordan@example.com",
           role: "CTO",
-          notes: "Interested in OSPO formation discussions"
+          notes: "Interested in formation discussions"
         }
       ]);
-    
+
     // Add Sponsorships
     console.log("Creating sponsorships...");
     await db.insert(sponsorships)
@@ -275,7 +275,7 @@ async function seedDatabase() {
           notes: "Booth size 10x10, 2 conference passes included"
         }
       ]);
-    
+
     console.log("✅ Database seeding completed successfully!");
   } catch (error) {
     console.error("❌ Error seeding database:", error);

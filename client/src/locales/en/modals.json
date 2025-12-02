@@ -1,0 +1,55 @@
+{
+  "addEvent": {
+    "title": "Add New Event",
+    "description": "Enter the details of the event you want to add to the system."
+  },
+  "editEvent": {
+    "title": "Edit Event",
+    "description": "Update the details of this event."
+  },
+  "deleteEvent": {
+    "title": "Are you sure you want to delete this event?",
+    "description": "This will permanently delete <strong>{{name}}</strong> and all associated data including CFP submissions, attendees, and sponsorships. This action cannot be undone.",
+    "warning": "This action cannot be undone."
+  },
+  "csvImport": {
+    "title": "Import Events from CSV",
+    "description": "Upload a CSV file to import multiple events at once.",
+    "selectFile": "Select CSV file",
+    "dragDrop": "Drag and drop a CSV file here, or click to select",
+    "mapping": "Column Mapping",
+    "preview": "Preview",
+    "import": "Import",
+    "importing": "Importing...",
+    "success": "Events imported successfully",
+    "failed": "Import failed"
+  },
+  "linkAsset": {
+    "title": "Link Existing Assets",
+    "description": "Select assets to link to this event. You can search by name, type, or description.",
+    "searchPlaceholder": "Search assets...",
+    "linked": "Assets Linked",
+    "linkedDescription": "Successfully linked {{count}} asset(s) to the event.",
+    "linkFailed": "Failed to link assets to event",
+    "noAssetsSelected": "No Assets Selected",
+    "noAssetsSelectedDescription": "Please select at least one asset to link to the event.",
+    "noAssetsFound": "No Assets Found",
+    "noMatch": "No assets match your search criteria",
+    "noUnlinkedAssets": "There are no unlinked assets available",
+    "uploadedBy": "Uploaded by {{name}}",
+    "selectedCount": "{{count}} asset(s) selected",
+    "linking": "Linking...",
+    "linkButton": "Link Assets"
+  },
+  "assetPreview": {
+    "title": "Asset Preview",
+    "updated": "Asset updated",
+    "updatedDescription": "The asset has been successfully updated.",
+    "updateFailed": "Failed to update asset: {{error}}",
+    "uploaded": "Uploaded",
+    "preview": "Preview",
+    "previewNotAvailable": "Preview not available for this file type",
+    "clickDownloadToView": "Click download to view the file"
+  }
+}
+

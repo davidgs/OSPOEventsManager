@@ -1,0 +1,41 @@
+{
+  "title": "CFP Submissions",
+  "submitCfp": "Submit CFP",
+  "submissionTitle": "Submit Call for Proposal",
+  "fields": {
+    "event": "Event",
+    "title": "Title",
+    "abstract": "Abstract",
+    "submitterName": "Submitter Name",
+    "status": "Status",
+    "submissionDate": "Submission Date",
+    "notes": "Notes"
+  },
+  "placeholders": {
+    "selectEvent": "Select an event",
+    "title": "Enter your presentation title",
+    "abstract": "Provide a detailed description of your presentation...",
+    "submitterName": "Enter your full name",
+    "selectStatus": "Select status",
+    "notes": "Any additional information or requirements..."
+  },
+  "validation": {
+    "eventRequired": "Please select an event",
+    "titleRequired": "Title is required",
+    "abstractRequired": "Abstract must be at least 10 characters",
+    "submitterNameRequired": "Submitter name is required"
+  },
+  "messages": {
+    "created": "CFP submission created",
+    "createdDescription": "Your call for proposal submission has been saved.",
+    "submissionFailed": "Submission failed",
+    "loadFailed": "Failed to load events"
+  },
+  "statuses": {
+    "draft": "Draft",
+    "submitted": "Submitted",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "withdrawn": "Withdrawn"
+  }
+}

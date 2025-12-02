@@ -1,6 +1,6 @@
 # Managing Events
 
-This guide covers everything you need to know about creating, editing, and managing events in OSPO Events Manager.
+This guide covers everything you need to know about creating, editing, and managing events in Events Manager.
 
 ## Event Lifecycle
 

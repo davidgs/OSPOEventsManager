@@ -1,6 +1,6 @@
-# Contributing to OSPO Events Manager
+# Contributing to Events Manager
 
-Thank you for your interest in contributing to the OSPO Events Manager! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to the Events Manager! This document provides guidelines and instructions for contributing to the project.
 
 ## Table of Contents
 
@@ -43,17 +43,30 @@ This project follows a [Code of Conduct](./CODE_OF_CONDUCT.md). By participating
    ```bash
    cp env.template .env
    # Edit .env with your configuration
+   # For local development: ./configure.sh --local
+   # For OpenShift: Configure OpenShift settings in .env
+   # For GKE: Configure GKE settings in .env
+   # For EKS: Configure EKS settings in .env
    ```
 
 4. **Set Up Database**
    ```bash
-   # Start PostgreSQL
+   # For local development with KIND:
+   ./configure.sh --local
+   ./deploy.sh --local --postgres
+   npm run db:push:local
+
+   # For other environments:
    # Update .env with database credentials
    npm run db:push
    ```
 
 5. **Run the Application**
    ```bash
+   # Local development (connects to KIND cluster services)
+   npm run dev:local
+
+   # Or standard development mode
    npm run dev
    ```
 
@@ -365,6 +378,7 @@ When adding features or making changes:
 3. **CHANGELOG**: Add entry for user-facing changes
 4. **API Docs**: Update if changing API endpoints
 5. **User Docs**: Update docs/ if changing user features
+6. **Deployment Docs**: Update deployment documentation for OpenShift/GKE/EKS/Local changes
 
 ## Getting Help
 
@@ -397,7 +411,7 @@ Contributors will be recognized in:
 
 ---
 
-**Thank you for contributing to OSPO Events Manager!** 🎉
+**Thank you for contributing to Events Manager!** 🎉
 
 If you have questions or need help, don't hesitate to ask in issues or discussions.
 

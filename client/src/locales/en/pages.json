@@ -1,0 +1,107 @@
+{
+  "home": {
+    "title": "Event Management System",
+    "subtitle": "Track and manage your open source program office events, submissions, and collaborations.",
+    "viewEvents": "View Events",
+    "signIn": "Sign In",
+    "features": {
+      "eventManagement": {
+        "title": "Event Management",
+        "description": "Track conferences, meetups, and workshops",
+        "details": "Manage all your events in one place with powerful filtering and calendar views."
+      },
+      "cfpTracking": {
+        "title": "CFP Tracking",
+        "description": "Submit and manage call for papers",
+        "details": "Keep track of all your CFP submissions, their statuses, and deadlines in one central location."
+      },
+      "attendeeManagement": {
+        "title": "Attendee Management",
+        "description": "Manage event participants",
+        "details": "Track attendees, speakers, and their roles in various events to facilitate better collaboration."
+      },
+      "sponsorshipManagement": {
+        "title": "Sponsorship Management",
+        "description": "Track sponsorships and budgets",
+        "details": "Manage event sponsorships, track budget allocations, and monitor sponsorship benefits."
+      }
+    },
+    "copyright": "© {{year}} Events. All rights reserved."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account settings and preferences",
+    "tabs": {
+      "profile": "Profile",
+      "notifications": "Notifications",
+      "security": "Security",
+      "preferences": "Preferences"
+    },
+    "profile": {
+      "title": "Profile Settings",
+      "description": "Manage your personal information and account settings"
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "description": "Configure how and when you receive notifications",
+      "emailNotifications": "Email Notifications",
+      "emailNotificationsDesc": "Receive notifications via email.",
+      "cfpDeadlineReminders": "CFP Deadline Reminders",
+      "cfpDeadlineRemindersDesc": "Receive a reminder 3 days before CFP deadlines.",
+      "cfpStatusUpdates": "CFP Status Updates",
+      "cfpStatusUpdatesDesc": "Receive notifications when your CFP status changes.",
+      "newCfpDigest": "New CFP Digest",
+      "newCfpDigestDesc": "Receive a weekly digest of new CFP opportunities.",
+      "eventReminders": "Event Reminders",
+      "eventRemindersDesc": "Receive reminders for upcoming events you're attending.",
+      "savePreferences": "Save Preferences"
+    },
+    "security": {
+      "title": "Security Settings",
+      "description": "Manage your account security and authentication",
+      "changePassword": "Change Password",
+      "changePasswordDesc": "Update your password to enhance your account security",
+      "twoFactorAuth": "Two-Factor Authentication",
+      "twoFactorAuthDesc": "Add an extra layer of security to your account",
+      "enable2FA": "Enable 2FA",
+      "connectedAccounts": "Connected Accounts",
+      "connectedAccountsDesc": "Manage third-party accounts linked to your profile",
+      "manage": "Manage",
+      "dangerZone": "Danger Zone",
+      "dangerZoneDesc": "Permanently delete your account and all your data",
+      "deleteAccount": "Delete Account"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "description": "Manage your application preferences",
+      "language": "Language",
+      "languageDesc": "Select your preferred language for the interface",
+      "theme": "Theme",
+      "themeDesc": "Choose your preferred color theme"
+    },
+    "success": {
+      "profileUpdated": "Profile Updated",
+      "profileUpdatedDesc": "Your profile information has been updated successfully.",
+      "headshotUploaded": "Headshot Uploaded",
+      "headshotUploadedDesc": "Your profile picture has been updated successfully.",
+      "headshotRemoved": "Headshot Removed",
+      "headshotRemovedDesc": "Your profile picture has been removed.",
+      "notificationSettingsUpdated": "Notification Settings Updated",
+      "notificationSettingsUpdatedDesc": "Your notification preferences have been saved.",
+      "preferencesUpdated": "Preferences Updated",
+      "preferencesUpdatedDesc": "Your preferences have been saved successfully."
+    },
+    "errors": {
+      "updateFailed": "Failed to update profile. Please try again.",
+      "uploadFailed": "Failed to upload headshot. Please try again.",
+      "removeFailed": "Failed to remove headshot. Please try again."
+    }
+  },
+  "footer": {
+    "appName": "Events Manager",
+    "sendFeedback": "Send Feedback",
+    "github": "GitHub",
+    "copyright": "© {{year}} Red Hat, Inc. Built with ❤️ for Open Source Program Office."
+  }
+}
+

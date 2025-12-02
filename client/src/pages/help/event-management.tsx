@@ -41,8 +41,8 @@ export default function EventManagementHelp() {
           Event Management
         </h1>
         <p className="text-muted-foreground text-lg">
-          Learn how to effectively manage your OSPO events, conferences,
-          meetups, and workshops.
+          Learn how to effectively manage your events, conferences, meetups, and
+          workshops.
         </p>
       </div>
 
@@ -53,9 +53,7 @@ export default function EventManagementHelp() {
               <Plus className="h-5 w-5" />
               Creating Events
             </CardTitle>
-            <CardDescription>
-              Add new events to your OSPO calendar
-            </CardDescription>
+            <CardDescription>Add new events to your calendar</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">

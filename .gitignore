@@ -106,3 +106,5 @@ secrets/
 *-backup.*
 *-old.*
 *-broken.*
+
+.vscode/

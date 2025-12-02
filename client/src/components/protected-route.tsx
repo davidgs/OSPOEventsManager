@@ -22,6 +22,7 @@
  */
 
 import React, { ReactNode, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/auth-context";
 import { Loader2 } from "lucide-react";
@@ -42,6 +43,7 @@ export function ProtectedRoute({
   children,
   requiredRoles = [],
 }: ProtectedRouteProps) {
+  const { t } = useTranslation(["common"]);
   console.log("[PROTECTED_ROUTE] Component render started");
   const { authenticated, initialized, user } = useAuth();
   const [, setLocation] = useLocation();
@@ -109,8 +111,10 @@ export function ProtectedRoute({
       <div className="flex min-h-screen items-center justify-center">
         <Card className="w-[350px] shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">OSPO Events</CardTitle>
-            <CardDescription>Verifying authentication...</CardDescription>
+            <CardTitle className="text-2xl">{t("common.appName")}</CardTitle>
+            <CardDescription>
+              {t("common.verifyingAuth", "Verifying authentication...")}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center p-6">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />

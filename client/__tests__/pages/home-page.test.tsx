@@ -32,6 +32,37 @@ vi.mock('@/contexts/auth-context', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+// Mock react-i18next
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, params?: Record<string, any>) => {
+      const translations: Record<string, string> = {
+        'pages.home.title': 'Event Management System',
+        'pages.home.subtitle': 'Track and manage your open source program office events, submissions, and collaborations.',
+        'pages.home.signIn': 'Sign In',
+        'pages.home.viewEvents': 'View Events',
+        'pages.home.features.eventManagement.title': 'Event Management',
+        'pages.home.features.eventManagement.description': 'Track conferences, meetups, and workshops',
+        'pages.home.features.cfpTracking.title': 'CFP Tracking',
+        'pages.home.features.cfpTracking.description': 'Submit and manage call for papers',
+        'pages.home.features.attendeeManagement.title': 'Attendee Management',
+        'pages.home.features.attendeeManagement.description': 'Manage event participants',
+        'pages.home.features.sponsorshipManagement.title': 'Sponsorship Management',
+        'pages.home.features.sponsorshipManagement.description': 'Track sponsorships and budgets',
+        'common.learnMore': 'Learn More',
+        'pages.home.copyright': `© ${params?.year || new Date().getFullYear()} Events. All rights reserved.`,
+      };
+      return translations[key] || key;
+    },
+  }),
+}));
+
+// Mock I18nProvider
+vi.mock('@/components/i18n/i18n-provider', () => ({
+  I18nProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useI18n: () => ({ language: 'en', setLanguage: vi.fn(), isLoading: false }),
+}));
+
 // Mock wouter Link
 vi.mock('wouter', () => ({
   Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -53,7 +84,7 @@ describe('HomePage', () => {
       });
 
       render(<HomePage />);
-      expect(screen.getByText('OSPO Event Management System')).toBeInTheDocument();
+      expect(screen.getByText('Event Management System')).toBeInTheDocument();
     });
 
     it('should render the description', () => {
@@ -179,7 +210,7 @@ describe('HomePage', () => {
 
       render(<HomePage />);
       const currentYear = new Date().getFullYear();
-      expect(screen.getByText(new RegExp(`© ${currentYear} OSPO Events`))).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(`© ${currentYear} Events`))).toBeInTheDocument();
     });
   });
 

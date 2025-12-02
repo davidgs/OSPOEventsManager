@@ -24,7 +24,7 @@
 #
 
 
-# OSPO Events Manager - Production-Ready Deployment Script
+# Events Manager - Production-Ready Deployment Script
 # Supports both dev and prod environments with .env configuration
 # Usage: ./deploy.sh --dev OR ./deploy.sh --prod
 
@@ -60,12 +60,14 @@ print_info() {
 
 # Function to show usage
 show_usage() {
-    echo "Usage: $0 [--dev|--prod|--local] [options]"
+    echo "Usage: $0 [--dev|--prod|--local|--gke|--eks] [options]"
     echo ""
     echo "Options:"
-    echo "  --dev          Deploy to development environment"
-    echo "  --prod         Deploy to production environment"
+    echo "  --dev          Deploy to development environment (OpenShift)"
+    echo "  --prod         Deploy to production environment (OpenShift)"
     echo "  --local        Deploy to local KIND cluster"
+    echo "  --gke          Deploy to Google Kubernetes Engine (GKE)"
+    echo "  --eks          Deploy to Amazon Elastic Kubernetes Service (EKS)"
     echo "  --help         Show this help message"
     echo "  --app          Deploy the application"
     echo "  --postgres     Deploy the postgres pod"
@@ -83,15 +85,21 @@ show_usage() {
     echo "Requirements:"
     echo "  - For --dev/--prod: .env file must exist, OpenShift CLI (oc) installed"
     echo "  - For --local: .env.local file must exist, kubectl, kind, and podman installed"
+    echo "  - For --gke: .env file must exist, gcloud CLI and kubectl installed"
+    echo "  - For --eks: .env file must exist, aws CLI and kubectl installed"
     echo ""
     echo "Example:"
     echo "  $0 --dev"
     echo "  $0 --prod"
     echo "  $0 --local"
+    echo "  $0 --gke"
+    echo "  $0 --eks"
     echo "  $0 --delete-local"
     echo "  $0 --dev --app --postgres"
     echo "  $0 --local --postgres --keycloak --minio"
     echo "  $0 --prod --app --postgres --keycloak"
+    echo "  $0 --gke --app --postgres --keycloak"
+    echo "  $0 --eks --app --postgres --keycloak"
 }
 
 # Parse command line arguments
@@ -121,6 +129,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --local)
             ENVIRONMENT="local"
+            shift
+            ;;
+        --gke)
+            ENVIRONMENT="gke"
+            shift
+            ;;
+        --eks)
+            ENVIRONMENT="eks"
             shift
             ;;
         --help)
@@ -194,7 +210,7 @@ done
 
 # Validate arguments (skip for operations that don't need environment)
 if [[ "$DELETE" != "true" && "$DELETE_LOCAL" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" && -z "$ENVIRONMENT" ]]; then
-    print_error "🚨 Environment not specified. Use --dev, --prod, or --local"
+    print_error "🚨 Environment not specified. Use --dev, --prod, --local, --gke, or --eks"
     show_usage
     exit 1
 fi
@@ -207,6 +223,7 @@ if [[ "$RESTORE" == "true" && -z "$RESTORE_PATH" ]]; then
 fi
 
 # Skip environment loading for operations that don't need it
+# Note: BACKUP and RESTORE need environment variables, so we load them
 if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" ]]; then
     # Check for appropriate .env file based on environment
     if [[ "$ENVIRONMENT" == "local" ]]; then
@@ -235,9 +252,31 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
     set -a  # automatically export all variables
     source "$ENV_FILE"
     set +a  # turn off automatic export
+elif [[ "$BACKUP" == "true" || "$RESTORE" == "true" ]]; then
+    # Backup and restore operations need environment variables
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+        if [[ ! -f .env.local ]]; then
+            print_error "🚨 .env.local file not found!"
+            exit 1
+        fi
+        ENV_FILE=".env.local"
+    else
+        if [[ ! -f .env ]]; then
+            print_error "🚨 .env file not found!"
+            exit 1
+        fi
+        ENV_FILE=".env"
+    fi
+
+    # Load environment variables
+    print_status "Loading configuration from $ENV_FILE file..."
+    set -a  # automatically export all variables
+    source "$ENV_FILE"
+    set +a  # turn off automatic export
 fi
 
 # Set environment-specific variables (skip for standalone operations)
+# Note: BACKUP and RESTORE need NAMESPACE and other env-specific vars
 if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" ]]; then
     if [[ "$ENVIRONMENT" == "local" ]]; then
         export NAMESPACE="ospo-local"
@@ -246,18 +285,51 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
         export VITE_KEYCLOAK_URL="http://localhost:8080/auth"
         export CLUSTER_NAME="ospo-local"
         export CLI_CMD="kubectl"
+        export PLATFORM="kubernetes"
+    elif [[ "$ENVIRONMENT" == "gke" ]]; then
+        export NAMESPACE="${GKE_NAMESPACE:-ospo-events}"
+        export APP_URL="${GKE_APP_URL}"
+        export KEYCLOAK_URL="${GKE_KEYCLOAK_URL}"
+        export VITE_KEYCLOAK_URL="${GKE_KEYCLOAK_URL}"
+        export CLI_CMD="kubectl"
+        export PLATFORM="gke"
+        # Set image registry defaults if not provided
+        export IMAGE_REGISTRY="${IMAGE_REGISTRY:-gcr.io/${GKE_PROJECT_ID}}"
+        export IMAGE_NAME="${IMAGE_NAME:-ospo-events-app}"
+        export IMAGE_TAG="${IMAGE_TAG:-latest}"
+    elif [[ "$ENVIRONMENT" == "eks" ]]; then
+        export NAMESPACE="${EKS_NAMESPACE:-ospo-events}"
+        export APP_URL="${EKS_APP_URL}"
+        export KEYCLOAK_URL="${EKS_KEYCLOAK_URL}"
+        export VITE_KEYCLOAK_URL="${EKS_KEYCLOAK_URL}"
+        export CLI_CMD="kubectl"
+        export PLATFORM="eks"
+        # Set image registry defaults if not provided
+        export IMAGE_REGISTRY="${IMAGE_REGISTRY:-${AWS_ACCOUNT_ID}.dkr.ecr.${EKS_REGION}.amazonaws.com}"
+        export IMAGE_NAME="${IMAGE_NAME:-ospo-events-app}"
+        export IMAGE_TAG="${IMAGE_TAG:-latest}"
     elif [[ "$ENVIRONMENT" == "dev" ]]; then
         export NAMESPACE="$DEV_NAMESPACE"
         export APP_URL="$DEV_APP_URL"
         export KEYCLOAK_URL="$DEV_KEYCLOAK_URL"
         export VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_DEV"
         export CLI_CMD="oc"
+        export PLATFORM="openshift"
+        # OpenShift uses internal registry
+        export IMAGE_REGISTRY="image-registry.openshift-image-registry.svc:5000/${DEV_NAMESPACE}"
+        export IMAGE_NAME="ospo-events-app"
+        export IMAGE_TAG="latest"
     else
         export NAMESPACE="$PROD_NAMESPACE"
         export APP_URL="$PROD_APP_URL"
         export KEYCLOAK_URL="$PROD_KEYCLOAK_URL"
         export VITE_KEYCLOAK_URL="$VITE_KEYCLOAK_URL_PROD"
         export CLI_CMD="oc"
+        export PLATFORM="openshift"
+        # OpenShift uses internal registry
+        export IMAGE_REGISTRY="image-registry.openshift-image-registry.svc:5000/${PROD_NAMESPACE}"
+        export IMAGE_NAME="ospo-events-app"
+        export IMAGE_TAG="latest"
     fi
 
     # Export application configuration variables
@@ -267,6 +339,21 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
     print_status "Namespace: $NAMESPACE"
     print_status "App URL: $APP_URL"
     print_status "Keycloak URL: $KEYCLOAK_URL"
+elif [[ "$BACKUP" == "true" || "$RESTORE" == "true" ]]; then
+    # Set environment-specific variables for backup/restore operations
+    if [[ "$ENVIRONMENT" == "local" ]]; then
+        export NAMESPACE="ospo-local"
+        export CLI_CMD="kubectl"
+    elif [[ "$ENVIRONMENT" == "dev" ]]; then
+        export NAMESPACE="$DEV_NAMESPACE"
+        export CLI_CMD="oc"
+    else
+        export NAMESPACE="$PROD_NAMESPACE"
+        export CLI_CMD="oc"
+    fi
+
+    print_success "Configuration loaded for $ENVIRONMENT environment"
+    print_status "Namespace: $NAMESPACE"
 fi
 
 # =============================================================================
@@ -285,13 +372,13 @@ setup_kind_cluster() {
     unset DOCKER_CONFIG
     # Create Podman auth directory if it doesn't exist
     mkdir -p "${HOME}/.config/containers"
-    
+
     # Create a minimal Podman auth file if it doesn't exist (empty JSON object)
     # This ensures Podman has its own auth file and won't try to use Docker's config
     if [[ ! -f "${HOME}/.config/containers/auth.json" ]]; then
         echo '{}' > "${HOME}/.config/containers/auth.json"
     fi
-    
+
     # Create KIND cluster with Podman provider
     # Note: Podman is configured above to use only its own auth file, ignoring Docker config entirely
     cat <<EOF | KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster --name "${CLUSTER_NAME}" --config=-
@@ -317,24 +404,24 @@ nodes:
         hostPort: 9001
         protocol: TCP
 EOF
-    
+
     if [ $? -eq 0 ]; then
         print_success "KIND cluster created successfully"
     else
         print_error "Failed to create KIND cluster"
         exit 1
     fi
-    
+
     # Wait for cluster to be ready
     print_status "Waiting for cluster to be ready..."
     kubectl wait --for=condition=Ready nodes --all --timeout=120s
     print_success "Cluster is ready"
-    
+
     # Create namespace
     print_status "Creating namespace '${NAMESPACE}'..."
     kubectl apply -f kind/namespace.yaml
     print_success "Namespace created"
-    
+
     # Create NodePort services for external access
     create_nodeport_services_local
 }
@@ -342,7 +429,7 @@ EOF
 # Function to create NodePort services for local KIND cluster
 create_nodeport_services_local() {
     print_status "Creating NodePort services for external access..."
-    
+
     cat <<EOF | kubectl apply -f -
 ---
 apiVersion: v1
@@ -403,38 +490,38 @@ spec:
       targetPort: 9001
       nodePort: 30901
 EOF
-    
+
     print_success "NodePort services created"
 }
 
 # Function to deploy PostgreSQL to local KIND cluster
 deploy_postgres_local() {
     print_status "📦 Deploying PostgreSQL to local KIND cluster..."
-    
+
     if [[ ! -f "kind/postgres.yaml" ]]; then
         print_error "PostgreSQL deployment file not found: kind/postgres.yaml"
         exit 1
     fi
-    
+
     kubectl apply -f kind/postgres.yaml
-    
+
     print_status "Waiting for PostgreSQL to be ready..."
     kubectl wait --for=condition=Ready pod -l app=postgres -n "${NAMESPACE}" --timeout=180s || {
         print_warning "PostgreSQL pod didn't become ready in time. Checking status..."
         kubectl get pods -n "${NAMESPACE}" -l app=postgres
         kubectl describe pod -n "${NAMESPACE}" -l app=postgres
     }
-    
+
     print_success "PostgreSQL deployed successfully"
 }
 
 # Function to deploy Keycloak to local KIND cluster
 deploy_keycloak_local() {
     print_status "📦 Deploying Keycloak to local KIND cluster..."
-    
+
     # Load Keycloak realm configuration
     local realm_file="keycloak-realm-export.json"
-    
+
     if [ -f "$realm_file" ]; then
         print_status "Loading Keycloak realm configuration..."
         kubectl create configmap keycloak-realm-config \
@@ -450,50 +537,51 @@ deploy_keycloak_local() {
             --namespace="${NAMESPACE}" \
             --dry-run=client -o yaml | kubectl apply -f -
     fi
-    
+
     if [[ ! -f "kind/keycloak.yaml" ]]; then
         print_error "Keycloak deployment file not found: kind/keycloak.yaml"
         exit 1
     fi
-    
+
     kubectl apply -f kind/keycloak.yaml
-    
+
     print_status "Waiting for Keycloak to be ready (this may take a few minutes)..."
     kubectl wait --for=condition=Ready pod -l app=keycloak -n "${NAMESPACE}" --timeout=300s || {
         print_warning "Keycloak pod didn't become ready in time. Checking status..."
         kubectl get pods -n "${NAMESPACE}" -l app=keycloak
         kubectl describe pod -n "${NAMESPACE}" -l app=keycloak
     }
-    
+
     print_success "Keycloak deployed successfully"
 }
 
 # Function to deploy MinIO to local KIND cluster
 deploy_minio_local() {
     print_status "📦 Deploying MinIO to local KIND cluster..."
-    
+
     if [[ ! -f "kind/minio.yaml" ]]; then
         print_error "MinIO deployment file not found: kind/minio.yaml"
         exit 1
     fi
-    
+
     kubectl apply -f kind/minio.yaml
-    
+
     print_status "Waiting for MinIO to be ready..."
     kubectl wait --for=condition=Ready pod -l app=minio -n "${NAMESPACE}" --timeout=180s || {
         print_warning "MinIO pod didn't become ready in time. Checking status..."
         kubectl get pods -n "${NAMESPACE}" -l app=minio
         kubectl describe pod -n "${NAMESPACE}" -l app=minio
     }
-    
+
     print_success "MinIO deployed successfully"
 }
 
 # Check CLI tool and connection based on environment (skip for standalone operations)
+# Note: BACKUP and RESTORE need CLI connection for OpenShift operations
 if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" && "$RESTORE" != "true" && "$DESTROY" != "true" ]]; then
     if [[ "$ENVIRONMENT" == "local" ]]; then
         print_status "Checking local Kubernetes (KIND) prerequisites..."
-        
+
         # Check for required tools
         if ! command -v kubectl &>/dev/null; then
             print_error "kubectl is required but not installed!"
@@ -501,21 +589,21 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
             echo "  brew install kubectl"
             exit 1
         fi
-        
+
         if ! command -v kind &>/dev/null; then
             print_error "kind is required but not installed!"
             echo "Installation instructions:"
             echo "  brew install kind"
             exit 1
         fi
-        
+
         if ! command -v podman &>/dev/null; then
             print_error "podman is required but not installed!"
             echo "Installation instructions:"
             echo "  brew install podman"
             exit 1
         fi
-        
+
         # Check if Podman machine is running
         if ! podman machine list | grep -q "Currently running"; then
             print_warning "Podman machine is not running. Starting it now..."
@@ -527,7 +615,7 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
             print_success "Podman machine started"
             sleep 5  # Give Podman a moment to stabilize
         fi
-        
+
         # Check if KIND cluster exists
         if ! kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
             print_warning "KIND cluster '${CLUSTER_NAME}' does not exist"
@@ -536,13 +624,75 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
         else
             print_success "KIND cluster '${CLUSTER_NAME}' exists"
         fi
-        
+
         # Switch context to KIND cluster
         kubectl config use-context "kind-${CLUSTER_NAME}" &>/dev/null || {
             print_error "Failed to switch to KIND cluster context"
             exit 1
         }
-        
+
+    elif [[ "$ENVIRONMENT" == "gke" ]]; then
+        # GKE connection check
+        print_status "Checking GKE connection..."
+
+        if ! command -v gcloud &>/dev/null; then
+            print_error "gcloud CLI is required but not installed!"
+            echo "Installation instructions:"
+            echo "  https://cloud.google.com/sdk/docs/install"
+            exit 1
+        fi
+
+        if ! command -v kubectl &>/dev/null; then
+            print_error "kubectl is required but not installed!"
+            exit 1
+        fi
+
+        # Authenticate and get cluster credentials
+        print_status "Authenticating to GKE cluster..."
+        gcloud container clusters get-credentials "${GKE_CLUSTER_NAME}" \
+            --region "${GKE_REGION}" \
+            --project "${GKE_PROJECT_ID}" || {
+            print_error "Failed to get GKE cluster credentials"
+            exit 1
+        }
+
+        # Create namespace if it doesn't exist
+        kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+
+        # Set context to namespace
+        kubectl config set-context --current --namespace="${NAMESPACE}"
+
+    elif [[ "$ENVIRONMENT" == "eks" ]]; then
+        # EKS connection check
+        print_status "Checking EKS connection..."
+
+        if ! command -v aws &>/dev/null; then
+            print_error "AWS CLI is required but not installed!"
+            echo "Installation instructions:"
+            echo "  https://aws.amazon.com/cli/"
+            exit 1
+        fi
+
+        if ! command -v kubectl &>/dev/null; then
+            print_error "kubectl is required but not installed!"
+            exit 1
+        fi
+
+        # Authenticate and get cluster credentials
+        print_status "Authenticating to EKS cluster..."
+        aws eks update-kubeconfig \
+            --name "${EKS_CLUSTER_NAME}" \
+            --region "${EKS_REGION}" || {
+            print_error "Failed to get EKS cluster credentials"
+            exit 1
+        }
+
+        # Create namespace if it doesn't exist
+        kubectl create namespace "${NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+
+        # Set context to namespace
+        kubectl config set-context --current --namespace="${NAMESPACE}"
+
     else
         # OpenShift connection check
         print_status "Checking OpenShift connection..."
@@ -563,8 +713,29 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
         }
     fi
 
-    print_success "🚀 Starting OSPO Events deployment to $ENVIRONMENT environment"
+    print_success "🚀 Starting Events deployment to $ENVIRONMENT environment"
     echo ""
+elif [[ "$BACKUP" == "true" || "$RESTORE" == "true" ]]; then
+    # For backup/restore operations, we need CLI connection for OpenShift
+    if [[ "$ENVIRONMENT" != "local" ]]; then
+        # OpenShift connection check
+        print_status "Checking OpenShift connection..."
+        if ! oc whoami &>/dev/null; then
+            print_error "Not logged into OpenShift!"
+            echo "Please login first:"
+            echo "  oc login --token=\$OPENSHIFT_TOKEN --server=\$OPENSHIFT_SERVER"
+            exit 1
+        fi
+
+        # Switch to correct namespace
+        print_status "Switching to namespace: $NAMESPACE"
+        oc project "$NAMESPACE" || {
+            print_error "Failed to switch to namespace $NAMESPACE"
+            print_warning "Make sure the namespace exists or create it with:"
+            echo "  oc new-project $NAMESPACE"
+            exit 1
+        }
+    fi
 fi
 
 # =============================================================================
@@ -686,22 +857,22 @@ deploy_postgres() {
     print_status "📦 Deploying PostgreSQL..."
 
     # Check if PostgreSQL deployment file exists
-    if [[ ! -f "k8s/postgres-deployment.yaml" ]]; then
-        print_error "PostgreSQL deployment file not found: k8s/postgres-deployment.yaml"
+    if [[ ! -f "k8s/common/postgres-deployment.yaml" ]]; then
+        print_error "PostgreSQL deployment file not found: k8s/common/postgres-deployment.yaml"
         exit 1
     fi
 
     # Apply PostgreSQL deployment
-    envsubst < k8s/postgres-deployment.yaml | oc apply -f -
+    envsubst < k8s/common/postgres-deployment.yaml | $CLI_CMD apply -f - -n "${NAMESPACE}"
 
     wait_for_deployment postgres
 
     print_status "📦 Initializing Keycloak database..."
     sleep 5  # Give PostgreSQL a moment to be fully ready
 
-    # Create Keycloak database and user
-    oc exec deployment/postgres -- psql -U ${POSTGRES_USER} -d postgres -c "CREATE USER ${KEYCLOAK_DB_USER} WITH PASSWORD '${KEYCLOAK_DB_PASSWORD}';" 2>/dev/null || true
-    oc exec deployment/postgres -- psql -U ${POSTGRES_USER} -d postgres -c "CREATE DATABASE ${KEYCLOAK_DB_NAME} OWNER ${KEYCLOAK_DB_USER};" 2>/dev/null || true
+    # Create Keycloak database and user (platform-agnostic)
+    $CLI_CMD exec deployment/postgres -n "${NAMESPACE}" -- psql -U ${POSTGRES_USER} -d postgres -c "CREATE USER ${KEYCLOAK_DB_USER} WITH PASSWORD '${KEYCLOAK_DB_PASSWORD}';" 2>/dev/null || true
+    $CLI_CMD exec deployment/postgres -n "${NAMESPACE}" -- psql -U ${POSTGRES_USER} -d postgres -c "CREATE DATABASE ${KEYCLOAK_DB_NAME} OWNER ${KEYCLOAK_DB_USER};" 2>/dev/null || true
 
     print_success "PostgreSQL and Keycloak database initialized"
 }
@@ -711,13 +882,13 @@ deploy_minio() {
     print_status "📦 Deploying Minio..."
 
     # Check if MinIO deployment file exists
-    if [[ ! -f "k8s/minio-deployment.yaml" ]]; then
-        print_error "MinIO deployment file not found: k8s/minio-deployment.yaml"
+    if [[ ! -f "k8s/common/minio-deployment.yaml" ]]; then
+        print_error "MinIO deployment file not found: k8s/common/minio-deployment.yaml"
         exit 1
     fi
 
     # Apply MinIO deployment
-    envsubst < k8s/minio-deployment.yaml | oc apply -f -
+    envsubst < k8s/common/minio-deployment.yaml | $CLI_CMD apply -f - -n "${NAMESPACE}"
 
     wait_for_deployment minio
 }
@@ -731,7 +902,7 @@ create_keycloak_realm_config() {
 {
   "id": "ospo-events",
   "realm": "ospo-events",
-  "displayName": "OSPO Events",
+  "displayName": "Events",
   "enabled": true,
   "sslRequired": "external",
   "registrationAllowed": true,
@@ -744,7 +915,7 @@ create_keycloak_realm_config() {
     {
       "id": "ospo-events-app",
       "clientId": "ospo-events-app",
-      "name": "OSPO Events Application",
+      "name": "Events Application",
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
@@ -779,7 +950,12 @@ create_keycloak_realm_config() {
 }
 EOF
 
-    oc create configmap keycloak-realm-config --from-file=realm.json=/tmp/keycloak-realm.json --dry-run=client -o yaml | oc apply -f -
+    # Create ConfigMap (platform-agnostic)
+    if [[ "$PLATFORM" == "openshift" ]]; then
+        oc create configmap keycloak-realm-config --from-file=realm.json=/tmp/keycloak-realm.json --dry-run=client -o yaml | oc apply -f -
+    else
+        kubectl create configmap keycloak-realm-config --from-file=realm.json=/tmp/keycloak-realm.json --dry-run=client -o yaml | kubectl apply -f - -n "${NAMESPACE}"
+    fi
     rm -f /tmp/keycloak-realm.json
 }
 
@@ -804,29 +980,140 @@ deploy_keycloak() {
     local keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||' | sed 's|/.*||')
 
     # Check if Keycloak deployment file exists
-    if [[ ! -f "k8s/keycloak-deployment.yaml" ]]; then
-        print_error "Keycloak deployment file not found: k8s/keycloak-deployment.yaml"
+    if [[ ! -f "k8s/common/keycloak-deployment.yaml" ]]; then
+        print_error "Keycloak deployment file not found: k8s/common/keycloak-deployment.yaml"
         exit 1
     fi
 
     # Apply Keycloak deployment with environment variable substitution
     keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||' | sed 's|/.*||')
     export keycloak_hostname
-    envsubst < k8s/keycloak-deployment.yaml | oc apply -f -
+    envsubst < k8s/common/keycloak-deployment.yaml | $CLI_CMD apply -f - -n "${NAMESPACE}"
 
     wait_for_deployment keycloak 600  # Keycloak takes longer to start
 }
 
+# Function to build and push Docker image to external registry
+build_and_push_image() {
+    local current_version=$1
+    local image_tag="${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+    local versioned_tag="${IMAGE_REGISTRY}/${IMAGE_NAME}:${current_version}"
+
+    print_status "🔨 Building Docker image..."
+
+    # Build the image
+    docker build \
+        --build-arg VITE_KEYCLOAK_URL="${VITE_KEYCLOAK_URL}" \
+        --build-arg VERSION="${current_version}" \
+        -t "${image_tag}" \
+        -t "${versioned_tag}" \
+        .
+
+    if [ $? -ne 0 ]; then
+        print_error "Failed to build Docker image"
+        exit 1
+    fi
+
+    print_success "✅ Docker image built successfully"
+
+    # Authenticate to registry based on platform
+    if [[ "$ENVIRONMENT" == "gke" ]]; then
+        print_status "🔐 Authenticating to GCR..."
+        gcloud auth configure-docker --quiet || {
+            print_error "Failed to authenticate to GCR"
+            exit 1
+        }
+    elif [[ "$ENVIRONMENT" == "eks" ]]; then
+        print_status "🔐 Authenticating to ECR..."
+        aws ecr get-login-password --region "${EKS_REGION}" | \
+            docker login --username AWS --password-stdin "${IMAGE_REGISTRY}" || {
+            print_error "Failed to authenticate to ECR"
+            exit 1
+        }
+    else
+        # Docker Hub authentication
+        if [[ -n "${DOCKERHUB_USERNAME:-}" && -n "${DOCKERHUB_TOKEN:-}" ]]; then
+            print_status "🔐 Authenticating to Docker Hub..."
+            echo "${DOCKERHUB_TOKEN}" | docker login --username "${DOCKERHUB_USERNAME}" --password-stdin || {
+                print_error "Failed to authenticate to Docker Hub"
+                exit 1
+            }
+        fi
+    fi
+
+    # Push both tags
+    print_status "📤 Pushing image ${image_tag}..."
+    docker push "${image_tag}" || {
+        print_error "Failed to push image ${image_tag}"
+        exit 1
+    }
+
+    print_status "📤 Pushing image ${versioned_tag}..."
+    docker push "${versioned_tag}" || {
+        print_error "Failed to push image ${versioned_tag}"
+        exit 1
+    }
+
+    print_success "✅ Images pushed successfully: ${image_tag} and ${versioned_tag}"
+}
+
+# Function to create GKE Ingress
+create_gke_ingress() {
+    print_status "🌐 Creating GKE Ingress..."
+
+    if [[ ! -f "k8s/gke/ingress.yaml" ]]; then
+        print_error "🚨 GKE Ingress file not found: k8s/gke/ingress.yaml"
+        exit 1
+    fi
+
+    # Set hostname variables for substitution
+    local keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||' | sed 's|http://||' | sed 's|/.*||')
+    local app_hostname=$(echo "$APP_URL" | sed 's|https://||' | sed 's|http://||' | sed 's|/.*||')
+    export keycloak_hostname
+    export app_hostname
+
+    # Delete existing ingress if it exists
+    kubectl delete ingress ospo-events-ingress --ignore-not-found=true -n "${NAMESPACE}"
+
+    # Apply ingress with environment variable substitution
+    envsubst < k8s/gke/ingress.yaml | kubectl apply -f -
+
+    print_success "✅ GKE Ingress created successfully"
+}
+
+# Function to create EKS Ingress
+create_eks_ingress() {
+    print_status "🌐 Creating EKS Ingress..."
+
+    if [[ ! -f "k8s/eks/ingress.yaml" ]]; then
+        print_error "🚨 EKS Ingress file not found: k8s/eks/ingress.yaml"
+        exit 1
+    fi
+
+    # Set hostname variables for substitution
+    local keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||' | sed 's|http://||' | sed 's|/.*||')
+    local app_hostname=$(echo "$APP_URL" | sed 's|https://||' | sed 's|http://||' | sed 's|/.*||')
+    export keycloak_hostname
+    export app_hostname
+
+    # Delete existing ingress if it exists
+    kubectl delete ingress ospo-events-ingress --ignore-not-found=true -n "${NAMESPACE}"
+
+    # Apply ingress with environment variable substitution
+    envsubst < k8s/eks/ingress.yaml | kubectl apply -f -
+
+    print_success "✅ EKS Ingress created successfully"
+}
+
 # Function to create application build and deployment
 deploy_app() {
-    print_status "📦 Deploying OSPO Events Application..."
+    print_status "📦 Deploying Events Application..."
+
+    # Get current version from package.json
+    local current_version=$(get_package_version)
+    print_status "🔍 Current version in package.json: $current_version"
 
 
-
-    # Ensure Docker Hub secret exists for builds
-    if [[ $APP == "true" ]]; then
-      create_dockerhub_secret
-    fi
 
     # Create keycloak.json configuration dynamically
     cat > /tmp/keycloak.json <<EOF
@@ -843,42 +1130,72 @@ deploy_app() {
 }
 EOF
 
-    oc create configmap keycloak-client-config --from-file=keycloak.json=/tmp/keycloak.json --dry-run=client -o yaml | oc apply -f -
+    # Create ConfigMap for keycloak.json (platform-agnostic)
+    if [[ "$PLATFORM" == "openshift" ]]; then
+        oc create configmap keycloak-client-config --from-file=keycloak.json=/tmp/keycloak.json --dry-run=client -o yaml | oc apply -f -
+    else
+        kubectl create configmap keycloak-client-config --from-file=keycloak.json=/tmp/keycloak.json --dry-run=client -o yaml | kubectl apply -f - -n "${NAMESPACE}"
+    fi
     rm -f /tmp/keycloak.json
 
-    # Create ImageStream
-    if [[ ! -f "k8s/app-imagestream.yaml" ]]; then
-        print_error "🚨 App ImageStream file not found: k8s/app-imagestream.yaml"
+    # Handle build process based on platform
+    if [[ "$PLATFORM" == "openshift" ]]; then
+        # OpenShift: Use BuildConfig and ImageStream
+        # Ensure Docker Hub secret exists for builds
+        if [[ $APP == "true" ]]; then
+          create_dockerhub_secret
+        fi
+
+        # Create ImageStream
+        if [[ ! -f "k8s/openshift/app-imagestream.yaml" ]]; then
+            print_error "🚨 App ImageStream file not found: k8s/openshift/app-imagestream.yaml"
+            exit 1
+        fi
+        oc apply -f k8s/openshift/app-imagestream.yaml
+
+        # Create BuildConfig
+        if [[ ! -f "k8s/openshift/app-buildconfig.yaml" ]]; then
+            print_error "🚨 App BuildConfig file not found: k8s/openshift/app-buildconfig.yaml"
+            exit 1
+        fi
+
+        # Export version for BuildConfig
+        export APP_VERSION="$current_version"
+        envsubst < k8s/openshift/app-buildconfig.yaml | oc apply -f -
+
+        # Start build
+        print_status "🔨 Starting application build for version $current_version..."
+        oc start-build ospo-events-app --from-dir=. --wait
+
+        # Tag the image with the version number in addition to 'latest'
+        print_status "🏷️  Tagging image as version $current_version..."
+        oc tag ospo-events-app:latest ospo-events-app:"$current_version"
+
+        print_success "✅ Built and tagged as ospo-events-app:$current_version and ospo-events-app:latest"
+    else
+        # GKE/EKS/Local: Build and push to external registry
+        # Check if build is needed (unless --force is specified)
+        if [[ "$FORCE_BUILD" != "true" ]]; then
+            # For external registries, we'll always build for now
+            # TODO: Add version checking for external registries
+            print_status "Building new version: $current_version"
+        else
+            print_status "Force build requested, skipping version check"
+        fi
+
+        # Build and push image
+        build_and_push_image "$current_version"
+
+        # Update IMAGE_TAG to use versioned tag
+        export IMAGE_TAG="$current_version"
+    fi
+
+    # Create Deployment (use common manifest)
+    if [[ ! -f "k8s/common/app-deployment.yaml" ]]; then
+        print_error "🚨 App deployment file not found: k8s/common/app-deployment.yaml"
         exit 1
     fi
-    oc apply -f k8s/app-imagestream.yaml
-
-    # Create BuildConfig
-    if [[ ! -f "k8s/app-buildconfig.yaml" ]]; then
-        print_error "🚨 App BuildConfig file not found: k8s/app-buildconfig.yaml"
-        exit 1
-    fi
-
-    # Export version for BuildConfig
-    export APP_VERSION="$current_version"
-    envsubst < k8s/app-buildconfig.yaml | oc apply -f -
-
-    # Start build
-    print_status "🔨 Starting application build for version $current_version..."
-    oc start-build ospo-events-app --from-dir=. --wait
-
-    # Tag the image with the version number in addition to 'latest'
-    print_status "🏷️  Tagging image as version $current_version..."
-    oc tag ospo-events-app:latest ospo-events-app:"$current_version"
-
-    print_success "✅ Built and tagged as ospo-events-app:$current_version and ospo-events-app:latest"
-
-    # Create Deployment
-    if [[ ! -f "k8s/app-deployment.yaml" ]]; then
-        print_error "🚨 App deployment file not found: k8s/app-deployment.yaml"
-        exit 1
-    fi
-    envsubst < k8s/app-deployment.yaml | oc apply -f -
+    envsubst < k8s/common/app-deployment.yaml | $CLI_CMD apply -f - -n "${NAMESPACE}"
 
     wait_for_deployment ospo-app
 }
@@ -915,31 +1232,39 @@ deploy_ai() {
     echo "  3. Or use the internal service URL: http://ollama-nvidia-gpu:11434"
 }
 
-# Function to create routes
+# Function to create routes/ingress based on platform
 create_routes() {
-    print_status "🌐 Creating Routes..."
+    if [[ "$PLATFORM" == "openshift" ]]; then
+        print_status "🌐 Creating OpenShift Routes..."
 
-    # Check if routes file exists
-    if [[ ! -f "k8s/routes.yaml" ]]; then
-        print_error "🚨 Routes file not found: k8s/routes.yaml"
-        exit 1
+        # Check if routes file exists
+        if [[ ! -f "k8s/openshift/routes.yaml" ]]; then
+            print_error "🚨 Routes file not found: k8s/openshift/routes.yaml"
+            exit 1
+        fi
+
+        # Set hostname variables for substitution
+        local keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||')
+        local app_hostname=$(echo "$APP_URL" | sed 's|https://||')
+        export keycloak_hostname
+        export app_hostname
+        print_status "🔍 keycloak_hostname: $keycloak_hostname"
+        print_status "🔍 app_hostname: $app_hostname"
+
+        oc delete route ospo-app --ignore-not-found=true
+        oc delete route keycloak --ignore-not-found=true
+        # Apply routes with environment variable substitution
+        envsubst < k8s/openshift/routes.yaml | oc apply -f -
+
+        print_success "✅ OpenShift Routes created successfully"
+    elif [[ "$PLATFORM" == "gke" ]]; then
+        create_gke_ingress
+    elif [[ "$PLATFORM" == "eks" ]]; then
+        create_eks_ingress
+    else
+        # Local/KIND: No ingress needed (uses NodePort)
+        print_status "🌐 Local deployment uses NodePort services - no ingress needed"
     fi
-
-    # Set hostname variables for substitution
-    local keycloak_hostname=$(echo "$KEYCLOAK_URL" | sed 's|https://||')
-    local app_hostname=$(echo "$APP_URL" | sed 's|https://||')
-    export keycloak_hostname
-    export app_hostname
-    print_status "🔍 keycloak_hostname: $keycloak_hostname"
-    print_status "🔍 app_hostname: $app_hostname"
-
-    oc delete route ospo-app --ignore-not-found=true
-    oc delete route keycloak --ignore-not-found=true
-    # oc delete route ollama-nvidia-gpu --ignore-not-found=true
-    # Apply routes with environment variable substitution
-    envsubst < k8s/routes.yaml | oc apply -f -
-
-    print_success "Routes created successfully"
 }
 
 # Function to safely delete all pods while preserving data
@@ -1187,7 +1512,7 @@ backup_all_data() {
     # Create backup metadata
     print_status "📋 Creating backup metadata..."
     cat > "$BACKUP_DIR/backup_metadata.txt" <<EOF
-OSPO Events Manager Backup
+Events Manager Backup
 =========================
 Backup Date: $(date)
 Environment: $ENVIRONMENT
@@ -1499,7 +1824,7 @@ delete_local_cluster() {
         echo "  brew install kind"
         exit 1
     fi
-    
+
     print_warning "⚠️  WARNING: This will delete the local KIND cluster!"
     print_warning "⚠️  This action will:"
     print_warning "   - Delete the entire 'ospo-local' KIND cluster"
@@ -1508,27 +1833,27 @@ delete_local_cluster() {
     print_warning ""
     print_warning "⚠️  ALL LOCAL DEVELOPMENT DATA WILL BE LOST!"
     echo ""
-    
+
     # Check if cluster exists
     if ! kind get clusters 2>/dev/null | grep -q "^ospo-local$"; then
         print_warning "KIND cluster 'ospo-local' does not exist"
         print_info "Nothing to delete"
         exit 0
     fi
-    
+
     # Require explicit confirmation
     read -p "Are you sure you want to delete the local KIND cluster? Type 'DELETE LOCAL CLUSTER' to confirm: " confirmation
-    
+
     if [[ "$confirmation" != "DELETE LOCAL CLUSTER" ]]; then
         print_error "Deletion cancelled. You must type 'DELETE LOCAL CLUSTER' exactly to confirm."
         exit 1
     fi
-    
+
     print_status "🗑️  Deleting local KIND cluster 'ospo-local'..."
-    
+
     # Delete the KIND cluster
     KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster --name ospo-local
-    
+
     if [ $? -eq 0 ]; then
         print_success "✅ Local KIND cluster deleted successfully!"
         echo ""
@@ -1600,15 +1925,15 @@ main() {
         if [[ "$POSTGRES" == "true" ]]; then
             deploy_postgres_local
         fi
-        
+
         if [[ "$KEYCLOAK" == "true" ]]; then
             deploy_keycloak_local
         fi
-        
+
         if [[ "$MINIO" == "true" ]]; then
             deploy_minio_local
         fi
-        
+
         # If specific components were deployed, show summary and exit
         if [[ "$POSTGRES" == "true" || "$KEYCLOAK" == "true" || "$MINIO" == "true" ]]; then
             print_success "🎉 Deployment completed successfully!"
@@ -1641,13 +1966,13 @@ main() {
             print_info "Application will run on your machine and connect to services in KIND."
             exit 0
         fi
-        
+
         # If no specific components were requested, deploy all
         print_status "🚀 Deploying all services to local KIND cluster..."
         deploy_postgres_local
         deploy_keycloak_local
         deploy_minio_local
-        
+
         print_success "🎉 All services deployed successfully!"
         echo ""
         print_status "📋 Deployment Summary:"
@@ -1675,6 +2000,116 @@ main() {
         exit 0
     fi
 
+    # Handle GKE/EKS deployment
+    if [[ "$ENVIRONMENT" == "gke" || "$ENVIRONMENT" == "eks" ]]; then
+        # Deploy postgres if flag is set
+        if [[ "$POSTGRES" == "true" ]]; then
+            print_status "🚀 Deploying PostgreSQL..."
+            $CLI_CMD scale deployment postgres --replicas=0 -n "${NAMESPACE}" || true
+            sleep 5
+            deploy_postgres
+            sleep 5
+            $CLI_CMD scale deployment postgres --replicas=1 -n "${NAMESPACE}"
+            print_success "🎉 PostgreSQL deployed successfully!"
+        fi
+
+        # Deploy keycloak if flag is set
+        if [[ "$KEYCLOAK" == "true" ]]; then
+            print_status "🚀 Deploying Keycloak..."
+            kc_running=$($CLI_CMD get pods -n "${NAMESPACE}" | grep keycloak | wc -l)
+            if [[ $kc_running -eq 0 ]]; then
+                print_status "🚀 Keycloak not running, deploying..."
+                deploy_keycloak
+                sleep 5
+                print_success "🎉 Keycloak deployed successfully!"
+            else
+                $CLI_CMD scale deployment keycloak --replicas=0 -n "${NAMESPACE}"
+                sleep 5
+                deploy_keycloak
+                sleep 5
+                $CLI_CMD scale deployment keycloak --replicas=1 -n "${NAMESPACE}"
+                print_success "🎉 Keycloak deployed successfully!"
+            fi
+        fi
+
+        # Deploy minio if flag is set
+        if [[ "$MINIO" == "true" ]]; then
+            print_status "🚀 Deploying MinIO..."
+            deploy_minio
+            print_success "🎉 MinIO deployed successfully!"
+        fi
+
+        # Deploy application if flag is set
+        if [[ "$APP" == "true" ]]; then
+            print_status "🚀 Deploying the application..."
+            local current_version=$(get_package_version)
+            print_status "🔍 Current version in package.json: $current_version"
+
+            # For GKE/EKS, always build unless we implement version checking for external registries
+            deploy_app
+            $CLI_CMD scale deployment ospo-app --replicas=0 -n "${NAMESPACE}" || true
+            sleep 5
+            $CLI_CMD scale deployment ospo-app --replicas=1 -n "${NAMESPACE}"
+            print_success "🎉 Application deployed successfully!"
+        fi
+
+        # Create ingress if routes flag is set or if deploying app
+        if [[ "$ROUTES" == "true" || "$APP" == "true" ]]; then
+            create_routes
+            print_success "🎉 Ingress created successfully!"
+        fi
+
+        # Show summary
+        if [[ "$APP" == "true" || "$KEYCLOAK" == "true" || "$POSTGRES" == "true" || "$MINIO" == "true" ]]; then
+            print_success "🎉 Deployment completed successfully!"
+            echo ""
+            print_status "📋 Deployment Summary:"
+            if [[ "$APP" == "true" ]]; then
+                echo "   ✅ Application Deployed"
+            fi
+            if [[ "$KEYCLOAK" == "true" ]]; then
+                echo "   ✅ Keycloak Deployed"
+            fi
+            if [[ "$POSTGRES" == "true" ]]; then
+                echo "   ✅ PostgreSQL Deployed"
+            fi
+            if [[ "$MINIO" == "true" ]]; then
+                echo "   ✅ MinIO Deployed"
+            fi
+            echo "   Environment: $ENVIRONMENT"
+            echo "   Platform: $PLATFORM"
+            echo "   Namespace: $NAMESPACE"
+            echo "   Application URL: $APP_URL"
+            echo "   Keycloak URL: $KEYCLOAK_URL"
+            echo ""
+            print_status "🔍 Checking deployment status..."
+            $CLI_CMD get pods -n "${NAMESPACE}"
+            exit 0
+        fi
+
+        # Deploy all components in order (default behavior)
+        deploy_postgres
+        deploy_keycloak
+        deploy_minio
+        deploy_app
+        create_routes
+
+        print_success "🎉 Deployment completed successfully!"
+        echo ""
+        print_status "📋 Deployment Summary:"
+        echo "   Environment: $ENVIRONMENT"
+        echo "   Platform: $PLATFORM"
+        echo "   Namespace: $NAMESPACE"
+        echo "   Application URL: $APP_URL"
+        echo "   Keycloak URL: $KEYCLOAK_URL"
+        echo ""
+        print_status "🔍 Checking deployment status..."
+        $CLI_CMD get pods -n "${NAMESPACE}"
+        echo ""
+        print_success "✨ Events Manager is now deployed and ready!"
+        exit 0
+    fi
+
     # Handle OpenShift (dev/prod) deployment
     # Deploy postgres if flag is set
     if [[ "$POSTGRES" == "true" ]]; then
@@ -1686,7 +2121,7 @@ main() {
         oc scale deployment postgres --replicas=1
         print_success "🎉 Postgres deployed successfully!"
     fi
-    
+
     # Deploy keycloak if flag is set
     if [[ "$KEYCLOAK" == "true" ]]; then
         print_status "🚀 Deploying the keycloak pod..."
@@ -1705,7 +2140,7 @@ main() {
           print_success "🎉 Keycloak deployed successfully!"
         fi
     fi
-    
+
     # Deploy application if flag is set
     if [[ "$APP" == "true" ]]; then
       print_status "🚀 Deploying the application..."
@@ -1775,7 +2210,7 @@ main() {
       exit 0
     fi
 
-    # Deploy all components in order (default behavior)
+    # Deploy all components in order (default behavior for OpenShift)
     create_dockerhub_secret
     deploy_postgres
     deploy_keycloak
@@ -1785,11 +2220,15 @@ main() {
     echo ""
     print_status "📋 Deployment Summary:"
     echo "   Environment: $ENVIRONMENT"
+    echo "   Platform: $PLATFORM"
     echo "   Namespace: $NAMESPACE"
     echo "   Application URL: $APP_URL"
     echo "   Keycloak URL: $KEYCLOAK_URL"
     echo ""
-    print_success "✨ OSPO Events Manager is now deployed and ready!"
+    print_status "🔍 Checking deployment status..."
+    oc get pods -l app
+    echo ""
+    print_success "✨ Events Manager is now deployed and ready!"
 }
 
 # Run main function

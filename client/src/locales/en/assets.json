@@ -1,0 +1,51 @@
+{
+  "title": "Assets",
+  "uploadAsset": "Upload Asset",
+  "uploading": "Uploading...",
+  "selectFile": "Select a file to upload",
+  "filesUpTo": "Files up to {{size}}",
+  "enterText": "Enter Text",
+  "uploadFile": "Upload File",
+  "fields": {
+    "name": "Asset Name",
+    "type": "Asset Type",
+    "description": "Description",
+    "event": "Event",
+    "cfpSubmission": "CFP Submission",
+    "uploadMethod": "Upload Method",
+    "file": "File",
+    "content": "Content"
+  },
+  "placeholders": {
+    "name": "Enter a name for this asset",
+    "selectType": "Select asset type",
+    "selectEvent": "Select an event",
+    "selectCfp": "Select a CFP submission",
+    "description": "Add details about this asset",
+    "content": "Enter your content here..."
+  },
+  "descriptions": {
+    "eventRequired": "This asset must be linked to an event. If the event isn't listed, click the + button to create it.",
+    "descriptionOptional": "Description (Optional)"
+  },
+  "validation": {
+    "nameRequired": "Asset name is required",
+    "fileRequired": "File is required",
+    "fileSizeExceeded": "File size must be less than {{size}}",
+    "fileTypeNotSupported": "File type not supported",
+    "contentRequired": "Please enter content for the asset",
+    "fileSelectRequired": "Please select a file to upload",
+    "eventRequired": "Please select an event or create a new one for this asset type."
+  },
+  "messages": {
+    "uploaded": "Asset uploaded successfully",
+    "uploadedDescription": "Your file has been uploaded and is now available in the assets library.",
+    "uploadFailed": "Upload failed",
+    "uploadFailedDescription": "There was an error uploading your file: {{error}}",
+    "remove": "Remove"
+  },
+  "tabs": {
+    "file": "File",
+    "text": "Text"
+  }
+}

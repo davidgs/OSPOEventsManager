@@ -1,6 +1,6 @@
 # Testing Guide
 
-This guide covers how to run and write tests for the OSPO Events Manager application.
+This guide covers how to run and write tests for the Events Manager application.
 
 ## Overview
 

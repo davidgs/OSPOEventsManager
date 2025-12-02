@@ -171,7 +171,7 @@ async function importCSVEvents() {
   console.log('Starting CSV import...');
 
   // Read and parse CSV file
-  const csvFilePath = process.env.CSV_FILE_PATH || 'OSPO AI Community team targeted events CY25 (2H) - CY26 - AI target events.csv';
+  const csvFilePath = process.env.CSV_FILE_PATH || 'AI Community team targeted events CY25 (2H) - CY26 - AI target events.csv';
   const csvContent = readFileSync(csvFilePath, 'utf-8');
 
   const records = parse(csvContent, {

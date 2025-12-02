@@ -3,7 +3,6 @@ name: UpdateDocs
 description: Rules for updating the documentation
 alwaysApply: true
 ---
-
 ## Rules
 
 ### 1. Always update the documentation
