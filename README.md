@@ -50,7 +50,7 @@ A comprehensive event management system for Open Source Program Offices (OSPOs),
 ```bash
 # Clone and install
 git clone <repository-url>
-cd OSPOEventsManager
+cd EventsManager
 npm install
 
 # Configure and deploy services to KIND cluster
@@ -71,7 +71,7 @@ See [kind/README.md](kind/README.md) for detailed setup and troubleshooting.
 ```bash
 # Clone and install
 git clone <repository-url>
-cd OSPOEventsManager
+cd EventsManager
 npm install
 
 # Configure environment
