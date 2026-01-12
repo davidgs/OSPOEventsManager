@@ -616,10 +616,17 @@ if [[ "$DELETE_LOCAL" != "true" && "$DELETE" != "true" && "$BACKUP" != "true" &&
             sleep 5  # Give Podman a moment to stabilize
         fi
 
-        # Check if KIND cluster exists
-        if ! kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
+        # Check if KIND cluster exists (use same provider as when creating)
+        if ! KIND_EXPERIMENTAL_PROVIDER=podman kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
             print_warning "KIND cluster '${CLUSTER_NAME}' does not exist"
             print_info "Creating KIND cluster..."
+            
+            # Clean up any orphaned nodes from previous failed attempts
+            print_status "Checking for orphaned nodes..."
+            if KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster --name "${CLUSTER_NAME}" 2>/dev/null; then
+                print_info "Cleaned up orphaned cluster resources"
+            fi
+            
             setup_kind_cluster
         else
             print_success "KIND cluster '${CLUSTER_NAME}' exists"
@@ -1834,8 +1841,8 @@ delete_local_cluster() {
     print_warning "⚠️  ALL LOCAL DEVELOPMENT DATA WILL BE LOST!"
     echo ""
 
-    # Check if cluster exists
-    if ! kind get clusters 2>/dev/null | grep -q "^ospo-local$"; then
+    # Check if cluster exists (use same provider as when creating)
+    if ! KIND_EXPERIMENTAL_PROVIDER=podman kind get clusters 2>/dev/null | grep -q "^ospo-local$"; then
         print_warning "KIND cluster 'ospo-local' does not exist"
         print_info "Nothing to delete"
         exit 0
